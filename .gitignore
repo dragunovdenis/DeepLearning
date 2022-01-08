@@ -48,3 +48,11 @@ Thumbs.db
 *.mov
 *.wmv
 
+.vs/
+Debug/
+DeepLearning/Release/
+DeepLearningTest/Release/
+DeepLearningTest/x64/
+DeepLearning/x64/
+x64/
+Release/
