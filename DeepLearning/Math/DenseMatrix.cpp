@@ -138,6 +138,18 @@ namespace DeepLearning
 		return result;
 	}
 
+	bool DenseMatrix::operator ==(const DenseMatrix& matr) const
+	{
+		return _row_dim == matr._row_dim &&
+			   _col_dim == matr._col_dim &&
+		       _data == matr._data;
+	}
+
+	bool DenseMatrix::operator !=(const DenseMatrix& matr) const
+	{
+		return !(*this == matr);
+	}
+
 	std::vector<Real>::iterator DenseMatrix::begin()
 	{
 		return _data.begin();

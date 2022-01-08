@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vector>
-
+#include <msgpack.hpp>
 #include "../defs.h"
 
 namespace DeepLearning
@@ -43,6 +43,8 @@ namespace DeepLearning
 		std::size_t row_col_to_data_id(const std::size_t row_id, const std::size_t col_id) const;
 
 	public:
+
+		MSGPACK_DEFINE(_row_dim, _col_dim, _data);
 
 		/// <summary>
 		/// Default constructor, constructs an empty matrix (i.e. a matrix having "zero" dimensions)
@@ -86,6 +88,16 @@ namespace DeepLearning
 		/// Multiplication by a vector from the left
 		/// </summary>
 		DenseVector friend operator *(const DenseVector& vec, const DenseMatrix& matr);
+
+		/// <summary>
+		/// Equality operator
+		/// </summary>
+		bool operator ==(const DenseMatrix& matr) const;
+
+		/// <summary>
+		/// Inequality operator
+		/// </summary>
+		bool operator !=(const DenseMatrix& matr) const;
 
 		/// <summary>
 		/// Iterator pointing to the first element of the vector

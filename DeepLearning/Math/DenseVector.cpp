@@ -47,6 +47,16 @@ namespace DeepLearning
 			return _data[id];
 	}
 
+	bool DenseVector::operator ==(const DenseVector& vect) const
+	{
+		return _data == vect._data;
+	}
+
+	bool DenseVector::operator !=(const DenseVector& vect) const
+	{
+		return !(*this == vect);
+	}
+
 	std::vector<Real>::iterator DenseVector::begin()
 	{
 		return _data.begin();

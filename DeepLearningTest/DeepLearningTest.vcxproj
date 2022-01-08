@@ -167,7 +167,17 @@
       <Project>{50160b3b-7ff2-43c0-b650-54332ef4fa75}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\packages\msgpack-c.0.5.9.1\build\native\msgpack-c.targets" Condition="Exists('..\packages\msgpack-c.0.5.9.1\build\native\msgpack-c.targets')" />
   </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\msgpack-c.0.5.9.1\build\native\msgpack-c.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\msgpack-c.0.5.9.1\build\native\msgpack-c.targets'))" />
+  </Target>
 </Project>

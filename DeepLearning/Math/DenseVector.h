@@ -2,6 +2,7 @@
 
 #include <vector>
 #include "../defs.h"
+#include <msgpack.hpp>
 
 namespace DeepLearning
 {
@@ -18,6 +19,8 @@ namespace DeepLearning
 		bool check_bounds(const ::std::size_t id) const;
 
 	public:
+
+		MSGPACK_DEFINE(_data);
 
 		/// <summary>
 		/// Default constructor
@@ -53,6 +56,16 @@ namespace DeepLearning
 		/// <param name="id">Index of the element to be accessed</param>
 		/// <returns>Constant reference to the element</returns>
 		const Real& operator ()(const std::size_t id) const;
+
+		/// <summary>
+		/// Equality operator
+		/// </summary>
+		bool operator ==(const DenseVector& vect) const;
+
+		/// <summary>
+		/// Inequality operator
+		/// </summary>
+		bool operator !=(const DenseVector& vect) const;
 
 		/// <summary>
 		/// Iterator pointing to the first element of the vector

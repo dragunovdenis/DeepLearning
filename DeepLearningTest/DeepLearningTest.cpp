@@ -2,6 +2,7 @@
 #include "CppUnitTest.h"
 #include <Math/DenseMatrix.h>
 #include <Math/DenseVector.h>
+#include <MsgPackUtils.h>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;
@@ -44,8 +45,8 @@ namespace DeepLearningTest
 			//Arrange
 			const std::size_t row_dim = 43;
 			const std::size_t col_dim = 14;
-			auto matrix = DenseMatrix(row_dim, col_dim, -1, 1);
-			auto vector = DenseVector(row_dim, -1, 1);
+			const auto matrix = DenseMatrix(row_dim, col_dim, -1, 1);
+			const auto vector = DenseVector(row_dim, -1, 1);
 
 			//Act
 			const auto product = vector * matrix;
@@ -62,8 +63,37 @@ namespace DeepLearningTest
 
 				const auto diff = std::abs(reference - product(col_id));
 				Logger::WriteMessage((std::string("Difference = ") + std::to_string(diff) + "\n").c_str());
-				Assert::IsTrue(diff < std::numeric_limits<Real>::epsilon(), L"Unexpectedly high difference");
+				Assert::IsTrue(diff < std::numeric_limits<Real>::epsilon(), L"Unexpectedly high difference.");
 			}
+		}
+
+		TEST_METHOD(VectorPackingTest)
+		{
+			//Arrange
+			const auto dim = 10;
+			const auto vector = DenseVector(dim, -1, 1);
+
+			//Act
+			const auto msg = MsgPack::pack(vector);
+			const auto vector_unpacked = MsgPack::unpack<DenseVector>(msg);
+
+			//Assert
+			Assert::IsTrue(vector == vector_unpacked, L"De-serialized vector is not equal to the original one.");
+		}
+
+		TEST_METHOD(MatrixPackingTest)
+		{
+			//Arrange
+			const auto row_dim = 10;
+			const auto col_dim = 33;
+			const auto matrix = DenseMatrix(row_dim, col_dim, -1, 1);
+
+			//Act
+			const auto msg = MsgPack::pack(matrix);
+			const auto matrix_unpacked = MsgPack::unpack<DenseMatrix>(msg);
+
+			//Assert
+			Assert::IsTrue(matrix == matrix_unpacked, L"De-serialized matrix is not equal to the original one.");
 		}
 	};
 }
