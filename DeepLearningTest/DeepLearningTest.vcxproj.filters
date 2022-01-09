@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="TestData">
+      <UniqueIdentifier>{1e568de2-f574-4791-a626-346bb0da6ef8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="TestData\MNIST">
+      <UniqueIdentifier>{b98d451f-f41c-46b8-9f0b-5067b0db0419}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DeepLearningTest.cpp">
@@ -21,8 +27,25 @@
     <ClCompile Include="ActivationFuncTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MnistDataUtilsTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="TestData\MNIST\t10k-images.idx3-ubyte">
+      <Filter>TestData\MNIST</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="TestData\MNIST\t10k-labels.idx1-ubyte">
+      <Filter>TestData\MNIST</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="TestData\MNIST\train-images.idx3-ubyte">
+      <Filter>TestData\MNIST</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="TestData\MNIST\train-labels.idx1-ubyte">
+      <Filter>TestData\MNIST</Filter>
+    </CopyFileToFolders>
   </ItemGroup>
 </Project>

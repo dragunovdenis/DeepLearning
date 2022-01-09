@@ -156,17 +156,21 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="defs.h" />
+    <ClInclude Include="Image8Bit.h" />
     <ClInclude Include="Math\ActivationFunction.h" />
     <ClInclude Include="Math\DenseMatrix.h" />
     <ClInclude Include="Math\DenseVector.h" />
     <ClInclude Include="Math\Dual.h" />
+    <ClInclude Include="MnistDataUtils.h" />
     <ClInclude Include="MsgPackUtils.h" />
     <ClInclude Include="Utilities.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Image8Bit.cpp" />
     <ClCompile Include="Math\ActivationFunction.cpp" />
     <ClCompile Include="Math\DenseMatrix.cpp" />
     <ClCompile Include="Math\DenseVector.cpp" />
+    <ClCompile Include="MnistDataUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

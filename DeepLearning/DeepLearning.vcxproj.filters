@@ -42,6 +42,12 @@
     <ClInclude Include="Math\ActivationFunction.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
+    <ClInclude Include="MnistDataUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Image8Bit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\DenseMatrix.cpp">
@@ -52,6 +58,12 @@
     </ClCompile>
     <ClCompile Include="Math\ActivationFunction.cpp">
       <Filter>Source Files\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Image8Bit.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MnistDataUtils.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
