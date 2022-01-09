@@ -56,8 +56,7 @@ namespace DeepLearningTest
 			const auto vector = DenseVector(dim, -1, 1);
 
 			//Act
-			DenseVector result, result_deriv;
-			std::tie(result, result_deriv) = Sigmoid().func_and_deriv(vector);
+			const auto [result, result_deriv] = Sigmoid().func_and_deriv(vector);
 
 			//Assert
 			Assert::AreEqual(vector.dim(), result.dim(), L"Unexpected dimension of the result vector");
