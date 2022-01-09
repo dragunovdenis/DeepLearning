@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <istream>
+#include <filesystem>
 
 namespace DeepLearning
 {
@@ -28,5 +29,9 @@ namespace DeepLearning
 		/// </summary>
 		Image8Bit(const std::size_t height, std::size_t width, std::istream& stream);
 
+		/// <summary>
+		/// Saves the image to disk in "bmp" format
+		/// </summary>
+		void SaveToBmp(const std::filesystem::path& path) const;
 	};
 }

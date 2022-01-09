@@ -19,6 +19,12 @@
     <Filter Include="Source Files\Math">
       <UniqueIdentifier>{edb7ef2c-b7e5-435a-9b8c-f828b7e74159}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\ThirdParty">
+      <UniqueIdentifier>{fc7ef70a-727f-442c-9d42-eb237b8ab668}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ThirdParty">
+      <UniqueIdentifier>{66d3026a-ead0-4b90-ad27-cb34fd978959}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="defs.h">
@@ -48,6 +54,9 @@
     <ClInclude Include="Image8Bit.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ThirdParty\BitmapUtils.h">
+      <Filter>Header Files\ThirdParty</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\DenseMatrix.cpp">
@@ -64,6 +73,9 @@
     </ClCompile>
     <ClCompile Include="MnistDataUtils.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ThirdParty\BitmapUtils.cpp">
+      <Filter>Source Files\ThirdParty</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
