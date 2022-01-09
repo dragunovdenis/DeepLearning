@@ -36,12 +36,21 @@
     <ClInclude Include="MsgPackUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Math\Dual.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\ActivationFunction.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\DenseMatrix.cpp">
       <Filter>Source Files\Math</Filter>
     </ClCompile>
     <ClCompile Include="Math\DenseVector.cpp">
+      <Filter>Source Files\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\ActivationFunction.cpp">
       <Filter>Source Files\Math</Filter>
     </ClCompile>
   </ItemGroup>
