@@ -58,6 +58,21 @@ namespace DeepLearning
 		const Real& operator ()(const std::size_t id) const;
 
 		/// <summary>
+		/// Compound addition operator
+		/// </summary>
+		DenseVector& operator += (const DenseVector& vec);
+
+		/// <summary>
+		/// Compound subtraction operator
+		/// </summary>
+		DenseVector& operator -= (const DenseVector& vec);
+
+		/// <summary>
+		/// Compound scalar multiplication operator
+		/// </summary>
+		DenseVector& operator *= (const Real& scalar);
+
+		/// <summary>
 		/// Equality operator
 		/// </summary>
 		bool operator ==(const DenseVector& vect) const;
@@ -91,5 +106,31 @@ namespace DeepLearning
 		/// Generates a vector filled with uniformly distributed pseudo random values
 		/// </summary>
 		static DenseVector random(const std::size_t dim, const Real range_begin, const Real range_end);
+
+		/// <summary>
+		/// "Maximal absolute value" norm ("infinity" norm)
+		/// </summary>
+		Real max_abs() const;
 	};
+
+	/// <summary>
+	/// Vector addition operator
+	/// </summary>
+	DenseVector operator + (const DenseVector& vec1, const DenseVector& vec2);
+
+	/// <summary>
+	/// Vector subtraction operator
+	/// </summary>
+	DenseVector operator -(const DenseVector& vec1, const DenseVector& vec2);
+
+	/// <summary>
+	/// Vector-Scalar multiplication operator
+	/// </summary>
+	DenseVector operator *(const DenseVector& vec, const Real& scalar);
+
+	/// <summary>
+	/// Scalar-vector multiplication operator
+	/// </summary>
+	DenseVector operator *(const Real& scalar, const DenseVector& vec);
+
 }

@@ -28,7 +28,7 @@ namespace DeepLearning
 			throw std::exception("Can't open file");
 
 		file.seekg(0, file.end);
-		const int length = file.tellg();
+		const int length = static_cast<int>(file.tellg());
 		file.seekg(0, file.beg);
 
 		const int image_height = 28;

@@ -5,6 +5,7 @@
 #include <numeric>
 #include <iterator>
 #include <cstddef>
+#include <algorithm>
 
 namespace DeepLearning
 {
@@ -176,5 +177,67 @@ namespace DeepLearning
 		fill_with_random_values(result.begin(), result.end(), range_begin, range_end);
 
 		return result;
+	}
+
+	DenseMatrix& DenseMatrix::operator +=(const DenseMatrix& mat)
+	{
+		if (mat.size() != size())
+			throw std::exception("Operands must be of the same dimension");
+
+		std::transform(begin(), end(), mat.begin(), begin(), [](const auto& x, const auto& y) { return x + y; });
+		return *this;
+	}
+
+	DenseMatrix& DenseMatrix::operator -=(const DenseMatrix& mat)
+	{
+		if (mat.size() != size())
+			throw std::exception("Operands must be of the same dimension");
+
+		std::transform(begin(), end(), mat.begin(), begin(), [](const auto& x, const auto& y) { return x - y; });
+		return *this;
+	}
+
+	DenseMatrix& DenseMatrix::operator *=(const Real& scalar)
+	{
+		std::transform(begin(), end(), begin(), [scalar](const auto& x) { return x * scalar; });
+		return *this;
+	}
+
+	DenseMatrix operator +(const DenseMatrix& mat1, const DenseMatrix& mat2)
+	{
+		auto result = mat1;
+		return result += mat2;
+	}
+
+	/// <summary>
+	/// Matrix subtraction operator
+	/// </summary>
+	DenseMatrix operator -(const DenseMatrix& mat1, const DenseMatrix& mat2)
+	{
+		auto result = mat1;
+		return result -= mat2;
+	}
+
+	/// <summary>
+	/// Matrix by scalar multiplication operator
+	/// </summary>
+	DenseMatrix operator *(const DenseMatrix& mat, const Real& scalar)
+	{
+		auto result = mat;
+		return result *= scalar;
+
+	}
+
+	/// <summary>
+	/// Scalar by matrix multiplication operator
+	/// </summary>
+	DenseMatrix operator *(const Real& scalar, const DenseMatrix& mat)
+	{
+		return mat * scalar;
+	}
+
+	Real DenseMatrix::max_abs() const
+	{
+		return std::abs(*std::max_element(begin(), end(), [](const auto& x, const auto& y) { return std::abs(x) < std::abs(y); }));
 	}
 }

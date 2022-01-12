@@ -165,7 +165,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ActivationFuncTest.cpp" />
-    <ClCompile Include="DeepLearningTest.cpp" />
+    <ClCompile Include="MatrixVectorAlgebraTest.cpp" />
     <ClCompile Include="MnistDataUtilsTest.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -124,5 +124,44 @@ namespace DeepLearning
 		/// </summary>
 		static inline DenseMatrix random(const std::size_t row_dim, const std::size_t col_dim, const Real range_begin, const Real range_end);
 
+		/// <summary>
+		/// Compound addition operator
+		/// </summary>
+		DenseMatrix& operator +=(const DenseMatrix &mat);
+
+		/// <summary>
+		/// Compound subtraction operator
+		/// </summary>
+		DenseMatrix& operator -=(const DenseMatrix &mat);
+
+		/// <summary>
+		/// Compound scalar multiplication operator
+		/// </summary>
+		DenseMatrix& operator *=(const Real& scalar);
+
+		/// <summary>
+		/// "Maximal absolute value" norm ("infinity" norm)
+		/// </summary>
+		Real max_abs() const;
 	};
+
+	/// <summary>
+	/// Matrix addition operator
+	/// </summary>
+	DenseMatrix operator +(const DenseMatrix& mat1, const DenseMatrix& mat2);
+
+	/// <summary>
+	/// Matrix subtraction operator
+	/// </summary>
+	DenseMatrix operator -(const DenseMatrix& mat1, const DenseMatrix& mat2);
+
+	/// <summary>
+	/// Matrix by scalar multiplication operator
+	/// </summary>
+	DenseMatrix operator *(const DenseMatrix& mat, const Real& scalar);
+
+	/// <summary>
+	/// Scalar by matrix multiplication operator
+	/// </summary>
+	DenseMatrix operator *(const Real& scalar, const DenseMatrix& mat);
 }

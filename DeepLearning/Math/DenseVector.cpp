@@ -3,6 +3,7 @@
 #include <exception>
 #include <stdlib.h>
 #include <time.h>
+#include <algorithm>
 
 namespace DeepLearning
 {
@@ -84,4 +85,57 @@ namespace DeepLearning
 
 		return result;
 	}
+
+	DenseVector& DenseVector::operator += (const DenseVector& vec)
+	{
+		if (vec.dim() != dim())
+			throw std::exception("Operands must be of the same dimension");
+
+		std::transform(begin(), end(), vec.begin(), begin(), [](const auto& x, const auto& y) { return x + y; });
+		return *this;
+	}
+
+	DenseVector& DenseVector::operator -= (const DenseVector& vec)
+	{
+		if (vec.dim() != dim())
+			throw std::exception("Operands must be of the same dimension");
+
+		std::transform(begin(), end(), vec.begin(), begin(), [](const auto& x, const auto& y) { return x - y; });
+		return *this;
+	}
+
+	DenseVector& DenseVector::operator *= (const Real& scalar)
+	{
+		std::transform(begin(), end(), begin(), [scalar](const auto& x) { return x * scalar; });
+		return *this;
+	}
+
+	DenseVector operator +(const DenseVector& vec1, const DenseVector& vec2)
+	{
+		auto result = vec1;
+		return result += vec2;
+	}
+
+	DenseVector operator -(const DenseVector& vec1, const DenseVector& vec2)
+	{
+		auto result = vec1;
+		return result -= vec2;
+	}
+
+	DenseVector operator *(const DenseVector& vec, const Real& scalar)
+	{
+		auto result = vec;
+		return result *= scalar;
+	}
+
+	DenseVector operator *(const Real& scalar, const DenseVector& vec)
+	{
+		return vec * scalar;
+	}
+
+	Real DenseVector::max_abs() const
+	{
+		return std::abs(*std::max_element(begin(), end(), [](const auto& x, const auto& y) { return std::abs(x) < std::abs(y); }));
+	}
+
 }

@@ -21,7 +21,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="DeepLearningTest.cpp">
+    <ClCompile Include="MatrixVectorAlgebraTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ActivationFuncTest.cpp">
@@ -33,19 +33,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <CopyFileToFolders Include="TestData\MNIST\t10k-images.idx3-ubyte">
-      <Filter>TestData\MNIST</Filter>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="TestData\MNIST\t10k-labels.idx1-ubyte">
-      <Filter>TestData\MNIST</Filter>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="TestData\MNIST\train-images.idx3-ubyte">
-      <Filter>TestData\MNIST</Filter>
-    </CopyFileToFolders>
-    <CopyFileToFolders Include="TestData\MNIST\train-labels.idx1-ubyte">
-      <Filter>TestData\MNIST</Filter>
-    </CopyFileToFolders>
+    <None Include="TestData\MNIST\t10k-images.idx3-ubyte" />
+    <None Include="TestData\MNIST\t10k-labels.idx1-ubyte" />
+    <None Include="TestData\MNIST\train-images.idx3-ubyte" />
+    <None Include="TestData\MNIST\train-labels.idx1-ubyte" />
   </ItemGroup>
 </Project>
