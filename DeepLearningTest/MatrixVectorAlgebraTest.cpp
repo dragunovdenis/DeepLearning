@@ -398,5 +398,54 @@ namespace DeepLearningTest
 			Assert::IsTrue((result1 - result2).max_abs() < 10 * std::numeric_limits<Real>::epsilon(),
 				L"Vector addition is non-distributive with respect to matrix multiplication from the right.");
 		}
+
+		TEST_METHOD(VectorColByVectorRowMultiplicationTest)
+		{
+			//Arrange
+			const auto row_dim = 10;
+			const auto col_dim = 23;
+			const auto vec_col = DenseVector(row_dim, -1, 1);
+			const auto vec_row = DenseVector(col_dim, -1, 1);
+			Assert::IsTrue(vec_col.max_abs() > 0 && vec_row.max_abs() > 0,
+				L"The input vectors are supposed to be non-zero!");
+
+			//Act
+			const auto result = vector_col_times_vector_row(vec_col, vec_row);
+
+			//Assert
+			Assert::IsTrue(result.col_dim() == col_dim && result.row_dim() == row_dim, L"Unexpected dimensions of the resulting matrix.");
+
+			for (std::size_t row_id = 0; row_id < row_dim; row_id++)
+			{
+				for (std::size_t col_id = 0; col_id < col_dim; col_id++)
+				{
+					const auto diff = std::abs(result(row_id, col_id) - vec_col(row_id) * vec_row(col_id));
+					Assert::IsTrue(diff <= 0, L"Too big deviation from expected value");
+				}
+			}
+		}
+
+		TEST_METHOD(HadamardVectorProductTest)
+		{
+			//Arrange
+			const auto dim = 10;
+			const auto vector1 = DenseVector(dim, -1, 1);
+			const auto vector2 = DenseVector(dim, -1, 1);
+			Assert::IsTrue(vector1.max_abs() > 0 && vector2.max_abs() > 0,
+				L"The input vectors are supposed to be non-zero!");
+
+			//Act
+			const auto result1 = vector1.hadamard_prod(vector2);
+			const auto result2 = vector2.hadamard_prod(vector1);
+
+			//Assert
+			Assert::IsTrue(result1 == result2, L"The Hadamard product should be commutative.");
+
+			for (std::size_t item_id = 0; item_id < dim; item_id++)
+			{
+				const auto diff = std::abs(result1(item_id) - vector1(item_id) * vector2(item_id));
+				Assert::IsTrue(diff <= 0, L"Too big deviation from the expected value.");
+			}
+		}
 	};
 }

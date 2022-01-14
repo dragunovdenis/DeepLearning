@@ -47,6 +47,16 @@ namespace DeepLearning
 		MSGPACK_DEFINE(_row_dim, _col_dim, _data);
 
 		/// <summary>
+		/// Column dimension getter
+		/// </summary>
+		std::size_t col_dim() const;
+
+		/// <summary>
+		/// Row dimension getter
+		/// </summary>
+		std::size_t row_dim() const;
+
+		/// <summary>
 		/// Default constructor, constructs an empty matrix (i.e. a matrix having "zero" dimensions)
 		/// </summary>
 		DenseMatrix() = default;
@@ -143,6 +153,11 @@ namespace DeepLearning
 		/// "Maximal absolute value" norm ("infinity" norm)
 		/// </summary>
 		Real max_abs() const;
+
+		/// <summary>
+		/// Assigns the given value to all the elements of the matrix
+		/// </summary>
+		void fill(const Real& val);
 	};
 
 	/// <summary>
@@ -164,4 +179,9 @@ namespace DeepLearning
 	/// Scalar by matrix multiplication operator
 	/// </summary>
 	DenseMatrix operator *(const Real& scalar, const DenseMatrix& mat);
+
+	/// <summary>
+	/// Returns result of multiplication of the given vector-column by the given vector-row
+	/// </summary>
+	DenseMatrix vector_col_times_vector_row(const DenseVector& vec_col, const DenseVector& vec_row);
 }

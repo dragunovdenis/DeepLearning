@@ -12,13 +12,14 @@ namespace DeepLearning
 	/// <summary>
 	/// An iterator allowing to traverse columns of the matrix
 	/// </summary>
+	template <typename T>
 	struct ColumnIterator
 	{
 		using iterator_category = std::input_iterator_tag;
 		using difference_type   = std::ptrdiff_t;
-		using value_type        = Real;
-		using pointer           = const Real*;
-		using reference         = const Real&;
+		using value_type		= T;
+		using pointer			= T*;
+		using reference			= T&;
 
 		/// <summary>
 		/// Constructor
@@ -131,8 +132,8 @@ namespace DeepLearning
 
 		for (std::size_t col_id = 0; col_id < matr._col_dim; col_id++)
 		{
-			const auto col_begin = ColumnIterator(&(matr._data[col_id]), matr._col_dim);
-			const auto col_end = ++ColumnIterator(&(matr._data[last_row_offset + col_id]), matr._col_dim);
+			const auto col_begin = ColumnIterator(&*(matr.begin() + col_id), matr._col_dim);
+			const auto col_end = ++ColumnIterator(&*(matr.begin() + last_row_offset + col_id), matr._col_dim);
 			result(col_id) = std::inner_product(col_begin, col_end, vec.begin(), Real(0));
 		}
 
@@ -181,7 +182,7 @@ namespace DeepLearning
 
 	DenseMatrix& DenseMatrix::operator +=(const DenseMatrix& mat)
 	{
-		if (mat.size() != size())
+		if (_row_dim != mat._row_dim || _col_dim != mat._col_dim)
 			throw std::exception("Operands must be of the same dimension");
 
 		std::transform(begin(), end(), mat.begin(), begin(), [](const auto& x, const auto& y) { return x + y; });
@@ -190,7 +191,7 @@ namespace DeepLearning
 
 	DenseMatrix& DenseMatrix::operator -=(const DenseMatrix& mat)
 	{
-		if (mat.size() != size())
+		if (_row_dim != mat._row_dim || _col_dim != mat._col_dim)
 			throw std::exception("Operands must be of the same dimension");
 
 		std::transform(begin(), end(), mat.begin(), begin(), [](const auto& x, const auto& y) { return x - y; });
@@ -240,4 +241,37 @@ namespace DeepLearning
 	{
 		return std::abs(*std::max_element(begin(), end(), [](const auto& x, const auto& y) { return std::abs(x) < std::abs(y); }));
 	}
+
+	void DenseMatrix::fill(const Real& val)
+	{
+		std::fill(begin(), end(), val);
+	}
+
+	std::size_t DenseMatrix::col_dim() const
+	{
+		return _col_dim;
+	}
+
+	std::size_t DenseMatrix::row_dim() const
+	{
+		return _row_dim;
+	}
+
+	DenseMatrix vector_col_times_vector_row(const DenseVector& vec_col, const DenseVector& vec_row)
+	{
+		DenseMatrix result(vec_col.dim(), vec_row.dim());
+
+		const auto col_dim = result.col_dim();
+		const auto last_row_offset = col_dim * (result.row_dim() - 1);
+
+		for (std::size_t col_id = 0; col_id < vec_row.dim(); col_id++)
+		{
+			const auto col_begin = ColumnIterator(&*(result.begin() + col_id), col_dim);
+			const auto factor = vec_row(col_id);
+			std::transform(vec_col.begin(), vec_col.end(), col_begin, [factor](const auto& x) {return factor * x; });
+		}
+
+		return result;
+	}
+
 }

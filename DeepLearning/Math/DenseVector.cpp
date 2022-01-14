@@ -138,4 +138,16 @@ namespace DeepLearning
 		return std::abs(*std::max_element(begin(), end(), [](const auto& x, const auto& y) { return std::abs(x) < std::abs(y); }));
 	}
 
+	void DenseVector::fill(const Real& val)
+	{
+		std::fill(begin(), end(), val);
+	}
+
+	DenseVector DenseVector::hadamard_prod(const DenseVector& vec) const
+	{
+		DenseVector result(dim());
+		std::transform(begin(), end(), vec.begin(), result.begin(), [](const auto& x, const auto& y) { return x * y; });
+		return result;
+	}
+
 }

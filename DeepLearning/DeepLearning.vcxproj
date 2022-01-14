@@ -163,6 +163,8 @@
     <ClInclude Include="Math\Dual.h" />
     <ClInclude Include="MnistDataUtils.h" />
     <ClInclude Include="MsgPackUtils.h" />
+    <ClInclude Include="NeuralNet\AuxLearaningData.h" />
+    <ClInclude Include="NeuralNet\NeuralLayer.h" />
     <ClInclude Include="ThirdParty\BitmapUtils.h" />
     <ClInclude Include="Utilities.h" />
   </ItemGroup>
@@ -172,6 +174,8 @@
     <ClCompile Include="Math\DenseMatrix.cpp" />
     <ClCompile Include="Math\DenseVector.cpp" />
     <ClCompile Include="MnistDataUtils.cpp" />
+    <ClCompile Include="NeuralNet\AuxLearningData.cpp" />
+    <ClCompile Include="NeuralNet\NeuralLayer.cpp" />
     <ClCompile Include="ThirdParty\BitmapUtils.cpp" />
   </ItemGroup>
   <ItemGroup>

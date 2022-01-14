@@ -111,6 +111,16 @@ namespace DeepLearning
 		/// "Maximal absolute value" norm ("infinity" norm)
 		/// </summary>
 		Real max_abs() const;
+
+		/// <summary>
+		/// Assigns the given value to all the elements of the vector
+		/// </summary>
+		void fill(const Real & val);
+
+		/// <summary>
+		/// Returns Hadamard (element-wise) product of the current vector with the input
+		/// </summary>
+		DenseVector hadamard_prod(const DenseVector & vec) const;
 	};
 
 	/// <summary>
@@ -132,5 +142,4 @@ namespace DeepLearning
 	/// Scalar-vector multiplication operator
 	/// </summary>
 	DenseVector operator *(const Real& scalar, const DenseVector& vec);
-
 }

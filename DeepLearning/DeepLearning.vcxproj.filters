@@ -19,6 +19,12 @@
     <Filter Include="Source Files\Math">
       <UniqueIdentifier>{edb7ef2c-b7e5-435a-9b8c-f828b7e74159}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\NeuralNet">
+      <UniqueIdentifier>{39d512d7-fe0c-47b3-8d50-fe176fad9ac7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\NeuralNet">
+      <UniqueIdentifier>{455ac75e-b2f8-4ac3-a527-4038251b2ea7}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Header Files\ThirdParty">
       <UniqueIdentifier>{fc7ef70a-727f-442c-9d42-eb237b8ab668}</UniqueIdentifier>
     </Filter>
@@ -48,6 +54,9 @@
     <ClInclude Include="Math\ActivationFunction.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
+    <ClInclude Include="NeuralNet\NeuralLayer.h">
+      <Filter>Header Files\NeuralNet</Filter>
+    </ClInclude>
     <ClInclude Include="MnistDataUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -56,6 +65,9 @@
     </ClInclude>
     <ClInclude Include="ThirdParty\BitmapUtils.h">
       <Filter>Header Files\ThirdParty</Filter>
+    </ClInclude>
+    <ClInclude Include="NeuralNet\AuxLearaningData.h">
+      <Filter>Header Files\NeuralNet</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -68,6 +80,9 @@
     <ClCompile Include="Math\ActivationFunction.cpp">
       <Filter>Source Files\Math</Filter>
     </ClCompile>
+    <ClCompile Include="NeuralNet\NeuralLayer.cpp">
+      <Filter>Source Files\NeuralNet</Filter>
+    </ClCompile>
     <ClCompile Include="Image8Bit.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -76,6 +91,9 @@
     </ClCompile>
     <ClCompile Include="ThirdParty\BitmapUtils.cpp">
       <Filter>Source Files\ThirdParty</Filter>
+    </ClCompile>
+    <ClCompile Include="NeuralNet\AuxLearningData.cpp">
+      <Filter>Source Files\NeuralNet</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
