@@ -62,13 +62,13 @@ namespace DeepLearningTest
 			Assert::AreEqual(vector.dim(), result.dim(), L"Unexpected dimension of the result vector");
 			Assert::AreEqual(vector.dim(), result_deriv.dim(), L"Unexpected dimension of the result derivative vector");
 
+			//Here we use the activation function to generate the reference values, because "()" operator of the activation function
+			//is tested separately, and we rely on that
+			const auto result_reference = ActivationFuncion(ActivationFunctionId::SIGMOID)(vector);
+			Assert::IsTrue((result_reference - result).max_abs() <= 0, L"Unexpectedly high deviation from the function reference value.");
+
 			for (std::size_t item_id = 0; item_id < vector.dim(); item_id++)
 			{
-				const auto func_diff = std::abs(result(item_id) - sigmoid(vector(item_id)));
-				Logger::WriteMessage((std::string("Function difference = ") + std::to_string(func_diff) + "\n").c_str());
-				Assert::IsTrue(func_diff < std::numeric_limits<Real>::epsilon(),
-					L"Unexpectedly high deviation from the function reference value.");
-
 				const auto deriv_diff = std::abs(result_deriv(item_id) - sigmoid_deriv(vector(item_id)));
 				Logger::WriteMessage((std::string("Derivative difference = ") + std::to_string(deriv_diff) + "\n").c_str());
 				Assert::IsTrue(deriv_diff < std::numeric_limits<Real>::epsilon(),

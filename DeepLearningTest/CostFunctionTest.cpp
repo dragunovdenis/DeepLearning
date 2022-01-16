@@ -59,13 +59,13 @@ namespace DeepLearningTest
 			const auto result = cost_func(input, reference);
 
 			//Assert
-			Assert::IsTrue(result.dim() == input.dim(), L"Input and result vectors should be of the same dimension.");
-
+			auto result_expected = Real(0);
 			for (std::size_t item_id = 0; item_id < dim; item_id++)
-			{
-				const auto diff = std::abs(result(item_id) - reference_func(input(item_id), reference(item_id)));
-				Assert::IsTrue(diff <= 0, L"Unexpectedly high deviation from the reference value");
-			}
+				result_expected += reference_func(input(item_id), reference(item_id));
+
+			const auto diff = std::abs(result - result_expected);
+			Assert::IsTrue(diff <= 0, L"Unexpectedly high deviation from the reference value");
+
 		}
 
 		/// <summary>
@@ -85,13 +85,17 @@ namespace DeepLearningTest
 			const auto [result_func, result_deriv] = cost_func.func_and_deriv(input, reference);
 
 			//Assert
-			Assert::IsTrue(result_func.dim() == input.dim() && result_deriv.dim() == input.dim(), L"Input and result vectors should be of the same dimension.");
+			Assert::IsTrue(result_deriv.dim() == input.dim(), L"Input and result vectors should be of the same dimension.");
+
+			//We use the cost function here to generate the reference because "()" operator of the
+			//cost function is tested separately and here we rely on that
+			auto result_func_expected = cost_func(input, reference);
+
+			const auto diff_func = std::abs(result_func - result_func_expected);
+			Assert::IsTrue(diff_func <= 0, L"Unexpectedly high deviation from the reference function value.");
 
 			for (std::size_t item_id = 0; item_id < dim; item_id++)
 			{
-				const auto diff_func = std::abs(result_func(item_id) - reference_func(input(item_id), reference(item_id)));
-				Assert::IsTrue(diff_func <= 0, L"Unexpectedly high deviation from the reference function value.");
-
 				const auto diff_deriv = std::abs(result_deriv(item_id) - reference_deriv(input(item_id), reference(item_id)));
 				Assert::IsTrue(diff_deriv <= 10 * std::numeric_limits<Real>::epsilon(), L"Unexpectedly high deviation from the reference derivative value");
 			}

@@ -33,14 +33,14 @@ namespace DeepLearning
 		/// </summary>
 		/// <param name="output">Actual output of the neural network</param>
 		/// <param name="reference">Expected output of the neural network</param>
-		virtual DenseVector operator ()(const DenseVector& output, const DenseVector& reference) const;
+		virtual Real operator ()(const DenseVector& output, const DenseVector& reference) const;
 
 		/// <summary>
 		/// Calculates function and derivative with respect to the given output vector
 		/// </summary>
 		/// <param name="output">Actual output of the neural network</param>
 		/// <param name="reference">Expected output of the neural network</param>
-		virtual std::tuple<DenseVector, DenseVector> func_and_deriv(const DenseVector& output, const DenseVector& reference) const;
+		virtual std::tuple<Real, DenseVector> func_and_deriv(const DenseVector& output, const DenseVector& reference) const;
 
 
 

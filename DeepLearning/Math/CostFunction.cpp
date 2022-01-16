@@ -1,6 +1,7 @@
 #include "CostFunction.h"
 #include "DenseVector.h"
 #include <exception>
+#include <numeric>
 
 namespace DeepLearning
 {
@@ -28,32 +29,31 @@ namespace DeepLearning
 		}
 	}
 
-	DenseVector CostFunction::operator ()(const DenseVector& output, const DenseVector& reference) const
+	Real CostFunction::operator ()(const DenseVector& output, const DenseVector& reference) const
 	{
 		if (output.dim() != reference.dim())
 			throw std::exception("Incompatible input");
 
-		DenseVector result(output.dim());
-		std::transform(output.begin(), output.end(), reference.begin(), result.begin(),
+		const auto result = std::transform_reduce(output.begin(), output.end(), reference.begin(), Real(0), std::plus<Real>(),
 			[&](const auto& x, const auto& ref) { return  _func->operator()(x, ref); });
 		return result;
 	}
 
-	std::tuple<DenseVector, DenseVector> CostFunction::func_and_deriv(const DenseVector& output, const DenseVector& reference) const
+	std::tuple<Real, DenseVector> CostFunction::func_and_deriv(const DenseVector& output, const DenseVector& reference) const
 	{
 		if (output.dim() != reference.dim())
 			throw std::exception("Incompatible input");
 
-		DenseVector func(output.dim());
 		DenseVector deriv(output.dim());
+		auto func_val = Real(0);
 
 		for (std::size_t item_id = 0; item_id < output.dim(); item_id++)
 		{
 			const auto [value, derivative] = _func->calc_funcion_and_derivative(output(item_id), reference(item_id));
-			func(item_id) = value;
+			func_val += value;
 			deriv(item_id) = derivative;
 		}
 
-		return std::make_tuple(func, deriv);
+		return std::make_tuple(func_val, deriv);
 	}
 }
