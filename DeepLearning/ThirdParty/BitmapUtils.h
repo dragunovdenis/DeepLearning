@@ -1,5 +1,6 @@
 #pragma once
 #include <stdio.h>
+#include <cstddef>
 
 namespace ThirdParty
 {
@@ -13,6 +14,6 @@ namespace ThirdParty
 	/// <param name="height">Height of the image</param>
 	/// <param name="width">Width of the image</param>
 	/// <param name="imageFileName">Name of file to save</param>
-	void SaveBitmapImage(const unsigned char* image, const int height, const int width, const char* imageFileName);
+	void SaveBitmapImage(const unsigned char* image, const std::size_t height, const std::size_t width, const char* imageFileName);
 }
 

@@ -189,6 +189,17 @@ namespace DeepLearning
 			return arg;
 		}
 
+		/// <summary>
+		/// Natural logarithm function
+		/// </summary>
+		friend dual<R, Dim> log(dual<R, Dim> arg)
+		{
+			arg.scale_dual_part(R(1)/(arg.x));
+			arg.x = log(arg.x);
+
+			return arg;
+		}
+
 		/// <sumary>
 		/// Exponent function
 		/// </summary>

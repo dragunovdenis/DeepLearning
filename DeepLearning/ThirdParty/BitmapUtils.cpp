@@ -9,9 +9,9 @@ namespace ThirdParty
     const int FILE_HEADER_SIZE = 14;
     const int INFO_HEADER_SIZE = 40;
 
-    unsigned char* createBitmapFileHeader(const int height, const int stride)
+    unsigned char* createBitmapFileHeader(const std::size_t height, const std::size_t stride)
     {
-        const int fileSize = FILE_HEADER_SIZE + INFO_HEADER_SIZE + (stride * height);
+        const auto fileSize = FILE_HEADER_SIZE + INFO_HEADER_SIZE + (stride * height);
 
         static unsigned char fileHeader[] = {
             0,0,     /// signature
@@ -31,7 +31,7 @@ namespace ThirdParty
         return fileHeader;
     }
 
-    unsigned char* createBitmapInfoHeader(const int height, const int width)
+    unsigned char* createBitmapInfoHeader(const std::size_t height, const std::size_t width)
     {
         static unsigned char infoHeader[] = {
             0,0,0,0, /// header size
@@ -62,14 +62,14 @@ namespace ThirdParty
         return infoHeader;
     }
 
-    void SaveBitmapImage(const unsigned char* image, const int height, const int width, const char* imageFileName)
+    void SaveBitmapImage(const unsigned char* image, const std::size_t height, const std::size_t width, const char* imageFileName)
     {
-        const int widthInBytes = width * BYTES_PER_PIXEL;
+        const auto widthInBytes = width * BYTES_PER_PIXEL;
 
         const unsigned char padding[3] = { 0, 0, 0 };
         const int paddingSize = (4 - (widthInBytes) % 4) % 4;
 
-        const int stride = (widthInBytes)+paddingSize;
+        const auto stride = (widthInBytes)+paddingSize;
 
         FILE* imageFile;
         const errno_t returnValue = fopen_s(&imageFile, imageFileName, "wb");

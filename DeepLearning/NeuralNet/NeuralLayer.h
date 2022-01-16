@@ -1,6 +1,7 @@
 #pragma once
 #include "../Math/DenseVector.h"
 #include "../Math/DenseMatrix.h"
+#include "../Math/ActivationFunction.h"
 #include <msgpack.hpp>
 
 namespace DeepLearning
@@ -13,15 +14,6 @@ namespace DeepLearning
 	/// </summary>
 	class NeuralLayer
 	{
-	public:
-		/// <summary>
-		/// Identifiers of different activation functions
-		/// </summary>
-		enum ActivationFunctionId {
-			UNKNOWN = 0,
-			SIGMOID = 1,
-		};
-
 	private:
 		/// <summary>
 		/// Dimensionality of the layer's input
@@ -61,7 +53,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Activation function id
 		/// </summary>
-		ActivationFunctionId _func_id = UNKNOWN;
+		ActivationFunctionId _func_id = ActivationFunctionId::UNKNOWN;
 		
 		/// <summary>
 		/// The activation function
@@ -80,9 +72,14 @@ namespace DeepLearning
 		NeuralLayer() = default;
 
 		/// <summary>
-		/// Constructor
+		/// Constructor with random weights and biases
 		/// </summary>
 		NeuralLayer(const std::size_t in_dim, const std::size_t out_dim, ActivationFunctionId func_id = ActivationFunctionId::SIGMOID);
+
+		/// <summary>
+		/// Constructor from the given weights and biases
+		/// </summary>
+		NeuralLayer(const DenseMatrix& weights, const DenseVector& biases, ActivationFunctionId func_id = ActivationFunctionId::SIGMOID);
 
 		/// <summary>
 		/// Makes a forward pass for the given input and outputs the result for the entire network

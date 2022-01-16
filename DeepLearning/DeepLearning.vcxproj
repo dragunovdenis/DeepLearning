@@ -158,9 +158,11 @@
     <ClInclude Include="defs.h" />
     <ClInclude Include="Image8Bit.h" />
     <ClInclude Include="Math\ActivationFunction.h" />
+    <ClInclude Include="Math\CostFunction.h" />
     <ClInclude Include="Math\DenseMatrix.h" />
     <ClInclude Include="Math\DenseVector.h" />
     <ClInclude Include="Math\Dual.h" />
+    <ClInclude Include="Math\DiffFunc.h" />
     <ClInclude Include="MnistDataUtils.h" />
     <ClInclude Include="MsgPackUtils.h" />
     <ClInclude Include="NeuralNet\AuxLearaningData.h" />
@@ -171,8 +173,10 @@
   <ItemGroup>
     <ClCompile Include="Image8Bit.cpp" />
     <ClCompile Include="Math\ActivationFunction.cpp" />
+    <ClCompile Include="Math\CostFunction.cpp" />
     <ClCompile Include="Math\DenseMatrix.cpp" />
     <ClCompile Include="Math\DenseVector.cpp" />
+    <ClCompile Include="Math\DiffFunc.cpp" />
     <ClCompile Include="MnistDataUtils.cpp" />
     <ClCompile Include="NeuralNet\AuxLearningData.cpp" />
     <ClCompile Include="NeuralNet\NeuralLayer.cpp" />

@@ -7,7 +7,7 @@ using namespace DeepLearning;
 
 namespace DeepLearningTest
 {
-	TEST_CLASS(ActivationfunctionTest)
+	TEST_CLASS(ActivationFunctionTest)
 	{
 	public:
 		/// <summary>
@@ -35,7 +35,7 @@ namespace DeepLearningTest
 			const auto vector = DenseVector(dim, -1, 1);
 
 			//Act
-			const auto result = Sigmoid()(vector);
+			const auto result = ActivationFuncion(ActivationFunctionId::SIGMOID)(vector);
 
 			//Assert
 			Assert::AreEqual(vector.dim(), result.dim(), L"Unexpected dimension of the result vector");
@@ -56,7 +56,7 @@ namespace DeepLearningTest
 			const auto vector = DenseVector(dim, -1, 1);
 
 			//Act
-			const auto [result, result_deriv] = Sigmoid().func_and_deriv(vector);
+			const auto [result, result_deriv] = ActivationFuncion(ActivationFunctionId::SIGMOID).func_and_deriv(vector);
 
 			//Assert
 			Assert::AreEqual(vector.dim(), result.dim(), L"Unexpected dimension of the result vector");

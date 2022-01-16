@@ -13,6 +13,16 @@ namespace DeepLearning
 		_func_id = func_id;
 	}
 
+	NeuralLayer::NeuralLayer(const DenseMatrix& weights, const DenseVector& biases, ActivationFunctionId func_id)
+	{
+		if (weights.row_dim() != biases.dim())
+			throw std::exception("incompatible dimensions of the weight and biases containers");
+
+		_biases = DenseVector(_out_dim, -1, 1);
+		_weights = DenseMatrix(_out_dim, _in_dim, -1, 1);
+		_func_id = func_id;
+	}
+
 	DenseVector NeuralLayer::act(const DenseVector& input)
 	{
 		if (!_function)
@@ -54,15 +64,7 @@ namespace DeepLearning
 
 	std::unique_ptr<ActivationFuncion> NeuralLayer::instantiate_activation_function() const
 	{
-		switch (_func_id)
-		{
-			case ActivationFunctionId::UNKNOWN: throw std::exception("Invalid activation function ID.");
-				break;
-			case ActivationFunctionId::SIGMOID: return std::make_unique<Sigmoid>();
-				break;
-			default: throw std::exception("Unexpected activation function ID.");
-				break;
-		}
+		return std::make_unique<ActivationFuncion>(_func_id);
 	}
 
 }
