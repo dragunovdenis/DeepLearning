@@ -76,7 +76,7 @@ namespace DeepLearning
 	DenseMatrix::DenseMatrix(const std::size_t row_dim, const std::size_t col_dim,
 		const Real range_begin, const Real range_end) : DenseMatrix(row_dim, col_dim)
 	{
-		fill_with_random_values(begin(), end(), range_begin, range_end);
+		Utils::fill_with_random_values(begin(), end(), range_begin, range_end);
 	}
 
 	std::size_t DenseMatrix::row_col_to_data_id(const std::size_t row_id, const std::size_t col_id) const
@@ -175,7 +175,7 @@ namespace DeepLearning
 	static inline DenseMatrix random(const std::size_t row_dim, const std::size_t col_dim, const Real range_begin, const Real range_end)
 	{
 		auto result = DenseMatrix(row_dim, col_dim);
-		fill_with_random_values(result.begin(), result.end(), range_begin, range_end);
+		Utils::fill_with_random_values(result.begin(), result.end(), range_begin, range_end);
 
 		return result;
 	}

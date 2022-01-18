@@ -30,6 +30,9 @@
     <ClCompile Include="MnistDataUtilsTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="NeuralLayerTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="CostFunctionTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

@@ -59,24 +59,8 @@ namespace DeepLearning
 	/// <summary>
 	/// Auxiliary data to perform learning on a level of single neuron layer
 	/// </summary>
-	class AuxLearningData
+	struct AuxLearningData
 	{
-		CummulativeLayerGradient _cumulative_gradient;
-
-	public:
-
-		/// <summary>
-		/// Constructor
-		/// </summary>
-		/// <param name="in_dim">Input dimension of the corresponding neuron layer</param>
-		/// <param name="out_dim">Output dimension of the corresponding neuron layer</param>
-		AuxLearningData(const std::size_t in_dim, const std::size_t out_dim):_cumulative_gradient(in_dim, out_dim){}
-
-		/// <summary>
-		/// Adds given gradient contributions to the cumulative gradient
-		/// </summary>
-		void add_gradient_contribution(const DenseMatrix& weight_grad, const DenseVector& bias_grad);
-
 		/// <summary>
 		/// Container to store input of a neuron layer
 		/// </summary>
@@ -86,16 +70,6 @@ namespace DeepLearning
 		/// Container to store derivatives of the activation functions
 		/// </summary>
 		DenseVector Derivatives{};
-
-		/// <summary>
-		/// Calculates and returns the "average" gradient with respect to layer weights and biases
-		/// </summary>
-		std::tuple<DenseMatrix, DenseVector> calc_average_grarient() const;
-
-		/// <summary>
-		/// Resets the cumulative structure
-		/// </summary>
-		void reset();
 	};
 
 }

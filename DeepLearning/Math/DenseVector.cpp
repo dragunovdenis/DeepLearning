@@ -15,7 +15,7 @@ namespace DeepLearning
 	DenseVector::DenseVector(const std::size_t dim, const Real range_begin, const Real range_end)
 		: DenseVector(dim)
 	{
-		fill_with_random_values(begin(), end(), range_begin, range_end);
+		Utils::fill_with_random_values(begin(), end(), range_begin, range_end);
 	}
 
 	bool DenseVector::check_bounds(const ::std::size_t id) const
@@ -81,7 +81,7 @@ namespace DeepLearning
 	static DenseVector random(const std::size_t dim, const Real range_begin, const Real range_end)
 	{
 		auto result = DenseVector(dim);
-		fill_with_random_values(result.begin(), result.end(), range_begin, range_end);
+		Utils::fill_with_random_values(result.begin(), result.end(), range_begin, range_end);
 
 		return result;
 	}

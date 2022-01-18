@@ -31,19 +31,4 @@ namespace DeepLearning
 		_sum_grad_weights.fill(Real(0));
 		_accumulated_items_count = 0;
 	}
-
-	void AuxLearningData::add_gradient_contribution(const DenseMatrix& weight_grad, const DenseVector& bias_grad)
-	{
-		_cumulative_gradient.Add(weight_grad, bias_grad);
-	}
-
-	std::tuple<DenseMatrix, DenseVector> AuxLearningData::calc_average_grarient() const
-	{
-		return _cumulative_gradient.calc_average_grarient();
-	}
-
-	void AuxLearningData::reset()
-	{
-		_cumulative_gradient.reset();
-	}
 }
