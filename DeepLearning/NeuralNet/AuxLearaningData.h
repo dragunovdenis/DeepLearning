@@ -48,7 +48,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Calculates and returns the "average" gradient with respect to layer weights and biases
 		/// </summary>
-		std::tuple<DenseMatrix, DenseVector> calc_average_grarient() const;
+		std::tuple<DenseMatrix, DenseVector> calc_average_grarient(const Real scale_factor = Real(1)) const;
 
 		/// <summary>
 		/// Resets the cumulative structure

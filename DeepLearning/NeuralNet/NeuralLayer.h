@@ -7,25 +7,12 @@
 
 namespace DeepLearning
 {
-	class AuxLearningData;
-	class ActivationFuncion;
-
 	/// <summary>
 	/// Representation of a single neural layer
 	/// </summary>
 	class NeuralLayer
 	{
 	private:
-		/// <summary>
-		/// Dimensionality of the layer's input
-		/// </summary>
-		std::size_t in_dim() const;
-
-		/// <summary>
-		/// Dimensionality of the layer's output
-		/// </summary>
-		std::size_t out_dim() const;
-
 		/// <summary>
 		/// Vector of bias coefficients of size _out_dim;
 		/// </summary>
@@ -47,6 +34,16 @@ namespace DeepLearning
 		ActivationFunctionId _func_id = ActivationFunctionId::UNKNOWN;
 
 	public:
+		/// <summary>
+		/// Dimensionality of the layer's input
+		/// </summary>
+		std::size_t in_dim() const;
+
+		/// <summary>
+		/// Dimensionality of the layer's output
+		/// </summary>
+		std::size_t out_dim() const;
+
 		/// <summary>
 		/// Default constructor
 		/// </summary>
@@ -89,6 +86,11 @@ namespace DeepLearning
 		/// Enabling learning for the multiple times at a row acts as a "reset learning" action
 		/// </summary>
 		void enable_learning_mode(const bool learning);
+
+		/// <summary>
+		/// Adds given increments to the weights and biases respectively
+		/// </summary>
+		void update(const std::tuple<DenseMatrix, DenseVector>& weights_and_biases_increment);
 	};
 
 }

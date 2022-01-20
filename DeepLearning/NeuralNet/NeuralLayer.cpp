@@ -81,4 +81,10 @@ namespace DeepLearning
 		else
 			_learning_data.reset();
 	}
+
+	void NeuralLayer::update(const std::tuple<DenseMatrix, DenseVector>& weights_and_biases_increment)
+	{
+		_weights += std::get<0>(weights_and_biases_increment);
+		_biases += std::get<1>(weights_and_biases_increment);
+	}
 }

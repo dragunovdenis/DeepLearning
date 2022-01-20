@@ -16,12 +16,12 @@ namespace DeepLearning
 		_accumulated_items_count++;
 	}
 
-	std::tuple<DenseMatrix, DenseVector> CummulativeLayerGradient::calc_average_grarient() const
+	std::tuple<DenseMatrix, DenseVector> CummulativeLayerGradient::calc_average_grarient(const Real scale_factor) const
 	{
 		if (_accumulated_items_count == 0)
 			throw std::exception("No items have been added.");
 
-		const auto factor = Real(1) / _accumulated_items_count;
+		const auto factor = scale_factor / _accumulated_items_count;
 		return std::make_tuple(_sum_grad_weights * factor, _sum_grad_biases * factor);
 	}
 

@@ -75,6 +75,9 @@
     <ClInclude Include="Math\CostFunction.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
+    <ClInclude Include="NeuralNet\Net.h">
+      <Filter>Header Files\NeuralNet</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\DenseMatrix.cpp">
@@ -106,6 +109,9 @@
     </ClCompile>
     <ClCompile Include="Math\CostFunction.cpp">
       <Filter>Source Files\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="NeuralNet\Net.cpp">
+      <Filter>Source Files\NeuralNet</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
