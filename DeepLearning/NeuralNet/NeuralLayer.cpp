@@ -4,10 +4,11 @@
 
 namespace DeepLearning
 {
-	NeuralLayer::NeuralLayer(const std::size_t in_dim, const std::size_t out_dim, ActivationFunctionId func_id, const bool enable_learnign)
+	NeuralLayer::NeuralLayer(const std::size_t in_dim, const std::size_t out_dim, ActivationFunctionId func_id, const bool enable_learnign,
+		const Real rand_low, const Real rand_high)
 	{
-		_biases  = DenseVector(out_dim, -1, 1);
-		_weights = DenseMatrix(out_dim, in_dim, -1, 1);
+		_biases  = DenseVector(out_dim, rand_low, rand_high);
+		_weights = DenseMatrix(out_dim, in_dim, rand_low, rand_high);
 		_func_id = func_id;
 
 		enable_learning_mode(enable_learnign);

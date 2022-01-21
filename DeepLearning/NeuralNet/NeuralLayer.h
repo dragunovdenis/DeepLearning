@@ -53,7 +53,7 @@ namespace DeepLearning
 		/// Constructor with random weights and biases
 		/// </summary>
 		NeuralLayer(const std::size_t in_dim, const std::size_t out_dim, ActivationFunctionId func_id = ActivationFunctionId::SIGMOID,
-			const bool enable_learnign = false);
+			const bool enable_learnign = false, const Real rand_low = Real(-1), const Real rand_high = Real(1));
 
 		/// <summary>
 		/// Constructor from the given weights and biases

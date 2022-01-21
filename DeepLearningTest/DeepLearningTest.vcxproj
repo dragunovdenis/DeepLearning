@@ -168,6 +168,7 @@
     <ClCompile Include="CostFunctionTest.cpp" />
     <ClCompile Include="MatrixVectorAlgebraTest.cpp" />
     <ClCompile Include="MnistDataUtilsTest.cpp" />
+    <ClCompile Include="NetTest.cpp" />
     <ClCompile Include="NeuralLayerTest.cpp" />
   </ItemGroup>
   <ItemGroup>

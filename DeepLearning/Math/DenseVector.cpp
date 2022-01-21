@@ -4,12 +4,19 @@
 #include <stdlib.h>
 #include <time.h>
 #include <algorithm>
+#include <numeric>
 
 namespace DeepLearning
 {
 	DenseVector::DenseVector(const std::size_t dim)
 	{
 		_data.resize(dim, Real(0));
+	}
+
+	template <class T>
+	DenseVector::DenseVector(const std::vector<T>& source)
+	{
+		_data = std::vector<Real>(source.begin(), source.end());
 	}
 
 	DenseVector::DenseVector(const std::size_t dim, const Real range_begin, const Real range_end)
@@ -138,6 +145,17 @@ namespace DeepLearning
 		return std::abs(*std::max_element(begin(), end(), [](const auto& x, const auto& y) { return std::abs(x) < std::abs(y); }));
 	}
 
+	std::size_t DenseVector::max_element_id(const std::function<bool(Real, Real)>& comparer) const
+	{
+		const auto id = std::max_element(begin(), end(), comparer) - begin();
+		return static_cast<std::size_t>(id);
+	}
+
+	Real DenseVector::sum(const std::function<Real(Real)>& transform_operator) const
+	{
+		return std::accumulate(begin(), end(), Real(0), [&transform_operator](const auto& sum, const auto& x) { return sum + transform_operator(x); });
+	}
+
 	void DenseVector::fill(const Real& val)
 	{
 		std::fill(begin(), end(), val);
@@ -150,4 +168,6 @@ namespace DeepLearning
 		return result;
 	}
 
+	template DenseVector::DenseVector(const std::vector<unsigned char>& souurce);
+	template DenseVector::DenseVector(const std::vector<Real>& souurce);
 }

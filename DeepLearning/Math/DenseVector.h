@@ -3,6 +3,7 @@
 #include <vector>
 #include "../defs.h"
 #include <msgpack.hpp>
+#include <functional>
 
 namespace DeepLearning
 {
@@ -31,6 +32,12 @@ namespace DeepLearning
 		/// Constructs dense vector of the given dimension
 		/// </summary>
 		DenseVector(const std::size_t dim);
+
+		/// <summary>
+		/// Constructor from given source vector
+		/// </summary>
+		template <class T>
+		DenseVector(const std::vector<T>& source);
 
 		/// <summary>
 		/// Constructs dense vector of the given dimension filled with
@@ -111,6 +118,17 @@ namespace DeepLearning
 		/// "Maximal absolute value" norm ("infinity" norm)
 		/// </summary>
 		Real max_abs() const;
+
+		/// <summary>
+		/// Returns index of the "maximal element" defined by the given comparer
+		/// or "1" if the vector contains zero elements
+		/// </summary>
+		std::size_t max_element_id(const std::function<bool(Real, Real)>&comparer = [](const auto& a, const auto& b) {return a < b; }) const;
+
+		/// <summary>
+		/// Returns sum of all the elements of the vector transformed with the given operator
+		/// </summary>
+		Real sum(const std::function<Real(Real)>& transform_operator = [](const auto& x) {return x; }) const;
 
 		/// <summary>
 		/// Assigns the given value to all the elements of the vector

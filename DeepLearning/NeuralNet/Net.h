@@ -1,11 +1,11 @@
 #pragma once
 #include <vector>
 #include "../defs.h"
-#include "../Math/DenseVector.h"
 #include "NeuralLayer.h"
 #include "AuxLearaningData.h"
 #include "../Math/ActivationFunction.h"
 #include "../Math/CostFunction.h"
+#include "../Math/DenseVector.h"
 
 namespace DeepLearning
 {
@@ -42,14 +42,12 @@ namespace DeepLearning
 		/// </summary>
 		/// <param name="training_items">Collection of training items</param>
 		/// <param name="reference_items">Collection of references (labels). One for each training item.</param>
-		/// <param name="batch_size">Number of items in a single batch (stochastic gradient descent method)</param>
+		/// <param name="batch_size">Number of elements in a batch (stochastic gradient descent method)</param>
 		/// <param name="epochs_count">Number of epochs to perform</param>
 		/// <param name="cost_func_id">Identifier of the cost function to use in the training process</param>
 		/// <param name="learning_rate">The learning rate (expected to be positive)</param>
 		/// <returns>A collection of values of the given cost function evaluated on the given training data after each epoch</returns>
-		template <class T>
-		std::vector<Real> learn(const std::vector<T>& training_items, const std::vector<DenseVector>& reference_items,
+		std::vector<Real> learn(const std::vector<DenseVector>& training_items, const std::vector<DenseVector>& reference_items,
 			const std::size_t batch_size, const std::size_t epochs_count, const Real learning_rate, const CostFunctionId& cost_func_id);
-
 	};
 }

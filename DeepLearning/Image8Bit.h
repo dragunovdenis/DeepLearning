@@ -5,6 +5,8 @@
 
 namespace DeepLearning
 {
+	class DenseVector;
+
 	/// <summary>
 	/// Representation of a single channel 8-bit image
 	/// </summary>
@@ -33,5 +35,10 @@ namespace DeepLearning
 		/// Saves the image to disk in "bmp" format
 		/// </summary>
 		void SaveToBmp(const std::filesystem::path& path) const;
+
+		/// <summary>
+		/// Implicit conversion operator
+		/// </summary>
+		operator DenseVector() const;
 	};
 }

@@ -1,5 +1,6 @@
 #include "Image8Bit.h"
 #include "ThirdParty/BitmapUtils.h"
+#include "Math/DenseVector.h"
 using namespace ThirdParty;
 
 namespace DeepLearning
@@ -42,4 +43,8 @@ namespace DeepLearning
 		SaveBitmapImage((unsigned char*)image.data(), _height, _width, path.u8string().c_str());
 	}
 
+	Image8Bit::operator DenseVector() const
+	{
+		return DenseVector(_pixels);
+	}
 }

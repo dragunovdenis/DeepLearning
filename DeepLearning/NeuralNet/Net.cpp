@@ -16,7 +16,7 @@ namespace DeepLearning
 			const auto in_dim = layer_dimensions[id - 1];
 			const auto out_dim = layer_dimensions[id];
 
-			_layers.emplace_back(in_dim, out_dim, activ_func_id, false /*enable learning*/);
+			_layers.emplace_back(in_dim, out_dim, activ_func_id, false /*enable learning*/, Real(-1), Real(1));
 		}
 	}
 
@@ -26,7 +26,7 @@ namespace DeepLearning
 		for (std::size_t layer_id = 0; layer_id < _layers.size(); layer_id++)
 			result = _layers[layer_id].act(result);
 
-		return input;
+		return result;
 	}
 
 	void Net::SetLearningMode(const bool do_learning)
@@ -76,12 +76,14 @@ namespace DeepLearning
 			collectors[collector_id].reset();
 	}
 
-	template <class T>
-	std::vector<Real> Net::learn(const std::vector<T>& training_items, const std::vector<DenseVector>& reference_items,
+	std::vector<Real> Net::learn(const std::vector<DenseVector>& training_items, const std::vector<DenseVector>& reference_items,
 		const std::size_t batch_size, const std::size_t epochs_count, const Real learning_rate, const CostFunctionId& cost_func_id)
 	{
 		if (training_items.size() != reference_items.size())
 			throw std::exception("Incompatible collection of training and reference items.");
+
+		if (training_items.size() == 0)
+			return std::vector<Real>();
 
 		//Activate learning mode of each layer
 		SetLearningMode(true);
@@ -101,9 +103,13 @@ namespace DeepLearning
 				//Reset gradient collectors before each batch
 				reset_gradient_collectors(gradient_collectors);
 
-				for (std::size_t elem_id = batch_start_elem_id;
-					elem_id < training_items.size() && ((elem_id - batch_start_elem_id) < batch_size);
-					elem_id++)
+				//If there remains less than 1.5 * batch_size elements in the collection we take all of them as a single batch
+				//This is aimed to ensure that an actual batch will always contain not less than half of the batch size elements
+				//(provided, of course, that the training collection itself contains not less than half of the batch size elements)
+				const auto batch_end_elem_id = (training_items.size() - batch_start_elem_id) < 1.5 * batch_size ? 
+					training_items.size() : batch_start_elem_id + batch_size;
+
+				for (std::size_t elem_id = batch_start_elem_id;	elem_id < batch_end_elem_id; elem_id++)
 				{
 					const auto input_item_id = id_permutation[elem_id];
 					const auto& input = training_items[input_item_id];
@@ -116,13 +122,16 @@ namespace DeepLearning
 						gradient = _layers[layer_id].backpropagate(gradient, gradient_collectors[layer_id]);
 				}
 
+				batch_start_elem_id = batch_end_elem_id;
+
 				for (std::size_t layer_id = 0; layer_id < _layers.size(); layer_id++)
 					_layers[layer_id].update(gradient_collectors[layer_id].calc_average_grarient(-learning_rate));
 			}
 
 			Real cost = Real(0);
 			//Evaluate cost function on the training set
-			for (std::size_t item_id = 0; item_id < training_items.size(); item_id++)
+			#pragma omp parallel for reduction(+:cost)
+			for (auto item_id = 0; item_id < training_items.size(); item_id++)
 				cost += cost_function(act(training_items[item_id]), reference_items[item_id]);
 
 			cost /= training_items.size();
@@ -133,6 +142,4 @@ namespace DeepLearning
 		SetLearningMode(false);
 		return result;
 	}
-
-
 }
