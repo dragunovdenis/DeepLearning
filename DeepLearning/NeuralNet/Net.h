@@ -6,6 +6,7 @@
 #include "../Math/ActivationFunction.h"
 #include "../Math/CostFunction.h"
 #include "../Math/DenseVector.h"
+#include <msgpack.hpp>
 
 namespace DeepLearning
 {
@@ -22,6 +23,13 @@ namespace DeepLearning
 		void SetLearningMode(const bool do_learning);
 
 	public:
+
+		MSGPACK_DEFINE(_layers);
+
+		/// <summary>
+		/// Default constructor (for the message-pack functionality to work)
+		/// </summary>
+		Net() = default;
 
 		/// <summary>
 		/// Constructor

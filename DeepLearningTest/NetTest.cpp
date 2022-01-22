@@ -2,6 +2,7 @@
 #include <NeuralNet/Net.h>
 #include <MnistDataUtils.h>
 #include <filesystem>
+#include <MsgPackUtils.h>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;
@@ -39,7 +40,7 @@ namespace DeepLearningTest
 		}
 
 	public:
-		TEST_METHOD(LearningTest)
+		TEST_METHOD(TrainingTest)
 		{
 			//Arrange
 			const auto training_images_count = 60000;
@@ -89,6 +90,33 @@ namespace DeepLearningTest
 			Logger::WriteMessage((std::string("Correct answers : ") + std::to_string(correct_unswers) + "\n").c_str());
 
 			Assert::IsTrue(correct_unswers >= (long_test ? 9700 : 9500), L"Too low accuracy on the test set.");
+		}
+
+		TEST_METHOD(NetSerializationTest)
+		{
+			//Arrange
+			const auto in_dimension = 784;
+			const auto out_dimension = 10;
+			const auto net = Net({ in_dimension, 100, out_dimension });
+
+			//Act
+			const auto msg = MsgPack::pack(net);
+			const auto net_unpacked = MsgPack::unpack<Net>(msg);
+
+			//Assert
+			const auto tests_samples_count = 100;
+			for (int test_sample_id = 0; test_sample_id < tests_samples_count; test_sample_id++)
+			{
+				//take a random input sample
+				const auto input_sample = DenseVector(in_dimension, -1, 1);
+				const auto ref_output = net.act(input_sample);
+				//Sanity check
+				Assert::IsTrue(ref_output.max_abs() > 0 && input_sample.max_abs() > 0, L"Both input sample and reference output are expected to be non-zero.");
+
+				const auto trial_output = net_unpacked.act(input_sample);
+
+				Assert::IsTrue(ref_output == trial_output, L"Nets are not the same.");
+			}
 		}
 	};
 }

@@ -7,7 +7,7 @@ namespace DeepLearning
 	/// <summary>
 	/// Identifiers of different activation functions
 	/// </summary>
-	enum class ActivationFunctionId: unsigned int {
+	enum ActivationFunctionId: unsigned int {
 		UNKNOWN = 0,
 		SIGMOID = 1,
 	};

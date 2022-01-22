@@ -47,7 +47,7 @@ namespace DeepLearning
 
 	DenseVector NeuralLayer::act(const DenseVector& input) const
 	{
-		const auto function = ActivationFuncion(_func_id);
+		const auto function = ActivationFuncion(ActivationFunctionId(_func_id));
 
 		const auto z = _weights * input + _biases;
 

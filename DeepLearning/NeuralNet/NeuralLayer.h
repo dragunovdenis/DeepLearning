@@ -29,11 +29,14 @@ namespace DeepLearning
 		mutable std::unique_ptr<AuxLearningData> _learning_data{};
 
 		/// <summary>
-		/// Activation function id
+		/// Activation function id, use "unsigned int" instead of the enum in order to make msgpack happy
 		/// </summary>
-		ActivationFunctionId _func_id = ActivationFunctionId::UNKNOWN;
+		unsigned int _func_id = ActivationFunctionId::UNKNOWN;
 
 	public:
+
+		MSGPACK_DEFINE(_biases, _weights, _func_id);
+
 		/// <summary>
 		/// Dimensionality of the layer's input
 		/// </summary>
