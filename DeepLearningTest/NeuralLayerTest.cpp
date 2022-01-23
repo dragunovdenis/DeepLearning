@@ -41,7 +41,7 @@ namespace DeepLearningTest
 			const auto reference = DenseVector(output_dim, -1, 1);;
 			const auto cost_func = CostFunction(cost_function_id);
 			const auto nl = NeuralLayer(weights_0, biases_0, activation_func_id, true);
-			auto cumulative_gradient = CummulativeLayerGradient(input_dim, output_dim);
+			auto cumulative_gradient = CummulativeGradient(input_dim, output_dim);
 
 			//Act
 			const auto [value, cost_gradient] = cost_func.func_and_deriv(nl.act(input_0), reference);
@@ -84,7 +84,7 @@ namespace DeepLearningTest
 			const auto reference = DenseVector(output_dim, -1, 1);;
 			const auto cost_func = CostFunction(cost_function_id);
 			const auto nl = NeuralLayer(weights_0, biases_0, activation_func_id, true);
-			auto cumulative_gradient = CummulativeLayerGradient(input_dim, output_dim);
+			auto cumulative_gradient = CummulativeGradient(input_dim, output_dim);
 
 			//Act
 			const auto [value, cost_gradient] = cost_func.func_and_deriv(nl.act(input_0), reference);

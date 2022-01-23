@@ -19,7 +19,7 @@
 #include "../Math/DenseVector.h"
 #include "../Math/DenseMatrix.h"
 #include "../Math/ActivationFunction.h"
-#include "AuxLearaningData.h"
+#include "CummulativeGradient.h"
 #include <msgpack.hpp>
 
 namespace DeepLearning
@@ -29,6 +29,23 @@ namespace DeepLearning
 	/// </summary>
 	class NeuralLayer
 	{
+	public:
+		/// <summary>
+		/// Auxiliary data to perform learning on a level of single neuron layer
+		/// </summary>
+		struct AuxLearningData
+		{
+			/// <summary>
+			/// Container to store input of a neuron layer
+			/// </summary>
+			DenseVector Input{};
+
+			/// <summary>
+			/// Container to store derivatives of the activation functions
+			/// </summary>
+			DenseVector Derivatives{};
+		};
+
 	private:
 		/// <summary>
 		/// Vector of bias coefficients of size _out_dim;
@@ -99,7 +116,7 @@ namespace DeepLearning
 		/// <param name="deltas">Derivatives of the cost function with respect to the output of the current neural layer</param>
 		/// <returns>Derivatives of the cost function with respect to the output of the previous neural layer
 		/// (or input of the current neural layer, which is the same)</returns>
-		DenseVector backpropagate(const DenseVector& deltas, CummulativeLayerGradient& cumulative_gradient) const;
+		DenseVector backpropagate(const DenseVector& deltas, CummulativeGradient& cumulative_gradient) const;
 
 		/// <summary>
 		/// Enables/disables learning mode for the neuron layer

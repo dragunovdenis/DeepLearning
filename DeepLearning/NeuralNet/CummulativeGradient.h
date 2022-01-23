@@ -29,7 +29,7 @@ namespace DeepLearning
 	/// the gradients of the "partial" cost function. The structure below allows to accumulate impact of each 
 	/// particular input and then calculate the average on demand
 	/// </summary>
-	class CummulativeLayerGradient
+	class CummulativeGradient
 	{
 		/// <summary>
 		/// Sum of the derivatives with respect to layer weight
@@ -53,7 +53,7 @@ namespace DeepLearning
 		/// </summary>
 		/// <param name="in_dim">Input dimension of the corresponding neuron layer</param>
 		/// <param name="out_dim">Output dimension of the corresponding neuron layer</param>
-		CummulativeLayerGradient(const std::size_t in_dim, const std::size_t out_dim);
+		CummulativeGradient(const std::size_t in_dim, const std::size_t out_dim);
 
 		/// <summary>
 		/// Adds given gradients to the corresponding "sum" structures
@@ -72,21 +72,4 @@ namespace DeepLearning
 		/// </summary>
 		void reset();
 	};
-
-	/// <summary>
-	/// Auxiliary data to perform learning on a level of single neuron layer
-	/// </summary>
-	struct AuxLearningData
-	{
-		/// <summary>
-		/// Container to store input of a neuron layer
-		/// </summary>
-		DenseVector Input{};
-
-		/// <summary>
-		/// Container to store derivatives of the activation functions
-		/// </summary>
-		DenseVector Derivatives{};
-	};
-
 }

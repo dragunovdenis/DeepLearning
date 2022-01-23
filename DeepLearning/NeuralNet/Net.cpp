@@ -71,9 +71,9 @@ namespace DeepLearning
 	/// <summary>
 	/// Returns collection of the gradient collectors that is "compatible" with the given collection of neural layers
 	/// </summary>
-	std::vector<CummulativeLayerGradient> init_gradient_collectors(const std::vector<NeuralLayer>& layers)
+	std::vector<CummulativeGradient> init_gradient_collectors(const std::vector<NeuralLayer>& layers)
 	{
-		std::vector<CummulativeLayerGradient> result;
+		std::vector<CummulativeGradient> result;
 
 		for (std::size_t layer_id = 0; layer_id < layers.size(); layer_id++)
 		{
@@ -87,7 +87,7 @@ namespace DeepLearning
 	/// <summary>
 	/// Resets all the collectors in the given collection
 	/// </summary>
-	void reset_gradient_collectors(std::vector<CummulativeLayerGradient>& collectors)
+	void reset_gradient_collectors(std::vector<CummulativeGradient>& collectors)
 	{
 		for (std::size_t collector_id = 0; collector_id < collectors.size(); collector_id++)
 			collectors[collector_id].reset();

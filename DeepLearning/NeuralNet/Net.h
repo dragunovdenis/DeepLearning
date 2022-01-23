@@ -19,7 +19,7 @@
 #include <vector>
 #include "../defs.h"
 #include "NeuralLayer.h"
-#include "AuxLearaningData.h"
+#include "CummulativeGradient.h"
 #include "../Math/ActivationFunction.h"
 #include "../Math/CostFunction.h"
 #include "../Math/DenseVector.h"

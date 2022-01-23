@@ -169,7 +169,7 @@
     <ClInclude Include="Math\DiffFunc.h" />
     <ClInclude Include="MnistDataUtils.h" />
     <ClInclude Include="MsgPackUtils.h" />
-    <ClInclude Include="NeuralNet\AuxLearaningData.h" />
+    <ClInclude Include="NeuralNet\CummulativeGradient.h" />
     <ClInclude Include="NeuralNet\Net.h" />
     <ClInclude Include="NeuralNet\NeuralLayer.h" />
     <ClInclude Include="ThirdParty\BitmapUtils.h" />
@@ -183,7 +183,7 @@
     <ClCompile Include="Math\DenseVector.cpp" />
     <ClCompile Include="Math\DiffFunc.cpp" />
     <ClCompile Include="MnistDataUtils.cpp" />
-    <ClCompile Include="NeuralNet\AuxLearningData.cpp" />
+    <ClCompile Include="NeuralNet\CummulativeGradient.cpp" />
     <ClCompile Include="NeuralNet\Net.cpp" />
     <ClCompile Include="NeuralNet\NeuralLayer.cpp" />
     <ClCompile Include="ThirdParty\BitmapUtils.cpp" />

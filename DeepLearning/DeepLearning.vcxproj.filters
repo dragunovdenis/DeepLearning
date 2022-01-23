@@ -66,7 +66,7 @@
     <ClInclude Include="ThirdParty\BitmapUtils.h">
       <Filter>Header Files\ThirdParty</Filter>
     </ClInclude>
-    <ClInclude Include="NeuralNet\AuxLearaningData.h">
+    <ClInclude Include="NeuralNet\CummulativeGradient.h">
       <Filter>Header Files\NeuralNet</Filter>
     </ClInclude>
     <ClInclude Include="Math\DiffFunc.h">
@@ -101,7 +101,7 @@
     <ClCompile Include="ThirdParty\BitmapUtils.cpp">
       <Filter>Source Files\ThirdParty</Filter>
     </ClCompile>
-    <ClCompile Include="NeuralNet\AuxLearningData.cpp">
+    <ClCompile Include="NeuralNet\CummulativeGradient.cpp">
       <Filter>Source Files\NeuralNet</Filter>
     </ClCompile>
     <ClCompile Include="Math\DiffFunc.cpp">

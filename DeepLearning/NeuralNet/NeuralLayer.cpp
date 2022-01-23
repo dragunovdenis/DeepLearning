@@ -79,7 +79,7 @@ namespace DeepLearning
 		return function(z);
 	}
 
-	DenseVector NeuralLayer::backpropagate(const DenseVector& deltas, CummulativeLayerGradient& cumulative_gradient) const
+	DenseVector NeuralLayer::backpropagate(const DenseVector& deltas, CummulativeGradient& cumulative_gradient) const
 	{
 		if (!_learning_data)
 			throw std::exception("Learning data is invalid");
