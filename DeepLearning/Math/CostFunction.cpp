@@ -38,6 +38,12 @@ namespace DeepLearning
 		case CostFunctionId::CROSS_ENTROPY:_func = DiffFunc::create(
 			[](const auto& x, const auto& ref)
 			{
+				if (ref == Real(0))
+					return -(Real(1) - ref) * log(Real(1) - x);
+
+				if (ref == Real(1))
+					return -ref * log(x);
+
 				return -(ref*log(x) + (Real(1) - ref)*log(Real(1) - x));
 			});
 			break;

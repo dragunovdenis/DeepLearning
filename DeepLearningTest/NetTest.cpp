@@ -31,11 +31,11 @@ namespace DeepLearningTest
 		/// <summary>
 		/// Scales intensities of the given images so that they are all between 0 and 1.0;
 		/// </summary>
-		std::vector<DenseVector> scale_images(const std::vector<Image8Bit>& images)
+		static std::vector<DenseVector> scale_images(const std::vector<Image8Bit>& images, const Real& one_value = Real(1))
 		{
 			std::vector<DenseVector> result(images.begin(), images.end());
 
-			const auto scale_factor = Real(1) / 256;
+			const auto scale_factor = one_value / 256;
 
 			for (auto& result_item : result)
 				result_item *= scale_factor;
@@ -46,18 +46,24 @@ namespace DeepLearningTest
 		/// <summary>
 		/// Return collections of data and labels (in this exact order)
 		/// </summary>
-		std::tuple<std::vector<DenseVector>, std::vector<DenseVector>> load_labeled_data(
-			const std::filesystem::path& data_path, const std::filesystem::path& labels_path, const std::size_t expected_items_count)
+		static std::tuple<std::vector<DenseVector>, std::vector<DenseVector>> load_labeled_data(
+			const std::filesystem::path& data_path, const std::filesystem::path& labels_path, const std::size_t expected_items_count, const Real& one_value = Real(1))
 		{
 			const auto images = MnistDataUtils::read_images(data_path, expected_items_count);
-			const auto images_scaled = scale_images(images);
+			const auto images_scaled = scale_images(images, one_value);
 			const auto labels = MnistDataUtils::read_labels(labels_path, expected_items_count);
 
 			return std::make_tuple(images_scaled, labels);
 		}
 
-	public:
-		TEST_METHOD(TrainingTest)
+		/// <summary>
+		/// A general method to run MNIST-based training and evaluation
+		/// </summary>
+		/// <param name="cost_func_id">Id of the cost function we want to use for training.</param>
+		/// <param name="learning_rate">The learning rate we want to use.</param>
+		/// <param name="expected_min_percentage_test_set">Expected minimal percentage of correct answers of the test data after the training.
+		/// Can take values from (0, 1).</param>
+		static void RunMnistBasedTrainingTest(const CostFunctionId cost_func_id, const Real& learning_rate, const Real& expected_min_percentage_test_set, const bool run_long_test)
 		{
 			//Arrange
 			const auto training_images_count = 60000;
@@ -72,25 +78,24 @@ namespace DeepLearningTest
 				"TestData\\MNIST\\t10k-labels.idx1-ubyte",
 				test_images_count);
 
-			auto net = Net({784, 100, 10});
+			auto net = Net({ 784, (run_long_test ? 100ull : 30ull), 10 });
 			const auto batch_size = 10;
-			const auto long_test = false;
-			const auto epochs_count = long_test ? 30 : 3;
-			const auto learning_rate = Real(3.0);
+			const auto long_test = true;
+			const auto epochs_count = run_long_test ? 30 : 5;
 
 			//Act
-			const auto costs_per_epoch =  net.learn(training_data, training_labels, batch_size, epochs_count, learning_rate, CostFunctionId::SQUARED_ERROR);
+			const auto costs_per_epoch = net.learn(training_data, training_labels, batch_size, epochs_count, learning_rate, cost_func_id);
 
+			//Report some information about how fast we converge and what was the value of the cost function after each training epoch
 			for (std::size_t cost_id = 0; cost_id < costs_per_epoch.size(); cost_id++)
-			{
-				Logger::WriteMessage((std::string("Epoch : ") + std::to_string(cost_id) + std::string("; Cost : ") + std::to_string(costs_per_epoch[cost_id]) + "\n").c_str());
-			}
+				Logger::WriteMessage((std::string("Epoch : ") + std::to_string(cost_id) +
+					std::string("; Cost : ") + std::to_string(costs_per_epoch[cost_id]) + "\n").c_str());
 
 			//Assert
 			Assert::IsTrue(costs_per_epoch.size() == epochs_count,
 				L"Number of elements in the output collection should be equal to the number of epochs.");
 
-			int correct_unswers = 0;
+			Real correct_unswers = 0;
 			for (std::size_t test_item_id = 0; test_item_id < test_data.size(); test_item_id++)
 			{
 				const auto& test_item = test_data[test_item_id];
@@ -101,12 +106,25 @@ namespace DeepLearningTest
 				const auto trial_answer = trial_label_normalized.max_element_id();
 
 				if (trial_answer == ref_answer && trial_label_normalized(trial_answer) > Real(0.5))
-					correct_unswers++;
+					correct_unswers += Real(1);
 			}
 
 			Logger::WriteMessage((std::string("Correct answers : ") + std::to_string(correct_unswers) + "\n").c_str());
 
-			Assert::IsTrue(correct_unswers >= (long_test ? 9700 : 9500), L"Too low accuracy on the test set.");
+			Assert::IsTrue(correct_unswers/ test_data.size() >= expected_min_percentage_test_set, L"Too low accuracy on the test set.");
+		}
+
+	public:
+		TEST_METHOD(TrainingWithQuadraticCostTest)
+		{
+			const bool long_test = false;
+			RunMnistBasedTrainingTest(CostFunctionId::SQUARED_ERROR, Real(3.0), long_test ? 0.97 : 0.94, long_test);
+		}
+
+		TEST_METHOD(TrainingWithCrossEntropyCostTest)
+		{
+			const bool long_test = false;
+			RunMnistBasedTrainingTest(CostFunctionId::CROSS_ENTROPY, Real(0.5), long_test ? 0.97 : 0.94, long_test);
 		}
 
 		TEST_METHOD(NetSerializationTest)
