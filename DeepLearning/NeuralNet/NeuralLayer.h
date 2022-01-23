@@ -46,6 +46,22 @@ namespace DeepLearning
 			DenseVector Derivatives{};
 		};
 
+		/// <summary>
+		/// A data structure to hold output of the back-propagation procedure
+		/// </summary>
+		struct LayerGradient
+		{
+			/// <summary>
+			/// Gradient with respect to the biases of the neural layer
+			/// </summary>
+			DenseVector Biases_grad{};
+
+			/// <summary>
+			/// Gradient with respect to the weights of the neural layer
+			/// </summary>
+			DenseMatrix Weights_grad{};
+		};
+
 	private:
 		/// <summary>
 		/// Vector of bias coefficients of size _out_dim;
@@ -56,11 +72,6 @@ namespace DeepLearning
 		/// Matrix of weights of size _out_dim x _in_dim  
 		/// </summary>
 		DenseMatrix _weights{};
-
-		/// <summary>
-		/// Helper data structure to use in the learning process
-		/// </summary>
-		mutable std::unique_ptr<AuxLearningData> _learning_data{};
 
 		/// <summary>
 		/// Activation function id, use "unsigned int" instead of the enum in order to make msgpack happy
@@ -90,13 +101,12 @@ namespace DeepLearning
 		/// Constructor with random weights and biases
 		/// </summary>
 		NeuralLayer(const std::size_t in_dim, const std::size_t out_dim, ActivationFunctionId func_id = ActivationFunctionId::SIGMOID,
-			const bool enable_learnign = false, const Real rand_low = Real(-1), const Real rand_high = Real(1));
+			const Real rand_low = Real(-1), const Real rand_high = Real(1));
 
 		/// <summary>
 		/// Constructor from the given weights and biases
 		/// </summary>
-		NeuralLayer(const DenseMatrix& weights, const DenseVector& biases, ActivationFunctionId func_id = ActivationFunctionId::SIGMOID, 
-			const bool enable_learnign = false);
+		NeuralLayer(const DenseMatrix& weights, const DenseVector& biases, ActivationFunctionId func_id = ActivationFunctionId::SIGMOID);
 
 		/// <summary>
 		/// Copy constructor
@@ -107,8 +117,9 @@ namespace DeepLearning
 		/// Makes a forward pass for the given input and outputs the result for the entire network
 		/// </summary>
 		/// <param name="input">Input signal</param>
+		/// <param name="aux_learning_data_ptr">Pointer to the auxiliary data structure that should be provided during the training (learning) process</param>
 		/// <returns>Output signal</returns>
-		DenseVector act(const DenseVector& input) const;
+		DenseVector act(const DenseVector& input, AuxLearningData* const aux_learning_data_ptr = nullptr) const;
 
 		/// <summary>
 		/// Performs the back-propagation
@@ -116,13 +127,7 @@ namespace DeepLearning
 		/// <param name="deltas">Derivatives of the cost function with respect to the output of the current neural layer</param>
 		/// <returns>Derivatives of the cost function with respect to the output of the previous neural layer
 		/// (or input of the current neural layer, which is the same)</returns>
-		DenseVector backpropagate(const DenseVector& deltas, CummulativeGradient& cumulative_gradient) const;
-
-		/// <summary>
-		/// Enables/disables learning mode for the neuron layer
-		/// Enabling learning for the multiple times at a row acts as a "reset learning" action
-		/// </summary>
-		void enable_learning_mode(const bool learning);
+		std::tuple<DenseVector, LayerGradient> backpropagate(const DenseVector& deltas, const AuxLearningData& aux_learning_data) const;
 
 		/// <summary>
 		/// Adds given increments to the weights and biases respectively

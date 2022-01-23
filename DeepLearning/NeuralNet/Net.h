@@ -19,7 +19,6 @@
 #include <vector>
 #include "../defs.h"
 #include "NeuralLayer.h"
-#include "CummulativeGradient.h"
 #include "../Math/ActivationFunction.h"
 #include "../Math/CostFunction.h"
 #include "../Math/DenseVector.h"
@@ -32,12 +31,10 @@ namespace DeepLearning
 	/// </summary>
 	class Net
 	{
-		std::vector<NeuralLayer> _layers{};
-
 		/// <summary>
-		/// Toggles on/of the learning mode for all the layers of the net
+		/// Layers of neurons
 		/// </summary>
-		void SetLearningMode(const bool do_learning);
+		std::vector<NeuralLayer> _layers{};
 
 	public:
 
@@ -60,7 +57,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Returns output of the neural network calculated for the given input
 		/// </summary>
-		DenseVector act(const DenseVector& input) const;
+		DenseVector act(const DenseVector& input, std::vector<NeuralLayer::AuxLearningData>* const aux_data_ptr = nullptr) const;
 
 		/// <summary>
 		/// A method that performs training of the neural net based on the given input data with references
@@ -71,8 +68,13 @@ namespace DeepLearning
 		/// <param name="epochs_count">Number of epochs to perform</param>
 		/// <param name="cost_func_id">Identifier of the cost function to use in the training process</param>
 		/// <param name="learning_rate">The learning rate (expected to be positive)</param>
-		/// <returns>A collection of values of the given cost function evaluated on the given training data after each epoch</returns>
+		/// <param name="cost_evaluation_step">Integer value that defines how often cost function should be evaluated (for diagnostic purposes)
+		/// "1" would mean that it gets evaluated after each epoch; "2" -- after each second epoch and so on.
+		/// "0" means that evaluation will be skipped completely</param>
+		/// <returns>A collection of values of the given cost function evaluated on the given training data after some number of epochs
+		/// (see parameter "cost_evaluation_step")</returns>
 		std::vector<Real> learn(const std::vector<DenseVector>& training_items, const std::vector<DenseVector>& reference_items,
-			const std::size_t batch_size, const std::size_t epochs_count, const Real learning_rate, const CostFunctionId& cost_func_id);
+			const std::size_t batch_size, const std::size_t epochs_count, const Real learning_rate, const CostFunctionId& cost_func_id,
+			const std::size_t cost_evaluation_step = 1);
 	};
 }

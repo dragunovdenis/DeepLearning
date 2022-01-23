@@ -40,12 +40,12 @@ namespace DeepLearningTest
 			const auto biases_0 = DenseVector(output_dim, -1, 1);
 			const auto reference = DenseVector(output_dim, -1, 1);;
 			const auto cost_func = CostFunction(cost_function_id);
-			const auto nl = NeuralLayer(weights_0, biases_0, activation_func_id, true);
-			auto cumulative_gradient = CummulativeGradient(input_dim, output_dim);
+			const auto nl = NeuralLayer(weights_0, biases_0, activation_func_id);
 
 			//Act
-			const auto [value, cost_gradient] = cost_func.func_and_deriv(nl.act(input_0), reference);
-			const auto result = nl.backpropagate(cost_gradient, cumulative_gradient);
+			auto aux_data = NeuralLayer::AuxLearningData();
+			const auto [value, cost_gradient] = cost_func.func_and_deriv(nl.act(input_0, &aux_data), reference);
+			const auto [input_grad_result, layer_grad_result] = nl.backpropagate(cost_gradient, aux_data);
 
 			//Assert
 			const auto nl_aux = NeuralLayer(weights_0, biases_0, activation_func_id);
@@ -64,7 +64,7 @@ namespace DeepLearningTest
 				const auto deriv_numeric = (result_plus - result_minus) / (2 * delta);
 
 				//Now do the same using the back-propagation approach
-				const auto diff = std::abs(deriv_numeric - result(in_item_id));
+				const auto diff = std::abs(deriv_numeric - input_grad_result(in_item_id));
 				Logger::WriteMessage((std::string("Difference = ") + Utils::to_string(diff) + '\n').c_str());
 				Assert::IsTrue(diff <= 1e-9, L"Unexpectedly high deviation!");
 			}
@@ -83,13 +83,14 @@ namespace DeepLearningTest
 			const auto biases_0 = DenseVector(output_dim, -1, 1);
 			const auto reference = DenseVector(output_dim, -1, 1);;
 			const auto cost_func = CostFunction(cost_function_id);
-			const auto nl = NeuralLayer(weights_0, biases_0, activation_func_id, true);
-			auto cumulative_gradient = CummulativeGradient(input_dim, output_dim);
+			const auto nl = NeuralLayer(weights_0, biases_0, activation_func_id);
 
 			//Act
-			const auto [value, cost_gradient] = cost_func.func_and_deriv(nl.act(input_0), reference);
-			nl.backpropagate(cost_gradient, cumulative_gradient);
-			const auto [wight_grad, bias_grad] = cumulative_gradient.calc_average_grarient();
+			auto aux_data = NeuralLayer::AuxLearningData();
+			const auto [value, cost_gradient] = cost_func.func_and_deriv(nl.act(input_0, &aux_data), reference);
+			const auto [input_grad_result, layer_grad_result] = nl.backpropagate(cost_gradient, aux_data);
+			const auto wight_grad = layer_grad_result.Weights_grad;
+			const auto bias_grad  = layer_grad_result.Biases_grad;
 
 			//Assert
 			const auto nl_aux = NeuralLayer(weights_0, biases_0, activation_func_id);

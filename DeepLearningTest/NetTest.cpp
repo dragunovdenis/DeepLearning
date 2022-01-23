@@ -82,20 +82,18 @@ namespace DeepLearningTest
 			const auto batch_size = 10;
 			const auto long_test = true;
 			const auto epochs_count = run_long_test ? 30 : 5;
+			const auto cost_evaluation_step = 2;
 
 			//Act
-			const auto costs_per_epoch = net.learn(training_data, training_labels, batch_size, epochs_count, learning_rate, cost_func_id);
+			const auto costs_per_epoch = net.learn(training_data, training_labels, batch_size, epochs_count, learning_rate, cost_func_id, cost_evaluation_step);
 
 			//Report some information about how fast we converge and what was the value of the cost function after each training epoch
 			for (std::size_t cost_id = 0; cost_id < costs_per_epoch.size(); cost_id++)
-				Logger::WriteMessage((std::string("Epoch : ") + std::to_string(cost_id) +
+				Logger::WriteMessage((std::string("Epoch : ") + std::to_string(cost_id * cost_evaluation_step) +
 					std::string("; Cost : ") + std::to_string(costs_per_epoch[cost_id]) + "\n").c_str());
 
 			//Assert
-			Assert::IsTrue(costs_per_epoch.size() == epochs_count,
-				L"Number of elements in the output collection should be equal to the number of epochs.");
-
-			Real correct_unswers = 0;
+			int correct_unswers = 0;
 			for (std::size_t test_item_id = 0; test_item_id < test_data.size(); test_item_id++)
 			{
 				const auto& test_item = test_data[test_item_id];
@@ -106,12 +104,12 @@ namespace DeepLearningTest
 				const auto trial_answer = trial_label_normalized.max_element_id();
 
 				if (trial_answer == ref_answer && trial_label_normalized(trial_answer) > Real(0.5))
-					correct_unswers += Real(1);
+					correct_unswers += 1;
 			}
 
 			Logger::WriteMessage((std::string("Correct answers : ") + std::to_string(correct_unswers) + "\n").c_str());
 
-			Assert::IsTrue(correct_unswers/ test_data.size() >= expected_min_percentage_test_set, L"Too low accuracy on the test set.");
+			Assert::IsTrue(correct_unswers * (Real(1)) / test_data.size() >= expected_min_percentage_test_set, L"Too low accuracy on the test set.");
 		}
 
 	public:

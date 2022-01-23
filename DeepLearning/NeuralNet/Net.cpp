@@ -20,6 +20,8 @@
 #include <random>
 #include <algorithm>
 #include <exception>
+#include "CummulativeGradient.h"
+#include <thread>
 
 namespace DeepLearning
 {
@@ -33,23 +35,20 @@ namespace DeepLearning
 			const auto in_dim = layer_dimensions[id - 1];
 			const auto out_dim = layer_dimensions[id];
 
-			_layers.emplace_back(in_dim, out_dim, activ_func_id, false /*enable learning*/, Real(-1), Real(1));
+			_layers.emplace_back(in_dim, out_dim, activ_func_id, Real(-1), Real(1));
 		}
 	}
 
-	DenseVector Net::act(const DenseVector& input) const
+	DenseVector Net::act(const DenseVector& input, std::vector<NeuralLayer::AuxLearningData>* const aux_data_ptr) const
 	{
+		if (aux_data_ptr != nullptr && aux_data_ptr->size() != _layers.size())
+			throw std::exception("Invalid auxiliary data.");
+
 		auto result = input;
 		for (std::size_t layer_id = 0; layer_id < _layers.size(); layer_id++)
-			result = _layers[layer_id].act(result);
+			result = _layers[layer_id].act(result, aux_data_ptr != nullptr ? &(*aux_data_ptr)[layer_id] : nullptr);
 
 		return result;
-	}
-
-	void Net::SetLearningMode(const bool do_learning)
-	{
-		for (std::size_t layer_id = 0; layer_id < _layers.size(); layer_id++)
-			_layers[layer_id].enable_learning_mode(do_learning);
 	}
 
 	/// <summary>
@@ -94,7 +93,8 @@ namespace DeepLearning
 	}
 
 	std::vector<Real> Net::learn(const std::vector<DenseVector>& training_items, const std::vector<DenseVector>& reference_items,
-		const std::size_t batch_size, const std::size_t epochs_count, const Real learning_rate, const CostFunctionId& cost_func_id)
+		const std::size_t batch_size, const std::size_t epochs_count, const Real learning_rate, const CostFunctionId& cost_func_id,
+		const std::size_t cost_evaluation_step)
 	{
 		if (training_items.size() != reference_items.size())
 			throw std::exception("Incompatible collection of training and reference items.");
@@ -102,14 +102,17 @@ namespace DeepLearning
 		if (training_items.size() == 0)
 			return std::vector<Real>();
 
-		//Activate learning mode of each layer
-		SetLearningMode(true);
-
 		const auto cost_function = CostFunction(cost_func_id);
 
 		auto gradient_collectors = init_gradient_collectors(_layers);
 
-		std::vector<Real> result(epochs_count);
+		const auto physical_cores_count = std::thread::hardware_concurrency() / 2;
+		//For some reason, this exact number of threads (when used in the parallel "for" loop below)
+		//gives the best performance on a PC with i7-10750H (the only PC where this code was
+		//tested so far). Whoever is reading this comment, feel free to try other numbers of the threads.
+		const auto threads_to_use = std::max<int>(1, physical_cores_count - 1);
+
+		std::vector<Real> result;
 		for (std::size_t epoch_id = 0; epoch_id < epochs_count; epoch_id++)
 		{
 			const auto id_permutation = get_index_permutation(training_items.size());
@@ -123,20 +126,27 @@ namespace DeepLearning
 				//If there remains less than 1.5 * batch_size elements in the collection we take all of them as a single batch
 				//This is aimed to ensure that an actual batch will always contain not less than half of the batch size elements
 				//(provided, of course, that the training collection itself contains not less than half of the batch size elements)
-				const auto batch_end_elem_id = (training_items.size() - batch_start_elem_id) < 1.5 * batch_size ? 
+				const long long batch_end_elem_id = (training_items.size() - batch_start_elem_id) < 1.5 * batch_size ? 
 					training_items.size() : batch_start_elem_id + batch_size;
 
-				for (std::size_t elem_id = batch_start_elem_id;	elem_id < batch_end_elem_id; elem_id++)
+				#pragma omp parallel for num_threads(threads_to_use)
+				for (long long elem_id = batch_start_elem_id; elem_id < batch_end_elem_id; elem_id++)
 				{
 					const auto input_item_id = id_permutation[elem_id];
 					const auto& input = training_items[input_item_id];
 					const auto& reference = reference_items[input_item_id];
-					const auto output = act(input);
+					auto aux_data_ptr = std::vector<NeuralLayer::AuxLearningData>(_layers.size());
+					const auto output = act(input, &aux_data_ptr);
 					auto [cost, gradient] = cost_function.func_and_deriv(output, reference);
 
+					auto back_prop_out = std::vector<NeuralLayer::LayerGradient>(_layers.size());
 					//Back-propagate through all the layers
 					for (long long layer_id = _layers.size() - 1; layer_id >= 0; layer_id--)
-						gradient = _layers[layer_id].backpropagate(gradient, gradient_collectors[layer_id]);
+						std::tie(gradient, back_prop_out[layer_id]) = _layers[layer_id].backpropagate(gradient, aux_data_ptr[layer_id]);
+
+					#pragma omp critical
+					for (std::size_t layer_id = 0; layer_id < _layers.size(); layer_id++)
+						gradient_collectors[layer_id].Add(back_prop_out[layer_id].Weights_grad, back_prop_out[layer_id].Biases_grad);
 				}
 
 				batch_start_elem_id = batch_end_elem_id;
@@ -144,6 +154,9 @@ namespace DeepLearning
 				for (std::size_t layer_id = 0; layer_id < _layers.size(); layer_id++)
 					_layers[layer_id].update(gradient_collectors[layer_id].calc_average_grarient(-learning_rate));
 			}
+
+			if (epoch_id % cost_evaluation_step != 0)
+				continue;
 
 			Real cost = Real(0);
 			//Evaluate cost function on the training set
@@ -153,10 +166,9 @@ namespace DeepLearning
 
 			cost /= training_items.size();
 
-			result[epoch_id] = cost;
+			result.push_back(cost);
 		}
 
-		SetLearningMode(false);
 		return result;
 	}
 }

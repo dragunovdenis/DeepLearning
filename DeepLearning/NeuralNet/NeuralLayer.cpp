@@ -21,17 +21,15 @@
 
 namespace DeepLearning
 {
-	NeuralLayer::NeuralLayer(const std::size_t in_dim, const std::size_t out_dim, ActivationFunctionId func_id, const bool enable_learnign,
+	NeuralLayer::NeuralLayer(const std::size_t in_dim, const std::size_t out_dim, ActivationFunctionId func_id,
 		const Real rand_low, const Real rand_high)
 	{
 		_biases  = DenseVector(out_dim, rand_low, rand_high);
 		_weights = DenseMatrix(out_dim, in_dim, rand_low, rand_high);
 		_func_id = func_id;
-
-		enable_learning_mode(enable_learnign);
 	}
 
-	NeuralLayer::NeuralLayer(const DenseMatrix& weights, const DenseVector& biases, ActivationFunctionId func_id, const bool enable_learnign)
+	NeuralLayer::NeuralLayer(const DenseMatrix& weights, const DenseVector& biases, ActivationFunctionId func_id)
 	{
 		if (weights.row_dim() != biases.dim())
 			throw std::exception("incompatible dimensions of the weight and biases containers");
@@ -39,8 +37,6 @@ namespace DeepLearning
 		_biases = biases;
 		_weights = weights;
 		_func_id = func_id;
-
-		enable_learning_mode(enable_learnign);
 	}
 
 	NeuralLayer::NeuralLayer(const NeuralLayer& anotherLayer)
@@ -48,8 +44,6 @@ namespace DeepLearning
 		_biases = anotherLayer._biases;
 		_weights = anotherLayer._weights;
 		_func_id = anotherLayer._func_id;
-
-		enable_learning_mode(_learning_data != nullptr);
 	}
 
 	std::size_t NeuralLayer::in_dim() const
@@ -62,42 +56,29 @@ namespace DeepLearning
 		return _weights.row_dim();
 	}
 
-	DenseVector NeuralLayer::act(const DenseVector& input) const
+	DenseVector NeuralLayer::act(const DenseVector& input, AuxLearningData* const aux_learning_data_ptr) const
 	{
 		const auto function = ActivationFuncion(ActivationFunctionId(_func_id));
 
 		const auto z = _weights * input + _biases;
 
-		if (_learning_data)
+		if (aux_learning_data_ptr)
 		{
-			_learning_data->Input = input;
+			aux_learning_data_ptr->Input = input;
 			const auto [result, deriv] = function.func_and_deriv(z);
-			_learning_data->Derivatives = deriv;
+			aux_learning_data_ptr->Derivatives = deriv;
 			return result;
 		}
 
 		return function(z);
 	}
 
-	DenseVector NeuralLayer::backpropagate(const DenseVector& deltas, CummulativeGradient& cumulative_gradient) const
+	std::tuple<DenseVector, NeuralLayer::LayerGradient> NeuralLayer::backpropagate(const DenseVector& deltas, const AuxLearningData& aux_learning_data) const
 	{
-		if (!_learning_data)
-			throw std::exception("Learning data is invalid");
+		const auto biases_ghrad = deltas.hadamard_prod(aux_learning_data.Derivatives);
+		const auto weights_grad = vector_col_times_vector_row(biases_ghrad, aux_learning_data.Input);
 
-		const auto biases_ghrad = deltas.hadamard_prod(_learning_data->Derivatives);
-		const auto weights_grad = vector_col_times_vector_row(biases_ghrad, _learning_data->Input);
-
-		cumulative_gradient.Add(weights_grad, biases_ghrad);
-
-		return biases_ghrad * _weights;
-	}
-
-	void NeuralLayer::enable_learning_mode(const bool learning)
-	{
-		if (learning)
-			_learning_data = std::make_unique<AuxLearningData>();
-		else
-			_learning_data.reset();
+		return std::make_tuple<DenseVector, NeuralLayer::LayerGradient>(biases_ghrad * _weights, { biases_ghrad, weights_grad });
 	}
 
 	void NeuralLayer::update(const std::tuple<DenseMatrix, DenseVector>& weights_and_biases_increment)
