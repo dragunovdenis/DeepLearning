@@ -104,7 +104,7 @@ namespace DeepLearningTest
 				const auto trial_answer = trial_label_normalized.max_element_id();
 
 				if (trial_answer == ref_answer && trial_label_normalized(trial_answer) > Real(0.5))
-					correct_unswers += 1;
+					correct_unswers++;
 			}
 
 			Logger::WriteMessage((std::string("Correct answers : ") + std::to_string(correct_unswers) + "\n").c_str());

@@ -78,6 +78,9 @@
     <ClInclude Include="NeuralNet\Net.h">
       <Filter>Header Files\NeuralNet</Filter>
     </ClInclude>
+    <ClInclude Include="IndexIterator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\DenseMatrix.cpp">
