@@ -57,7 +57,7 @@ namespace DeepLearning
 			}
 		}
 
-		SaveBitmapImage((unsigned char*)image.data(), _height, _width, path.u8string().c_str());
+		SaveBitmapImage((unsigned char*)image.data(), _height, _width, path.string().c_str());
 	}
 
 	Image8Bit::operator DenseVector() const
