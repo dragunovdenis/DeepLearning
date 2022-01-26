@@ -54,17 +54,24 @@ namespace DeepLearning
 	}
 
 	/// <summary>
-	/// Returns random permutation of indices from 0 to elements_count - 1
+	/// Applies random permutation to the given collection of indices
 	/// </summary>
-	std::vector<std::size_t> get_index_permutation(const std::size_t elements_count)
+	void apply_random_permutation(std::vector<std::size_t>& indices)
 	{
-		std::vector<std::size_t> result(elements_count);
-		std::iota(result.begin(), result.end(), 0);
-
 		std::random_device rd;
 		std::mt19937 g(rd());
 
-		std::shuffle(result.begin(), result.end(), g);
+		std::shuffle(indices.begin(), indices.end(), g);
+	}
+
+	/// <summary>
+	/// Returns collection containing "elements_count" integer
+	/// indices starting from "0" all the way to "elements_count - 1"
+	/// </summary>
+	std::vector<std::size_t> get_indices(const std::size_t elements_count)
+	{
+		std::vector<std::size_t> result(elements_count);
+		std::iota(result.begin(), result.end(), 0);
 
 		return result;
 	}
@@ -94,15 +101,17 @@ namespace DeepLearning
 			collectors[collector_id].reset();
 	}
 
-	std::vector<Real> Net::learn(const std::vector<DenseVector>& training_items, const std::vector<DenseVector>& reference_items,
+	void Net::learn(const std::vector<DenseVector>& training_items, const std::vector<DenseVector>& reference_items,
 		const std::size_t batch_size, const std::size_t epochs_count, const Real learning_rate, const CostFunctionId& cost_func_id,
-		const std::size_t cost_evaluation_step)
+		const Real& lambda, const std::function<void(std::size_t)>& epoch_callback)
 	{
 		if (training_items.size() != reference_items.size())
 			throw std::exception("Incompatible collection of training and reference items.");
 
 		if (training_items.size() == 0)
-			return std::vector<Real>();
+			return;
+
+		const auto reg_factor = -learning_rate * lambda / training_items.size();
 
 		const auto cost_function = CostFunction(cost_func_id);
 
@@ -116,10 +125,11 @@ namespace DeepLearning
 
 		std::mutex mutex;
 
-		std::vector<Real> result;
+		auto  data_index_mapping = get_indices(training_items.size());
+
 		for (std::size_t epoch_id = 0; epoch_id < epochs_count; epoch_id++)
 		{
-			const auto id_permutation = get_index_permutation(training_items.size());
+			apply_random_permutation(data_index_mapping);
 
 			std::size_t batch_start_elem_id = 0;
 			while (batch_start_elem_id < training_items.size())
@@ -137,7 +147,7 @@ namespace DeepLearning
 				concurrency::parallel_for<std::size_t>(batch_start_elem_id, batch_end_elem_id,
 					[&](const std::size_t elem_id)
 					{
-						const auto input_item_id = id_permutation[elem_id];
+						const auto input_item_id = data_index_mapping[elem_id];
 						const auto& input = training_items[input_item_id];
 						const auto& reference = reference_items[input_item_id];
 						auto aux_data_ptr = std::vector<NeuralLayer::AuxLearningData>(_layers.size());
@@ -157,27 +167,65 @@ namespace DeepLearning
 				batch_start_elem_id = batch_end_elem_id;
 
 				for (std::size_t layer_id = 0; layer_id < _layers.size(); layer_id++)
-					_layers[layer_id].update(gradient_collectors[layer_id].calc_average_grarient(-learning_rate));
+					_layers[layer_id].update(gradient_collectors[layer_id].calc_average_grarient(-learning_rate), reg_factor);
 			}
 
-			if (epoch_id % cost_evaluation_step != 0)
-				continue;
-
-			const auto cost_sum = concurrency::parallel_reduce(IndexIterator<std::size_t>(0), IndexIterator<std::size_t>(training_items.size()), Real(0),
-				[&](const auto& start_iter, const auto& end_iter, const auto& init_val)
-				{
-					auto result = init_val;
-					const auto start_id = *start_iter;
-					const auto end_id = *end_iter;
-					for (auto i = start_id; i < end_id; i++)
-						result += cost_function(act(training_items[i]), reference_items[i]);
-
-					return result;
-				}, std::plus<Real>());
-
-			result.push_back(cost_sum/ training_items.size());
+			epoch_callback(epoch_id);
 		}
+	}
 
-		return result;
+	Real Net::evaluate_cost_function(const std::vector<DenseVector>& test_input,
+		const std::vector<DenseVector>& reference_output, const CostFunctionId& cost_func_id) const
+	{
+		if (test_input.size() != reference_output.size())
+			throw std::exception("Invalid input.");
+
+		const auto cost_function = CostFunction(cost_func_id);
+
+		const auto cost_sum = concurrency::parallel_reduce(IndexIterator<std::size_t>(0), IndexIterator<std::size_t>(test_input.size()), Real(0),
+			[&](const auto& start_iter, const auto& end_iter, const auto& init_val)
+			{
+				auto result = init_val;
+				const auto start_id = *start_iter;
+				const auto end_id = *end_iter;
+				for (auto i = start_id; i < end_id; i++)
+					result += cost_function(act(test_input[i]), reference_output[i]);
+
+				return result;
+			}, std::plus<Real>());
+
+		return cost_sum / test_input.size();
+	}
+
+	std::size_t Net::count_correct_answers(const std::vector<DenseVector>& test_input,
+		const std::vector<DenseVector>& labels, const Real& min_answer_probability) const
+	{
+		if (test_input.size() != labels.size())
+			throw std::exception("Invalid input.");
+
+		const auto correct_answers = concurrency::parallel_reduce(IndexIterator<std::size_t>(0), IndexIterator<std::size_t>(test_input.size()), 0,
+			[&](const auto& start_iter, const auto& end_iter, const auto& init_val)
+			{
+				auto result = init_val;
+				const auto start_id = *start_iter;
+				const auto end_id = *end_iter;
+				for (auto test_item_id = start_id; test_item_id < end_id; test_item_id++)
+				{
+					const auto& test_item = test_input[test_item_id];
+					const auto ref_answer = labels[test_item_id].max_element_id();
+					const auto trial_label = act(test_item);
+					//after normalization each element of the trial answer can be treated
+					//as a probability of the corresponding class
+					const auto trial_answer_normalized = trial_label * (Real(1) / trial_label.sum());
+					const auto trial_answer = trial_answer_normalized.max_element_id();
+					const auto trial_anwer_probability = trial_answer_normalized(trial_answer);
+
+					if (trial_answer == ref_answer && trial_anwer_probability >= min_answer_probability)
+						result++;
+				}
+				return result;
+			}, std::plus<int>());
+
+		return  correct_answers;
 	}
 }

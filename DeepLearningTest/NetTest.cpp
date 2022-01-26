@@ -63,7 +63,8 @@ namespace DeepLearningTest
 		/// <param name="learning_rate">The learning rate we want to use.</param>
 		/// <param name="expected_min_percentage_test_set">Expected minimal percentage of correct answers of the test data after the training.
 		/// Can take values from (0, 1).</param>
-		static void RunMnistBasedTrainingTest(const CostFunctionId cost_func_id, const Real& learning_rate, const Real& expected_min_percentage_test_set, const bool run_long_test)
+		static void RunMnistBasedTrainingTest(const CostFunctionId cost_func_id, const Real& learning_rate,
+			const Real& expected_min_percentage_test_set, const bool run_long_test, const Real& lambda = Real(0))
 		{
 			//Arrange
 			const auto training_images_count = 60000;
@@ -82,34 +83,22 @@ namespace DeepLearningTest
 			const auto batch_size = 10;
 			const auto long_test = true;
 			const auto epochs_count = run_long_test ? 30 : 5;
-			const auto cost_evaluation_step = 2;
+
+			const auto evaluation_action = [&](const auto epoch_id)
+			{
+				const auto correct_unswers = net.count_correct_answers(test_data, test_labels);
+				Logger::WriteMessage((std::string("Epoch: ") + std::to_string(epoch_id) +  ". Correct answers : " + std::to_string(correct_unswers) + "\n").c_str());
+			};
 
 			//Act
-			const auto costs_per_epoch = net.learn(training_data, training_labels, batch_size, epochs_count, learning_rate, cost_func_id, cost_evaluation_step);
-
-			//Report some information about how fast we converge and what was the value of the cost function after each training epoch
-			for (std::size_t cost_id = 0; cost_id < costs_per_epoch.size(); cost_id++)
-				Logger::WriteMessage((std::string("Epoch : ") + std::to_string(cost_id * cost_evaluation_step) +
-					std::string("; Cost : ") + std::to_string(costs_per_epoch[cost_id]) + "\n").c_str());
+			net.learn(training_data, training_labels, batch_size, epochs_count,
+				learning_rate, cost_func_id, lambda, evaluation_action);
 
 			//Assert
-			int correct_unswers = 0;
-			for (std::size_t test_item_id = 0; test_item_id < test_data.size(); test_item_id++)
-			{
-				const auto& test_item = test_data[test_item_id];
-				const auto ref_answer = test_labels[test_item_id].max_element_id();
-				const auto trial_label = net.act(test_item);
-				const auto abs_sum = trial_label.sum();
-				const auto trial_label_normalized = trial_label * (Real(1) / abs_sum);
-				const auto trial_answer = trial_label_normalized.max_element_id();
-
-				if (trial_answer == ref_answer && trial_label_normalized(trial_answer) > Real(0.5))
-					correct_unswers++;
-			}
-
-			Logger::WriteMessage((std::string("Correct answers : ") + std::to_string(correct_unswers) + "\n").c_str());
-
-			Assert::IsTrue(correct_unswers * (Real(1)) / test_data.size() >= expected_min_percentage_test_set, L"Too low accuracy on the test set.");
+			const auto correct_unswers = net.count_correct_answers(test_data, test_labels);
+			const auto validation_result = correct_unswers * (Real(1)) / test_data.size();
+			Assert::IsTrue(validation_result >= expected_min_percentage_test_set, L"Too low accuracy on the test set.");
+			Logger::WriteMessage("\n");
 		}
 
 	public:
@@ -119,10 +108,22 @@ namespace DeepLearningTest
 			RunMnistBasedTrainingTest(CostFunctionId::SQUARED_ERROR, Real(3.0), long_test ? 0.97 : 0.94, long_test);
 		}
 
+		TEST_METHOD(TrainingWithQuadraticCostRegularizedTest)
+		{
+			const bool long_test = false;
+			RunMnistBasedTrainingTest(CostFunctionId::SQUARED_ERROR, Real(3.0), long_test ? 0.95 : 0.94, long_test, 4.0);
+		}
+
 		TEST_METHOD(TrainingWithCrossEntropyCostTest)
 		{
 			const bool long_test = false;
-			RunMnistBasedTrainingTest(CostFunctionId::CROSS_ENTROPY, Real(0.5), long_test ? 0.97 : 0.94, long_test);
+			RunMnistBasedTrainingTest(CostFunctionId::CROSS_ENTROPY, Real(0.5), long_test ? 0.97 : 0.95, long_test);
+		}
+
+		TEST_METHOD(TrainingWithCrossEntropyCostRegularizedTest)
+		{
+			const bool long_test = false;
+			RunMnistBasedTrainingTest(CostFunctionId::CROSS_ENTROPY, Real(0.5), long_test ? 0.97 : 0.95, long_test, 6.0);
 		}
 
 		TEST_METHOD(NetSerializationTest)

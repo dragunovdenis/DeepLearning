@@ -81,9 +81,13 @@ namespace DeepLearning
 		return std::make_tuple<DenseVector, NeuralLayer::LayerGradient>(biases_ghrad * _weights, { biases_ghrad, weights_grad });
 	}
 
-	void NeuralLayer::update(const std::tuple<DenseMatrix, DenseVector>& weights_and_biases_increment)
+	void NeuralLayer::update(const std::tuple<DenseMatrix, DenseVector>& weights_and_biases_increment, const Real& reg_factor)
 	{
-		_weights += std::get<0>(weights_and_biases_increment);
+		if (reg_factor != Real(0))
+			_weights += (std::get<0>(weights_and_biases_increment) + _weights * reg_factor);
+		else
+			_weights += std::get<0>(weights_and_biases_increment);
+
 		_biases += std::get<1>(weights_and_biases_increment);
 	}
 }

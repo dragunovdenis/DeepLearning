@@ -132,7 +132,10 @@ namespace DeepLearning
 		/// <summary>
 		/// Adds given increments to the weights and biases respectively
 		/// </summary>
-		void update(const std::tuple<DenseMatrix, DenseVector>& weights_and_biases_increment);
+		/// <param name="weights_and_biases_increment">Increment for weights and biases</param>
+		/// <param name="reg_factor">Regularization factor, that (if non-zero) 
+		/// results in term "reg_factor*w_i" being added to each weight "w_i" </param>
+		void update(const std::tuple<DenseMatrix, DenseVector>& weights_and_biases_increment, const Real& reg_factor);
 	};
 
 }

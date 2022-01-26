@@ -68,13 +68,32 @@ namespace DeepLearning
 		/// <param name="epochs_count">Number of epochs to perform</param>
 		/// <param name="cost_func_id">Identifier of the cost function to use in the training process</param>
 		/// <param name="learning_rate">The learning rate (expected to be positive)</param>
-		/// <param name="cost_evaluation_step">Integer value that defines how often cost function should be evaluated (for diagnostic purposes)
-		/// "1" would mean that it gets evaluated after each epoch; "2" -- after each second epoch and so on.
-		/// "0" means that evaluation will be skipped completely</param>
-		/// <returns>A collection of values of the given cost function evaluated on the given training data after some number of epochs
-		/// (see parameter "cost_evaluation_step")</returns>
-		std::vector<Real> learn(const std::vector<DenseVector>& training_items, const std::vector<DenseVector>& reference_items,
+		/// <param name="lambda">Regularization factor, determining the regularization term that will be added to the cost function : lambda/(2*n)*\sum w_{i},
+		/// where n is the number of training items, w_{i} --- weights.</param>
+		/// <param name="epoch_callback">Callback method that will be called after each learning epoch.
+		/// It is supposed to serve diagnostic evaluation purposes.</param>
+		void learn(const std::vector<DenseVector>& training_items, const std::vector<DenseVector>& reference_items,
 			const std::size_t batch_size, const std::size_t epochs_count, const Real learning_rate, const CostFunctionId& cost_func_id,
-			const std::size_t cost_evaluation_step = 1);
+			const Real& lambda = Real(0),
+			const std::function<void(std::size_t)>& epoch_callback = [](const auto epoch_id) {});
+
+		/// <summary>
+		/// Evaluates number of "correct answers" for the given collection of the
+		/// input data with respect to the given collection of reference labels 
+		/// It is assumed that the labels are in effect zero vectors with single positive element (defining the "correct" class)
+		/// (i.e. the net is trained to solve classification problems)
+		/// </summary>
+		/// <param name="test_items">Input data</param>
+		/// <param name="labels">Labels for the given input data</param>
+		/// <param name="min_answer_probability">Minimal "probability" that the answer
+		/// from the neural net should have in order to be considered as a "valid"</param>
+		std::size_t count_correct_answers(const std::vector<DenseVector>& test_input, const std::vector<DenseVector>& labels,
+			const Real& min_answer_probability = Real(0)) const;
+
+		/// <summary>
+		/// Evaluates the given cost function for the given pair of input and reference collections
+		/// </summary>
+		Real evaluate_cost_function(const std::vector<DenseVector>& test_input,
+			const std::vector<DenseVector>& reference_output, const CostFunctionId& cost_func_id) const;
 	};
 }
