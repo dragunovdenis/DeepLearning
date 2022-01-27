@@ -82,7 +82,7 @@ namespace DeepLearningTest
 			auto net = Net({ 784, (run_long_test ? 100ull : 30ull), 10 });
 			const auto batch_size = 10;
 			const auto long_test = true;
-			const auto epochs_count = run_long_test ? 30 : 5;
+			const auto epochs_count = run_long_test ? 30 : 6;
 
 			const auto evaluation_action = [&](const auto epoch_id)
 			{
@@ -111,7 +111,7 @@ namespace DeepLearningTest
 		TEST_METHOD(TrainingWithQuadraticCostRegularizedTest)
 		{
 			const bool long_test = false;
-			RunMnistBasedTrainingTest(CostFunctionId::SQUARED_ERROR, Real(3.0), long_test ? 0.95 : 0.94, long_test, 4.0);
+			RunMnistBasedTrainingTest(CostFunctionId::SQUARED_ERROR, Real(3.0), long_test ? 0.97 : 0.94, long_test, 1.0);
 		}
 
 		TEST_METHOD(TrainingWithCrossEntropyCostTest)

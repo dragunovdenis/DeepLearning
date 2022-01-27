@@ -157,7 +157,8 @@ namespace DeepLearning
 						auto back_prop_out = std::vector<NeuralLayer::LayerGradient>(_layers.size());
 						//Back-propagate through all the layers
 						for (long long layer_id = _layers.size() - 1; layer_id >= 0; layer_id--)
-							std::tie(gradient, back_prop_out[layer_id]) = _layers[layer_id].backpropagate(gradient, aux_data_ptr[layer_id]);
+							std::tie(gradient, back_prop_out[layer_id]) = _layers[layer_id].backpropagate(
+								gradient, aux_data_ptr[layer_id], layer_id != 0);
 
 						std::lock_guard guard(mutex);
 						for (std::size_t layer_id = 0; layer_id < _layers.size(); layer_id++)

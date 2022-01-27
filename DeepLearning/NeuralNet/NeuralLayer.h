@@ -125,9 +125,15 @@ namespace DeepLearning
 		/// Performs the back-propagation
 		/// </summary>
 		/// <param name="deltas">Derivatives of the cost function with respect to the output of the current neural layer</param>
+		/// <param name="aux_learning_data">Auxiliary learning data that should be obtained from the corresponding
+		/// "forward" pass (see method "act") </param>
+		/// <param name="evaluate_input_gradient">Determines whether the gradient with respect to the
+		/// input data (the first item of the output tuple) will be actually evaluated.
+		/// The evaluation is redundant for the very first layer of the net</param>
 		/// <returns>Derivatives of the cost function with respect to the output of the previous neural layer
 		/// (or input of the current neural layer, which is the same)</returns>
-		std::tuple<DenseVector, LayerGradient> backpropagate(const DenseVector& deltas, const AuxLearningData& aux_learning_data) const;
+		std::tuple<DenseVector, LayerGradient> backpropagate(const DenseVector& deltas, const AuxLearningData& aux_learning_data,
+			const bool evaluate_input_gradient = true) const;
 
 		/// <summary>
 		/// Adds given increments to the weights and biases respectively

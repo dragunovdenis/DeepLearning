@@ -73,12 +73,15 @@ namespace DeepLearning
 		return function(z);
 	}
 
-	std::tuple<DenseVector, NeuralLayer::LayerGradient> NeuralLayer::backpropagate(const DenseVector& deltas, const AuxLearningData& aux_learning_data) const
+	std::tuple<DenseVector, NeuralLayer::LayerGradient> NeuralLayer::backpropagate(const DenseVector& deltas,
+		const AuxLearningData& aux_learning_data, const bool evaluate_input_gradient) const
 	{
 		const auto biases_ghrad = deltas.hadamard_prod(aux_learning_data.Derivatives);
 		const auto weights_grad = vector_col_times_vector_row(biases_ghrad, aux_learning_data.Input);
 
-		return std::make_tuple<DenseVector, NeuralLayer::LayerGradient>(biases_ghrad * _weights, { biases_ghrad, weights_grad });
+		return std::make_tuple<DenseVector, NeuralLayer::LayerGradient>(
+			evaluate_input_gradient ? biases_ghrad * _weights : DenseVector(0),
+			{ biases_ghrad, weights_grad });
 	}
 
 	void NeuralLayer::update(const std::tuple<DenseMatrix, DenseVector>& weights_and_biases_increment, const Real& reg_factor)
