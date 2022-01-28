@@ -94,6 +94,12 @@ namespace DeepLearning
 	}
 
 	DenseMatrix::DenseMatrix(const std::size_t row_dim, const std::size_t col_dim,
+		const std::function<Real()>& generator) : DenseMatrix(row_dim, col_dim)
+	{
+		std::generate(begin(), end(), generator);
+	}
+
+	DenseMatrix::DenseMatrix(const std::size_t row_dim, const std::size_t col_dim,
 		const Real range_begin, const Real range_end) : DenseMatrix(row_dim, col_dim)
 	{
 		Utils::fill_with_random_values(begin(), end(), range_begin, range_end);

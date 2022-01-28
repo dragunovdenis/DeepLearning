@@ -63,6 +63,11 @@ namespace DeepLearning
 		DenseVector(const std::size_t dim, const Real range_begin, const Real range_end);
 
 		/// <summary>
+		/// Constructs dense vector of the given dimension filled with the given generator function
+		/// </summary>
+		DenseVector(const std::size_t dim, const std::function<Real()>& generator);
+
+		/// <summary>
 		/// Returns dimension of the vector
 		/// </summary>
 		std::size_t dim() const;

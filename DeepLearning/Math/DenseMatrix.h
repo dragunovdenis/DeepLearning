@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <msgpack.hpp>
+#include <functional>
 #include "../defs.h"
 
 namespace DeepLearning
@@ -82,6 +83,11 @@ namespace DeepLearning
 		/// Constructs a dense matrix of the given dimensions
 		/// </summary>
 		DenseMatrix(const std::size_t row_dim, const std::size_t col_dim);
+
+		/// <summary>
+		/// Constructs a dense matrix of the given dimensions filled according to the given generator function
+		/// </summary>
+		DenseMatrix(const std::size_t row_dim, const std::size_t col_dim, const std::function<Real()>& generator);
 
 		/// <summary>
 		/// Constructs a dense matrix of the given dimensions filled

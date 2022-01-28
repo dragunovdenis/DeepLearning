@@ -32,12 +32,18 @@ namespace DeepLearning
 		if (layer_dimensions.size() <= 1)
 			throw std::exception("Invalid collection of layer dimensions.");
 
+		static std::random_device rd;
+		static std::mt19937 gen(rd());
+
 		for (std::size_t id = 1; id < layer_dimensions.size(); id++)
 		{
 			const auto in_dim = layer_dimensions[id - 1];
 			const auto out_dim = layer_dimensions[id];
 
-			_layers.emplace_back(in_dim, out_dim, activ_func_id, Real(-1), Real(1));
+			std::normal_distribution<Real> dist{ 0, Real(1) / std::sqrt(in_dim)};
+
+			_layers.emplace_back(DenseMatrix(out_dim, in_dim,  [&]() {return dist(gen); }),
+				DenseVector(out_dim, Real(-1), Real(1)), activ_func_id);
 		}
 	}
 

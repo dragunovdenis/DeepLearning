@@ -42,6 +42,12 @@ namespace DeepLearning
 		Utils::fill_with_random_values(begin(), end(), range_begin, range_end);
 	}
 
+	DenseVector::DenseVector(const std::size_t dim, const std::function<Real()>& generator)
+		: DenseVector(dim)
+	{
+		std::generate(begin(), end(), generator);
+	}
+
 	bool DenseVector::check_bounds(const ::std::size_t id) const
 	{
 		return id < _data.size();
