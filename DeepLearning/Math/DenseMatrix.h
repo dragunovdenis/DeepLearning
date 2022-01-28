@@ -112,6 +112,14 @@ namespace DeepLearning
 		DenseVector friend operator *(const DenseMatrix& matr, const DenseVector& vec);
 
 		/// <summary>
+		/// Performs multiplication by the given vector (from the right)
+		/// and simultaneously adds another vector to the result of multiplication
+		/// </summary>
+		/// <param name="mul_vec">The vector that is involved in the multiplication operation</param>
+		/// <param name="add_vec">The vector that is involved in the addition operation</param>
+		DenseVector mul_add(const DenseVector& mul_vec, const DenseVector& add_vec) const;
+
+		/// <summary>
 		/// Multiplication by a vector from the left
 		/// </summary>
 		DenseVector friend operator *(const DenseVector& vec, const DenseMatrix& matr);

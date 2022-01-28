@@ -23,6 +23,9 @@
 #include <iterator>
 #include <cstddef>
 #include <algorithm>
+#include <immintrin.h>
+
+#define USE_AVX2 //to use AVX2 instructions below
 
 namespace DeepLearning
 {
@@ -121,18 +124,85 @@ namespace DeepLearning
 		return _data[row_col_to_data_id(row_id, col_id)];
 	}
 
+	/// <summary>
+	/// Sums up given 4 doubles and returns the result
+	/// </summary>
+	double mm256_reduce(const __m256d& input) {
+		const auto temp = _mm256_hadd_pd(input, input);
+		const auto sum_high = _mm256_extractf128_pd(temp, 1);
+		const auto result = _mm_add_pd(sum_high, _mm256_castpd256_pd128(temp));
+		return ((double*)&result)[0];
+	}
+
+	/// <summary>
+	/// Calculate dot product of the given pair of vectors using 4-doubles operations
+	/// </summary>
+	/// <param name="vec1">Pointer to the beginning of the first vector</param>
+	/// <param name="vec2">Pointer to the beginning of the second vector</param>
+	/// <param name="size">Size of the vectors</param>
+	/// <returns>Dot product of the vectors</returns>
+	double mm256_dot_product(const double* vec1, const double* vec2, const std::size_t size) {
+		auto sum_vec = _mm256_set_pd(0.0, 0.0, 0.0, 0.0);
+
+		/* Add up partial dot-products in blocks of 256 bits */
+		const auto chunk_size = 4;
+		const auto chunks_count = size / chunk_size;
+		std::size_t offset = 0;
+		for (std::size_t chunk_id = 0; chunk_id < chunks_count; chunk_id++) {
+			const auto x = _mm256_loadu_pd(vec1 + offset);
+			const auto y = _mm256_loadu_pd(vec2 + offset);
+			offset += chunk_size;
+			sum_vec = _mm256_add_pd(sum_vec, _mm256_mul_pd(x, y));
+		}
+
+		/* Find the partial dot-product for the remaining elements after
+		 * dealing with all 256-bit blocks. */
+		double rest = 0.0;
+		for (std::size_t element_id = size - (size % chunk_size); element_id < size; element_id++)
+			rest += vec1[element_id] * vec2[element_id];
+
+		return mm256_reduce(sum_vec) + rest;
+	}
+
 	DenseVector operator *(const DenseMatrix& matr, const DenseVector& vec)
 	{
 		if (vec.dim() != matr._col_dim)
-			throw std::exception("Incompatible matrix-vector dimension");
+			throw std::exception("Incompatible matrix-vector dimensionality");
 
 		auto result = DenseVector(matr._row_dim);
 
 		for (std::size_t row_id = 0; row_id < matr._row_dim; row_id++)
 		{
+#ifdef USE_AVX2
+			const auto begin_row_ptr = matr._data.data() + row_id * matr._col_dim;
+			result(row_id) = mm256_dot_product(begin_row_ptr, &*vec.begin(), vec.dim());
+#else
 			const auto row_begin = matr._data.begin() + row_id * matr._col_dim;
 			const auto row_end = matr._data.begin() + row_id * matr._col_dim + matr._col_dim;
 			result(row_id) = std::inner_product(row_begin, row_end, vec.begin(), Real(0));
+#endif // USE_AVX2
+		}
+
+		return result;
+	}
+
+	DenseVector DenseMatrix::mul_add(const DenseVector& mul_vec, const DenseVector& add_vec) const
+	{
+		if (mul_vec.dim() != _col_dim || add_vec.dim() != _row_dim)
+			throw std::exception("Incompatible matrix-vector dimensionality");
+
+		auto result = DenseVector(_row_dim);
+
+		for (std::size_t row_id = 0; row_id < row_dim(); row_id++)
+		{
+#ifdef USE_AVX2
+			const auto begin_row_ptr = _data.data() + row_id * _col_dim;
+			result(row_id) = mm256_dot_product(begin_row_ptr, &*mul_vec.begin(), _col_dim) + add_vec(row_id);
+#else
+			const auto row_begin = _data.begin() + row_id * col_dim();
+			const auto row_end = _data.begin() + (row_id + 1) * _col_dim;
+			result(row_id) = std::inner_product(row_begin, row_end, mul_vec.begin(), Real(0)) + +add_vec(row_id);
+#endif // USE_AVX2
 		}
 
 		return result;

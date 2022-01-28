@@ -19,6 +19,7 @@
 #include <Math/DenseMatrix.h>
 #include <Math/DenseVector.h>
 #include <MsgPackUtils.h>
+#include "Utilities.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;
@@ -51,8 +52,8 @@ namespace DeepLearningTest
 				}
 
 				const auto diff = std::abs(reference - product(row_id));
-				Logger::WriteMessage((std::string("Difference = ") + std::to_string(diff) + "\n").c_str());
-				Assert::IsTrue(diff < std::numeric_limits<Real>::epsilon(), L"Unexpectedly high difference");
+				Logger::WriteMessage((std::string("Difference = ") +  Utils::to_string(diff) + "\n").c_str());
+				Assert::IsTrue(diff < 10*std::numeric_limits<Real>::epsilon(), L"Unexpectedly high difference");
 			}
 		}
 
@@ -462,6 +463,25 @@ namespace DeepLearningTest
 				const auto diff = std::abs(result1(item_id) - vector1(item_id) * vector2(item_id));
 				Assert::IsTrue(diff <= 0, L"Too big deviation from the expected value.");
 			}
+		}
+
+		TEST_METHOD(MatrixVectorMultiplicationAndAdditionTest)
+		{
+			//Arrange
+			const std::size_t row_dim = 10;
+			const std::size_t col_dim = 23;
+			const auto matrix = DenseMatrix(row_dim, col_dim, -1, 1);
+			const auto mul_vector = DenseVector(col_dim, -1, 1);
+			const auto add_vector = DenseVector(row_dim, -1, 1);
+
+			//Act
+			const auto result1 = matrix * mul_vector + add_vector;
+			const auto result2 = matrix.mul_add(mul_vector, add_vector);
+
+			//Assert
+			const auto diff = (result1 - result2).max_abs();
+			Logger::WriteMessage((std::string("Difference = ") + Utils::to_string(diff) + "\n").c_str());
+			Assert::IsTrue(diff < 10 * std::numeric_limits<Real>::epsilon(), L"Unexpectedly high difference");
 		}
 	};
 }

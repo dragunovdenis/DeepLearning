@@ -60,7 +60,7 @@ namespace DeepLearning
 	{
 		const auto function = ActivationFuncion(ActivationFunctionId(_func_id));
 
-		const auto z = _weights * input + _biases;
+		const auto z = _weights.mul_add(input, _biases);
 
 		if (aux_learning_data_ptr)
 		{
