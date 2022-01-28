@@ -19,6 +19,7 @@
 #include <NeuralNet/NeuralLayer.h>
 #include <Math/CostFunction.h>
 #include <Utilities.h>
+#include <type_traits>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;
@@ -49,7 +50,7 @@ namespace DeepLearningTest
 
 			//Assert
 			const auto nl_aux = NeuralLayer(weights_0, biases_0, activation_func_id);
-			const auto delta = Real(1e-5);
+			const auto delta = std::is_same_v<Real, double> ? Real(1e-5) : Real(1e-3);
 
 			for (std::size_t in_item_id = 0; in_item_id < input_dim; in_item_id++)
 			{
@@ -66,7 +67,7 @@ namespace DeepLearningTest
 				//Now do the same using the back-propagation approach
 				const auto diff = std::abs(deriv_numeric - input_grad_result(in_item_id));
 				Logger::WriteMessage((std::string("Difference = ") + Utils::to_string(diff) + '\n').c_str());
-				Assert::IsTrue(diff <= 1e-9, L"Unexpectedly high deviation!");
+				Assert::IsTrue(diff <= (std::is_same_v<Real, double> ?  Real(1e-9) : Real(5e-3)), L"Unexpectedly high deviation!");
 			}
 		}
 
@@ -94,7 +95,7 @@ namespace DeepLearningTest
 
 			//Assert
 			const auto nl_aux = NeuralLayer(weights_0, biases_0, activation_func_id);
-			const auto delta = Real(1e-5);
+			const auto delta = std::is_same_v<Real, double> ? Real(1e-5) : Real(1e-3);
 
 			//Check derivatives with respect to weights
 			Logger::WriteMessage("Weights:\n");
@@ -114,7 +115,7 @@ namespace DeepLearningTest
 					//Now do the same using the back-propagation approach
 					const auto diff = std::abs(deriv_numeric - wight_grad(row_id, col_id));
 					Logger::WriteMessage((std::string("Difference = ") + Utils::to_string(diff) + '\n').c_str());
-					Assert::IsTrue(diff <= 5e-10, L"Unexpectedly high deviation!");
+					Assert::IsTrue(diff <= (std::is_same_v<Real, double> ? Real(5e-10) : Real(3e-3)), L"Unexpectedly high deviation!");
 				}
 
 			//Check derivatives with respect to biases
@@ -134,7 +135,7 @@ namespace DeepLearningTest
 				//Now do the same using the back-propagation approach
 				const auto diff = std::abs(deriv_numeric - bias_grad(row_id));
 				Logger::WriteMessage((std::string("Difference = ") + Utils::to_string(diff) + '\n').c_str());
-				Assert::IsTrue(diff <= 5e-10, L"Unexpectedly high deviation!");
+				Assert::IsTrue(diff <= (std::is_same_v<Real, double> ? Real(5e-10) : Real(3e-3)), L"Unexpectedly high deviation!");
 			}
 
 		}

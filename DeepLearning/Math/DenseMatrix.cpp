@@ -141,6 +141,17 @@ namespace DeepLearning
 	}
 
 	/// <summary>
+	/// Sums up given 8 floats and returns the result
+	/// </summary>
+	float mm256_reduce(const __m256& input) {
+		const auto t1 = _mm256_hadd_ps(input, input);
+		const auto t2 = _mm256_hadd_ps(t1, t1);
+		const auto t3 = _mm256_extractf128_ps(t2, 1);
+		const auto t4 = _mm_add_ss(_mm256_castps256_ps128(t2), t3);
+		return _mm_cvtss_f32(t4);
+	}
+
+	/// <summary>
 	/// Calculate dot product of the given pair of vectors using 4-doubles operations
 	/// </summary>
 	/// <param name="vec1">Pointer to the beginning of the first vector</param>
@@ -164,6 +175,36 @@ namespace DeepLearning
 		/* Find the partial dot-product for the remaining elements after
 		 * dealing with all 256-bit blocks. */
 		double rest = 0.0;
+		for (std::size_t element_id = size - (size % chunk_size); element_id < size; element_id++)
+			rest += vec1[element_id] * vec2[element_id];
+
+		return mm256_reduce(sum_vec) + rest;
+	}
+
+	/// <summary>
+	/// Calculate dot product of the given pair of vectors using 8-floats operations
+	/// </summary>
+	/// <param name="vec1">Pointer to the beginning of the first vector</param>
+	/// <param name="vec2">Pointer to the beginning of the second vector</param>
+	/// <param name="size">Size of the vectors</param>
+	/// <returns>Dot product of the vectors</returns>
+	float mm256_dot_product(const float* vec1, const float* vec2, const std::size_t size) {
+		auto sum_vec = _mm256_set_ps(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
+
+		/* Add up partial dot-products in blocks of 256 bits */
+		const auto chunk_size = 8;
+		const auto chunks_count = size / chunk_size;
+		std::size_t offset = 0;
+		for (std::size_t chunk_id = 0; chunk_id < chunks_count; chunk_id++) {
+			const auto x = _mm256_loadu_ps(vec1 + offset);
+			const auto y = _mm256_loadu_ps(vec2 + offset);
+			offset += chunk_size;
+			sum_vec = _mm256_add_ps(sum_vec, _mm256_mul_ps(x, y));
+		}
+
+		/* Find the partial dot-product for the remaining elements after
+		 * dealing with all 256-bit blocks. */
+		float rest = 0.0;
 		for (std::size_t element_id = size - (size % chunk_size); element_id < size; element_id++)
 			rest += vec1[element_id] * vec2[element_id];
 

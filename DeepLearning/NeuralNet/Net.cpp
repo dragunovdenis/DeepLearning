@@ -40,7 +40,7 @@ namespace DeepLearning
 			const auto in_dim = layer_dimensions[id - 1];
 			const auto out_dim = layer_dimensions[id];
 
-			std::normal_distribution<Real> dist{ 0, Real(1) / std::sqrt(in_dim)};
+			std::normal_distribution<Real> dist{ 0, Real(1) / Real(std::sqrt(in_dim))};
 
 			_layers.emplace_back(DenseMatrix(out_dim, in_dim,  [&]() {return dist(gen); }),
 				DenseVector(out_dim, Real(-1), Real(1)), activ_func_id);

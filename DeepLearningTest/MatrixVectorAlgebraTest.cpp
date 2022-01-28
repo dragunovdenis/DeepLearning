@@ -53,7 +53,7 @@ namespace DeepLearningTest
 
 				const auto diff = std::abs(reference - product(row_id));
 				Logger::WriteMessage((std::string("Difference = ") +  Utils::to_string(diff) + "\n").c_str());
-				Assert::IsTrue(diff < 10*std::numeric_limits<Real>::epsilon(), L"Unexpectedly high difference");
+				Assert::IsTrue(diff < 15*std::numeric_limits<Real>::epsilon(), L"Unexpectedly high difference");
 			}
 		}
 

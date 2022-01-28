@@ -68,8 +68,8 @@ namespace DeepLearningTest
 			//Arrange
 			const auto dim = 10;
 			const auto cost_func = CostFunction(func_id);
-			const auto input = DenseVector(dim, 1e-5, 1-1e-5);
-			const auto reference = DenseVector(dim, 1e-5, 1 - 1e-5);
+			const auto input = DenseVector(dim, Real(1e-5), Real(1-1e-5));
+			const auto reference = DenseVector(dim, Real(1e-5), Real(1 - 1e-5));
 			Assert::IsTrue(input != reference, L"Reference and input vectors should not be equal.");
 
 			//Act
@@ -94,8 +94,8 @@ namespace DeepLearningTest
 			//Arrange
 			const auto dim = 10;
 			const auto cost_func = CostFunction(func_id);
-			const auto input = DenseVector(dim, 0.1, 0.9);
-			const auto reference = DenseVector(dim, 0.1, 0.9);
+			const auto input = DenseVector(dim, Real(0.1), Real(0.9));
+			const auto reference = DenseVector(dim, Real(0.1), Real(0.9));
 			Assert::IsTrue(input != reference, L"Reference and input vectors should not be equal.");
 
 			//Act

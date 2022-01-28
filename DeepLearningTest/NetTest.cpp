@@ -63,7 +63,7 @@ namespace DeepLearningTest
 		/// <param name="learning_rate">The learning rate we want to use.</param>
 		/// <param name="expected_min_percentage_test_set">Expected minimal percentage of correct answers of the test data after the training.
 		/// Can take values from (0, 1).</param>
-		static void RunMnistBasedTrainingTest(const CostFunctionId cost_func_id, const Real& learning_rate,
+		static Real RunMnistBasedTrainingTest(const CostFunctionId cost_func_id, const Real& learning_rate,
 			const Real& expected_min_percentage_test_set, const bool run_long_test, const Real& lambda = Real(0))
 		{
 			//Arrange
@@ -99,31 +99,38 @@ namespace DeepLearningTest
 			const auto validation_result = correct_unswers * (Real(1)) / test_data.size();
 			Assert::IsTrue(validation_result >= expected_min_percentage_test_set, L"Too low accuracy on the test set.");
 			Logger::WriteMessage("\n");
+			return validation_result;
 		}
 
 	public:
 		TEST_METHOD(TrainingWithQuadraticCostTest)
 		{
 			const bool long_test = false;
-			RunMnistBasedTrainingTest(CostFunctionId::SQUARED_ERROR, Real(3.0), long_test ? 0.97 : 0.94, long_test);
+			RunMnistBasedTrainingTest(CostFunctionId::SQUARED_ERROR, Real(3.0), long_test ? Real(0.97) : Real(0.95), long_test);
 		}
 
 		TEST_METHOD(TrainingWithQuadraticCostRegularizedTest)
 		{
 			const bool long_test = false;
-			RunMnistBasedTrainingTest(CostFunctionId::SQUARED_ERROR, Real(3.0), long_test ? 0.97 : 0.94, long_test, 1.0);
+			RunMnistBasedTrainingTest(CostFunctionId::SQUARED_ERROR, Real(3.0), long_test ? Real(0.97) : Real(0.94), long_test, Real(1.0));
 		}
 
 		TEST_METHOD(TrainingWithCrossEntropyCostTest)
 		{
 			const bool long_test = false;
-			RunMnistBasedTrainingTest(CostFunctionId::CROSS_ENTROPY, Real(0.5), long_test ? 0.97 : 0.95, long_test);
+			RunMnistBasedTrainingTest(CostFunctionId::CROSS_ENTROPY, Real(0.5), long_test ? Real(0.97) : Real(0.95), long_test);
 		}
 
 		TEST_METHOD(TrainingWithCrossEntropyCostRegularizedTest)
 		{
+			auto average_accuracy = 0.0;
 			const bool long_test = false;
-			RunMnistBasedTrainingTest(CostFunctionId::CROSS_ENTROPY, Real(0.5), long_test ? 0.97 : 0.95, long_test, 6.0);
+			const auto trials_count = 1;
+			for (int i = 0; i < trials_count; i++)
+				average_accuracy += RunMnistBasedTrainingTest(CostFunctionId::CROSS_ENTROPY, Real(0.5), long_test ? Real(0.97) : Real(0.94), long_test, Real(6.0));
+
+			Logger::WriteMessage((std::string("Average accuracy = ") +
+				std::to_string(average_accuracy/trials_count)).c_str());
 		}
 
 		TEST_METHOD(NetSerializationTest)
