@@ -81,6 +81,9 @@
     <ClInclude Include="IndexIterator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Math\AvxAcceleration.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\DenseMatrix.cpp">
@@ -115,6 +118,9 @@
     </ClCompile>
     <ClCompile Include="NeuralNet\Net.cpp">
       <Filter>Source Files\NeuralNet</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\AvxAcceleration.cpp">
+      <Filter>Source Files\Math</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
