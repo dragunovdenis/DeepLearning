@@ -169,6 +169,7 @@
     <ClInclude Include="Math\DenseVector.h" />
     <ClInclude Include="Math\Dual.h" />
     <ClInclude Include="Math\DiffFunc.h" />
+    <ClInclude Include="Math\LinAlg2d.h" />
     <ClInclude Include="MnistDataUtils.h" />
     <ClInclude Include="MsgPackUtils.h" />
     <ClInclude Include="NeuralNet\CummulativeGradient.h" />
@@ -190,6 +191,7 @@
     <ClCompile Include="NeuralNet\Net.cpp" />
     <ClCompile Include="NeuralNet\NeuralLayer.cpp" />
     <ClCompile Include="ThirdParty\BitmapUtils.cpp" />
+    <ClCompile Include="Utilities.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

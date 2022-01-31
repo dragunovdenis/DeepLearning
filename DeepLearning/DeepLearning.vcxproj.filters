@@ -84,6 +84,9 @@
     <ClInclude Include="Math\AvxAcceleration.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
+    <ClInclude Include="Math\LinAlg2d.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\DenseMatrix.cpp">
@@ -121,6 +124,9 @@
     </ClCompile>
     <ClCompile Include="Math\AvxAcceleration.cpp">
       <Filter>Source Files\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

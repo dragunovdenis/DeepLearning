@@ -19,6 +19,7 @@
 
 #include <random>
 #include <algorithm>
+#include <ios>
 #include "defs.h"
 
 namespace DeepLearning::Utils
@@ -31,11 +32,16 @@ namespace DeepLearning::Utils
     {
         static std::random_device rd;
         static std::mt19937 gen(rd());
-        std::uniform_int_distribution<int> dist(0, std::numeric_limits<int>::max());
+        static std::uniform_int_distribution<int> dist(0, std::numeric_limits<int>::max());
 
         const auto normalization_factor = (max - min) / std::numeric_limits<int>::max();
         std::generate(start, end, [&]() { return normalization_factor * dist(gen) + min; });
     }
+
+    /// <summary>
+    /// Returns uniformly distributed random value from the given interval
+    /// </summary>
+    Real get_random(const Real min, const Real max);
 
     /// <summary>
     /// Functionality to fill the given range with normally distributed pseudo-random numbers
