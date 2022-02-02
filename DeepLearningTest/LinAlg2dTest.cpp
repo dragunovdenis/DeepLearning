@@ -458,6 +458,19 @@ namespace DeepLearningTest
 				L"Main property of the inverse matrix does not hold true");
 		}
 
+		TEST_METHOD(InversingSingularMatrixResultsInException)
+		{
+			//Arrange
+			const auto singular_matrix = Matrix2x2<Real>{ 1, 2, 3, 6 };
+			//Sanity check
+			Assert::IsTrue(std::abs(singular_matrix.det()) < 10 * std::numeric_limits<Real>::epsilon(),
+				L"The matrix is expected to be singular");
+
+			//Act + Assert
+			Assert::ExpectException<std::exception>([&]() {singular_matrix.inverse(); },
+				L"Inversing singular matrix must result in an exception thrown");
+		}
+
 		TEST_METHOD(TransposeMatrixTest)
 		{
 			//Arrange
@@ -588,6 +601,8 @@ namespace DeepLearningTest
 			Assert::IsTrue(angle_diff < 10 * std::numeric_limits<Real>::epsilon() ||
 				std::abs(angle_diff - 2 * std::numbers::pi) < 10 * std::numeric_limits<Real>::epsilon(),
 				L"Unexpected actual rotation angle");
+			Assert::IsTrue(std::abs(vector.norm() - vector_rotated.norm()) < 10 * std::numeric_limits<Real>::epsilon(),
+				L"distance to the rotation center should not change");
 		}
 
 		TEST_METHOD(AffineMatrixMiltiplicationTest)
@@ -622,6 +637,27 @@ namespace DeepLearningTest
 			//Assert
 			Assert::IsTrue((vector - vector_transformer_inverse).max_abs() <
 				10 * std::numeric_limits<Real>::epsilon(), L"Unexpected result of the inverse affine transformation");
+		}
+
+		TEST_METHOD(RotationAroundPointTest)
+		{
+			//Arrange
+			const auto vector = Vector2d<Real>::random();
+			const auto center = Vector2d<Real>::random() + Vector2d{ 3.0, 3.0 };
+			const auto angle = Utils::get_random(0, std::numbers::pi);
+			const auto rotation = MatrixAffine2d<Real>::rotation(angle, center);
+
+			//Act
+			const auto vector_rotated = rotation * vector;
+
+			//Assert
+			const auto radius_vect = vector - center;
+			const auto radius_vect_rotated = vector_rotated - center;
+			const auto actual_angle = std::acos(radius_vect.normalize().dot(radius_vect_rotated.normalize()));
+			Assert::IsTrue(std::abs(actual_angle - angle) < 10 * std::numeric_limits<Real>::epsilon(),
+				L"Too high difference between the actual and expected angles");
+			Assert::IsTrue(std::abs(radius_vect.norm() - radius_vect_rotated.norm()) < 10 * std::numeric_limits<Real>::epsilon(),
+				L"Distance to the rotation center should not change");
 		}
 	};
 }

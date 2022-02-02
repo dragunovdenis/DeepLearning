@@ -161,6 +161,7 @@
   <ItemGroup>
     <ClInclude Include="defs.h" />
     <ClInclude Include="Image8Bit.h" />
+    <ClInclude Include="ImageProcessing\ImageUtils.h" />
     <ClInclude Include="IndexIterator.h" />
     <ClInclude Include="Math\ActivationFunction.h" />
     <ClInclude Include="Math\AvxAcceleration.h" />
@@ -180,6 +181,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Image8Bit.cpp" />
+    <ClCompile Include="ImageProcessing\ImageUtils.cpp" />
     <ClCompile Include="Math\ActivationFunction.cpp" />
     <ClCompile Include="Math\AvxAcceleration.cpp" />
     <ClCompile Include="Math\CostFunction.cpp" />

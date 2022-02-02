@@ -31,6 +31,12 @@
     <Filter Include="Source Files\ThirdParty">
       <UniqueIdentifier>{66d3026a-ead0-4b90-ad27-cb34fd978959}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\ImageProcessing">
+      <UniqueIdentifier>{d6b0acf0-316e-45c3-a636-ea08993fcc81}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ImageProcessing">
+      <UniqueIdentifier>{833359fd-5396-48ee-b232-036b889f80c8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="defs.h">
@@ -87,6 +93,9 @@
     <ClInclude Include="Math\LinAlg2d.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
+    <ClInclude Include="ImageProcessing\ImageUtils.h">
+      <Filter>Header Files\ImageProcessing</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\DenseMatrix.cpp">
@@ -127,6 +136,9 @@
     </ClCompile>
     <ClCompile Include="Utilities.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ImageProcessing\ImageUtils.cpp">
+      <Filter>Source Files\ImageProcessing</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -29,10 +29,25 @@ namespace DeepLearning
 	/// </summary>
 	class Image8Bit
 	{
-		std::vector<unsigned char> _pixels{};
+	public:
+		using pixel_t = unsigned char;
+
+	private:
+		std::vector<pixel_t> _pixels{};
 		std::size_t _height{};
 		std::size_t _width{};
 	public:
+
+		/// <summary>
+		/// Read access to the height parameter of the image
+		/// </summary>
+		std::size_t height() const;
+
+		/// <summary>
+		/// Read access to the width parameter of the image
+		/// </summary>
+		std::size_t width() const;
+
 		/// <summary>
 		/// Default constructor
 		/// </summary>
@@ -44,14 +59,39 @@ namespace DeepLearning
 		Image8Bit(const std::size_t height, std::size_t width, char* data);
 
 		/// <summary>
+		/// Constructor
+		/// </summary>
+		Image8Bit(const std::size_t height, std::size_t width);
+
+		/// <summary>
 		/// Constructor (from a stream)
 		/// </summary>
 		Image8Bit(const std::size_t height, std::size_t width, std::istream& stream);
 
 		/// <summary>
+		/// Access to a pixel with the given row and column indices. Check for index boundaries is on the caller.
+		/// </summary>
+		pixel_t& operator()(const std::size_t row_id, const std::size_t col_id);
+
+		/// <summary>
+		/// Access to a pixel with the given row and column indices (constant version). Check for index boundaries is on the caller.
+		/// </summary>
+		const pixel_t& operator()(const std::size_t row_id, const std::size_t col_id) const;
+
+		/// <summary>
 		/// Saves the image to disk in "bmp" format
 		/// </summary>
 		void SaveToBmp(const std::filesystem::path& path) const;
+
+		/// <summary>
+		/// "Equal to" operator
+		/// </summary>
+		bool operator ==(const Image8Bit& anotherImage) const;
+
+		/// <summary>
+		/// "Not equal to" operator
+		/// </summary>
+		bool operator !=(const Image8Bit& anotherImage) const;
 
 		/// <summary>
 		/// Implicit conversion operator

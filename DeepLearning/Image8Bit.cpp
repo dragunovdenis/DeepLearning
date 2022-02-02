@@ -23,18 +23,21 @@ using namespace ThirdParty;
 namespace DeepLearning
 {
 	Image8Bit::Image8Bit(const std::size_t height, std::size_t width, char* data)
+		: _height(height), _width(width)
 	{
-		_height = height;
-		_width = width;
 		_pixels.resize(_height * _width);
-
 		std::memcpy(_pixels.data(), data, _pixels.size());
 	}
 
-	Image8Bit::Image8Bit(const std::size_t height, std::size_t width, std::istream& stream)
+	Image8Bit::Image8Bit(const std::size_t height, std::size_t width)
+		: _height(height), _width(width)
 	{
-		_height = height;
-		_width = width;
+		_pixels.resize(_height * _width);
+	}
+
+	Image8Bit::Image8Bit(const std::size_t height, std::size_t width, std::istream& stream)
+		: _height(height), _width(width)
+	{
 		_pixels.resize(_height * _width);
 
 		stream.read((char*)_pixels.data(), _pixels.size());
@@ -63,5 +66,37 @@ namespace DeepLearning
 	Image8Bit::operator DenseVector() const
 	{
 		return DenseVector(_pixels);
+	}
+
+	std::size_t Image8Bit::height() const
+	{
+		return _height;
+	}
+
+	std::size_t Image8Bit::width() const
+	{
+		return _width;
+	}
+
+	Image8Bit::pixel_t& Image8Bit::operator()(const std::size_t row_id, const std::size_t col_id)
+	{
+		return _pixels[row_id * _width + col_id];
+	}
+
+	const Image8Bit::pixel_t& Image8Bit::operator()(const std::size_t row_id, const std::size_t col_id) const
+	{
+		return _pixels[row_id * _width + col_id];
+	}
+
+	bool Image8Bit::operator ==(const Image8Bit& anotherImage) const
+	{
+		return width() == anotherImage.width() && 
+			height() == anotherImage.height() &&
+			_pixels == anotherImage._pixels;
+	}
+
+	bool Image8Bit::operator !=(const Image8Bit& anotherImage) const
+	{
+		return !(*this == anotherImage);
 	}
 }

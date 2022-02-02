@@ -18,6 +18,7 @@
 #pragma once
 
 #include "../Utilities.h"
+#include "../defs.h"
 #include <exception>
 
 namespace DeepLearning
@@ -25,7 +26,7 @@ namespace DeepLearning
 	/// <summary>
 	/// 2-dimensional vector
 	/// </summary>
-	template <class R>
+	template <class R = Real>
 	struct Vector2d
 	{
 		/// <summary>
@@ -136,7 +137,7 @@ namespace DeepLearning
 		/// </summary>
 		R norm() const
 		{
-			std::sqrt(norm_sqr());
+			return std::sqrt(norm_sqr());
 		}
 
 		/// <summary>
@@ -145,6 +146,15 @@ namespace DeepLearning
 		R max_abs() const
 		{
 			return std::max<R>(std::abs(x), std::abs(y));
+		}
+
+		/// <summary>
+		/// Returns normalized vector
+		/// In case the current vector is "zero" the result of normalization will be NaN
+		/// </summary>
+		Vector2d<R> normalize() const
+		{
+			return *this / norm();
 		}
 	};
 
@@ -227,7 +237,7 @@ namespace DeepLearning
 	/// <summary>
 	/// 2x2 matrix
 	/// </summary>
-	template <class R>
+	template <class R = Real>
 	struct Matrix2x2
 	{
 		R a00{};
@@ -502,7 +512,7 @@ namespace DeepLearning
 	/// | 0  1 |, where L - is a "linear" part of the affine transformation, represented with a 2x2 matrix
 	/// and T - is a "translation" part of the affine transformation represented with a 2d translation vector
 	/// </summary>
-	template <class R>
+	template <class R = Real>
 	struct MatrixAffine2d
 	{
 		Matrix2x2<R> linear{};
@@ -544,6 +554,17 @@ namespace DeepLearning
 			const auto linear_inverse = linear.inverse();
 
 			return { linear_inverse, -linear_inverse * translation };
+		}
+
+		/// <summary>
+		/// Returns rigid motion transformation which represents a rotation around the given center on the given angle
+		/// </summary>
+		/// <param name="angle">Rotation angle in radians</param>
+		/// <param name="center">Center of the rotation</param>
+		static MatrixAffine2d<R> rotation(const R& angle, const Vector2d<Real>& center)
+		{
+			const auto rotation = Matrix2x2<Real>::rotation(angle);
+			return MatrixAffine2d<R>{rotation, center - rotation * center};
 		}
 	};
 
