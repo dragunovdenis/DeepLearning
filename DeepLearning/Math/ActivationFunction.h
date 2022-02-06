@@ -24,9 +24,11 @@ namespace DeepLearning
 	/// <summary>
 	/// Identifiers of different activation functions
 	/// </summary>
-	enum ActivationFunctionId: unsigned int {
+	enum class ActivationFunctionId: unsigned int {
 		UNKNOWN = 0,
-		SIGMOID = 1,
+		SIGMOID = 1, //Sigmoid activation function
+		TANH = 2, //Hyperbolic tangent activation function
+		RELU = 3, // rectified linear activation (unit)
 	};
 
 	/// <summary>

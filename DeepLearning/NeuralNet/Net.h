@@ -49,10 +49,14 @@ namespace DeepLearning
 		/// Constructor
 		/// </summary>
 		/// <param name="layer_dimensions">A collection of
-		/// nonnegative integers. Each par of consecutive elements in the collection defines input (left element) and
-		/// output (right element) dimensions of the corresponding neural layer. Thus the number of resulting neural
+		/// nonnegative integers. Each par of consecutive elements in the collection defines input (the left element) and
+		/// output (the right element) dimensions of the corresponding neural layer. Thus the number of resulting neural
 		/// layers is one less than the number of integers in the collection </param>
-		Net(const std::vector<std::size_t>& layer_dimensions, const ActivationFunctionId& activ_func_id = ActivationFunctionId::SIGMOID);
+		/// <param name="activ_func_ids">Collection of activation function identifiers indicating the type of
+		/// activation function to be used in each particular neural layer. The number of elements in this collection
+		/// must either be equal to the number of neural layers (i.e. one less than the number of elements in "layer_dimensions") of be equal to "0".
+		/// The latter case will be treated as if the collection was populated with SIGMOID identifiers.</param>
+		Net(const std::vector<std::size_t>& layer_dimensions, const std::vector<ActivationFunctionId>& activ_func_ids = std::vector<ActivationFunctionId>());
 
 		/// <summary>
 		/// Returns output of the neural network calculated for the given input

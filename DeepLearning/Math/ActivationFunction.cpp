@@ -39,11 +39,14 @@ namespace DeepLearning
 			break;
 		case ActivationFunctionId::SIGMOID: _func = DiffFunc::create([](const auto& x, const auto& param) { return Real(1) / (Real(1) + exp(-x)); });
 			break;
+		case ActivationFunctionId::TANH: _func = DiffFunc::create([](const auto& x, const auto& param) { return tanh(x); });
+			break;
+		case ActivationFunctionId::RELU: _func = DiffFunc::create([](const auto& x, const auto& param) { return  x < Real(0) ? Real(0) : x; });
+			break;
 		default: throw std::exception("Unexpected activation function ID.");
 			break;
 		}
 	}
-
 
 	DenseVector ActivationFuncion::operator ()(const DenseVector& input) const
 	{

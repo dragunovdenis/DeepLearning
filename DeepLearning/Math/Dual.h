@@ -17,6 +17,8 @@
 
 #pragma once
 #include <array>
+#include <cmath>
+#include <algorithm>
 
 namespace DeepLearning
 {
@@ -250,6 +252,18 @@ namespace DeepLearning
 			return arg;
 		}
 
+		///<summary>
+		/// Hyperbolic tangent function
+		/// </summary>
+		friend dual<R, Dim> tanh(dual<R, Dim> arg)
+		{
+			const auto temp = R(1) / cosh(arg.x);
+			arg.scale_dual_part(temp * temp);
+			arg.x = tanh(arg.x);
+
+			return arg;
+		}
+
 		/// <summary>
 		/// Square root function
 		/// </summary>
@@ -260,6 +274,40 @@ namespace DeepLearning
 
 			return arg;
 		}
+
+		/// <summary>
+		/// "Less than" operator
+		/// </summary>
+		bool operator <(const dual<R, Dim>& arg) const
+		{
+			return x < arg.x;
+		}
+
+		/// <summary>
+		/// "Less or equal" operator
+		/// </summary>
+		bool operator <=(const dual<R, Dim>& arg) const
+		{
+			return x <= arg.x;
+		}
+
+		/// <summary>
+		/// "Greater than" operator
+		/// </summary>
+		bool operator >(const dual<R, Dim>& arg) const
+		{
+			return !(*this <= arg.x);
+		}
+
+		/// <summary>
+		/// "Greater or equal" operator
+		/// </summary>
+		bool operator >=(const dual<R, Dim>& arg) const
+		{
+			return !(*this < arg.x);
+		}
+	};
+}
 
 namespace std
 {

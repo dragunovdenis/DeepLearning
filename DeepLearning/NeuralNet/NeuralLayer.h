@@ -76,7 +76,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Activation function id, use "unsigned int" instead of the enum in order to make msgpack happy
 		/// </summary>
-		unsigned int _func_id = ActivationFunctionId::UNKNOWN;
+		unsigned int _func_id = static_cast<unsigned int>(ActivationFunctionId::UNKNOWN);
 
 	public:
 

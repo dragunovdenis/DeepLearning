@@ -64,7 +64,8 @@ namespace DeepLearningTest
 		/// <param name="expected_min_percentage_test_set">Expected minimal percentage of correct answers of the test data after the training.
 		/// Can take values from (0, 1).</param>
 		static Real RunMnistBasedTrainingTest(const CostFunctionId cost_func_id, const Real& learning_rate,
-			const Real& expected_min_percentage_test_set, const bool run_long_test, const Real& lambda = Real(0))
+			const Real& expected_min_percentage_test_set, const bool run_long_test, const Real& lambda = Real(0),
+			const std::vector<ActivationFunctionId>& activ_func_ids = std::vector<ActivationFunctionId>())
 		{
 			//Arrange
 			const auto training_images_count = 60000;
@@ -79,7 +80,7 @@ namespace DeepLearningTest
 				"TestData\\MNIST\\t10k-labels.idx1-ubyte",
 				test_images_count);
 
-			auto net = Net({ 784, (run_long_test ? 100ull : 30ull), 10 });
+			auto net = Net({ 784, (run_long_test ? 100ull : 30ull), 10 }, activ_func_ids);
 			const auto batch_size = 10;
 			const auto long_test = true;
 			const auto epochs_count = run_long_test ? 30 : 6;
@@ -106,13 +107,13 @@ namespace DeepLearningTest
 		TEST_METHOD(TrainingWithQuadraticCostTest)
 		{
 			const bool long_test = false;
-			RunMnistBasedTrainingTest(CostFunctionId::SQUARED_ERROR, Real(3.0), long_test ? Real(0.97) : Real(0.95), long_test);
+			RunMnistBasedTrainingTest(CostFunctionId::SQUARED_ERROR, Real(2.0), long_test ? Real(0.97) : Real(0.95), long_test);
 		}
 
 		TEST_METHOD(TrainingWithQuadraticCostRegularizedTest)
 		{
 			const bool long_test = false;
-			RunMnistBasedTrainingTest(CostFunctionId::SQUARED_ERROR, Real(3.0), long_test ? Real(0.97) : Real(0.94), long_test, Real(1.0));
+			RunMnistBasedTrainingTest(CostFunctionId::SQUARED_ERROR, Real(2.0), long_test ? Real(0.97) : Real(0.95), long_test, Real(1.0));
 		}
 
 		TEST_METHOD(TrainingWithCrossEntropyCostTest)
@@ -131,6 +132,20 @@ namespace DeepLearningTest
 
 			Logger::WriteMessage((std::string("Average accuracy = ") +
 				std::to_string(average_accuracy/trials_count)).c_str());
+		}
+
+		TEST_METHOD(TrainingWithCrossEntropyCostAndTanhActivationTest)
+		{
+			const bool long_test = false;
+			RunMnistBasedTrainingTest(CostFunctionId::CROSS_ENTROPY, Real(0.1), long_test ? Real(0.97) : Real(0.946), long_test, Real(0),
+				{ActivationFunctionId::TANH, ActivationFunctionId::SIGMOID});
+		}
+
+		TEST_METHOD(TrainingWithCrossEntropyCostAndReluActivationTest)
+		{
+			const bool long_test = false;
+			RunMnistBasedTrainingTest(CostFunctionId::CROSS_ENTROPY, Real(0.1), long_test ? Real(0.97) : Real(0.95), long_test, Real(0),
+				{ ActivationFunctionId::RELU, ActivationFunctionId::SIGMOID });
 		}
 
 		TEST_METHOD(NetSerializationTest)

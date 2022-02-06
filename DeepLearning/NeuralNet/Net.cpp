@@ -27,10 +27,17 @@
 
 namespace DeepLearning
 {
-	Net::Net(const std::vector<std::size_t>& layer_dimensions, const ActivationFunctionId& activ_func_id)
+	Net::Net(const std::vector<std::size_t>& layer_dimensions, const std::vector<ActivationFunctionId>& activ_func_ids)
 	{
-		if (layer_dimensions.size() <= 1)
+		const auto layers_count = layer_dimensions.size() - 1;
+		if (layers_count <= 0)
 			throw std::exception("Invalid collection of layer dimensions.");
+
+		//The situation when collection "activ_func_ids" is empty should be interpreted as each layer having SIGMOID as its activation function
+		const auto af_ids_local = activ_func_ids.empty() ? std::vector<ActivationFunctionId>(layers_count, ActivationFunctionId::SIGMOID) : activ_func_ids;
+
+		if (layers_count != af_ids_local.size())
+			throw std::exception("Invalid collection of activation function identifiers.");
 
 		static std::random_device rd;
 		static std::mt19937 gen(rd());
@@ -40,10 +47,10 @@ namespace DeepLearning
 			const auto in_dim = layer_dimensions[id - 1];
 			const auto out_dim = layer_dimensions[id];
 
-			std::normal_distribution<Real> dist{ 0, Real(1) / Real(std::sqrt(in_dim))};
+			std::normal_distribution<Real> dist{ 0, Real(1) / Real(std::sqrt(in_dim)) };
 
-			_layers.emplace_back(DenseMatrix(out_dim, in_dim,  [&]() {return dist(gen); }),
-				DenseVector(out_dim, Real(-1), Real(1)), activ_func_id);
+			_layers.emplace_back(DenseMatrix(out_dim, in_dim, [&]() {return dist(gen); }),
+				DenseVector(out_dim, Real(-1), Real(1)), af_ids_local[id - 1]);
 		}
 	}
 
