@@ -654,9 +654,14 @@ namespace DeepLearningTest
 			const auto radius_vect = vector - center;
 			const auto radius_vect_rotated = vector_rotated - center;
 			const auto actual_angle = std::acos(radius_vect.normalize().dot(radius_vect_rotated.normalize()));
-			Assert::IsTrue(std::abs(actual_angle - angle) < 10 * std::numeric_limits<Real>::epsilon(),
+			const auto angle_diff = std::abs(actual_angle - angle);
+			const auto radius_diff = std::abs(radius_vect.norm() - radius_vect_rotated.norm());
+			Logger::WriteMessage((std::string("angle_diff = ") + Utils::to_string(angle_diff) + "\n").c_str());
+			Logger::WriteMessage((std::string("radius_diff = ") + Utils::to_string(radius_diff) + "\n").c_str());
+
+			Assert::IsTrue(angle_diff < 10 * std::numeric_limits<Real>::epsilon(),
 				L"Too high difference between the actual and expected angles");
-			Assert::IsTrue(std::abs(radius_vect.norm() - radius_vect_rotated.norm()) < 10 * std::numeric_limits<Real>::epsilon(),
+			Assert::IsTrue(radius_diff < 10 * std::numeric_limits<Real>::epsilon(),
 				L"Distance to the rotation center should not change");
 		}
 	};

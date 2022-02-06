@@ -165,6 +165,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ActivationFuncTest.cpp" />
+    <ClCompile Include="AutomaticDifferentiationTest.cpp" />
     <ClCompile Include="CostFunctionTest.cpp" />
     <ClCompile Include="ImageProcessingTest.cpp" />
     <ClCompile Include="LinAlg2dTest.cpp" />

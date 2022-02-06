@@ -22,7 +22,10 @@
 
 namespace DeepLearning
 {
-
+	/// <summary>
+	/// A functionality that allows calculating derivatives via the "automatic differentiation"
+	/// approach in its " forward accumulation" version (see https://en.wikipedia.org/wiki/Automatic_differentiation for more detail)
+	/// </summary>
 	template<class R, int Dim = 1>
 	class dual
 	{
