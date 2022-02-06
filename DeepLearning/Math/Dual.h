@@ -260,5 +260,38 @@ namespace DeepLearning
 
 			return arg;
 		}
+
+namespace std
+{
+	/// <summary>
+	/// Returns true if the given dual number has infinite components
+	/// </summary>
+	template<class R, int Dim>
+	bool isinf(const DeepLearning::dual<R, Dim>& val)
+	{
+		return std::isinf(val.Real()) || std::any_of(val.Dual().begin(), val.Dual().end(), [](const auto& x) { return std::isinf(x); });
+	}
+
+	 //<summary>
+	 //Returns true if the given dual number has "not a number" components
+	 //</summary>
+	template<class R, int Dim>
+	bool isnan(const DeepLearning::dual<R, Dim>& val)
+	{
+		return std::isnan(val.Real()) || std::any_of(val.Dual().begin(), val.Dual().end(), [](const auto& x) { return std::isnan(x); });
+	}
+
+	//Definitions of the "numeric limits" properties for the "dual' class
+	template<class R, int Dim>
+	class numeric_limits<DeepLearning::dual<R, Dim>>
+	{
+	public:
+		/// <summary>
+		/// Return "max" value for the current "dual" type
+		/// </summary>
+		static DeepLearning::dual<R, Dim> max()
+		{
+			return DeepLearning::dual<R, Dim>(std::numeric_limits<R>::max());
+		}
 	};
 }

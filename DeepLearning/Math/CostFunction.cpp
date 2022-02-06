@@ -19,6 +19,7 @@
 #include "DenseVector.h"
 #include <exception>
 #include <numeric>
+#include "../Utilities.h"
 
 namespace DeepLearning
 {
@@ -39,12 +40,12 @@ namespace DeepLearning
 			[](const auto& x, const auto& ref)
 			{
 				if (ref == Real(0))
-					return -(Real(1) - ref) * log(Real(1) - x);
+					return Utils::nan_to_num(-(Real(1) - ref) * log(Real(1) - x));
 
 				if (ref == Real(1))
-					return -ref * log(x);
+					return Utils::nan_to_num(-ref * log(x));
 
-				return -(ref*log(x) + (Real(1) - ref)*log(Real(1) - x));
+				return Utils::nan_to_num(-(ref*log(x) + (Real(1) - ref)*log(Real(1) - x)));
 			});
 			break;
 		default: throw std::exception("Unexpected cost function ID.");

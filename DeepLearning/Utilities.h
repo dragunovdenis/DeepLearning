@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <ios>
 #include "defs.h"
+#include <cmath>
 
 namespace DeepLearning::Utils
 {
@@ -59,12 +60,30 @@ namespace DeepLearning::Utils
     /// <summary>
     /// Converts given value to string with the given number of digits
     /// </summary>
-    template <typename T>
-    std::string to_string(const T a_value, const int n = std::numeric_limits<T>::digits10)
+    template <typename R>
+    std::string to_string(const R a_value, const int n = std::numeric_limits<R>::digits10)
     {
         std::ostringstream out;
         out.precision(n);
         out << std::fixed << a_value;
         return out.str();
+    }
+
+    /// <summary>
+    /// An analogous of the Python's nan_to_num() function
+    /// </summary>
+    template <class R>
+    R nan_to_num(const R& val) {
+        if (std::isinf(val)) {
+            if (val < R(0))
+                return -std::numeric_limits<R>::max();
+            else
+                return std::numeric_limits<R>::max();
+        }
+        else if (std::isnan(val)) {
+            return R(0);
+        }
+
+        return val;
     }
 }
