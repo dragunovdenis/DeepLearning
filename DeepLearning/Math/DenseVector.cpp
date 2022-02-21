@@ -22,40 +22,106 @@
 #include <time.h>
 #include <algorithm>
 #include <numeric>
+#include "../IndexIterator.h"
 
 namespace DeepLearning
 {
-	DenseVector::DenseVector(const std::size_t dim)
+	DenseVector::DenseVector(const DenseVector& vec)
+		: DenseVector(vec.dim(), false)
 	{
-		_data.resize(dim, Real(0));
+		std::copy(vec.begin(), vec.end(), begin());
+	}
+
+	DenseVector& DenseVector::operator=(const DenseVector& vec)
+	{
+		assign(vec);
+		return *this;
+	}
+
+	DenseVector::DenseVector(DenseVector&& vec) noexcept : _dim(vec._dim), _data(vec._data)
+	{
+		vec._data = nullptr;
+		vec._dim = 0;
+	}
+
+	DenseVector::DenseVector(const std::size_t dim, const bool assign_zero) : _dim(dim)
+	{
+		_data = reinterpret_cast<Real*>(std::malloc(dim * sizeof(Real)));
+
+		if (assign_zero)
+			std::fill(begin(), end(), Real(0));
 	}
 
 	template <class T>
 	DenseVector::DenseVector(const std::vector<T>& source)
+		: DenseVector(source.size(), false)
 	{
-		_data = std::vector<Real>(source.begin(), source.end());
+		std::copy(source.begin(), source.end(), begin());
 	}
 
 	DenseVector::DenseVector(const std::size_t dim, const Real range_begin, const Real range_end)
-		: DenseVector(dim)
+		: DenseVector(dim, false)
 	{
 		Utils::fill_with_random_values(begin(), end(), range_begin, range_end);
 	}
 
 	DenseVector::DenseVector(const std::size_t dim, const std::function<Real()>& generator)
-		: DenseVector(dim)
+		: DenseVector(dim, false)
 	{
 		std::generate(begin(), end(), generator);
 	}
 
+	DenseVector::~DenseVector()
+	{
+		free();
+	}
+
+	/// <summary>
+	/// Frees the allocated memory
+	/// </summary>
+	void DenseVector::free()
+	{
+		if (_data != nullptr)
+		{
+			delete[] _data;
+			_data = nullptr;
+		}
+		_dim = 0;
+	}
+
+	std::vector<Real> DenseVector::ToStdVector() const
+	{
+		return std::vector<Real>(begin(), end());
+	}
+
+	template <class S>
+	void DenseVector::assign(const S& source)
+	{
+		if (size() != source.size())
+		{
+			free();
+			_dim = source.size();
+			_data = reinterpret_cast<Real*>(std::malloc(_dim * sizeof(Real)));
+		}
+		std::copy(source.begin(), source.end(), begin());
+	}
+
+	template void DenseVector::assign(const std::vector<Real>& source);
+	template void DenseVector::assign(const DenseVector& source);
+
 	bool DenseVector::check_bounds(const ::std::size_t id) const
 	{
-		return id < _data.size();
+		return id < _dim;
 	}
 
 	std::size_t DenseVector::dim() const
 	{
-		return _data.size();
+		return _dim;
+	}
+
+	std::size_t DenseVector::size() const
+	{
+		return _dim;
 	}
 
 	Real& DenseVector::operator ()(const std::size_t id)
@@ -80,7 +146,8 @@ namespace DeepLearning
 
 	bool DenseVector::operator ==(const DenseVector& vect) const
 	{
-		return _data == vect._data;
+		return _dim == vect._dim && std::all_of(IndexIterator(0), IndexIterator(static_cast<int>(_dim)),
+			[&](const auto& index) { return _data[index] == vect._data[index]; });
 	}
 
 	bool DenseVector::operator !=(const DenseVector& vect) const
@@ -88,24 +155,24 @@ namespace DeepLearning
 		return !(*this == vect);
 	}
 
-	std::vector<Real>::iterator DenseVector::begin()
+	Real* DenseVector::begin()
 	{
-		return _data.begin();
+		return _data;
 	}
 
-	std::vector<Real>::const_iterator DenseVector::begin() const
+	const Real* DenseVector::begin() const
 	{
-		return _data.begin();
+		return _data;
 	}
 
-	std::vector<Real>::iterator DenseVector::end()
+	Real* DenseVector::end()
 	{
-		return _data.end();
+		return _data + _dim;
 	}
 
-	std::vector<Real>::const_iterator DenseVector::end() const
+	const Real* DenseVector::end() const
 	{
-		return _data.end();
+		return _data + _dim;
 	}
 
 	static DenseVector random(const std::size_t dim, const Real range_begin, const Real range_end)

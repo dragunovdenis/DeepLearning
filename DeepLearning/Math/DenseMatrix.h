@@ -34,7 +34,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Elements of the matrix in a "flattened" form
 		/// </summary>
-		std::vector<Real> _data{};
+		Real* _data{};
 
 		/// <summary>
 		/// Matrix dimensions
@@ -60,9 +60,27 @@ namespace DeepLearning
 		/// <param name="col_id">Column index</param>
 		std::size_t row_col_to_data_id(const std::size_t row_id, const std::size_t col_id) const;
 
+		/// <summary>
+		/// Method to free the data array
+		/// </summary>
+		void free();
+
 	public:
 
-		MSGPACK_DEFINE(_row_dim, _col_dim, _data);
+		template <typename Packer>
+		void msgpack_pack(Packer& msgpack_pk) const
+		{
+			const auto proxy = std::vector<Real>(begin(), end());
+			msgpack::type::make_define_array(_row_dim, _col_dim, proxy).msgpack_pack(msgpack_pk);
+		}
+
+		void msgpack_unpack(msgpack::object const& msgpack_o)
+		{
+			std::vector<Real> proxy;
+			msgpack::type::make_define_array(_row_dim, _col_dim, proxy).msgpack_unpack(msgpack_o);
+			_data = reinterpret_cast<Real*>(std::malloc(size() * sizeof(Real)));
+			std::copy(proxy.begin(), proxy.end(), begin());
+		}
 
 		/// <summary>
 		/// Column dimension getter
@@ -82,7 +100,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Constructs a dense matrix of the given dimensions
 		/// </summary>
-		DenseMatrix(const std::size_t row_dim, const std::size_t col_dim);
+		DenseMatrix(const std::size_t row_dim, const std::size_t col_dim, const bool assign_zero = true);
 
 		/// <summary>
 		/// Constructs a dense matrix of the given dimensions filled according to the given generator function
@@ -95,6 +113,26 @@ namespace DeepLearning
 		/// </summary>
 		DenseMatrix(const std::size_t row_dim, const std::size_t col_dim,
 			const Real range_begin, const Real range_end);
+
+		/// <summary>
+		/// Copy constructor
+		/// </summary>
+		DenseMatrix(const DenseMatrix& matr);
+
+		/// <summary>
+		/// Assignment operator
+		/// </summary>
+		DenseMatrix& operator =(const DenseMatrix& matr);
+
+		/// <summary>
+		/// Move constructor
+		/// </summary>
+		DenseMatrix(DenseMatrix&& matr) noexcept;
+
+		/// <summary>
+		/// Destructor
+		/// </summary>
+		~DenseMatrix();
 
 		/// <summary>
 		/// Element access operator
@@ -143,22 +181,22 @@ namespace DeepLearning
 		/// <summary>
 		/// Iterator pointing to the first element of the vector
 		/// </summary>
-		std::vector<Real>::iterator begin();
+		Real* begin();
 
 		/// <summary>
 		/// Iterator pointing to the first element of the vector (constant version)
 		/// </summary>
-		std::vector<Real>::const_iterator begin() const;
+		const Real* begin() const;
 
 		/// <summary>
 		/// Iterator pointing to the "behind last" element of the vector
 		/// </summary>
-		std::vector<Real>::iterator end();
+		Real* end();
 
 		/// <summary>
 		/// Iterator pointing to the "behind last" element of the vector (constant version)
 		/// </summary>
-		std::vector<Real>::const_iterator end() const;
+		const Real* end() const;
 
 		/// <summary>
 		/// Generates a vector filled with uniformly distributed pseudo random values

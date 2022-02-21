@@ -29,16 +29,51 @@ namespace DeepLearning
 	/// </summary>
 	class DenseVector
 	{
-		std::vector<Real> _data{};
+		/// <summary>
+		/// Pointer to the data array
+		/// </summary>
+		Real* _data{};
+		/// <summary>
+		/// Number of elements in the vector
+		/// </summary>
+		std::size_t _dim{};
 
 		/// <summary>
 		/// Returns "true" if the given index is valid (within the boundaries of the underlying "data" collection)
 		/// </summary>
 		bool check_bounds(const ::std::size_t id) const;
 
+		/// <summary>
+		/// Frees the allocated memory
+		/// </summary>
+		void free();
+
+		/// <summary>
+		/// Assignment from another DenseVector
+		/// </summary>
+		template <class S>
+		void assign(const S& source);
+
+		/// <summary>
+		/// Size of the vector
+		/// </summary>
+		std::size_t size() const;
+
 	public:
 
-		MSGPACK_DEFINE(_data);
+		template <typename Packer> 
+		void msgpack_pack(Packer& msgpack_pk) const 
+		{ 
+			const auto proxy = ToStdVector();
+			msgpack::type::make_define_array(proxy).msgpack_pack(msgpack_pk);
+		} 
+
+		void msgpack_unpack(msgpack::object const& msgpack_o) 
+		{ 
+			std::vector<Real> proxy;
+			msgpack::type::make_define_array(proxy).msgpack_unpack(msgpack_o);
+			assign(proxy);
+		}
 
 		/// <summary>
 		/// Default constructor
@@ -46,9 +81,24 @@ namespace DeepLearning
 		DenseVector() = default;
 
 		/// <summary>
+		/// Copy constructor
+		/// </summary>
+		DenseVector(const DenseVector& vec);
+
+		/// <summary>
+		/// Move constructor
+		/// </summary>
+		DenseVector(DenseVector&& vec) noexcept;
+
+		/// <summary>
+		/// Copy assignment operator
+		/// </summary>
+		DenseVector& operator=(const DenseVector& vec);
+
+		/// <summary>
 		/// Constructs dense vector of the given dimension
 		/// </summary>
-		DenseVector(const std::size_t dim);
+		DenseVector(const std::size_t dim, const bool assign_zero = true);
 
 		/// <summary>
 		/// Constructor from given source vector
@@ -66,6 +116,17 @@ namespace DeepLearning
 		/// Constructs dense vector of the given dimension filled with the given generator function
 		/// </summary>
 		DenseVector(const std::size_t dim, const std::function<Real()>& generator);
+
+		/// <summary>
+		/// Destructor
+		/// </summary>
+		~DenseVector();
+
+		/// <summary>
+		/// Converter to std::vector
+		/// </summary>
+		/// <returns></returns>
+		std::vector<Real> ToStdVector() const;
 
 		/// <summary>
 		/// Returns dimension of the vector
@@ -112,24 +173,24 @@ namespace DeepLearning
 		bool operator !=(const DenseVector& vect) const;
 
 		/// <summary>
-		/// Iterator pointing to the first element of the vector
+		/// Pointer to the first element of the vector
 		/// </summary>
-		std::vector<Real>::iterator begin();
+		Real* begin();
 
 		/// <summary>
-		/// Iterator pointing to the first element of the vector (constant version)
+		/// Pointer to the first element of the vector (constant version)
 		/// </summary>
-		std::vector<Real>::const_iterator begin() const;
+		const Real* begin() const;
 
 		/// <summary>
-		/// Iterator pointing to the "behind last" element of the vector
+		/// Pointer to the "behind last" element of the vector
 		/// </summary>
-		std::vector<Real>::iterator end();
+		Real* end();
 
 		/// <summary>
-		/// Iterator pointing to the "behind last" element of the vector (constant version)
+		/// Pointer to the "behind last" element of the vector (constant version)
 		/// </summary>
-		std::vector<Real>::const_iterator end() const;
+		const Real* end() const;
 
 		/// <summary>
 		/// Generates a vector filled with uniformly distributed pseudo random values

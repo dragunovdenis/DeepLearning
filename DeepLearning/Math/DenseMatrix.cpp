@@ -24,6 +24,7 @@
 #include <cstddef>
 #include <algorithm>
 #include "AvxAcceleration.h"
+#include "../IndexIterator.h"
 
 #define USE_AVX2 //to use AVX2 instructions below
 
@@ -88,21 +89,71 @@ namespace DeepLearning
 		return row_id < _row_dim && col_id < _col_dim;
 	}
 
-	DenseMatrix::DenseMatrix(const std::size_t row_dim, const std::size_t col_dim):_row_dim(row_dim), _col_dim(col_dim)
+	DenseMatrix::DenseMatrix(const std::size_t row_dim, const std::size_t col_dim, const bool assign_zero)
+		:_row_dim(row_dim), _col_dim(col_dim)
 	{
-		_data.resize(size(), Real(0));
+		_data = reinterpret_cast<Real*>(std::malloc(size() * sizeof(Real)));
+
+		if (assign_zero)
+			std::fill(begin(), end(), Real(0));
 	}
 
 	DenseMatrix::DenseMatrix(const std::size_t row_dim, const std::size_t col_dim,
-		const std::function<Real()>& generator) : DenseMatrix(row_dim, col_dim)
+		const std::function<Real()>& generator) : DenseMatrix(row_dim, col_dim, false)
 	{
 		std::generate(begin(), end(), generator);
 	}
 
 	DenseMatrix::DenseMatrix(const std::size_t row_dim, const std::size_t col_dim,
-		const Real range_begin, const Real range_end) : DenseMatrix(row_dim, col_dim)
+		const Real range_begin, const Real range_end) : DenseMatrix(row_dim, col_dim, false)
 	{
 		Utils::fill_with_random_values(begin(), end(), range_begin, range_end);
+	}
+
+	DenseMatrix::DenseMatrix(const DenseMatrix& matr) : DenseMatrix(matr.row_dim(), matr.col_dim(), false)
+	{
+		std::copy(matr.begin(), matr.end(), begin());
+	}
+
+	DenseMatrix& DenseMatrix::operator =(const DenseMatrix& matr)
+	{
+		if (size() != matr.size())
+		{
+			free();
+			_data = reinterpret_cast<Real*>(std::malloc(matr.size() * sizeof(Real)));
+		}
+
+		_col_dim = matr.col_dim();
+		_row_dim = matr.row_dim();
+
+		std::copy(matr.begin(), matr.end(), begin());
+
+		return *this;
+	}
+
+	DenseMatrix::DenseMatrix(DenseMatrix&& matr) noexcept 
+		: _col_dim(matr._col_dim), _row_dim(matr._row_dim), _data(matr._data)
+	{
+		matr._data = nullptr;
+		matr._col_dim = 0;
+		matr._row_dim = 0;
+	}
+
+	void DenseMatrix::free()
+	{
+		if (_data != nullptr)
+		{
+			delete[] _data;
+			_data = nullptr;
+		}
+
+		_col_dim = 0;
+		_row_dim = 0;
+	}
+
+	DenseMatrix::~DenseMatrix()
+	{
+		free();
 	}
 
 	std::size_t DenseMatrix::row_col_to_data_id(const std::size_t row_id, const std::size_t col_id) const
@@ -140,7 +191,7 @@ namespace DeepLearning
 		for (std::size_t row_id = 0; row_id < matr._row_dim; row_id++)
 		{
 #ifdef USE_AVX2
-			const auto begin_row_ptr = matr._data.data() + row_id * matr._col_dim;
+			const auto begin_row_ptr = matr._data + row_id * matr._col_dim;
 			result(row_id) = Avx::mm256_dot_product(begin_row_ptr, &*vec.begin(), vec.dim());
 #else
 			const auto row_begin = matr._data.begin() + row_id * matr._col_dim;
@@ -162,7 +213,7 @@ namespace DeepLearning
 		for (std::size_t row_id = 0; row_id < row_dim(); row_id++)
 		{
 #ifdef USE_AVX2
-			const auto begin_row_ptr = _data.data() + row_id * _col_dim;
+			const auto begin_row_ptr = _data + row_id * _col_dim;
 			result(row_id) = Avx::mm256_dot_product(begin_row_ptr, &*mul_vec.begin(), _col_dim) + add_vec(row_id);
 #else
 			const auto row_begin = _data.begin() + row_id * col_dim();
@@ -197,7 +248,8 @@ namespace DeepLearning
 	{
 		return _row_dim == matr._row_dim &&
 			   _col_dim == matr._col_dim &&
-		       _data == matr._data;
+			std::all_of(IndexIterator(0), IndexIterator(static_cast<int>(size())),
+				[&](const auto id) { return _data[id] == matr._data[id]; });
 	}
 
 	bool DenseMatrix::operator !=(const DenseMatrix& matr) const
@@ -205,24 +257,24 @@ namespace DeepLearning
 		return !(*this == matr);
 	}
 
-	std::vector<Real>::iterator DenseMatrix::begin()
+	Real* DenseMatrix::begin()
 	{
-		return _data.begin();
+		return _data;
 	}
 
-	std::vector<Real>::const_iterator DenseMatrix::begin() const
+	const Real* DenseMatrix::begin() const
 	{
-		return _data.begin();
+		return _data;
 	}
 
-	std::vector<Real>::iterator DenseMatrix::end()
+	Real* DenseMatrix::end()
 	{
-		return _data.end();
+		return _data + size();
 	}
 
-	std::vector<Real>::const_iterator DenseMatrix::end() const
+	const Real* DenseMatrix::end() const
 	{
-		return _data.end();
+		return _data + size();
 	}
 
 	static inline DenseMatrix random(const std::size_t row_dim, const std::size_t col_dim, const Real range_begin, const Real range_end)

@@ -119,7 +119,7 @@ namespace DeepLearningTest
 			RunOneVariableDifferentiationTest(
 				[](const auto& x) {
 					return exp(x * x - 1) + 2;
-				}, arg, Real(2e-10));
+				}, arg, Real(4e-10));
 		}
 
 		TEST_METHOD(SingleVarSquareRootFunctionsTest)
