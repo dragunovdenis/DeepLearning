@@ -29,7 +29,136 @@ namespace DeepLearningTest
 	TEST_CLASS(MatrixVectorAlgebraTest)
 	{
 	public:
-		
+
+		TEST_METHOD(VectorCopyConstructorTest)
+		{
+			//Arrange
+			const auto dim = 10;
+			const auto vector = DenseVector(dim, -1, 1);
+
+			//Act
+			const auto vector_copy = DenseVector(vector);
+
+			//Assert
+			Assert::IsTrue(vector == vector_copy, L"Vectors are not the same");
+			Assert::IsTrue(vector.begin() != vector_copy.begin(), L"Vectors share the same memory");
+		}
+
+		TEST_METHOD(VectorCopyAssignmentOperatorTest)
+		{
+			//Arrange
+			const auto dim = 10;
+			const auto dim1 = 13;
+			auto vec_to_assign = DenseVector(dim, -1, 1);
+			const auto ptr_before_assignment = vec_to_assign.begin();
+
+			auto vec_to_assign1 = DenseVector(dim, -1, 1);
+			const auto ptr_before_assignment1 = vec_to_assign1.begin();
+
+			const auto vec_to_copy = DenseVector(dim, -1, 1);
+			const auto vec_to_copy1 = DenseVector(dim1, -1, 1);
+
+			Assert::IsTrue(vec_to_assign != vec_to_copy && vec_to_assign != vec_to_copy1,
+				L"Vectors are supposed to be different");
+
+			//Act
+			vec_to_assign = vec_to_copy;//Assign vector of the same size
+			vec_to_assign1 = vec_to_copy1;//Assign vector of different size
+
+			//Assert
+			Assert::IsTrue(vec_to_assign == vec_to_copy, L"Copying failed (same size)");
+			Assert::IsTrue(ptr_before_assignment == vec_to_assign.begin(), L"Memory was re-allocated when copying vector of the same size");
+
+			Assert::IsTrue(vec_to_assign1 == vec_to_copy1, L"Copying failed (different sizes)");
+			Assert::IsTrue(vec_to_assign1.begin() != vec_to_copy1.begin(), L"Vectors share the same memory");
+		}
+
+		TEST_METHOD(VectorMoveConstructorTest)
+		{
+			//Arrange
+			const auto dim = 10;
+			auto vector_to_move = DenseVector(dim, -1, 1);
+			const auto begin_pointer_before_move = vector_to_move.begin();
+			const auto end_pointer_before_move = vector_to_move.end();
+
+			//Act
+			const DenseVector vector(std::move(vector_to_move));
+
+			//Assert
+			Assert::IsTrue(begin_pointer_before_move == vector.begin()
+				&& end_pointer_before_move == vector.end(), L"Move operator does not work as expected");
+
+			Assert::IsTrue(vector_to_move.begin() == nullptr && vector_to_move.dim() == 0,
+				L"Unexpected state for a vector after being moved");
+		}
+
+		TEST_METHOD(MatrixCopyConstructorTest)
+		{
+			//Arrange
+			const auto row_dim = 10;
+			const auto col_dim = 13;
+			const auto matrix = DenseMatrix(row_dim, col_dim, -1, 1);
+
+			//Act
+			const auto matrix_copy = DenseMatrix(matrix);
+
+			//Assert
+			Assert::IsTrue(matrix == matrix_copy, L"Matrices are not the same");
+			Assert::IsTrue(matrix.begin() != matrix_copy.begin(), L"Matrices share the same memory");
+		}
+
+		TEST_METHOD(MatrixCopyAssignmentOperatorTest)
+		{
+			//Arrange
+			const auto row_dim = 10;
+			const auto col_dim = 13;
+			const auto row_dim1 = 20;
+			const auto col_dim1 = 23;
+			auto matr_to_assign = DenseMatrix(row_dim, col_dim, -1, 1);
+			const auto ptr_before_assignment = matr_to_assign.begin();
+
+			auto matr_to_assign1 = DenseMatrix(row_dim, col_dim, -1, 1);
+			const auto ptr_before_assignment1 = matr_to_assign1.begin();
+
+			const auto matr_to_copy = DenseMatrix(col_dim, row_dim, -1, 1);
+			const auto matr_to_copy1 = DenseMatrix(row_dim1, col_dim1, -1, 1);
+
+			Assert::IsTrue(matr_to_assign != matr_to_copy && matr_to_assign != matr_to_copy1,
+				L"Matrices are supposed to be different");
+
+			//Act
+			matr_to_assign = matr_to_copy;//Assign matrix of the same size
+			matr_to_assign1 = matr_to_copy1;//Assign matrix of different size
+
+			//Assert
+			Assert::IsTrue(matr_to_assign == matr_to_copy, L"Copying failed (same size)");
+			Assert::IsTrue(ptr_before_assignment == matr_to_assign.begin(), L"Memory was re-allocated when copying matrix of the same size");
+
+			Assert::IsTrue(matr_to_assign1 == matr_to_copy1, L"Copying failed (different sizes)");
+			Assert::IsTrue(matr_to_assign1.begin() != matr_to_copy1.begin(), L"Matrices share the same memory");
+		}
+
+		TEST_METHOD(MatrixMoveConstructorTest)
+		{
+			//Arrange
+			const auto row_dim = 10;
+			const auto col_dim = 13;
+			auto matrix_to_move = DenseMatrix(row_dim, col_dim, -1, 1);
+			const auto begin_pointer_before_move = matrix_to_move.begin();
+			const auto end_pointer_before_move = matrix_to_move.end();
+
+			//Act
+			const DenseMatrix matrix(std::move(matrix_to_move));
+
+			//Assert
+			Assert::IsTrue(begin_pointer_before_move == matrix.begin()
+				&& end_pointer_before_move == matrix.end(), L"Move operator does not work as expected");
+
+			Assert::IsTrue(matrix_to_move.begin() == nullptr &&
+				matrix_to_move.row_dim() == 0 && matrix_to_move.col_dim() == 0,
+				L"Unexpected state for a matrix after being moved");
+		}
+
 		TEST_METHOD(MatrixVectorMultiplicationTest)
 		{
 			//Arrange

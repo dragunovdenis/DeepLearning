@@ -179,22 +179,22 @@ namespace DeepLearning
 		bool operator !=(const DenseMatrix& matr) const;
 
 		/// <summary>
-		/// Iterator pointing to the first element of the vector
+		/// Pointer to the first element of the vector
 		/// </summary>
 		Real* begin();
 
 		/// <summary>
-		/// Iterator pointing to the first element of the vector (constant version)
+		/// Pointer to the first element of the vector (constant version)
 		/// </summary>
 		const Real* begin() const;
 
 		/// <summary>
-		/// Iterator pointing to the "behind last" element of the vector
+		/// Pointer to the "behind last" element of the vector
 		/// </summary>
 		Real* end();
 
 		/// <summary>
-		/// Iterator pointing to the "behind last" element of the vector (constant version)
+		/// Pointer to the "behind last" element of the vector (constant version)
 		/// </summary>
 		const Real* end() const;
 
