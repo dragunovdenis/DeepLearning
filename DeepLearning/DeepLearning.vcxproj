@@ -165,8 +165,10 @@
     <ClInclude Include="IndexIterator.h" />
     <ClInclude Include="Math\ActivationFunction.h" />
     <ClInclude Include="Math\AvxAcceleration.h" />
+    <ClInclude Include="Math\BasicCollection.h" />
     <ClInclude Include="Math\CostFunction.h" />
     <ClInclude Include="Math\DenseMatrix.h" />
+    <ClInclude Include="Math\DenseTensor.h" />
     <ClInclude Include="Math\DenseVector.h" />
     <ClInclude Include="Math\Dual.h" />
     <ClInclude Include="Math\DiffFunc.h" />
@@ -184,8 +186,10 @@
     <ClCompile Include="ImageProcessing\ImageUtils.cpp" />
     <ClCompile Include="Math\ActivationFunction.cpp" />
     <ClCompile Include="Math\AvxAcceleration.cpp" />
+    <ClCompile Include="Math\BasicCollection.cpp" />
     <ClCompile Include="Math\CostFunction.cpp" />
     <ClCompile Include="Math\DenseMatrix.cpp" />
+    <ClCompile Include="Math\DenseTensor.cpp" />
     <ClCompile Include="Math\DenseVector.cpp" />
     <ClCompile Include="Math\DiffFunc.cpp" />
     <ClCompile Include="MnistDataUtils.cpp" />

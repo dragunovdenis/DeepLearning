@@ -188,7 +188,7 @@ namespace DeepLearning
 		if (vec.dim() != dim())
 			throw std::exception("Operands must be of the same dimension");
 
-		std::transform(begin(), end(), vec.begin(), begin(), [](const auto& x, const auto& y) { return x + y; });
+		add(vec);
 		return *this;
 	}
 
@@ -197,13 +197,13 @@ namespace DeepLearning
 		if (vec.dim() != dim())
 			throw std::exception("Operands must be of the same dimension");
 
-		std::transform(begin(), end(), vec.begin(), begin(), [](const auto& x, const auto& y) { return x - y; });
+		sub(vec);
 		return *this;
 	}
 
 	DenseVector& DenseVector::operator *= (const Real& scalar)
 	{
-		std::transform(begin(), end(), begin(), [scalar](const auto& x) { return x * scalar; });
+		mul(scalar);
 		return *this;
 	}
 
@@ -230,27 +230,12 @@ namespace DeepLearning
 		return vec * scalar;
 	}
 
-	Real DenseVector::max_abs() const
-	{
-		return std::abs(*std::max_element(begin(), end(), [](const auto& x, const auto& y) { return std::abs(x) < std::abs(y); }));
-	}
 
 	std::size_t DenseVector::max_element_id(const std::function<bool(Real, Real)>& comparer) const
 	{
 		const auto id = std::max_element(begin(), end(), comparer) - begin();
 		return static_cast<std::size_t>(id);
 	}
-
-	Real DenseVector::sum(const std::function<Real(Real)>& transform_operator) const
-	{
-		return std::accumulate(begin(), end(), Real(0), [&transform_operator](const auto& sum, const auto& x) { return sum + transform_operator(x); });
-	}
-
-	void DenseVector::fill(const Real& val)
-	{
-		std::fill(begin(), end(), val);
-	}
-
 	DenseVector DenseVector::hadamard_prod(const DenseVector& vec) const
 	{
 		DenseVector result(dim());

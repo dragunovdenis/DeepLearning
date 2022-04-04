@@ -173,6 +173,7 @@
     <ClCompile Include="MnistDataUtilsTest.cpp" />
     <ClCompile Include="NetTest.cpp" />
     <ClCompile Include="NeuralLayerTest.cpp" />
+    <ClCompile Include="TensorTest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DeepLearning\DeepLearning.vcxproj">
@@ -193,6 +194,9 @@
     <None Include="TestData\MNIST\train-labels.idx1-ubyte">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="StandardTestUtils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -21,13 +21,14 @@
 #include "../defs.h"
 #include <msgpack.hpp>
 #include <functional>
+#include "BasicCollection.h"
 
 namespace DeepLearning
 {
 	/// <summary>
 	/// Represents a dense vector of arbitrary dimension
 	/// </summary>
-	class DenseVector
+	class DenseVector : public BasicCollection
 	{
 		/// <summary>
 		/// Pointer to the data array
@@ -53,6 +54,8 @@ namespace DeepLearning
 		/// </summary>
 		template <class S>
 		void assign(const S& source);
+
+	protected:
 
 		/// <summary>
 		/// Size of the vector
@@ -197,27 +200,12 @@ namespace DeepLearning
 		/// </summary>
 		static DenseVector random(const std::size_t dim, const Real range_begin, const Real range_end);
 
-		/// <summary>
-		/// "Maximal absolute value" norm ("infinity" norm)
-		/// </summary>
-		Real max_abs() const;
 
 		/// <summary>
 		/// Returns index of the "maximal element" defined by the given comparer
 		/// or "1" if the vector contains zero elements
 		/// </summary>
 		std::size_t max_element_id(const std::function<bool(Real, Real)>&comparer = [](const auto& a, const auto& b) {return a < b; }) const;
-
-		/// <summary>
-		/// Returns sum of all the elements of the vector transformed with the given operator
-		/// </summary>
-		Real sum(const std::function<Real(Real)>& transform_operator = [](const auto& x) {return x; }) const;
-
-		/// <summary>
-		/// Assigns the given value to all the elements of the vector
-		/// </summary>
-		void fill(const Real & val);
-
 		/// <summary>
 		/// Returns Hadamard (element-wise) product of the current vector with the input
 		/// </summary>

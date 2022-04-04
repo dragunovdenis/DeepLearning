@@ -115,7 +115,7 @@ namespace DeepLearningTest
 					//Now do the same using the back-propagation approach
 					const auto diff = std::abs(deriv_numeric - wight_grad(row_id, col_id));
 					Logger::WriteMessage((std::string("Difference = ") + Utils::to_string(diff) + '\n').c_str());
-					Assert::IsTrue(diff <= (std::is_same_v<Real, double> ? Real(5e-10) : Real(3e-3)), L"Unexpectedly high deviation!");
+					Assert::IsTrue(diff <= (std::is_same_v<Real, double> ? Real(5e-10) : Real(3e-3)), L"Unexpectedly high deviation (weight derivatives)!");
 				}
 
 			//Check derivatives with respect to biases
@@ -135,7 +135,7 @@ namespace DeepLearningTest
 				//Now do the same using the back-propagation approach
 				const auto diff = std::abs(deriv_numeric - bias_grad(row_id));
 				Logger::WriteMessage((std::string("Difference = ") + Utils::to_string(diff) + '\n').c_str());
-				Assert::IsTrue(diff <= (std::is_same_v<Real, double> ? Real(5e-10) : Real(3e-3)), L"Unexpectedly high deviation!");
+				Assert::IsTrue(diff <= (std::is_same_v<Real, double> ? Real(5e-10) : Real(3e-3)), L"Unexpectedly high deviation (bias derivatives)!");
 			}
 
 		}

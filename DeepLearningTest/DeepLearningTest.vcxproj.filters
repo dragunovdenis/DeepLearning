@@ -48,6 +48,9 @@
     <ClCompile Include="AutomaticDifferentiationTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="TensorTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -55,5 +58,10 @@
     <None Include="TestData\MNIST\t10k-labels.idx1-ubyte" />
     <None Include="TestData\MNIST\train-images.idx3-ubyte" />
     <None Include="TestData\MNIST\train-labels.idx1-ubyte" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="StandardTestUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

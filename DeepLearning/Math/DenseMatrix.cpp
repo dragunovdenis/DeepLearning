@@ -290,7 +290,7 @@ namespace DeepLearning
 		if (_row_dim != mat._row_dim || _col_dim != mat._col_dim)
 			throw std::exception("Operands must be of the same dimension");
 
-		std::transform(begin(), end(), mat.begin(), begin(), [](const auto& x, const auto& y) { return x + y; });
+		add(mat);
 		return *this;
 	}
 
@@ -299,13 +299,13 @@ namespace DeepLearning
 		if (_row_dim != mat._row_dim || _col_dim != mat._col_dim)
 			throw std::exception("Operands must be of the same dimension");
 
-		std::transform(begin(), end(), mat.begin(), begin(), [](const auto& x, const auto& y) { return x - y; });
+		sub(mat);
 		return *this;
 	}
 
 	DenseMatrix& DenseMatrix::operator *=(const Real& scalar)
 	{
-		std::transform(begin(), end(), begin(), [scalar](const auto& x) { return x * scalar; });
+		mul(scalar);
 		return *this;
 	}
 
@@ -315,18 +315,12 @@ namespace DeepLearning
 		return result += mat2;
 	}
 
-	/// <summary>
-	/// Matrix subtraction operator
-	/// </summary>
 	DenseMatrix operator -(const DenseMatrix& mat1, const DenseMatrix& mat2)
 	{
 		auto result = mat1;
 		return result -= mat2;
 	}
 
-	/// <summary>
-	/// Matrix by scalar multiplication operator
-	/// </summary>
 	DenseMatrix operator *(const DenseMatrix& mat, const Real& scalar)
 	{
 		auto result = mat;
@@ -334,22 +328,9 @@ namespace DeepLearning
 
 	}
 
-	/// <summary>
-	/// Scalar by matrix multiplication operator
-	/// </summary>
 	DenseMatrix operator *(const Real& scalar, const DenseMatrix& mat)
 	{
 		return mat * scalar;
-	}
-
-	Real DenseMatrix::max_abs() const
-	{
-		return std::abs(*std::max_element(begin(), end(), [](const auto& x, const auto& y) { return std::abs(x) < std::abs(y); }));
-	}
-
-	void DenseMatrix::fill(const Real& val)
-	{
-		std::fill(begin(), end(), val);
 	}
 
 	std::size_t DenseMatrix::col_dim() const

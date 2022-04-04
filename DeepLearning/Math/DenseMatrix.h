@@ -21,6 +21,7 @@
 #include <msgpack.hpp>
 #include <functional>
 #include "../defs.h"
+#include "BasicCollection.h"
 
 namespace DeepLearning
 {
@@ -29,7 +30,8 @@ namespace DeepLearning
 	/// <summary>
 	/// Representation of a dense rectangular matrix
 	/// </summary>
-	class DenseMatrix
+	class DenseMatrix : public BasicCollection
+
 	{
 		/// <summary>
 		/// Elements of the matrix in a "flattened" form
@@ -41,11 +43,6 @@ namespace DeepLearning
 		/// </summary>
 		std::size_t _row_dim{};
 		std::size_t _col_dim{};
-
-		/// <summary>
-		/// Size of the inner array
-		/// </summary>
-		std::size_t size() const;
 
 		/// <summary>
 		/// Returns true if the given row and column indices are valid
@@ -64,6 +61,13 @@ namespace DeepLearning
 		/// Method to free the data array
 		/// </summary>
 		void free();
+
+	protected:
+
+		/// <summary>
+		/// Size of the inner array
+		/// </summary>
+		std::size_t size() const;
 
 	public:
 
@@ -217,16 +221,6 @@ namespace DeepLearning
 		/// Compound scalar multiplication operator
 		/// </summary>
 		DenseMatrix& operator *=(const Real& scalar);
-
-		/// <summary>
-		/// "Maximal absolute value" norm ("infinity" norm)
-		/// </summary>
-		Real max_abs() const;
-
-		/// <summary>
-		/// Assigns the given value to all the elements of the matrix
-		/// </summary>
-		void fill(const Real& val);
 	};
 
 	/// <summary>

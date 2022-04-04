@@ -1,0 +1,198 @@
+//Copyright (c) 2022 Denys Dragunov, dragunovdenis@gmail.com
+//Permission is hereby granted, free of charge, to any person obtaining a copy
+//of this software and associated documentation files(the "Software"), to deal
+//in the Software without restriction, including without limitation the rights
+//to use, copy, modify, merge, publish, distribute, sublicense, and /or sell
+//copies of the Software, and to permit persons to whom the Software is furnished
+//to do so, subject to the following conditions :
+
+//The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+//THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+//INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+//PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+//HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+//OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+//SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+#pragma once
+#include "../defs.h"
+#include <msgpack.hpp>
+#include "BasicCollection.h"
+
+
+namespace DeepLearning
+{
+	/// <summary>
+	/// Representation of rank 3 
+	/// </summary>
+	class DenseTensor : public BasicCollection
+	{
+		Real* _data{};
+
+		/// <summary>
+		/// Number of layers (matrices) in the tensor
+		/// </summary>
+		std::size_t _layer_dim{};
+
+		/// <summary>
+		/// Number of rows in each layer
+		/// </summary>
+		std::size_t _row_dim;
+
+		/// <summary>
+		/// Number of elements in each row (or columns in each layer)
+		/// </summary>
+		std::size_t _col_dim{};
+
+		/// <summary>
+		/// Releases allocated resources
+		/// </summary>
+		void free();
+
+		/// <summary>
+		/// Return total number of elements in the tensor
+		/// </summary>
+		std::size_t size() const;
+
+	public:
+
+		template <typename Packer>
+		void msgpack_pack(Packer& msgpack_pk) const
+		{
+			const auto proxy = std::vector<Real>(begin(), end());
+			msgpack::type::make_define_array(_layer_dim, _row_dim, _col_dim, proxy).msgpack_pack(msgpack_pk);
+		}
+
+		void msgpack_unpack(msgpack::object const& msgpack_o)
+		{
+			std::vector<Real> proxy;
+			msgpack::type::make_define_array(_layer_dim, _row_dim, _col_dim, proxy).msgpack_unpack(msgpack_o);
+			_data = reinterpret_cast<Real*>(std::malloc(size() * sizeof(Real)));
+			std::copy(proxy.begin(), proxy.end(), begin());
+		}
+
+		/// <summary>
+		/// Default constructor
+		/// </summary>
+		DenseTensor() = default;
+
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		/// <param name="layer_dim">Layer dimension</param>
+		/// <param name="row_dim">Row dimension in each layer</param>
+		/// <param name="col_dim">Number of elements in each row</param>
+		/// <param name="assign_zero">The tensor will be assigned with "0" if "true"</param>
+		DenseTensor(const std::size_t layer_dim, const std::size_t row_dim,
+			const std::size_t col_dim, const bool assign_zero = true);
+
+		/// <summary>
+		/// Copy constructor
+		/// </summary>
+		DenseTensor(const DenseTensor& tensor);
+
+		/// <summary>
+		/// Move constructor
+		/// </summary>
+		DenseTensor(DenseTensor&& tensor) noexcept;
+
+		/// <summary>
+		/// Constructs dense tensor of the given dimension filled with
+		/// uniformly distributed pseudo-random values from the given range
+		/// </summary>
+		DenseTensor(const std::size_t layer_dim, const std::size_t row_dim,
+			const std::size_t col_dim, const Real range_begin, const Real range_end);
+
+		/// <summary>
+		/// Assignment operator
+		/// </summary>
+		DenseTensor& operator =(const DenseTensor& tensor);
+
+		/// <summary>
+		/// Destructor
+		/// </summary>
+		~DenseTensor();
+
+		/// <summary>
+		/// Pointer to the first element of the tensor
+		/// </summary>
+		Real* begin();
+
+		/// <summary>
+		/// Pointer to the first element of the tensor (constant version)
+		/// </summary>
+		const Real* begin() const;
+
+		/// <summary>
+		/// Pointer to the "behind last" element of the tensor
+		/// </summary>
+		Real* end();
+
+		/// <summary>
+		/// Pointer to the "behind last" element of the tensor (constant version)
+		/// </summary>
+		const Real* end() const;
+
+		/// <summary>
+		/// Number of "layers"
+		/// </summary>
+		std::size_t layer_dim() const;
+
+		/// <summary>
+		/// Number of rows in each layer
+		/// </summary>
+		std::size_t row_dim() const;
+
+		/// <summary>
+		/// Number of columns in each layer (or number of elements in each layer row)
+		/// </summary>
+		std::size_t col_dim() const;
+
+		/// <summary>
+		/// Compound addition operator
+		/// </summary>
+		DenseTensor& operator +=(const DenseTensor & tensor);
+
+		/// <summary>
+		/// Compound subtraction operator
+		/// </summary>
+		DenseTensor& operator -=(const DenseTensor & tensor);
+
+		/// <summary>
+		/// Compound scalar multiplication operator
+		/// </summary>
+		DenseTensor& operator *=(const Real & scalar);
+
+		/// <summary>
+		/// "Equal to" operator
+		/// </summary>
+		bool operator ==(const DenseTensor & tensor) const;
+
+		/// <summary>
+		/// "Not equal to" operator
+		/// </summary>
+		bool operator !=(const DenseTensor& tensor) const;
+	};
+
+	/// <summary>
+	/// Addition operator
+	/// </summary>
+	DenseTensor operator +(const DenseTensor& tensor1, const DenseTensor& tensor2);
+
+	/// <summary>
+	/// Subtraction operator
+	/// </summary>
+	DenseTensor operator -(const DenseTensor& tensor1, const DenseTensor& tensor2);
+
+	/// <summary>
+	/// Multiplication by a scalar from the right
+	/// </summary>
+	DenseTensor operator *(const DenseTensor& tensor, const Real& scalar);
+
+	/// <summary>
+	/// Multiplication by a scalar from the left
+	/// </summary>
+	DenseTensor operator *(const Real& scalar, const DenseTensor& tensor);
+
+}

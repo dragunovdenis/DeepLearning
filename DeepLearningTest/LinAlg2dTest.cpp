@@ -100,7 +100,7 @@ namespace DeepLearningTest
 			check_random_values(set);
 
 			//In principle, there is a very low probability that during those very few iterations that we did above
-			// we will get two identical random values. so we assert this
+			// we will get two identical random values. So we assert this
 			Assert::IsTrue(set.size() >= iterations * 4 - 0.0002 * iterations, L"Too many identical values.");
 		}
 
@@ -659,7 +659,7 @@ namespace DeepLearningTest
 			Logger::WriteMessage((std::string("angle_diff = ") + Utils::to_string(angle_diff) + "\n").c_str());
 			Logger::WriteMessage((std::string("radius_diff = ") + Utils::to_string(radius_diff) + "\n").c_str());
 
-			Assert::IsTrue(angle_diff < 10 * std::numeric_limits<Real>::epsilon(),
+			Assert::IsTrue(angle_diff < 100 * std::numeric_limits<Real>::epsilon(),
 				L"Too high difference between the actual and expected angles");
 			Assert::IsTrue(radius_diff < 10 * std::numeric_limits<Real>::epsilon(),
 				L"Distance to the rotation center should not change");
