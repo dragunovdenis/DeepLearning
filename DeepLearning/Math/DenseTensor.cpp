@@ -80,7 +80,10 @@ namespace DeepLearning
 	void DenseTensor::free()
 	{
 		if (_data != nullptr)
+		{
 			delete[] _data;
+			_data = nullptr;
+		}
 
 		_layer_dim = 0;
 		_row_dim = 0;
@@ -125,6 +128,36 @@ namespace DeepLearning
 	std::size_t DenseTensor::col_dim() const
 	{
 		return _col_dim;
+	}
+
+	std::size_t DenseTensor::coords_to_data_id(const std::size_t layer_id, const std::size_t row_id, const std::size_t col_id) const
+	{
+		return _col_dim * (layer_id * _row_dim + row_id) + col_id;
+	}
+
+	bool DenseTensor::check_bounds(const std::size_t layer_id, const std::size_t row_id, const std::size_t col_id) const
+	{
+		return layer_id < _layer_dim && row_id < _row_dim && col_id < _col_dim;
+	}
+
+	Real& DenseTensor::operator ()(const std::size_t layer_id, const std::size_t row_id, const std::size_t col_id)
+	{
+#ifdef CHECK_BOUNDS
+		if (!check_bounds(layer_id, row_id, col_id))
+			throw std::exception("Index out of bounds")
+#endif // CHECK_BOUNDS
+
+		return _data[coords_to_data_id(layer_id, row_id, col_id)];
+	}
+
+	const Real& DenseTensor::operator ()(const std::size_t layer_id, const std::size_t row_id, const std::size_t col_id) const
+	{
+#ifdef CHECK_BOUNDS
+		if (!check_bounds(layer_id, row_id, col_id))
+			throw std::exception("Index out of bounds")
+#endif // CHECK_BOUNDS
+
+		return _data[coords_to_data_id(layer_id, row_id, col_id)];
 	}
 
 	DenseTensor& DenseTensor::operator +=(const DenseTensor& tensor)

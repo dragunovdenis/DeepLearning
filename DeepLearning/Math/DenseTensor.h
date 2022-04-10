@@ -38,7 +38,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Number of rows in each layer
 		/// </summary>
-		std::size_t _row_dim;
+		std::size_t _row_dim{};
 
 		/// <summary>
 		/// Number of elements in each row (or columns in each layer)
@@ -54,6 +54,16 @@ namespace DeepLearning
 		/// Return total number of elements in the tensor
 		/// </summary>
 		std::size_t size() const;
+
+		/// <summary>
+		/// Converts given triplet of integer coordinates to a single index that can be used to access "data" array
+		/// </summary>
+		std::size_t coords_to_data_id(const std::size_t layer_id, const std::size_t row_id, const std::size_t col_id) const;
+
+		/// <summary>
+		/// Returns "true" if the given triplet of coordinates is valid to access "data" array
+		/// </summary>
+		bool check_bounds(const std::size_t layer_id, const std::size_t row_id, const std::size_t col_id) const;
 
 	public:
 
@@ -148,6 +158,16 @@ namespace DeepLearning
 		/// Number of columns in each layer (or number of elements in each layer row)
 		/// </summary>
 		std::size_t col_dim() const;
+
+		/// <summary>
+		/// Operator to access elements by three indices
+		/// </summary>
+		Real& operator ()(const std::size_t layer_id, const std::size_t row_id, const std::size_t col_id);
+
+		/// <summary>
+		/// Operator to access elements by three indices ("constant" version)
+		/// </summary>
+		const Real& operator ()(const std::size_t layer_id, const std::size_t row_id, const std::size_t col_id) const;
 
 		/// <summary>
 		/// Compound addition operator
