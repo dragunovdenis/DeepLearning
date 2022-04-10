@@ -17,7 +17,7 @@
 
 #pragma once
 #include "Image8Bit.h"
-#include "Math/DenseVector.h"
+#include "Math/Vector.h"
 #include <filesystem>
 
 namespace DeepLearning
@@ -58,7 +58,7 @@ namespace DeepLearning
 		/// <param name="path">Path to the corresponding file on disk</param>
 		/// <param name="expected_label_count">Expected number of labels to read</param>
 		/// <returns></returns>
-		static std::vector<DenseVector> read_labels(const std::filesystem::path& path,
+		static std::vector<Vector> read_labels(const std::filesystem::path& path,
 			const std::size_t expected_label_count);
 	};
 }

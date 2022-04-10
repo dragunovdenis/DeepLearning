@@ -16,8 +16,8 @@
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "CppUnitTest.h"
-#include <Math/DenseMatrix.h>
-#include <Math/DenseVector.h>
+#include <Math/Matrix.h>
+#include <Math/Vector.h>
 #include <MsgPackUtils.h>
 #include "Utilities.h"
 #include "StandardTestUtils.h"
@@ -35,10 +35,10 @@ namespace DeepLearningTest
 		{
 			//Arrange
 			const auto dim = 10;
-			const auto vector = DenseVector(dim, -1, 1);
+			const auto vector = Vector(dim, -1, 1);
 
 			//Act
-			const auto vector_copy = DenseVector(vector);
+			const auto vector_copy = Vector(vector);
 
 			//Assert
 			Assert::IsTrue(vector == vector_copy, L"Vectors are not the same");
@@ -50,14 +50,14 @@ namespace DeepLearningTest
 			//Arrange
 			const auto dim = 10;
 			const auto dim1 = 13;
-			auto vec_to_assign = DenseVector(dim, -1, 1);
+			auto vec_to_assign = Vector(dim, -1, 1);
 			const auto ptr_before_assignment = vec_to_assign.begin();
 
-			auto vec_to_assign1 = DenseVector(dim, -1, 1);
+			auto vec_to_assign1 = Vector(dim, -1, 1);
 			const auto ptr_before_assignment1 = vec_to_assign1.begin();
 
-			const auto vec_to_copy = DenseVector(dim, -1, 1);
-			const auto vec_to_copy1 = DenseVector(dim1, -1, 1);
+			const auto vec_to_copy = Vector(dim, -1, 1);
+			const auto vec_to_copy1 = Vector(dim1, -1, 1);
 
 			Assert::IsTrue(vec_to_assign != vec_to_copy && vec_to_assign != vec_to_copy1,
 				L"Vectors are supposed to be different");
@@ -78,12 +78,12 @@ namespace DeepLearningTest
 		{
 			//Arrange
 			const auto dim = 10;
-			auto vector_to_move = DenseVector(dim, -1, 1);
+			auto vector_to_move = Vector(dim, -1, 1);
 			const auto begin_pointer_before_move = vector_to_move.begin();
 			const auto end_pointer_before_move = vector_to_move.end();
 
 			//Act
-			const DenseVector vector(std::move(vector_to_move));
+			const Vector vector(std::move(vector_to_move));
 
 			//Assert
 			Assert::IsTrue(begin_pointer_before_move == vector.begin()
@@ -98,10 +98,10 @@ namespace DeepLearningTest
 			//Arrange
 			const auto row_dim = 10;
 			const auto col_dim = 13;
-			const auto matrix = DenseMatrix(row_dim, col_dim, -1, 1);
+			const auto matrix = Matrix(row_dim, col_dim, -1, 1);
 
 			//Act
-			const auto matrix_copy = DenseMatrix(matrix);
+			const auto matrix_copy = Matrix(matrix);
 
 			//Assert
 			Assert::IsTrue(matrix == matrix_copy, L"Matrices are not the same");
@@ -115,14 +115,14 @@ namespace DeepLearningTest
 			const auto col_dim = 13;
 			const auto row_dim1 = 20;
 			const auto col_dim1 = 23;
-			auto matr_to_assign = DenseMatrix(row_dim, col_dim, -1, 1);
+			auto matr_to_assign = Matrix(row_dim, col_dim, -1, 1);
 			const auto ptr_before_assignment = matr_to_assign.begin();
 
-			auto matr_to_assign1 = DenseMatrix(row_dim, col_dim, -1, 1);
+			auto matr_to_assign1 = Matrix(row_dim, col_dim, -1, 1);
 			const auto ptr_before_assignment1 = matr_to_assign1.begin();
 
-			const auto matr_to_copy = DenseMatrix(col_dim, row_dim, -1, 1);
-			const auto matr_to_copy1 = DenseMatrix(row_dim1, col_dim1, -1, 1);
+			const auto matr_to_copy = Matrix(col_dim, row_dim, -1, 1);
+			const auto matr_to_copy1 = Matrix(row_dim1, col_dim1, -1, 1);
 
 			Assert::IsTrue(matr_to_assign != matr_to_copy && matr_to_assign != matr_to_copy1,
 				L"Matrices are supposed to be different");
@@ -144,12 +144,12 @@ namespace DeepLearningTest
 			//Arrange
 			const auto row_dim = 10;
 			const auto col_dim = 13;
-			auto matrix_to_move = DenseMatrix(row_dim, col_dim, -1, 1);
+			auto matrix_to_move = Matrix(row_dim, col_dim, -1, 1);
 			const auto begin_pointer_before_move = matrix_to_move.begin();
 			const auto end_pointer_before_move = matrix_to_move.end();
 
 			//Act
-			const DenseMatrix matrix(std::move(matrix_to_move));
+			const Matrix matrix(std::move(matrix_to_move));
 
 			//Assert
 			Assert::IsTrue(begin_pointer_before_move == matrix.begin()
@@ -165,8 +165,8 @@ namespace DeepLearningTest
 			//Arrange
 			const std::size_t row_dim = 10;
 			const std::size_t col_dim = 23;
-			const auto matrix = DenseMatrix(row_dim, col_dim, -1, 1);
-			const auto vector = DenseVector(col_dim, -1, 1);
+			const auto matrix = Matrix(row_dim, col_dim, -1, 1);
+			const auto vector = Vector(col_dim, -1, 1);
 
 			//Act
 			const auto product = matrix * vector;
@@ -192,8 +192,8 @@ namespace DeepLearningTest
 			//Arrange
 			const std::size_t row_dim = 43;
 			const std::size_t col_dim = 14;
-			const auto matrix = DenseMatrix(row_dim, col_dim, -1, 1);
-			const auto vector = DenseVector(row_dim, -1, 1);
+			const auto matrix = Matrix(row_dim, col_dim, -1, 1);
+			const auto vector = Vector(row_dim, -1, 1);
 
 			//Act
 			const auto product = vector * matrix;
@@ -215,92 +215,92 @@ namespace DeepLearningTest
 		}
 
 		/// <summary>
-		/// Creates random instance of DenseVector class of the given dimension
+		/// Creates random instance of Vector class of the given dimension
 		/// </summary>
-		static DenseVector VectorFactory(const std::size_t dim = 10)
+		static Vector VectorFactory(const std::size_t dim = 10)
 		{
-			return  DenseVector(dim, -1, 1);
+			return  Vector(dim, -1, 1);
 		}
 
 		/// <summary>
-		/// Creates random instance of DenseMatrix class of the given dimensions
+		/// Creates random instance of Matrix class of the given dimensions
 		/// </summary>
-		static DenseMatrix MatrixFactory(const std::size_t row_dim = 10, const std::size_t col_dim = 33)
+		static Matrix MatrixFactory(const std::size_t row_dim = 10, const std::size_t col_dim = 33)
 		{
-			return  DenseMatrix(row_dim, col_dim, -1, 1);
+			return  Matrix(row_dim, col_dim, -1, 1);
 		}
 
 		TEST_METHOD(VectorPackingTest)
 		{
-			StandardTestUtils::PackingTest<DenseVector>([]() { return VectorFactory(); });
+			StandardTestUtils::PackingTest<Vector>([]() { return VectorFactory(); });
 		}
 
 		TEST_METHOD(MatrixPackingTest)
 		{
-			StandardTestUtils::PackingTest<DenseMatrix>([]() { return MatrixFactory(); });
+			StandardTestUtils::PackingTest<Matrix>([]() { return MatrixFactory(); });
 		}
 
 		TEST_METHOD(SumWithZeroVectorTest)
 		{
 			const auto dim = 10;
-			StandardTestUtils::SumWithZeroElementTest<DenseVector>([]() { return VectorFactory(dim); }, DenseVector(dim));
+			StandardTestUtils::SumWithZeroElementTest<Vector>([]() { return VectorFactory(dim); }, Vector(dim));
 		}
 
 		TEST_METHOD(VectorAdditionCommutativityTest)
 		{
-			StandardTestUtils::AdditionCommutativityTest<DenseVector>([]() { return VectorFactory(); });
+			StandardTestUtils::AdditionCommutativityTest<Vector>([]() { return VectorFactory(); });
 		}
 
 		TEST_METHOD(DifferenceOfEqualVectorsIsZeroTest)
 		{
-			StandardTestUtils::DifferenceOfEqualInstancesTest<DenseVector>([]() { return VectorFactory(); });
+			StandardTestUtils::DifferenceOfEqualInstancesTest<Vector>([]() { return VectorFactory(); });
 		}
 
 		TEST_METHOD(VectorAdditionAssocoativityTest)
 		{
-			StandardTestUtils::AdditionAssociativityTest<DenseVector>([]() { return VectorFactory(); });
+			StandardTestUtils::AdditionAssociativityTest<Vector>([]() { return VectorFactory(); });
 		}
 
 		TEST_METHOD(DistributivityOfScalarMultiplicationWithRespectToVectorAdditionTest)
 		{
-			StandardTestUtils::ScalarMultiplicationDistributivityTest<DenseVector>([]() { return VectorFactory(); });
+			StandardTestUtils::ScalarMultiplicationDistributivityTest<Vector>([]() { return VectorFactory(); });
 		}
 
 		TEST_METHOD(VectorMultiplicationByOneTest)
 		{
-			StandardTestUtils::ScalarMultiplicationByOneTest<DenseVector>([]() { return VectorFactory(); });
+			StandardTestUtils::ScalarMultiplicationByOneTest<Vector>([]() { return VectorFactory(); });
 		}
 
 		TEST_METHOD(SumWithZeroMatrixTest)
 		{
 			const auto row_dim = 10;
 			const auto col_dim = 23;
-			StandardTestUtils::SumWithZeroElementTest<DenseMatrix>([]() { return MatrixFactory(row_dim, col_dim); }, DenseMatrix(row_dim, col_dim));
+			StandardTestUtils::SumWithZeroElementTest<Matrix>([]() { return MatrixFactory(row_dim, col_dim); }, Matrix(row_dim, col_dim));
 		}
 
 		TEST_METHOD(MatrixAdditionCommutativityTest)
 		{
-			StandardTestUtils::AdditionCommutativityTest<DenseMatrix>([]() { return MatrixFactory(); });
+			StandardTestUtils::AdditionCommutativityTest<Matrix>([]() { return MatrixFactory(); });
 		}
 
 		TEST_METHOD(DifferenceOfEqualMatricesIsZeroTest)
 		{
-			StandardTestUtils::DifferenceOfEqualInstancesTest<DenseMatrix>([]() { return MatrixFactory(); });
+			StandardTestUtils::DifferenceOfEqualInstancesTest<Matrix>([]() { return MatrixFactory(); });
 		}
 
 		TEST_METHOD(MatrixAdditionAssociativityTest)
 		{
-			StandardTestUtils::AdditionAssociativityTest<DenseMatrix>([]() { return MatrixFactory(); });
+			StandardTestUtils::AdditionAssociativityTest<Matrix>([]() { return MatrixFactory(); });
 		}
 
 		TEST_METHOD(DistributivityOfScalarMltiplicationWithRespectToMatrixAdditionTest)
 		{
-			StandardTestUtils::ScalarMultiplicationDistributivityTest<DenseMatrix>([]() { return MatrixFactory(); });
+			StandardTestUtils::ScalarMultiplicationDistributivityTest<Matrix>([]() { return MatrixFactory(); });
 		}
 
 		TEST_METHOD(MatrixMultiplicationByOneTest)
 		{
-			StandardTestUtils::ScalarMultiplicationByOneTest<DenseMatrix>([]() { return MatrixFactory(); });
+			StandardTestUtils::ScalarMultiplicationByOneTest<Matrix>([]() { return MatrixFactory(); });
 		}
 
 		TEST_METHOD(DistributivityOfMatrixAdditionWithRespectToRightVectorMultiplicationTest)
@@ -308,9 +308,9 @@ namespace DeepLearningTest
 			//Arrange
 			const auto row_dim = 10;
 			const auto col_dim = 23;
-			const auto matrix1 = DenseMatrix(row_dim, col_dim, -1, 1);
-			const auto matrix2 = DenseMatrix(row_dim, col_dim, -1, 1);
-			const auto vector = DenseVector(col_dim, -1, 1);
+			const auto matrix1 = Matrix(row_dim, col_dim, -1, 1);
+			const auto matrix2 = Matrix(row_dim, col_dim, -1, 1);
+			const auto vector = Vector(col_dim, -1, 1);
 			Assert::IsTrue(matrix1.max_abs() > 0 && matrix2.max_abs() > 0,
 				L"The input matrices are supposed to be non-zero!");
 			Assert::IsTrue(vector.max_abs() > 0, L"The input vector is supposed to be non-zero!");
@@ -329,9 +329,9 @@ namespace DeepLearningTest
 			//Arrange
 			const auto row_dim = 10;
 			const auto col_dim = 23;
-			const auto matrix1 = DenseMatrix(row_dim, col_dim, -1, 1);
-			const auto matrix2 = DenseMatrix(row_dim, col_dim, -1, 1);
-			const auto vector = DenseVector(row_dim, -1, 1);
+			const auto matrix1 = Matrix(row_dim, col_dim, -1, 1);
+			const auto matrix2 = Matrix(row_dim, col_dim, -1, 1);
+			const auto vector = Vector(row_dim, -1, 1);
 			Assert::IsTrue(matrix1.max_abs() > 0 && matrix2.max_abs() > 0,
 				L"The input matrices are supposed to be non-zero!");
 			Assert::IsTrue(vector.max_abs() > 0, L"The input vector is supposed to be non-zero!");
@@ -350,9 +350,9 @@ namespace DeepLearningTest
 			//Arrange
 			const auto row_dim = 10;
 			const auto col_dim = 23;
-			const auto matrix = DenseMatrix(row_dim, col_dim, -1, 1);
-			const auto vector1 = DenseVector(col_dim, -1, 1);
-			const auto vector2 = DenseVector(col_dim, -1, 1);
+			const auto matrix = Matrix(row_dim, col_dim, -1, 1);
+			const auto vector1 = Vector(col_dim, -1, 1);
+			const auto vector2 = Vector(col_dim, -1, 1);
 			Assert::IsTrue(matrix.max_abs() > 0,
 				L"The input matrix is supposed to be non-zero!");
 			Assert::IsTrue(vector1.max_abs() > 0 && vector2.max_abs() > 0,
@@ -372,9 +372,9 @@ namespace DeepLearningTest
 			//Arrange
 			const auto row_dim = 10;
 			const auto col_dim = 23;
-			const auto matrix = DenseMatrix(row_dim, col_dim, -1, 1);
-			const auto vector1 = DenseVector(row_dim, -1, 1);
-			const auto vector2 = DenseVector(row_dim, -1, 1);
+			const auto matrix = Matrix(row_dim, col_dim, -1, 1);
+			const auto vector1 = Vector(row_dim, -1, 1);
+			const auto vector2 = Vector(row_dim, -1, 1);
 			Assert::IsTrue(matrix.max_abs() > 0,
 				L"The input matrix is supposed to be non-zero!");
 			Assert::IsTrue(vector1.max_abs() > 0 && vector2.max_abs() > 0,
@@ -394,8 +394,8 @@ namespace DeepLearningTest
 			//Arrange
 			const auto row_dim = 10;
 			const auto col_dim = 23;
-			const auto vec_col = DenseVector(row_dim, -1, 1);
-			const auto vec_row = DenseVector(col_dim, -1, 1);
+			const auto vec_col = Vector(row_dim, -1, 1);
+			const auto vec_row = Vector(col_dim, -1, 1);
 			Assert::IsTrue(vec_col.max_abs() > 0 && vec_row.max_abs() > 0,
 				L"The input vectors are supposed to be non-zero!");
 
@@ -419,8 +419,8 @@ namespace DeepLearningTest
 		{
 			//Arrange
 			const auto dim = 10;
-			const auto vector1 = DenseVector(dim, -1, 1);
-			const auto vector2 = DenseVector(dim, -1, 1);
+			const auto vector1 = Vector(dim, -1, 1);
+			const auto vector2 = Vector(dim, -1, 1);
 			Assert::IsTrue(vector1.max_abs() > 0 && vector2.max_abs() > 0,
 				L"The input vectors are supposed to be non-zero!");
 
@@ -443,9 +443,9 @@ namespace DeepLearningTest
 			//Arrange
 			const std::size_t row_dim = 10;
 			const std::size_t col_dim = 23;
-			const auto matrix = DenseMatrix(row_dim, col_dim, -1, 1);
-			const auto mul_vector = DenseVector(col_dim, -1, 1);
-			const auto add_vector = DenseVector(row_dim, -1, 1);
+			const auto matrix = Matrix(row_dim, col_dim, -1, 1);
+			const auto mul_vector = Vector(col_dim, -1, 1);
+			const auto add_vector = Vector(row_dim, -1, 1);
 
 			//Act
 			const auto result1 = matrix * mul_vector + add_vector;

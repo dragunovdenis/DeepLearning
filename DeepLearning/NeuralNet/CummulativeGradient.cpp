@@ -22,18 +22,18 @@ namespace DeepLearning
 {
 	CummulativeGradient::CummulativeGradient(const std::size_t in_dim, const std::size_t out_dim)
 	{
-		_sum_grad_weights = DenseMatrix(out_dim, in_dim);
-		_sum_grad_biases = DenseVector(out_dim);
+		_sum_grad_weights = Matrix(out_dim, in_dim);
+		_sum_grad_biases = Vector(out_dim);
 	}
 
-	void CummulativeGradient::Add(const DenseMatrix& weight_grad, const DenseVector& bias_grad)
+	void CummulativeGradient::Add(const Matrix& weight_grad, const Vector& bias_grad)
 	{
 		_sum_grad_weights += weight_grad;
 		_sum_grad_biases += bias_grad;
 		_accumulated_items_count++;
 	}
 
-	std::tuple<DenseMatrix, DenseVector> CummulativeGradient::calc_average_grarient(const Real scale_factor) const
+	std::tuple<Matrix, Vector> CummulativeGradient::calc_average_grarient(const Real scale_factor) const
 	{
 		if (_accumulated_items_count == 0)
 			throw std::exception("No items have been added.");

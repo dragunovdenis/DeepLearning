@@ -36,10 +36,10 @@ namespace DeepLearningTest
 		{
 			const auto input_dim = 10;
 			const auto output_dim = 23;
-			const auto input_0 = DenseVector(input_dim, -1, 1);
-			const auto weights_0 = DenseMatrix(output_dim, input_dim, -1, 1);
-			const auto biases_0 = DenseVector(output_dim, -1, 1);
-			const auto reference = DenseVector(output_dim, -1, 1);;
+			const auto input_0 = Vector(input_dim, -1, 1);
+			const auto weights_0 = Matrix(output_dim, input_dim, -1, 1);
+			const auto biases_0 = Vector(output_dim, -1, 1);
+			const auto reference = Vector(output_dim, -1, 1);;
 			const auto cost_func = CostFunction(cost_function_id);
 			const auto nl = NeuralLayer(weights_0, biases_0, activation_func_id);
 
@@ -79,10 +79,10 @@ namespace DeepLearningTest
 		{
 			const auto input_dim = 10;
 			const auto output_dim = 23;
-			const auto input_0 = DenseVector(input_dim, -1, 1);
-			const auto weights_0 = DenseMatrix(output_dim, input_dim, -1, 1);
-			const auto biases_0 = DenseVector(output_dim, -1, 1);
-			const auto reference = DenseVector(output_dim, -1, 1);;
+			const auto input_0 = Vector(input_dim, -1, 1);
+			const auto weights_0 = Matrix(output_dim, input_dim, -1, 1);
+			const auto biases_0 = Vector(output_dim, -1, 1);
+			const auto reference = Vector(output_dim, -1, 1);;
 			const auto cost_func = CostFunction(cost_function_id);
 			const auto nl = NeuralLayer(weights_0, biases_0, activation_func_id);
 

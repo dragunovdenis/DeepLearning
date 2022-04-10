@@ -22,7 +22,7 @@
 
 namespace DeepLearning
 {
-	class DenseVector;
+	class Vector;
 
 	/// <summary>
 	/// Representation of a single channel 8-bit image
@@ -96,6 +96,6 @@ namespace DeepLearning
 		/// <summary>
 		/// Implicit conversion operator
 		/// </summary>
-		operator DenseVector() const;
+		operator Vector() const;
 	};
 }

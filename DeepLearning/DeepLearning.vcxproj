@@ -167,9 +167,9 @@
     <ClInclude Include="Math\AvxAcceleration.h" />
     <ClInclude Include="Math\BasicCollection.h" />
     <ClInclude Include="Math\CostFunction.h" />
-    <ClInclude Include="Math\DenseMatrix.h" />
-    <ClInclude Include="Math\DenseTensor.h" />
-    <ClInclude Include="Math\DenseVector.h" />
+    <ClInclude Include="Math\Matrix.h" />
+    <ClInclude Include="Math\Tensor.h" />
+    <ClInclude Include="Math\Vector.h" />
     <ClInclude Include="Math\Dual.h" />
     <ClInclude Include="Math\DiffFunc.h" />
     <ClInclude Include="Math\LinAlg2d.h" />
@@ -188,9 +188,9 @@
     <ClCompile Include="Math\AvxAcceleration.cpp" />
     <ClCompile Include="Math\BasicCollection.cpp" />
     <ClCompile Include="Math\CostFunction.cpp" />
-    <ClCompile Include="Math\DenseMatrix.cpp" />
-    <ClCompile Include="Math\DenseTensor.cpp" />
-    <ClCompile Include="Math\DenseVector.cpp" />
+    <ClCompile Include="Math\Matrix.cpp" />
+    <ClCompile Include="Math\Tensor.cpp" />
+    <ClCompile Include="Math\Vector.cpp" />
     <ClCompile Include="Math\DiffFunc.cpp" />
     <ClCompile Include="MnistDataUtils.cpp" />
     <ClCompile Include="NeuralNet\CummulativeGradient.cpp" />

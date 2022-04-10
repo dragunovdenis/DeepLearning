@@ -42,10 +42,10 @@
     <ClInclude Include="defs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Math\DenseMatrix.h">
+    <ClInclude Include="Math\Matrix.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
-    <ClInclude Include="Math\DenseVector.h">
+    <ClInclude Include="Math\Vector.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
     <ClInclude Include="Utilities.h">
@@ -96,7 +96,7 @@
     <ClInclude Include="ImageProcessing\ImageUtils.h">
       <Filter>Header Files\ImageProcessing</Filter>
     </ClInclude>
-    <ClInclude Include="Math\DenseTensor.h">
+    <ClInclude Include="Math\Tensor.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
     <ClInclude Include="Math\BasicCollection.h">
@@ -104,10 +104,10 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Math\DenseMatrix.cpp">
+    <ClCompile Include="Math\Matrix.cpp">
       <Filter>Source Files\Math</Filter>
     </ClCompile>
-    <ClCompile Include="Math\DenseVector.cpp">
+    <ClCompile Include="Math\Vector.cpp">
       <Filter>Source Files\Math</Filter>
     </ClCompile>
     <ClCompile Include="Math\ActivationFunction.cpp">
@@ -146,7 +146,7 @@
     <ClCompile Include="ImageProcessing\ImageUtils.cpp">
       <Filter>Source Files\ImageProcessing</Filter>
     </ClCompile>
-    <ClCompile Include="Math\DenseTensor.cpp">
+    <ClCompile Include="Math\Tensor.cpp">
       <Filter>Source Files\Math</Filter>
     </ClCompile>
     <ClCompile Include="Math\BasicCollection.cpp">

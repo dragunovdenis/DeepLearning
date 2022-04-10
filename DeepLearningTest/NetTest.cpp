@@ -31,9 +31,9 @@ namespace DeepLearningTest
 		/// <summary>
 		/// Scales intensities of the given images so that they are all between 0 and 1.0;
 		/// </summary>
-		static std::vector<DenseVector> scale_images(const std::vector<Image8Bit>& images, const Real& one_value = Real(1))
+		static std::vector<Vector> scale_images(const std::vector<Image8Bit>& images, const Real& one_value = Real(1))
 		{
-			std::vector<DenseVector> result(images.begin(), images.end());
+			std::vector<Vector> result(images.begin(), images.end());
 
 			const auto scale_factor = one_value / 256;
 
@@ -46,7 +46,7 @@ namespace DeepLearningTest
 		/// <summary>
 		/// Return collections of data and labels (in this exact order)
 		/// </summary>
-		static std::tuple<std::vector<DenseVector>, std::vector<DenseVector>> load_labeled_data(
+		static std::tuple<std::vector<Vector>, std::vector<Vector>> load_labeled_data(
 			const std::filesystem::path& data_path, const std::filesystem::path& labels_path, const std::size_t expected_items_count, const Real& one_value = Real(1))
 		{
 			const auto images = MnistDataUtils::read_images(data_path, expected_items_count);
@@ -164,7 +164,7 @@ namespace DeepLearningTest
 			for (int test_sample_id = 0; test_sample_id < tests_samples_count; test_sample_id++)
 			{
 				//take a random input sample
-				const auto input_sample = DenseVector(in_dimension, -1, 1);
+				const auto input_sample = Vector(in_dimension, -1, 1);
 				const auto ref_output = net.act(input_sample);
 				//Sanity check
 				Assert::IsTrue(ref_output.max_abs() > 0 && input_sample.max_abs() > 0, L"Both input sample and reference output are expected to be non-zero.");

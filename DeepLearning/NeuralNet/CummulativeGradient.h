@@ -17,8 +17,8 @@
 
 #pragma once
 
-#include "../Math/DenseMatrix.h"
-#include "../Math/DenseVector.h"
+#include "../Math/Matrix.h"
+#include "../Math/Vector.h"
 
 namespace DeepLearning
 {
@@ -34,12 +34,12 @@ namespace DeepLearning
 		/// <summary>
 		/// Sum of the derivatives with respect to layer weight
 		/// </summary>
-		DenseMatrix _sum_grad_weights{};
+		Matrix _sum_grad_weights{};
 
 		/// <summary>
 		/// Sum of the derivatives with respect to layer biases
 		/// </summary>
-		DenseVector _sum_grad_biases{};
+		Vector _sum_grad_biases{};
 
 		/// <summary>
 		/// Number of the items accumulated in the corresponding sums
@@ -60,12 +60,12 @@ namespace DeepLearning
 		/// </summary>
 		/// <param name="weight_grad">"Partial" gradient with respect to weights</param>
 		/// <param name="bias_grad">"Partial" gradient with respect to biases</param>
-		void Add(const DenseMatrix& weight_grad, const DenseVector& bias_grad);
+		void Add(const Matrix& weight_grad, const Vector& bias_grad);
 
 		/// <summary>
 		/// Calculates and returns the "average" gradient with respect to layer weights and biases
 		/// </summary>
-		std::tuple<DenseMatrix, DenseVector> calc_average_grarient(const Real scale_factor = Real(1)) const;
+		std::tuple<Matrix, Vector> calc_average_grarient(const Real scale_factor = Real(1)) const;
 
 		/// <summary>
 		/// Resets the cumulative structure

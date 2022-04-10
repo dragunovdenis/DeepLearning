@@ -48,18 +48,18 @@ namespace DeepLearning
 		}
 	}
 
-	DenseVector ActivationFuncion::operator ()(const DenseVector& input) const
+	Vector ActivationFuncion::operator ()(const Vector& input) const
 	{
-		DenseVector result(input.dim());
+		Vector result(input.dim());
 		std::transform(input.begin(), input.end(), result.begin(),
 			[&](const auto& x) { return  _func->operator()(x); });
 		return result;
 	}
 
-	std::tuple<DenseVector, DenseVector> ActivationFuncion::func_and_deriv(const DenseVector& input) const
+	std::tuple<Vector, Vector> ActivationFuncion::func_and_deriv(const Vector& input) const
 	{
-		DenseVector func(input.dim());
-		DenseVector deriv(input.dim());
+		Vector func(input.dim());
+		Vector deriv(input.dim());
 
 		for (std::size_t item_id = 0; item_id < input.dim(); item_id++)
 		{

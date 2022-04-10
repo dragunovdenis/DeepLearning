@@ -16,7 +16,7 @@
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "CostFunction.h"
-#include "DenseVector.h"
+#include "Vector.h"
 #include <exception>
 #include <numeric>
 #include "../Utilities.h"
@@ -53,7 +53,7 @@ namespace DeepLearning
 		}
 	}
 
-	Real CostFunction::operator ()(const DenseVector& output, const DenseVector& reference) const
+	Real CostFunction::operator ()(const Vector& output, const Vector& reference) const
 	{
 		if (output.dim() != reference.dim())
 			throw std::exception("Incompatible input");
@@ -63,12 +63,12 @@ namespace DeepLearning
 		return result;
 	}
 
-	std::tuple<Real, DenseVector> CostFunction::func_and_deriv(const DenseVector& output, const DenseVector& reference) const
+	std::tuple<Real, Vector> CostFunction::func_and_deriv(const Vector& output, const Vector& reference) const
 	{
 		if (output.dim() != reference.dim())
 			throw std::exception("Incompatible input");
 
-		DenseVector deriv(output.dim());
+		Vector deriv(output.dim());
 		auto func_val = Real(0);
 
 		for (std::size_t item_id = 0; item_id < output.dim(); item_id++)

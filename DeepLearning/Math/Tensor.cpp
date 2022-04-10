@@ -15,14 +15,14 @@
 //OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#include "DenseTensor.h"
+#include "Tensor.h"
 #include "../Utilities.h"
 #include <exception>
 #include "../IndexIterator.h"
 
 namespace DeepLearning
 {
-	DenseTensor::DenseTensor(const std::size_t layer_dim, const std::size_t row_dim,
+	Tensor::Tensor(const std::size_t layer_dim, const std::size_t row_dim,
 		const std::size_t col_dim, const bool assign_zero)
 		: _layer_dim(layer_dim), _row_dim(row_dim), _col_dim(col_dim)
 	{
@@ -32,13 +32,13 @@ namespace DeepLearning
 			std::fill(begin(), end(), Real(0));
 	}
 
-	DenseTensor::DenseTensor(const DenseTensor& tensor)
-		: DenseTensor(tensor._layer_dim, tensor._row_dim, tensor._col_dim, false)
+	Tensor::Tensor(const Tensor& tensor)
+		: Tensor(tensor._layer_dim, tensor._row_dim, tensor._col_dim, false)
 	{
 		std::copy(tensor.begin(), tensor.end(), begin());
 	}
 
-	DenseTensor::DenseTensor(DenseTensor&& tensor) noexcept
+	Tensor::Tensor(Tensor&& tensor) noexcept
 		: _data(tensor._data), _layer_dim(tensor._layer_dim),
 		_row_dim(tensor._row_dim), _col_dim(tensor._col_dim)
 	{
@@ -48,14 +48,14 @@ namespace DeepLearning
 		tensor._col_dim = 0;
 	}
 
-	DenseTensor::DenseTensor(const std::size_t layer_dim, const std::size_t row_dim,
+	Tensor::Tensor(const std::size_t layer_dim, const std::size_t row_dim,
 		const std::size_t col_dim, const Real range_begin, const Real range_end)
-		: DenseTensor(layer_dim, row_dim, col_dim, false)
+		: Tensor(layer_dim, row_dim, col_dim, false)
 	{
 		Utils::fill_with_random_values(begin(), end(), range_begin, range_end);
 	}
 
-	DenseTensor& DenseTensor::operator =(const DenseTensor& tensor)
+	Tensor& Tensor::operator =(const Tensor& tensor)
 	{
 		if (size() != tensor.size())
 		{
@@ -72,12 +72,12 @@ namespace DeepLearning
 		return *this;
 	}
 
-	DenseTensor::~DenseTensor()
+	Tensor::~Tensor()
 	{
 		free();
 	}
 
-	void DenseTensor::free()
+	void Tensor::free()
 	{
 		if (_data != nullptr)
 		{
@@ -90,57 +90,57 @@ namespace DeepLearning
 		_col_dim = 0;
 	}
 
-	std::size_t DenseTensor::size() const
+	std::size_t Tensor::size() const
 	{
 		return _layer_dim * _row_dim * _col_dim;
 	}
 
-	Real* DenseTensor::begin()
+	Real* Tensor::begin()
 	{
 		return _data;
 	}
 
-	const Real* DenseTensor::begin() const
+	const Real* Tensor::begin() const
 	{
 		return _data;
 	}
 
-	Real* DenseTensor::end()
+	Real* Tensor::end()
 	{
 		return _data + size();
 	}
 
-	const Real* DenseTensor::end() const
+	const Real* Tensor::end() const
 	{
 		return _data + size();
 	}
 
-	std::size_t DenseTensor::layer_dim() const
+	std::size_t Tensor::layer_dim() const
 	{
 		return _layer_dim;
 	}
 
-	std::size_t DenseTensor::row_dim() const
+	std::size_t Tensor::row_dim() const
 	{
 		return _row_dim;
 	}
 
-	std::size_t DenseTensor::col_dim() const
+	std::size_t Tensor::col_dim() const
 	{
 		return _col_dim;
 	}
 
-	std::size_t DenseTensor::coords_to_data_id(const std::size_t layer_id, const std::size_t row_id, const std::size_t col_id) const
+	std::size_t Tensor::coords_to_data_id(const std::size_t layer_id, const std::size_t row_id, const std::size_t col_id) const
 	{
 		return _col_dim * (layer_id * _row_dim + row_id) + col_id;
 	}
 
-	bool DenseTensor::check_bounds(const std::size_t layer_id, const std::size_t row_id, const std::size_t col_id) const
+	bool Tensor::check_bounds(const std::size_t layer_id, const std::size_t row_id, const std::size_t col_id) const
 	{
 		return layer_id < _layer_dim && row_id < _row_dim && col_id < _col_dim;
 	}
 
-	Real& DenseTensor::operator ()(const std::size_t layer_id, const std::size_t row_id, const std::size_t col_id)
+	Real& Tensor::operator ()(const std::size_t layer_id, const std::size_t row_id, const std::size_t col_id)
 	{
 #ifdef CHECK_BOUNDS
 		if (!check_bounds(layer_id, row_id, col_id))
@@ -150,7 +150,7 @@ namespace DeepLearning
 		return _data[coords_to_data_id(layer_id, row_id, col_id)];
 	}
 
-	const Real& DenseTensor::operator ()(const std::size_t layer_id, const std::size_t row_id, const std::size_t col_id) const
+	const Real& Tensor::operator ()(const std::size_t layer_id, const std::size_t row_id, const std::size_t col_id) const
 	{
 #ifdef CHECK_BOUNDS
 		if (!check_bounds(layer_id, row_id, col_id))
@@ -160,7 +160,7 @@ namespace DeepLearning
 		return _data[coords_to_data_id(layer_id, row_id, col_id)];
 	}
 
-	DenseTensor& DenseTensor::operator +=(const DenseTensor& tensor)
+	Tensor& Tensor::operator +=(const Tensor& tensor)
 	{
 		if (_layer_dim != tensor._layer_dim ||
 			_row_dim != tensor._row_dim ||
@@ -171,7 +171,7 @@ namespace DeepLearning
 		return *this;
 	}
 
-	DenseTensor& DenseTensor::operator -=(const DenseTensor& tensor)
+	Tensor& Tensor::operator -=(const Tensor& tensor)
 	{
 		if (_layer_dim != tensor._layer_dim ||
 			_row_dim != tensor._row_dim ||
@@ -182,13 +182,13 @@ namespace DeepLearning
 		return *this;
 	}
 
-	DenseTensor& DenseTensor::operator *=(const Real& scalar)
+	Tensor& Tensor::operator *=(const Real& scalar)
 	{
 		mul(scalar);
 		return *this;
 	}
 
-	DenseTensor operator +(const DenseTensor& tensor1, const DenseTensor& tensor2)
+	Tensor operator +(const Tensor& tensor1, const Tensor& tensor2)
 	{
 		auto result = tensor1;
 		result += tensor2;
@@ -196,7 +196,7 @@ namespace DeepLearning
 		return result;
 	}
 
-	DenseTensor operator -(const DenseTensor& tensor1, const DenseTensor& tensor2)
+	Tensor operator -(const Tensor& tensor1, const Tensor& tensor2)
 	{
 		auto result = tensor1;
 		result -= tensor2;
@@ -204,7 +204,7 @@ namespace DeepLearning
 		return result;
 	}
 
-	DenseTensor operator *(const DenseTensor& tensor, const Real& scalar)
+	Tensor operator *(const Tensor& tensor, const Real& scalar)
 	{
 		auto result = tensor;
 		result *= scalar;
@@ -212,12 +212,12 @@ namespace DeepLearning
 		return result;
 	}
 
-	DenseTensor operator *(const Real& scalar, const DenseTensor& tensor)
+	Tensor operator *(const Real& scalar, const Tensor& tensor)
 	{
 		return tensor * scalar;
 	}
 
-	bool DenseTensor::operator ==(const DenseTensor& tensor) const
+	bool Tensor::operator ==(const Tensor& tensor) const
 	{
 		return _layer_dim == tensor._layer_dim &&
 			_row_dim == tensor._row_dim &&
@@ -226,7 +226,7 @@ namespace DeepLearning
 				[&](const auto& id) { return _data[id] == tensor._data[id]; });
 	}
 
-	bool DenseTensor::operator !=(const DenseTensor& tensor) const
+	bool Tensor::operator !=(const Tensor& tensor) const
 	{
 		return !(*this == tensor);
 	}

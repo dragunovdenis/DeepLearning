@@ -28,7 +28,7 @@ namespace DeepLearningTest
 		/// <summary>
 		/// Validates given collection of MNIST labels
 		/// </summary>
-		static void ValidateLabels(const std::vector<DenseVector>& labels)
+		static void ValidateLabels(const std::vector<Vector>& labels)
 		{
 			for (std::size_t label_id = 0; label_id < labels.size(); label_id++)
 			{

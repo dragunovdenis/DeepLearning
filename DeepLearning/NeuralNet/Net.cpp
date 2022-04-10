@@ -49,12 +49,12 @@ namespace DeepLearning
 
 			std::normal_distribution<Real> dist{ 0, Real(1) / Real(std::sqrt(in_dim)) };
 
-			_layers.emplace_back(DenseMatrix(out_dim, in_dim, [&]() {return dist(gen); }),
-				DenseVector(out_dim, Real(-1), Real(1)), af_ids_local[id - 1]);
+			_layers.emplace_back(Matrix(out_dim, in_dim, [&]() {return dist(gen); }),
+				Vector(out_dim, Real(-1), Real(1)), af_ids_local[id - 1]);
 		}
 	}
 
-	DenseVector Net::act(const DenseVector& input, std::vector<NeuralLayer::AuxLearningData>* const aux_data_ptr) const
+	Vector Net::act(const Vector& input, std::vector<NeuralLayer::AuxLearningData>* const aux_data_ptr) const
 	{
 		if (aux_data_ptr != nullptr && aux_data_ptr->size() != _layers.size())
 			throw std::exception("Invalid auxiliary data.");
@@ -114,7 +114,7 @@ namespace DeepLearning
 			collectors[collector_id].reset();
 	}
 
-	void Net::learn(const std::vector<DenseVector>& training_items, const std::vector<DenseVector>& reference_items,
+	void Net::learn(const std::vector<Vector>& training_items, const std::vector<Vector>& reference_items,
 		const std::size_t batch_size, const std::size_t epochs_count, const Real learning_rate, const CostFunctionId& cost_func_id,
 		const Real& lambda, const std::function<void(std::size_t)>& epoch_callback)
 	{
@@ -188,8 +188,8 @@ namespace DeepLearning
 		}
 	}
 
-	Real Net::evaluate_cost_function(const std::vector<DenseVector>& test_input,
-		const std::vector<DenseVector>& reference_output, const CostFunctionId& cost_func_id) const
+	Real Net::evaluate_cost_function(const std::vector<Vector>& test_input,
+		const std::vector<Vector>& reference_output, const CostFunctionId& cost_func_id) const
 	{
 		if (test_input.size() != reference_output.size())
 			throw std::exception("Invalid input.");
@@ -211,8 +211,8 @@ namespace DeepLearning
 		return cost_sum / test_input.size();
 	}
 
-	std::size_t Net::count_correct_answers(const std::vector<DenseVector>& test_input,
-		const std::vector<DenseVector>& labels, const Real& min_answer_probability) const
+	std::size_t Net::count_correct_answers(const std::vector<Vector>& test_input,
+		const std::vector<Vector>& labels, const Real& min_answer_probability) const
 	{
 		if (test_input.size() != labels.size())
 			throw std::exception("Invalid input.");

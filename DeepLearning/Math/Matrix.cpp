@@ -15,8 +15,8 @@
 //OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#include "DenseMatrix.h"
-#include "DenseVector.h"
+#include "Matrix.h"
+#include "Vector.h"
 #include "../Utilities.h"
 #include <exception>
 #include <numeric>
@@ -79,17 +79,17 @@ namespace DeepLearning
 
 	};
 
-	std::size_t DenseMatrix::size() const
+	std::size_t Matrix::size() const
 	{
 		return _row_dim * _col_dim;
 	}
 
-	bool DenseMatrix::check_bounds(const std::size_t row_id, const std::size_t col_id) const
+	bool Matrix::check_bounds(const std::size_t row_id, const std::size_t col_id) const
 	{
 		return row_id < _row_dim && col_id < _col_dim;
 	}
 
-	DenseMatrix::DenseMatrix(const std::size_t row_dim, const std::size_t col_dim, const bool assign_zero)
+	Matrix::Matrix(const std::size_t row_dim, const std::size_t col_dim, const bool assign_zero)
 		:_row_dim(row_dim), _col_dim(col_dim)
 	{
 		_data = reinterpret_cast<Real*>(std::malloc(size() * sizeof(Real)));
@@ -98,24 +98,24 @@ namespace DeepLearning
 			std::fill(begin(), end(), Real(0));
 	}
 
-	DenseMatrix::DenseMatrix(const std::size_t row_dim, const std::size_t col_dim,
-		const std::function<Real()>& generator) : DenseMatrix(row_dim, col_dim, false)
+	Matrix::Matrix(const std::size_t row_dim, const std::size_t col_dim,
+		const std::function<Real()>& generator) : Matrix(row_dim, col_dim, false)
 	{
 		std::generate(begin(), end(), generator);
 	}
 
-	DenseMatrix::DenseMatrix(const std::size_t row_dim, const std::size_t col_dim,
-		const Real range_begin, const Real range_end) : DenseMatrix(row_dim, col_dim, false)
+	Matrix::Matrix(const std::size_t row_dim, const std::size_t col_dim,
+		const Real range_begin, const Real range_end) : Matrix(row_dim, col_dim, false)
 	{
 		Utils::fill_with_random_values(begin(), end(), range_begin, range_end);
 	}
 
-	DenseMatrix::DenseMatrix(const DenseMatrix& matr) : DenseMatrix(matr.row_dim(), matr.col_dim(), false)
+	Matrix::Matrix(const Matrix& matr) : Matrix(matr.row_dim(), matr.col_dim(), false)
 	{
 		std::copy(matr.begin(), matr.end(), begin());
 	}
 
-	DenseMatrix& DenseMatrix::operator =(const DenseMatrix& matr)
+	Matrix& Matrix::operator =(const Matrix& matr)
 	{
 		if (size() != matr.size())
 		{
@@ -131,7 +131,7 @@ namespace DeepLearning
 		return *this;
 	}
 
-	DenseMatrix::DenseMatrix(DenseMatrix&& matr) noexcept 
+	Matrix::Matrix(Matrix&& matr) noexcept 
 		: _col_dim(matr._col_dim), _row_dim(matr._row_dim), _data(matr._data)
 	{
 		matr._data = nullptr;
@@ -139,7 +139,7 @@ namespace DeepLearning
 		matr._row_dim = 0;
 	}
 
-	void DenseMatrix::free()
+	void Matrix::free()
 	{
 		if (_data != nullptr)
 		{
@@ -151,17 +151,17 @@ namespace DeepLearning
 		_row_dim = 0;
 	}
 
-	DenseMatrix::~DenseMatrix()
+	Matrix::~Matrix()
 	{
 		free();
 	}
 
-	std::size_t DenseMatrix::row_col_to_data_id(const std::size_t row_id, const std::size_t col_id) const
+	std::size_t Matrix::row_col_to_data_id(const std::size_t row_id, const std::size_t col_id) const
 	{
 		return row_id * _col_dim + col_id;
 	}
 
-	Real& DenseMatrix::operator ()(const std::size_t row_id, const std::size_t col_id)
+	Real& Matrix::operator ()(const std::size_t row_id, const std::size_t col_id)
 	{
 #ifdef CHECK_BOUNDS
 		if (!check_bounds(row_id, col_id))
@@ -171,7 +171,7 @@ namespace DeepLearning
 		return _data[row_col_to_data_id(row_id, col_id)];
 	}
 
-	const Real& DenseMatrix::operator ()(const std::size_t row_id, const std::size_t col_id) const
+	const Real& Matrix::operator ()(const std::size_t row_id, const std::size_t col_id) const
 	{
 #ifdef CHECK_BOUNDS
 		if (!check_bounds(row_id, col_id))
@@ -181,12 +181,12 @@ namespace DeepLearning
 		return _data[row_col_to_data_id(row_id, col_id)];
 	}
 
-	DenseVector operator *(const DenseMatrix& matr, const DenseVector& vec)
+	Vector operator *(const Matrix& matr, const Vector& vec)
 	{
 		if (vec.dim() != matr._col_dim)
 			throw std::exception("Incompatible matrix-vector dimensionality");
 
-		auto result = DenseVector(matr._row_dim);
+		auto result = Vector(matr._row_dim);
 
 		for (std::size_t row_id = 0; row_id < matr._row_dim; row_id++)
 		{
@@ -203,12 +203,12 @@ namespace DeepLearning
 		return result;
 	}
 
-	DenseVector DenseMatrix::mul_add(const DenseVector& mul_vec, const DenseVector& add_vec) const
+	Vector Matrix::mul_add(const Vector& mul_vec, const Vector& add_vec) const
 	{
 		if (mul_vec.dim() != _col_dim || add_vec.dim() != _row_dim)
 			throw std::exception("Incompatible matrix-vector dimensionality");
 
-		auto result = DenseVector(_row_dim);
+		auto result = Vector(_row_dim);
 
 		for (std::size_t row_id = 0; row_id < row_dim(); row_id++)
 		{
@@ -225,12 +225,12 @@ namespace DeepLearning
 		return result;
 	}
 
-	DenseVector operator *(const DenseVector& vec, const DenseMatrix& matr)
+	Vector operator *(const Vector& vec, const Matrix& matr)
 	{
 		if (vec.dim() != matr._row_dim)
 			throw std::exception("Incompatible matrix-vector dimension");
 
-		auto result = DenseVector(matr._col_dim);
+		auto result = Vector(matr._col_dim);
 
 		const auto last_row_offset = matr._col_dim * (matr._row_dim - 1);
 
@@ -244,7 +244,7 @@ namespace DeepLearning
 		return result;
 	}
 
-	bool DenseMatrix::operator ==(const DenseMatrix& matr) const
+	bool Matrix::operator ==(const Matrix& matr) const
 	{
 		return _row_dim == matr._row_dim &&
 			   _col_dim == matr._col_dim &&
@@ -252,40 +252,40 @@ namespace DeepLearning
 				[&](const auto id) { return _data[id] == matr._data[id]; });
 	}
 
-	bool DenseMatrix::operator !=(const DenseMatrix& matr) const
+	bool Matrix::operator !=(const Matrix& matr) const
 	{
 		return !(*this == matr);
 	}
 
-	Real* DenseMatrix::begin()
+	Real* Matrix::begin()
 	{
 		return _data;
 	}
 
-	const Real* DenseMatrix::begin() const
+	const Real* Matrix::begin() const
 	{
 		return _data;
 	}
 
-	Real* DenseMatrix::end()
+	Real* Matrix::end()
 	{
 		return _data + size();
 	}
 
-	const Real* DenseMatrix::end() const
+	const Real* Matrix::end() const
 	{
 		return _data + size();
 	}
 
-	static inline DenseMatrix random(const std::size_t row_dim, const std::size_t col_dim, const Real range_begin, const Real range_end)
+	static inline Matrix random(const std::size_t row_dim, const std::size_t col_dim, const Real range_begin, const Real range_end)
 	{
-		auto result = DenseMatrix(row_dim, col_dim);
+		auto result = Matrix(row_dim, col_dim);
 		Utils::fill_with_random_values(result.begin(), result.end(), range_begin, range_end);
 
 		return result;
 	}
 
-	DenseMatrix& DenseMatrix::operator +=(const DenseMatrix& mat)
+	Matrix& Matrix::operator +=(const Matrix& mat)
 	{
 		if (_row_dim != mat._row_dim || _col_dim != mat._col_dim)
 			throw std::exception("Operands must be of the same dimension");
@@ -294,7 +294,7 @@ namespace DeepLearning
 		return *this;
 	}
 
-	DenseMatrix& DenseMatrix::operator -=(const DenseMatrix& mat)
+	Matrix& Matrix::operator -=(const Matrix& mat)
 	{
 		if (_row_dim != mat._row_dim || _col_dim != mat._col_dim)
 			throw std::exception("Operands must be of the same dimension");
@@ -303,49 +303,49 @@ namespace DeepLearning
 		return *this;
 	}
 
-	DenseMatrix& DenseMatrix::operator *=(const Real& scalar)
+	Matrix& Matrix::operator *=(const Real& scalar)
 	{
 		mul(scalar);
 		return *this;
 	}
 
-	DenseMatrix operator +(const DenseMatrix& mat1, const DenseMatrix& mat2)
+	Matrix operator +(const Matrix& mat1, const Matrix& mat2)
 	{
 		auto result = mat1;
 		return result += mat2;
 	}
 
-	DenseMatrix operator -(const DenseMatrix& mat1, const DenseMatrix& mat2)
+	Matrix operator -(const Matrix& mat1, const Matrix& mat2)
 	{
 		auto result = mat1;
 		return result -= mat2;
 	}
 
-	DenseMatrix operator *(const DenseMatrix& mat, const Real& scalar)
+	Matrix operator *(const Matrix& mat, const Real& scalar)
 	{
 		auto result = mat;
 		return result *= scalar;
 
 	}
 
-	DenseMatrix operator *(const Real& scalar, const DenseMatrix& mat)
+	Matrix operator *(const Real& scalar, const Matrix& mat)
 	{
 		return mat * scalar;
 	}
 
-	std::size_t DenseMatrix::col_dim() const
+	std::size_t Matrix::col_dim() const
 	{
 		return _col_dim;
 	}
 
-	std::size_t DenseMatrix::row_dim() const
+	std::size_t Matrix::row_dim() const
 	{
 		return _row_dim;
 	}
 
-	DenseMatrix vector_col_times_vector_row(const DenseVector& vec_col, const DenseVector& vec_row)
+	Matrix vector_col_times_vector_row(const Vector& vec_col, const Vector& vec_row)
 	{
-		DenseMatrix result(vec_col.dim(), vec_row.dim());
+		Matrix result(vec_col.dim(), vec_row.dim());
 
 		const auto col_dim = result.col_dim();
 		const auto last_row_offset = col_dim * (result.row_dim() - 1);

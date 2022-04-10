@@ -28,7 +28,7 @@ namespace DeepLearning
 	/// <summary>
 	/// Represents a dense vector of arbitrary dimension
 	/// </summary>
-	class DenseVector : public BasicCollection
+	class Vector : public BasicCollection
 	{
 		/// <summary>
 		/// Pointer to the data array
@@ -50,7 +50,7 @@ namespace DeepLearning
 		void free();
 
 		/// <summary>
-		/// Assignment from another DenseVector
+		/// Assignment from another Vector
 		/// </summary>
 		template <class S>
 		void assign(const S& source);
@@ -81,49 +81,49 @@ namespace DeepLearning
 		/// <summary>
 		/// Default constructor
 		/// </summary>
-		DenseVector() = default;
+		Vector() = default;
 
 		/// <summary>
 		/// Copy constructor
 		/// </summary>
-		DenseVector(const DenseVector& vec);
+		Vector(const Vector& vec);
 
 		/// <summary>
 		/// Move constructor
 		/// </summary>
-		DenseVector(DenseVector&& vec) noexcept;
+		Vector(Vector&& vec) noexcept;
 
 		/// <summary>
 		/// Copy assignment operator
 		/// </summary>
-		DenseVector& operator=(const DenseVector& vec);
+		Vector& operator=(const Vector& vec);
 
 		/// <summary>
 		/// Constructs dense vector of the given dimension
 		/// </summary>
-		DenseVector(const std::size_t dim, const bool assign_zero = true);
+		Vector(const std::size_t dim, const bool assign_zero = true);
 
 		/// <summary>
 		/// Constructor from given source vector
 		/// </summary>
 		template <class T>
-		DenseVector(const std::vector<T>& source);
+		Vector(const std::vector<T>& source);
 
 		/// <summary>
 		/// Constructs dense vector of the given dimension filled with
 		/// uniformly distributed pseudo-random values from the given range
 		/// </summary>
-		DenseVector(const std::size_t dim, const Real range_begin, const Real range_end);
+		Vector(const std::size_t dim, const Real range_begin, const Real range_end);
 
 		/// <summary>
 		/// Constructs dense vector of the given dimension filled with the given generator function
 		/// </summary>
-		DenseVector(const std::size_t dim, const std::function<Real()>& generator);
+		Vector(const std::size_t dim, const std::function<Real()>& generator);
 
 		/// <summary>
 		/// Destructor
 		/// </summary>
-		~DenseVector();
+		~Vector();
 
 		/// <summary>
 		/// Converter to std::vector
@@ -153,27 +153,27 @@ namespace DeepLearning
 		/// <summary>
 		/// Compound addition operator
 		/// </summary>
-		DenseVector& operator += (const DenseVector& vec);
+		Vector& operator += (const Vector& vec);
 
 		/// <summary>
 		/// Compound subtraction operator
 		/// </summary>
-		DenseVector& operator -= (const DenseVector& vec);
+		Vector& operator -= (const Vector& vec);
 
 		/// <summary>
 		/// Compound scalar multiplication operator
 		/// </summary>
-		DenseVector& operator *= (const Real& scalar);
+		Vector& operator *= (const Real& scalar);
 
 		/// <summary>
 		/// Equality operator
 		/// </summary>
-		bool operator ==(const DenseVector& vect) const;
+		bool operator ==(const Vector& vect) const;
 
 		/// <summary>
 		/// Inequality operator
 		/// </summary>
-		bool operator !=(const DenseVector& vect) const;
+		bool operator !=(const Vector& vect) const;
 
 		/// <summary>
 		/// Pointer to the first element of the vector
@@ -198,7 +198,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Generates a vector filled with uniformly distributed pseudo random values
 		/// </summary>
-		static DenseVector random(const std::size_t dim, const Real range_begin, const Real range_end);
+		static Vector random(const std::size_t dim, const Real range_begin, const Real range_end);
 
 
 		/// <summary>
@@ -209,26 +209,26 @@ namespace DeepLearning
 		/// <summary>
 		/// Returns Hadamard (element-wise) product of the current vector with the input
 		/// </summary>
-		DenseVector hadamard_prod(const DenseVector & vec) const;
+		Vector hadamard_prod(const Vector & vec) const;
 	};
 
 	/// <summary>
 	/// Vector addition operator
 	/// </summary>
-	DenseVector operator + (const DenseVector& vec1, const DenseVector& vec2);
+	Vector operator + (const Vector& vec1, const Vector& vec2);
 
 	/// <summary>
 	/// Vector subtraction operator
 	/// </summary>
-	DenseVector operator -(const DenseVector& vec1, const DenseVector& vec2);
+	Vector operator -(const Vector& vec1, const Vector& vec2);
 
 	/// <summary>
 	/// Vector-Scalar multiplication operator
 	/// </summary>
-	DenseVector operator *(const DenseVector& vec, const Real& scalar);
+	Vector operator *(const Vector& vec, const Real& scalar);
 
 	/// <summary>
 	/// Scalar-vector multiplication operator
 	/// </summary>
-	DenseVector operator *(const Real& scalar, const DenseVector& vec);
+	Vector operator *(const Real& scalar, const Vector& vec);
 }

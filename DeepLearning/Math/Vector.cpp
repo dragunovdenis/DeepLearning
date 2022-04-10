@@ -15,7 +15,7 @@
 //OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#include "DenseVector.h"
+#include "Vector.h"
 #include "../Utilities.h"
 #include <exception>
 #include <stdlib.h>
@@ -26,25 +26,25 @@
 
 namespace DeepLearning
 {
-	DenseVector::DenseVector(const DenseVector& vec)
-		: DenseVector(vec.dim(), false)
+	Vector::Vector(const Vector& vec)
+		: Vector(vec.dim(), false)
 	{
 		std::copy(vec.begin(), vec.end(), begin());
 	}
 
-	DenseVector& DenseVector::operator=(const DenseVector& vec)
+	Vector& Vector::operator=(const Vector& vec)
 	{
 		assign(vec);
 		return *this;
 	}
 
-	DenseVector::DenseVector(DenseVector&& vec) noexcept : _dim(vec._dim), _data(vec._data)
+	Vector::Vector(Vector&& vec) noexcept : _dim(vec._dim), _data(vec._data)
 	{
 		vec._data = nullptr;
 		vec._dim = 0;
 	}
 
-	DenseVector::DenseVector(const std::size_t dim, const bool assign_zero) : _dim(dim)
+	Vector::Vector(const std::size_t dim, const bool assign_zero) : _dim(dim)
 	{
 		_data = reinterpret_cast<Real*>(std::malloc(dim * sizeof(Real)));
 
@@ -53,25 +53,25 @@ namespace DeepLearning
 	}
 
 	template <class T>
-	DenseVector::DenseVector(const std::vector<T>& source)
-		: DenseVector(source.size(), false)
+	Vector::Vector(const std::vector<T>& source)
+		: Vector(source.size(), false)
 	{
 		std::copy(source.begin(), source.end(), begin());
 	}
 
-	DenseVector::DenseVector(const std::size_t dim, const Real range_begin, const Real range_end)
-		: DenseVector(dim, false)
+	Vector::Vector(const std::size_t dim, const Real range_begin, const Real range_end)
+		: Vector(dim, false)
 	{
 		Utils::fill_with_random_values(begin(), end(), range_begin, range_end);
 	}
 
-	DenseVector::DenseVector(const std::size_t dim, const std::function<Real()>& generator)
-		: DenseVector(dim, false)
+	Vector::Vector(const std::size_t dim, const std::function<Real()>& generator)
+		: Vector(dim, false)
 	{
 		std::generate(begin(), end(), generator);
 	}
 
-	DenseVector::~DenseVector()
+	Vector::~Vector()
 	{
 		free();
 	}
@@ -79,7 +79,7 @@ namespace DeepLearning
 	/// <summary>
 	/// Frees the allocated memory
 	/// </summary>
-	void DenseVector::free()
+	void Vector::free()
 	{
 		if (_data != nullptr)
 		{
@@ -89,13 +89,13 @@ namespace DeepLearning
 		_dim = 0;
 	}
 
-	std::vector<Real> DenseVector::ToStdVector() const
+	std::vector<Real> Vector::ToStdVector() const
 	{
 		return std::vector<Real>(begin(), end());
 	}
 
 	template <class S>
-	void DenseVector::assign(const S& source)
+	void Vector::assign(const S& source)
 	{
 		if (size() != source.size())
 		{
@@ -106,25 +106,25 @@ namespace DeepLearning
 		std::copy(source.begin(), source.end(), begin());
 	}
 
-	template void DenseVector::assign(const std::vector<Real>& source);
-	template void DenseVector::assign(const DenseVector& source);
+	template void Vector::assign(const std::vector<Real>& source);
+	template void Vector::assign(const Vector& source);
 
-	bool DenseVector::check_bounds(const ::std::size_t id) const
+	bool Vector::check_bounds(const ::std::size_t id) const
 	{
 		return id < _dim;
 	}
 
-	std::size_t DenseVector::dim() const
+	std::size_t Vector::dim() const
 	{
 		return _dim;
 	}
 
-	std::size_t DenseVector::size() const
+	std::size_t Vector::size() const
 	{
 		return _dim;
 	}
 
-	Real& DenseVector::operator ()(const std::size_t id)
+	Real& Vector::operator ()(const std::size_t id)
 	{
 #ifdef CHECK_BOUNDS
 		if (!check_bounds(row_id, col_id))
@@ -134,7 +134,7 @@ namespace DeepLearning
 			return _data[id];
 	}
 
-	const Real& DenseVector::operator ()(const std::size_t id) const
+	const Real& Vector::operator ()(const std::size_t id) const
 	{
 #ifdef CHECK_BOUNDS
 		if (!check_bounds(row_id, col_id))
@@ -144,46 +144,46 @@ namespace DeepLearning
 			return _data[id];
 	}
 
-	bool DenseVector::operator ==(const DenseVector& vect) const
+	bool Vector::operator ==(const Vector& vect) const
 	{
 		return _dim == vect._dim && std::all_of(IndexIterator(0), IndexIterator(static_cast<int>(_dim)),
 			[&](const auto& index) { return _data[index] == vect._data[index]; });
 	}
 
-	bool DenseVector::operator !=(const DenseVector& vect) const
+	bool Vector::operator !=(const Vector& vect) const
 	{
 		return !(*this == vect);
 	}
 
-	Real* DenseVector::begin()
+	Real* Vector::begin()
 	{
 		return _data;
 	}
 
-	const Real* DenseVector::begin() const
+	const Real* Vector::begin() const
 	{
 		return _data;
 	}
 
-	Real* DenseVector::end()
+	Real* Vector::end()
 	{
 		return _data + _dim;
 	}
 
-	const Real* DenseVector::end() const
+	const Real* Vector::end() const
 	{
 		return _data + _dim;
 	}
 
-	static DenseVector random(const std::size_t dim, const Real range_begin, const Real range_end)
+	static Vector random(const std::size_t dim, const Real range_begin, const Real range_end)
 	{
-		auto result = DenseVector(dim);
+		auto result = Vector(dim);
 		Utils::fill_with_random_values(result.begin(), result.end(), range_begin, range_end);
 
 		return result;
 	}
 
-	DenseVector& DenseVector::operator += (const DenseVector& vec)
+	Vector& Vector::operator += (const Vector& vec)
 	{
 		if (vec.dim() != dim())
 			throw std::exception("Operands must be of the same dimension");
@@ -192,7 +192,7 @@ namespace DeepLearning
 		return *this;
 	}
 
-	DenseVector& DenseVector::operator -= (const DenseVector& vec)
+	Vector& Vector::operator -= (const Vector& vec)
 	{
 		if (vec.dim() != dim())
 			throw std::exception("Operands must be of the same dimension");
@@ -201,48 +201,48 @@ namespace DeepLearning
 		return *this;
 	}
 
-	DenseVector& DenseVector::operator *= (const Real& scalar)
+	Vector& Vector::operator *= (const Real& scalar)
 	{
 		mul(scalar);
 		return *this;
 	}
 
-	DenseVector operator +(const DenseVector& vec1, const DenseVector& vec2)
+	Vector operator +(const Vector& vec1, const Vector& vec2)
 	{
 		auto result = vec1;
 		return result += vec2;
 	}
 
-	DenseVector operator -(const DenseVector& vec1, const DenseVector& vec2)
+	Vector operator -(const Vector& vec1, const Vector& vec2)
 	{
 		auto result = vec1;
 		return result -= vec2;
 	}
 
-	DenseVector operator *(const DenseVector& vec, const Real& scalar)
+	Vector operator *(const Vector& vec, const Real& scalar)
 	{
 		auto result = vec;
 		return result *= scalar;
 	}
 
-	DenseVector operator *(const Real& scalar, const DenseVector& vec)
+	Vector operator *(const Real& scalar, const Vector& vec)
 	{
 		return vec * scalar;
 	}
 
 
-	std::size_t DenseVector::max_element_id(const std::function<bool(Real, Real)>& comparer) const
+	std::size_t Vector::max_element_id(const std::function<bool(Real, Real)>& comparer) const
 	{
 		const auto id = std::max_element(begin(), end(), comparer) - begin();
 		return static_cast<std::size_t>(id);
 	}
-	DenseVector DenseVector::hadamard_prod(const DenseVector& vec) const
+	Vector Vector::hadamard_prod(const Vector& vec) const
 	{
-		DenseVector result(dim());
+		Vector result(dim());
 		std::transform(begin(), end(), vec.begin(), result.begin(), [](const auto& x, const auto& y) { return x * y; });
 		return result;
 	}
 
-	template DenseVector::DenseVector(const std::vector<unsigned char>& souurce);
-	template DenseVector::DenseVector(const std::vector<Real>& souurce);
+	template Vector::Vector(const std::vector<unsigned char>& souurce);
+	template Vector::Vector(const std::vector<Real>& souurce);
 }

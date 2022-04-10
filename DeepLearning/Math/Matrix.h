@@ -25,12 +25,12 @@
 
 namespace DeepLearning
 {
-	class DenseVector;
+	class Vector;
 
 	/// <summary>
 	/// Representation of a dense rectangular matrix
 	/// </summary>
-	class DenseMatrix : public BasicCollection
+	class Matrix : public BasicCollection
 
 	{
 		/// <summary>
@@ -99,44 +99,44 @@ namespace DeepLearning
 		/// <summary>
 		/// Default constructor, constructs an empty matrix (i.e. a matrix having "zero" dimensions)
 		/// </summary>
-		DenseMatrix() = default;
+		Matrix() = default;
 
 		/// <summary>
 		/// Constructs a dense matrix of the given dimensions
 		/// </summary>
-		DenseMatrix(const std::size_t row_dim, const std::size_t col_dim, const bool assign_zero = true);
+		Matrix(const std::size_t row_dim, const std::size_t col_dim, const bool assign_zero = true);
 
 		/// <summary>
 		/// Constructs a dense matrix of the given dimensions filled according to the given generator function
 		/// </summary>
-		DenseMatrix(const std::size_t row_dim, const std::size_t col_dim, const std::function<Real()>& generator);
+		Matrix(const std::size_t row_dim, const std::size_t col_dim, const std::function<Real()>& generator);
 
 		/// <summary>
 		/// Constructs a dense matrix of the given dimensions filled
 		/// with a uniformly distributed pseudo-random values from the given range
 		/// </summary>
-		DenseMatrix(const std::size_t row_dim, const std::size_t col_dim,
+		Matrix(const std::size_t row_dim, const std::size_t col_dim,
 			const Real range_begin, const Real range_end);
 
 		/// <summary>
 		/// Copy constructor
 		/// </summary>
-		DenseMatrix(const DenseMatrix& matr);
+		Matrix(const Matrix& matr);
 
 		/// <summary>
 		/// Assignment operator
 		/// </summary>
-		DenseMatrix& operator =(const DenseMatrix& matr);
+		Matrix& operator =(const Matrix& matr);
 
 		/// <summary>
 		/// Move constructor
 		/// </summary>
-		DenseMatrix(DenseMatrix&& matr) noexcept;
+		Matrix(Matrix&& matr) noexcept;
 
 		/// <summary>
 		/// Destructor
 		/// </summary>
-		~DenseMatrix();
+		~Matrix();
 
 		/// <summary>
 		/// Element access operator
@@ -157,7 +157,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Multiplication by a vector from the right
 		/// </summary>
-		DenseVector friend operator *(const DenseMatrix& matr, const DenseVector& vec);
+		Vector friend operator *(const Matrix& matr, const Vector& vec);
 
 		/// <summary>
 		/// Performs multiplication by the given vector (from the right)
@@ -165,22 +165,22 @@ namespace DeepLearning
 		/// </summary>
 		/// <param name="mul_vec">The vector that is involved in the multiplication operation</param>
 		/// <param name="add_vec">The vector that is involved in the addition operation</param>
-		DenseVector mul_add(const DenseVector& mul_vec, const DenseVector& add_vec) const;
+		Vector mul_add(const Vector& mul_vec, const Vector& add_vec) const;
 
 		/// <summary>
 		/// Multiplication by a vector from the left
 		/// </summary>
-		DenseVector friend operator *(const DenseVector& vec, const DenseMatrix& matr);
+		Vector friend operator *(const Vector& vec, const Matrix& matr);
 
 		/// <summary>
 		/// Equality operator
 		/// </summary>
-		bool operator ==(const DenseMatrix& matr) const;
+		bool operator ==(const Matrix& matr) const;
 
 		/// <summary>
 		/// Inequality operator
 		/// </summary>
-		bool operator !=(const DenseMatrix& matr) const;
+		bool operator !=(const Matrix& matr) const;
 
 		/// <summary>
 		/// Pointer to the first element of the vector
@@ -205,46 +205,46 @@ namespace DeepLearning
 		/// <summary>
 		/// Generates a vector filled with uniformly distributed pseudo random values
 		/// </summary>
-		static inline DenseMatrix random(const std::size_t row_dim, const std::size_t col_dim, const Real range_begin, const Real range_end);
+		static inline Matrix random(const std::size_t row_dim, const std::size_t col_dim, const Real range_begin, const Real range_end);
 
 		/// <summary>
 		/// Compound addition operator
 		/// </summary>
-		DenseMatrix& operator +=(const DenseMatrix &mat);
+		Matrix& operator +=(const Matrix &mat);
 
 		/// <summary>
 		/// Compound subtraction operator
 		/// </summary>
-		DenseMatrix& operator -=(const DenseMatrix &mat);
+		Matrix& operator -=(const Matrix &mat);
 
 		/// <summary>
 		/// Compound scalar multiplication operator
 		/// </summary>
-		DenseMatrix& operator *=(const Real& scalar);
+		Matrix& operator *=(const Real& scalar);
 	};
 
 	/// <summary>
 	/// Matrix addition operator
 	/// </summary>
-	DenseMatrix operator +(const DenseMatrix& mat1, const DenseMatrix& mat2);
+	Matrix operator +(const Matrix& mat1, const Matrix& mat2);
 
 	/// <summary>
 	/// Matrix subtraction operator
 	/// </summary>
-	DenseMatrix operator -(const DenseMatrix& mat1, const DenseMatrix& mat2);
+	Matrix operator -(const Matrix& mat1, const Matrix& mat2);
 
 	/// <summary>
 	/// Matrix by scalar multiplication operator
 	/// </summary>
-	DenseMatrix operator *(const DenseMatrix& mat, const Real& scalar);
+	Matrix operator *(const Matrix& mat, const Real& scalar);
 
 	/// <summary>
 	/// Scalar by matrix multiplication operator
 	/// </summary>
-	DenseMatrix operator *(const Real& scalar, const DenseMatrix& mat);
+	Matrix operator *(const Real& scalar, const Matrix& mat);
 
 	/// <summary>
 	/// Returns result of multiplication of the given vector-column by the given vector-row
 	/// </summary>
-	DenseMatrix vector_col_times_vector_row(const DenseVector& vec_col, const DenseVector& vec_row);
+	Matrix vector_col_times_vector_row(const Vector& vec_col, const Vector& vec_row);
 }

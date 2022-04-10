@@ -26,7 +26,7 @@ namespace DeepLearning
 	/// <summary>
 	/// Representation of rank 3 
 	/// </summary>
-	class DenseTensor : public BasicCollection
+	class Tensor : public BasicCollection
 	{
 		Real* _data{};
 
@@ -85,7 +85,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Default constructor
 		/// </summary>
-		DenseTensor() = default;
+		Tensor() = default;
 
 		/// <summary>
 		/// Constructor
@@ -94,35 +94,35 @@ namespace DeepLearning
 		/// <param name="row_dim">Row dimension in each layer</param>
 		/// <param name="col_dim">Number of elements in each row</param>
 		/// <param name="assign_zero">The tensor will be assigned with "0" if "true"</param>
-		DenseTensor(const std::size_t layer_dim, const std::size_t row_dim,
+		Tensor(const std::size_t layer_dim, const std::size_t row_dim,
 			const std::size_t col_dim, const bool assign_zero = true);
 
 		/// <summary>
 		/// Copy constructor
 		/// </summary>
-		DenseTensor(const DenseTensor& tensor);
+		Tensor(const Tensor& tensor);
 
 		/// <summary>
 		/// Move constructor
 		/// </summary>
-		DenseTensor(DenseTensor&& tensor) noexcept;
+		Tensor(Tensor&& tensor) noexcept;
 
 		/// <summary>
 		/// Constructs dense tensor of the given dimension filled with
 		/// uniformly distributed pseudo-random values from the given range
 		/// </summary>
-		DenseTensor(const std::size_t layer_dim, const std::size_t row_dim,
+		Tensor(const std::size_t layer_dim, const std::size_t row_dim,
 			const std::size_t col_dim, const Real range_begin, const Real range_end);
 
 		/// <summary>
 		/// Assignment operator
 		/// </summary>
-		DenseTensor& operator =(const DenseTensor& tensor);
+		Tensor& operator =(const Tensor& tensor);
 
 		/// <summary>
 		/// Destructor
 		/// </summary>
-		~DenseTensor();
+		~Tensor();
 
 		/// <summary>
 		/// Pointer to the first element of the tensor
@@ -172,47 +172,47 @@ namespace DeepLearning
 		/// <summary>
 		/// Compound addition operator
 		/// </summary>
-		DenseTensor& operator +=(const DenseTensor & tensor);
+		Tensor& operator +=(const Tensor & tensor);
 
 		/// <summary>
 		/// Compound subtraction operator
 		/// </summary>
-		DenseTensor& operator -=(const DenseTensor & tensor);
+		Tensor& operator -=(const Tensor & tensor);
 
 		/// <summary>
 		/// Compound scalar multiplication operator
 		/// </summary>
-		DenseTensor& operator *=(const Real & scalar);
+		Tensor& operator *=(const Real & scalar);
 
 		/// <summary>
 		/// "Equal to" operator
 		/// </summary>
-		bool operator ==(const DenseTensor & tensor) const;
+		bool operator ==(const Tensor & tensor) const;
 
 		/// <summary>
 		/// "Not equal to" operator
 		/// </summary>
-		bool operator !=(const DenseTensor& tensor) const;
+		bool operator !=(const Tensor& tensor) const;
 	};
 
 	/// <summary>
 	/// Addition operator
 	/// </summary>
-	DenseTensor operator +(const DenseTensor& tensor1, const DenseTensor& tensor2);
+	Tensor operator +(const Tensor& tensor1, const Tensor& tensor2);
 
 	/// <summary>
 	/// Subtraction operator
 	/// </summary>
-	DenseTensor operator -(const DenseTensor& tensor1, const DenseTensor& tensor2);
+	Tensor operator -(const Tensor& tensor1, const Tensor& tensor2);
 
 	/// <summary>
 	/// Multiplication by a scalar from the right
 	/// </summary>
-	DenseTensor operator *(const DenseTensor& tensor, const Real& scalar);
+	Tensor operator *(const Tensor& tensor, const Real& scalar);
 
 	/// <summary>
 	/// Multiplication by a scalar from the left
 	/// </summary>
-	DenseTensor operator *(const Real& scalar, const DenseTensor& tensor);
+	Tensor operator *(const Real& scalar, const Tensor& tensor);
 
 }

@@ -16,7 +16,7 @@
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "CppUnitTest.h"
-#include <Math/DenseVector.h>
+#include <Math/Vector.h>
 #include <Math/ActivationFunction.h>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -49,7 +49,7 @@ namespace DeepLearningTest
 		{
 			//Arrange
 			const auto dim = 10;
-			const auto vector = DenseVector(dim, -1, 1);
+			const auto vector = Vector(dim, -1, 1);
 
 			//Act
 			const auto result = ActivationFuncion(ActivationFunctionId::SIGMOID)(vector);
@@ -70,7 +70,7 @@ namespace DeepLearningTest
 		{
 			//Arrange
 			const auto dim = 10;
-			const auto vector = DenseVector(dim, -1, 1);
+			const auto vector = Vector(dim, -1, 1);
 
 			//Act
 			const auto [result, result_deriv] = ActivationFuncion(ActivationFunctionId::SIGMOID).func_and_deriv(vector);

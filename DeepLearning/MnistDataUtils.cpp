@@ -82,7 +82,7 @@ namespace DeepLearning
 		return result;
 	}
 
-	std::vector<DenseVector> MnistDataUtils::read_labels(const std::filesystem::path& path,
+	std::vector<Vector> MnistDataUtils::read_labels(const std::filesystem::path& path,
 		const std::size_t expected_label_count)
 	{
 		std::ifstream file;
@@ -109,7 +109,7 @@ namespace DeepLearning
 			throw std::exception("Unexpected number of labels in the file.");
 
 		//The header is over
-		std::vector<DenseVector> result(expected_label_count, DenseVector(10));
+		std::vector<Vector> result(expected_label_count, Vector(10));
 
 		unsigned char u_byte;
 		for (std::size_t label_id = 0; label_id < expected_label_count; label_id++)
