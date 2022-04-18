@@ -135,6 +135,17 @@ namespace DeepLearning
 		return _col_dim * (layer_id * _row_dim + row_id) + col_id;
 	}
 
+	Index3d Tensor::data_id_to_index_3d(const long long data_id) const
+	{
+		const auto temp = std::div(data_id, static_cast<long long>(_col_dim));
+		const auto col_id = temp.rem;
+		const auto temp1 = std::div(temp.quot, static_cast<long long>(_row_dim));
+		const auto row_id = temp1.rem;
+		const auto layer_id = temp1.quot;
+
+		return { layer_id, row_id, col_id };
+	}
+
 	bool Tensor::check_bounds(const std::size_t layer_id, const std::size_t row_id, const std::size_t col_id) const
 	{
 		return layer_id < _layer_dim && row_id < _row_dim && col_id < _col_dim;
@@ -144,7 +155,7 @@ namespace DeepLearning
 	{
 #ifdef CHECK_BOUNDS
 		if (!check_bounds(layer_id, row_id, col_id))
-			throw std::exception("Index out of bounds")
+			throw std::exception("Index out of bounds");
 #endif // CHECK_BOUNDS
 
 		return _data[coords_to_data_id(layer_id, row_id, col_id)];
@@ -154,7 +165,7 @@ namespace DeepLearning
 	{
 #ifdef CHECK_BOUNDS
 		if (!check_bounds(layer_id, row_id, col_id))
-			throw std::exception("Index out of bounds")
+			throw std::exception("Index out of bounds");
 #endif // CHECK_BOUNDS
 
 		return _data[coords_to_data_id(layer_id, row_id, col_id)];
@@ -229,5 +240,85 @@ namespace DeepLearning
 	bool Tensor::operator !=(const Tensor& tensor) const
 	{
 		return !(*this == tensor);
+	}
+
+	Index3d Tensor::size_3d() const
+	{
+		return Index3d{ static_cast<long long>(_layer_dim),
+			            static_cast<long long>(_row_dim),
+			            static_cast<long long>(_col_dim) };
+	}
+
+	/// <summary>
+	/// Returns size of convolution result in certain dimension
+	/// </summary>
+	/// <param name="in_size">Input size (in the chosen dimension)</param>
+	/// <param name="kernel_size">Kernel size (in the chosen dimension)</param>
+	/// <param name="padding">Padding size (in the chosen dimension)</param>
+	/// <param name="stride">Stride size (in the chosen dimension)</param>
+	long long calc_out_size_for_convolution(const std::size_t in_size, const std::size_t kernel_size,
+		const long long padding, const long long stride)
+	{
+		const auto temp = static_cast<long long>(in_size) + 2 * padding - static_cast<long long>(kernel_size) + 1ll;
+		if (temp < 0)
+			return 0;
+
+		return  temp / stride;
+	}
+
+	/// <summary>
+	/// Linear rectifier function of integer argument
+	/// </summary>
+	inline long long relu(const long long x)
+	{
+		return x > 0ll ? x : 0ll;
+	}
+
+	/// <summary>
+	/// Linear rectifier function, 3d version
+	/// </summary>
+	inline Index3d relu(const Index3d& v)
+	{
+		return { relu(v.x), relu(v.y), relu(v.z) };
+	}
+
+	Tensor Tensor::convolve(const Tensor& kernel, const Index3d& paddings, const Index3d& strides) const
+	{
+		const Index3d result_dim = { calc_out_size_for_convolution(_layer_dim, kernel._layer_dim, paddings.x, strides.x) ,
+									 calc_out_size_for_convolution(_row_dim, kernel._row_dim, paddings.y, strides.y) ,
+									 calc_out_size_for_convolution(_col_dim, kernel._col_dim, paddings.z, strides.z) };
+		auto result = Tensor(result_dim.x, result_dim.y, result_dim.z, false);
+
+		const auto tensor_size = size_3d();
+		const auto kernel_size = kernel.size_3d();
+
+		for (std::size_t res_data_id = 0; res_data_id < result.size(); res_data_id++)
+		{
+			const auto result_offsets = result.data_id_to_index_3d(res_data_id);
+			const auto tensor_offsets = result_offsets.hadamard_prod(strides) - paddings;
+			const auto kernel_start_offsets = relu(-tensor_offsets);
+			const auto kernel_stop_offsets = kernel_size - relu(tensor_offsets + kernel_size - tensor_size);
+
+			Real part_res = Real(0);
+
+			for (auto k_x = kernel_start_offsets.x; k_x < kernel_stop_offsets.x; k_x++)
+			{
+				const auto t_x = tensor_offsets.x + k_x;
+				for (auto k_y = kernel_start_offsets.y; k_y < kernel_stop_offsets.y; k_y++)
+				{
+					const auto t_y = tensor_offsets.y + k_y;
+					for (auto k_z = kernel_start_offsets.z; k_z < kernel_stop_offsets.z; k_z++)
+					{
+						const auto t_z = tensor_offsets.z + k_z;
+						part_res += _data[coords_to_data_id(t_x, t_y, t_z)] * kernel(k_x, k_y, k_z);
+					}
+
+				}
+			}
+
+			result._data[res_data_id] = part_res;
+		}
+
+		return result;
 	}
 }

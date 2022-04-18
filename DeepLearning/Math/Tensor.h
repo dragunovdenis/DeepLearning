@@ -19,6 +19,7 @@
 #include "../defs.h"
 #include <msgpack.hpp>
 #include "BasicCollection.h"
+#include "LinAlg3d.h"
 
 
 namespace DeepLearning
@@ -59,6 +60,11 @@ namespace DeepLearning
 		/// Converts given triplet of integer coordinates to a single index that can be used to access "data" array
 		/// </summary>
 		std::size_t coords_to_data_id(const std::size_t layer_id, const std::size_t row_id, const std::size_t col_id) const;
+
+		/// <summary>
+		/// Converts given index of an element in the "data" array to a triplet of layer, row and column indices of the same element
+		/// </summary>
+		Index3d data_id_to_index_3d(const long long data_id) const;
 
 		/// <summary>
 		/// Returns "true" if the given triplet of coordinates is valid to access "data" array
@@ -193,6 +199,21 @@ namespace DeepLearning
 		/// "Not equal to" operator
 		/// </summary>
 		bool operator !=(const Tensor& tensor) const;
+
+		/// <summary>
+		/// Returns "sizes" of the tensor in all the 3 directions
+		/// </summary>
+		Index3d size_3d() const;
+
+		/// <summary>
+		/// Convolution with another tensor
+		/// </summary>
+		/// <param name="kernel">Convolution kernel</param>
+		/// <param name="paddings">Paddings in 3-dimensional index space</param>
+		/// <param name="strides">Strides in 3-dimensional index space</param>
+		/// <returns>Result of the convolution</returns>
+		Tensor convolve(const Tensor& kernel, const Index3d& paddings = Index3d{ 0, 0, 0 },
+											  const Index3d& strides = Index3d{ 1, 1, 1 }) const;
 	};
 
 	/// <summary>

@@ -102,6 +102,9 @@
     <ClInclude Include="Math\BasicCollection.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
+    <ClInclude Include="Math\LinAlg3d.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Matrix.cpp">

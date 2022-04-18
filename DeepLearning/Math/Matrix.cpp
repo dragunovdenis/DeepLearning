@@ -165,7 +165,7 @@ namespace DeepLearning
 	{
 #ifdef CHECK_BOUNDS
 		if (!check_bounds(row_id, col_id))
-			throw std::exception("Index out of bounds")
+			throw std::exception("Index out of bounds");
 #endif // CHECK_BOUNDS
 
 		return _data[row_col_to_data_id(row_id, col_id)];
@@ -175,7 +175,7 @@ namespace DeepLearning
 	{
 #ifdef CHECK_BOUNDS
 		if (!check_bounds(row_id, col_id))
-			throw std::exception("Index out of bounds")
+			throw std::exception("Index out of bounds");
 #endif // CHECK_BOUNDS
 
 		return _data[row_col_to_data_id(row_id, col_id)];

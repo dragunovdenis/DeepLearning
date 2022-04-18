@@ -127,8 +127,8 @@ namespace DeepLearning
 	Real& Vector::operator ()(const std::size_t id)
 	{
 #ifdef CHECK_BOUNDS
-		if (!check_bounds(row_id, col_id))
-			throw std::exception("Index out of bounds")
+		if (!check_bounds(id))
+			throw std::exception("Index out of bounds");
 #endif // CHECK_BOUNDS
 
 			return _data[id];
@@ -137,8 +137,8 @@ namespace DeepLearning
 	const Real& Vector::operator ()(const std::size_t id) const
 	{
 #ifdef CHECK_BOUNDS
-		if (!check_bounds(row_id, col_id))
-			throw std::exception("Index out of bounds")
+		if (!check_bounds(id))
+			throw std::exception("Index out of bounds");
 #endif // CHECK_BOUNDS
 
 			return _data[id];

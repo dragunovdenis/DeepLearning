@@ -150,5 +150,103 @@ namespace DeepLearningTest
 		{
 			StandardTestUtils::ScalarMultiplicationByOneTest<Tensor>([]() { return TensorFactory(); });
 		}
+
+		TEST_METHOD(ConvolutionNoPaddingNoStrideTest)
+		{
+
+			const auto tensor_size = Index3d{ 10, 22, 33 };
+			const auto tensor = TensorFactory(tensor_size.x, tensor_size.y, tensor_size.z);//filled with random numbers
+			Assert::IsTrue(tensor.max_abs() > 0, L"Tensor is expected to be nonzero");
+
+			const auto kernel_size = Index3d{ 3, 5, 7 };
+			const auto kernel = TensorFactory(kernel_size.x, kernel_size.y, kernel_size.z);//filled with random numbers
+			Assert::IsTrue(kernel.max_abs() > 0, L"Kernel is expected to be nonzero");
+
+			const auto result = tensor.convolve(kernel);
+			const auto result_size = result.size_3d();
+
+			Assert::IsTrue(result_size.x == tensor_size.x - kernel_size.x + 1 &&
+				result_size.y == tensor_size.y - kernel_size.y + 1 &&
+				result_size.z == tensor_size.z - kernel_size.z + 1, L"Wrong size of the convolution result");
+
+			for (auto r_l = 0ll; r_l < result_size.x; r_l++)
+			{
+				for (auto r_r = 0ll; r_r < result_size.y; r_r++)
+				{
+					for (auto r_c = 0ll; r_c < result_size.z; r_c++)
+					{
+						Real reference = Real(0);
+
+						for (auto k_l = 0ll; k_l < kernel_size.x; k_l++)
+						{
+							for (auto k_r = 0ll; k_r < kernel_size.y; k_r++)
+							{
+								for (auto k_c = 0ll; k_c < kernel_size.z; k_c++)
+								{
+									reference += kernel(k_l, k_r, k_c) * tensor(r_l + k_l, r_r + k_r, r_c + k_c);
+								}
+							}
+						}
+
+						const auto diff = std::abs(reference - result(r_l, r_r, r_c));
+						Logger::WriteMessage((std::string("diff =  ") + Utils::to_string(diff) + "\n").c_str());
+						Assert::IsTrue(diff < 10 * std::numeric_limits<Real>::epsilon(), L"Unexpected result");
+					}
+				}
+			}
+		}
+
+		TEST_METHOD(ConvolutionWithPaddingNoStrideTest)
+		{
+			const auto tensor_size = Index3d{ 10, 22, 33 };
+			const auto tensor = TensorFactory(tensor_size.x, tensor_size.y, tensor_size.z);//filled with random numbers
+			Assert::IsTrue(tensor.max_abs() > 0, L"Tensor is expected to be nonzero");
+
+			const auto padding = Index3d{ 2, 3, 5 };
+			//zero tensor
+			auto tensor_with_padding = Tensor(tensor_size.x + 2 * padding.x, tensor_size.y + 2 * padding.y, tensor_size.z + 2 * padding.z );
+
+			//copy values to proper location
+			for (auto l = 0ll;  l < tensor_size.x; l++ )
+				for (auto r = 0ll; r < tensor_size.y; r++)
+					for (auto c = 0ll; c < tensor_size.z; c++)
+						tensor_with_padding(l + padding.x, r + padding.y, c + padding.z) = tensor(l, r, c);
+
+
+			const auto kernel_size = Index3d{ 3, 5, 7 };
+			const auto kernel = TensorFactory(kernel_size.x, kernel_size.y, kernel_size.z);//filled with random numbers
+			Assert::IsTrue(kernel.max_abs() > 0, L"Kernel is expected to be nonzero");
+
+			const auto result = tensor.convolve(kernel, padding);
+			const auto result_padding_included = tensor_with_padding.convolve(kernel);
+
+			Assert::IsTrue(result == result_padding_included, L"Tensors are not the same");
+		}
+
+		TEST_METHOD(ConvolutionWithStrideNoPaddingTest)
+		{
+			const auto tensor_size = Index3d{ 10, 22, 33 };
+			const auto tensor = TensorFactory(tensor_size.x, tensor_size.y, tensor_size.z);//filled with random numbers
+			Assert::IsTrue(tensor.max_abs() > 0, L"Tensor is expected to be nonzero");
+
+			const auto stride = Index3d{ 2, 3, 5 };
+
+			const auto kernel_size = Index3d{ 3, 5, 7 };
+			const auto kernel = TensorFactory(kernel_size.x, kernel_size.y, kernel_size.z);//filled with random numbers
+			Assert::IsTrue(kernel.max_abs() > 0, L"Kernel is expected to be nonzero");
+
+			const auto result = tensor.convolve(kernel, Index3d{ 0, 0, 0 }, stride);
+			const auto result_no_stride = tensor.convolve(kernel);
+
+
+			for (auto l = 0ul; l < result.layer_dim(); l++)
+				for (auto r = 0ul; r < result.row_dim(); r++)
+					for (auto c = 0ul; c < result.col_dim(); c++)
+					{
+						const auto diff = std::abs(result(l, r, c) - result_no_stride(l * stride.x, r * stride.y, c * stride.z));
+						Logger::WriteMessage((std::string("diff =  ") + Utils::to_string(diff) + "\n").c_str());
+						Assert::IsTrue(diff == Real(0), L"Elements are not the same");
+					}
+		}
 	};
 }

@@ -60,7 +60,6 @@ namespace DeepLearningTest::StandardTestUtils
 		//Arrange
 		const auto instance = factory();
 		Assert::IsTrue(instance.max_abs() > 0, L"The instance is zero!");
-		Assert::IsTrue(!instance.empty(), L"Instances must be non-empty");
 		Assert::IsTrue(zero_instance.max_abs() == 0, L"Zero instance is actually non-zero!");
 
 		//Act
@@ -84,7 +83,6 @@ namespace DeepLearningTest::StandardTestUtils
 		const auto instance1 = factory();
 		const auto instance2 = factory();
 
-		Assert::IsTrue(!instance1.empty() && !instance2.empty(), L"Instances must be non-empty");
 		Assert::IsTrue(instance1.max_abs() > 0 && instance2.max_abs() > 0, L"The two random instances are supposed to be non-zero!");
 		Assert::IsTrue(instance1 != instance2, L"The two random instances are supposed to be different!");
 
@@ -182,5 +180,25 @@ namespace DeepLearningTest::StandardTestUtils
 
 		//Assert
 		Assert::IsTrue(result == instance, L"Instances are not the same!");
+	}
+
+	/// <summary>
+	/// Performs a "standard" test of a unary "minus" operator
+	/// </summary>
+	/// <param name="factory">A factory method returning random instances of class "T"</param>
+	template <class T>
+	void UnaryMinusOperatorTest(const std::function<T()>& factory)
+	{
+		//Arrange
+		const auto instance = factory();
+		Assert::IsTrue(instance.max_abs() > 0, L"The input instance is expected to be non-zero!");
+
+		//Act
+		const auto minus_instance = -instance;
+		const auto double_minus_instance = -minus_instance;
+
+		//Assert
+		Assert::IsTrue(instance == double_minus_instance, L"Minus operator should be inverse to itself!");
+		Assert::IsTrue((instance + minus_instance).max_abs() == 0, L"Minus operator should result in an additionally inverse instance!");
 	}
 }
