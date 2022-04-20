@@ -17,6 +17,9 @@
 
 #include "ActivationFunction.h"
 #include "Dual.h"
+#include "Vector.h"
+#include "Matrix.h"
+#include "Tensor.h"
 #include <vector>
 #include <algorithm>
 
@@ -48,26 +51,36 @@ namespace DeepLearning
 		}
 	}
 
-	Vector ActivationFuncion::operator ()(const Vector& input) const
+	template <class T>
+	T ActivationFuncion::operator ()(const T& input) const
 	{
-		Vector result(input.dim());
-		std::transform(input.begin(), input.end(), result.begin(),
+		auto result = input;
+		std::transform(result.begin(), result.end(), result.begin(),
 			[&](const auto& x) { return  _func->operator()(x); });
 		return result;
 	}
 
-	std::tuple<Vector, Vector> ActivationFuncion::func_and_deriv(const Vector& input) const
+	template <class T>
+	std::tuple<T, T> ActivationFuncion::func_and_deriv(const T& input) const
 	{
-		Vector func(input.dim());
-		Vector deriv(input.dim());
+		auto func = input;
+		auto deriv = input;
 
-		for (std::size_t item_id = 0; item_id < input.dim(); item_id++)
+		for (std::size_t item_id = 0; item_id < input.size(); item_id++)
 		{
-			const auto [value, derivative] = _func->calc_funcion_and_derivative(input(item_id));
-			func(item_id) = value;
-			deriv(item_id) = derivative;
+			const auto [value, derivative] = _func->calc_funcion_and_derivative(func.begin()[item_id]);
+			func.begin()[item_id] = value;
+			deriv.begin()[item_id] = derivative;
 		}
 
 		return std::make_tuple(func, deriv);
 	}
+
+	template Vector ActivationFuncion::operator ()(const Vector& input) const;
+	template Matrix ActivationFuncion::operator ()(const Matrix& input) const;
+	template Tensor ActivationFuncion::operator ()(const Tensor& input) const;
+
+	template std::tuple<Vector, Vector> ActivationFuncion::func_and_deriv(const Vector& input) const;
+	template std::tuple<Matrix, Matrix> ActivationFuncion::func_and_deriv(const Matrix& input) const;
+	template std::tuple<Tensor, Tensor> ActivationFuncion::func_and_deriv(const Tensor& input) const;
 }

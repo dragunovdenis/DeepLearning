@@ -148,7 +148,7 @@ namespace DeepLearningTest
 				[](const auto& x, const auto& y) {
 					return x * x * x * x * Real(5) + 2 * y * y - 3 * x * x * y - 2 + sin(x + 2 * y) +
 						cos(x * y) + exp(y / 2 + x / 2) + log(1 + x * x + y * y) + sqrt(cosh((x + y) / 10)) + sinh(x + y) / (1 + tanh(x * y)); 
-				}, arg1, arg2, Real(2e-9));
+				}, arg1, arg2, Real(2.1e-9));
 		}
 	};
 }

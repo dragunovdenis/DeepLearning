@@ -18,7 +18,6 @@
 #pragma once
 
 #include "DiffFunc.h"
-#include "Vector.h"
 
 namespace DeepLearning
 {
@@ -50,14 +49,16 @@ namespace DeepLearning
 		/// </summary>
 		/// <param name="output">Actual output of the neural network</param>
 		/// <param name="reference">Expected output of the neural network</param>
-		virtual Real operator ()(const Vector& output, const Vector& reference) const;
+		template <class T>
+		Real operator ()(const T& output, const T& reference) const;
 
 		/// <summary>
 		/// Calculates function and derivative with respect to the given output vector
 		/// </summary>
 		/// <param name="output">Actual output of the neural network</param>
 		/// <param name="reference">Expected output of the neural network</param>
-		virtual std::tuple<Real, Vector> func_and_deriv(const Vector& output, const Vector& reference) const;
+		template <class T>
+		std::tuple<Real, T> func_and_deriv(const T& output, const T& reference) const;
 
 
 

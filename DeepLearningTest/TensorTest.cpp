@@ -238,6 +238,11 @@ namespace DeepLearningTest
 			const auto result = tensor.convolve(kernel, Index3d{ 0, 0, 0 }, stride);
 			const auto result_no_stride = tensor.convolve(kernel);
 
+			const auto result_size = result.size_3d();
+			const auto result_no_stride_size = result_no_stride.size_3d();
+			Assert::IsTrue(result_no_stride_size.x / stride.x == result_size.x &&
+						   result_no_stride_size.y / stride.y == result_size.y &&
+						   result_no_stride_size.z / stride.z == result_size.z, L"Unexpected size of output tensors");
 
 			for (auto l = 0ul; l < result.layer_dim(); l++)
 				for (auto r = 0ul; r < result.row_dim(); r++)

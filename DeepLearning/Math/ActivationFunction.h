@@ -16,7 +16,6 @@
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #pragma once
-#include "Vector.h"
 #include "DiffFunc.h"
 
 namespace DeepLearning
@@ -48,11 +47,13 @@ namespace DeepLearning
 		/// <summary>
 		/// The function
 		/// </summary>
-		virtual Vector operator ()(const Vector& input) const;
+		template <class T>
+		T operator ()(const T& input) const;
 
 		/// <summary>
 		/// Calculates function and derivative with respect to the given input vector
 		/// </summary>
-		virtual std::tuple<Vector, Vector> func_and_deriv(const Vector& input) const;
+		template <class T>
+		std::tuple<T, T> func_and_deriv(const T& input) const;
 	};
 }

@@ -62,14 +62,12 @@ namespace DeepLearning
 		/// </summary>
 		void free();
 
-	protected:
+	public:
 
 		/// <summary>
-		/// Size of the inner array
+		/// Total number of elements in the matrix
 		/// </summary>
 		std::size_t size() const;
-
-	public:
 
 		template <typename Packer>
 		void msgpack_pack(Packer& msgpack_pk) const

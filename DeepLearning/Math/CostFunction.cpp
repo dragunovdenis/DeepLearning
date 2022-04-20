@@ -17,6 +17,8 @@
 
 #include "CostFunction.h"
 #include "Vector.h"
+#include "Matrix.h"
+#include "Tensor.h"
 #include <exception>
 #include <numeric>
 #include "../Utilities.h"
@@ -53,9 +55,10 @@ namespace DeepLearning
 		}
 	}
 
-	Real CostFunction::operator ()(const Vector& output, const Vector& reference) const
+	template <class T>
+	Real CostFunction::operator ()(const T& output, const T& reference) const
 	{
-		if (output.dim() != reference.dim())
+		if (output.size() != reference.size())
 			throw std::exception("Incompatible input");
 
 		const auto result = std::transform_reduce(output.begin(), output.end(), reference.begin(), Real(0), std::plus<Real>(),
@@ -63,21 +66,31 @@ namespace DeepLearning
 		return result;
 	}
 
-	std::tuple<Real, Vector> CostFunction::func_and_deriv(const Vector& output, const Vector& reference) const
+	template <class T>
+	std::tuple<Real, T> CostFunction::func_and_deriv(const T& output, const T& reference) const
 	{
-		if (output.dim() != reference.dim())
+		if (output.size() != reference.size())
 			throw std::exception("Incompatible input");
 
-		Vector deriv(output.dim());
+		auto deriv = output;
 		auto func_val = Real(0);
 
-		for (std::size_t item_id = 0; item_id < output.dim(); item_id++)
+		for (auto item_id = 0ull; item_id < output.size(); item_id++)
 		{
-			const auto [value, derivative] = _func->calc_funcion_and_derivative(output(item_id), reference(item_id));
+			const auto [value, derivative] = _func->calc_funcion_and_derivative(deriv.begin()[item_id], reference.begin()[item_id]);
 			func_val += value;
-			deriv(item_id) = derivative;
+			deriv.begin()[item_id] = derivative;
 		}
 
 		return std::make_tuple(func_val, deriv);
 	}
+
+	template Real CostFunction::operator ()(const Vector& output, const Vector& reference) const;
+	template Real CostFunction::operator ()(const Matrix& output, const Matrix& reference) const;
+	template Real CostFunction::operator ()(const Tensor& output, const Tensor& reference) const;
+
+	template std::tuple<Real, Vector> CostFunction::func_and_deriv(const Vector& output, const Vector& reference) const;
+	template std::tuple<Real, Matrix> CostFunction::func_and_deriv(const Matrix& output, const Matrix& reference) const;
+	template std::tuple<Real, Tensor> CostFunction::func_and_deriv(const Tensor& output, const Tensor& reference) const;
+
 }

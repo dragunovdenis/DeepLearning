@@ -52,11 +52,6 @@ namespace DeepLearning
 		void free();
 
 		/// <summary>
-		/// Return total number of elements in the tensor
-		/// </summary>
-		std::size_t size() const;
-
-		/// <summary>
 		/// Converts given triplet of integer coordinates to a single index that can be used to access "data" array
 		/// </summary>
 		std::size_t coords_to_data_id(const std::size_t layer_id, const std::size_t row_id, const std::size_t col_id) const;
@@ -72,6 +67,11 @@ namespace DeepLearning
 		bool check_bounds(const std::size_t layer_id, const std::size_t row_id, const std::size_t col_id) const;
 
 	public:
+
+		/// <summary>
+		/// Return total number of elements in the tensor
+		/// </summary>
+		std::size_t size() const;
 
 		template <typename Packer>
 		void msgpack_pack(Packer& msgpack_pk) const

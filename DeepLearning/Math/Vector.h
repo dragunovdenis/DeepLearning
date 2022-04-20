@@ -55,14 +55,12 @@ namespace DeepLearning
 		template <class S>
 		void assign(const S& source);
 
-	protected:
+	public:
 
 		/// <summary>
 		/// Size of the vector
 		/// </summary>
 		std::size_t size() const;
-
-	public:
 
 		template <typename Packer> 
 		void msgpack_pack(Packer& msgpack_pk) const 

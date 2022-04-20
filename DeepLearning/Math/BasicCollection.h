@@ -27,12 +27,6 @@ namespace DeepLearning
 	class BasicCollection
 	{
 	protected:
-
-		/// <summary>
-		/// Size of the vector
-		/// </summary>
-		virtual std::size_t size() const = 0;
-
 		/// <summary>
 		/// Element-wise sum with another collection of the same size
 		/// It is a responsibility of the caller to make sure that the collections are of the same size
@@ -51,6 +45,10 @@ namespace DeepLearning
 		void mul(const Real& scalar);
 
 	public:
+		/// <summary>
+		/// Size of the collection
+		/// </summary>
+		virtual std::size_t size() const = 0;
 
 		/// <summary>
 		/// Pointer to the first element of the vector
