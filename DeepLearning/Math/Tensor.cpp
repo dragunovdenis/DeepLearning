@@ -312,7 +312,6 @@ namespace DeepLearning
 						const auto t_z = tensor_offsets.z + k_z;
 						part_res += _data[coords_to_data_id(t_x, t_y, t_z)] * kernel(k_x, k_y, k_z);
 					}
-
 				}
 			}
 
@@ -320,5 +319,51 @@ namespace DeepLearning
 		}
 
 		return result;
+	}
+
+	std::tuple<Tensor, Tensor> Tensor::convolution_kernel_gradient(const Tensor& conv_res_grad, const Tensor& kernel, const Index3d& paddings,
+		const Index3d& strides) const
+	{
+		const auto kernel_size = kernel.size_3d();
+
+		const Index3d result_size_check = { calc_out_size_for_convolution(_layer_dim, kernel_size.x, paddings.x, strides.x) ,
+									        calc_out_size_for_convolution(_row_dim, kernel_size.y, paddings.y, strides.y) ,
+									        calc_out_size_for_convolution(_col_dim, kernel_size.z, paddings.z, strides.z) };
+		const auto conv_res_grad_size = conv_res_grad.size_3d();
+
+		if (result_size_check != conv_res_grad_size)
+			throw std::exception("Inconsistent input data.");
+
+		auto kern_grad = Tensor(kernel_size.x, kernel_size.y, kernel_size.z, true);
+		auto in_grad = Tensor(_layer_dim, _row_dim, _col_dim, true);
+
+		const auto tensor_size = size_3d();
+
+		for (std::size_t res_data_id = 0; res_data_id < conv_res_grad.size(); res_data_id++)
+		{
+			const auto result_offsets = conv_res_grad.data_id_to_index_3d(res_data_id);
+			const auto tensor_offsets = result_offsets.hadamard_prod(strides) - paddings;
+			const auto kernel_start_offsets = relu(-tensor_offsets);
+			const auto kernel_stop_offsets = kernel_size - relu(tensor_offsets + kernel_size - tensor_size);
+
+			const auto factor = conv_res_grad._data[res_data_id];
+
+			for (auto k_x = kernel_start_offsets.x; k_x < kernel_stop_offsets.x; k_x++)
+			{
+				const auto t_x = tensor_offsets.x + k_x;
+				for (auto k_y = kernel_start_offsets.y; k_y < kernel_stop_offsets.y; k_y++)
+				{
+					const auto t_y = tensor_offsets.y + k_y;
+					for (auto k_z = kernel_start_offsets.z; k_z < kernel_stop_offsets.z; k_z++)
+					{
+						const auto t_z = tensor_offsets.z + k_z;
+						kern_grad(k_x, k_y, k_z) += _data[coords_to_data_id(t_x, t_y, t_z)] * factor;
+						in_grad(t_x, t_y, t_z) += kernel(k_x, k_y, k_z) * factor;
+					}
+				}
+			}
+		}
+
+		return { kern_grad, in_grad };
 	}
 }

@@ -214,6 +214,19 @@ namespace DeepLearning
 		/// <returns>Result of the convolution</returns>
 		Tensor convolve(const Tensor& kernel, const Index3d& paddings = Index3d{ 0, 0, 0 },
 											  const Index3d& strides = Index3d{ 1, 1, 1 }) const;
+
+		/// <summary>
+		/// Computes gradient of some scalar function F (depending on the result of some convolution)
+		/// with respect to the convolution kernel K: dF/dK
+		/// and to the input tensor of the convolution I : dF/dI
+		/// </summary>
+		/// <param name="conv_res_grad">Gradient of the function F with respect to the result of the convolution R: dF/dR</param>
+		/// <param name="kernel">The convolution kernel</param>
+		/// <param name="paddings">Paddings used for computing the convolution</param>
+		/// <param name="strides">Strides used for computing the convolution</param>
+		/// <returns>Tuple of tensors dF/dK, dF/dI in the exact same order </returns>
+		std::tuple<Tensor, Tensor> convolution_kernel_gradient(const Tensor& conv_res_grad, const Tensor& kernel, const Index3d& paddings,
+			const Index3d& strides) const;
 	};
 
 	/// <summary>

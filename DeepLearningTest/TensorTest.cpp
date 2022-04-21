@@ -17,6 +17,7 @@
 
 #include "CppUnitTest.h"
 #include <Math/Tensor.h>
+#include "Math/CostFunction.h"
 #include <MsgPackUtils.h>
 #include "Utilities.h"
 #include "StandardTestUtils.h"
@@ -153,7 +154,7 @@ namespace DeepLearningTest
 
 		TEST_METHOD(ConvolutionNoPaddingNoStrideTest)
 		{
-
+			//arrange
 			const auto tensor_size = Index3d{ 10, 22, 33 };
 			const auto tensor = TensorFactory(tensor_size.x, tensor_size.y, tensor_size.z);//filled with random numbers
 			Assert::IsTrue(tensor.max_abs() > 0, L"Tensor is expected to be nonzero");
@@ -162,9 +163,11 @@ namespace DeepLearningTest
 			const auto kernel = TensorFactory(kernel_size.x, kernel_size.y, kernel_size.z);//filled with random numbers
 			Assert::IsTrue(kernel.max_abs() > 0, L"Kernel is expected to be nonzero");
 
+			//Act
 			const auto result = tensor.convolve(kernel);
 			const auto result_size = result.size_3d();
 
+			//Assert
 			Assert::IsTrue(result_size.x == tensor_size.x - kernel_size.x + 1 &&
 				result_size.y == tensor_size.y - kernel_size.y + 1 &&
 				result_size.z == tensor_size.z - kernel_size.z + 1, L"Wrong size of the convolution result");
@@ -198,6 +201,7 @@ namespace DeepLearningTest
 
 		TEST_METHOD(ConvolutionWithPaddingNoStrideTest)
 		{
+			//Arrange
 			const auto tensor_size = Index3d{ 10, 22, 33 };
 			const auto tensor = TensorFactory(tensor_size.x, tensor_size.y, tensor_size.z);//filled with random numbers
 			Assert::IsTrue(tensor.max_abs() > 0, L"Tensor is expected to be nonzero");
@@ -217,14 +221,17 @@ namespace DeepLearningTest
 			const auto kernel = TensorFactory(kernel_size.x, kernel_size.y, kernel_size.z);//filled with random numbers
 			Assert::IsTrue(kernel.max_abs() > 0, L"Kernel is expected to be nonzero");
 
+			//Act
 			const auto result = tensor.convolve(kernel, padding);
 			const auto result_padding_included = tensor_with_padding.convolve(kernel);
 
+			//Assert
 			Assert::IsTrue(result == result_padding_included, L"Tensors are not the same");
 		}
 
 		TEST_METHOD(ConvolutionWithStrideNoPaddingTest)
 		{
+			//Arrange
 			const auto tensor_size = Index3d{ 10, 22, 33 };
 			const auto tensor = TensorFactory(tensor_size.x, tensor_size.y, tensor_size.z);//filled with random numbers
 			Assert::IsTrue(tensor.max_abs() > 0, L"Tensor is expected to be nonzero");
@@ -235,9 +242,11 @@ namespace DeepLearningTest
 			const auto kernel = TensorFactory(kernel_size.x, kernel_size.y, kernel_size.z);//filled with random numbers
 			Assert::IsTrue(kernel.max_abs() > 0, L"Kernel is expected to be nonzero");
 
+			//Act
 			const auto result = tensor.convolve(kernel, Index3d{ 0, 0, 0 }, stride);
 			const auto result_no_stride = tensor.convolve(kernel);
 
+			//Assert
 			const auto result_size = result.size_3d();
 			const auto result_no_stride_size = result_no_stride.size_3d();
 			Assert::IsTrue(result_no_stride_size.x / stride.x == result_size.x &&
@@ -251,6 +260,114 @@ namespace DeepLearningTest
 						const auto diff = std::abs(result(l, r, c) - result_no_stride(l * stride.x, r * stride.y, c * stride.z));
 						Logger::WriteMessage((std::string("diff =  ") + Utils::to_string(diff) + "\n").c_str());
 						Assert::IsTrue(diff == Real(0), L"Elements are not the same");
+					}
+		}
+
+		TEST_METHOD(ConvolutionKernelGradientTest)
+		{
+			//Arrange
+			const auto tensor_size = Index3d{ 10, 22, 33 };
+			const auto tensor = TensorFactory(tensor_size.x, tensor_size.y, tensor_size.z);//filled with random numbers
+			Assert::IsTrue(tensor.max_abs() > 0, L"Tensor is expected to be nonzero");
+
+			const auto kernel_size = Index3d{ 3, 5, 7 };
+			const auto kernel = TensorFactory(kernel_size.x, kernel_size.y, kernel_size.z);//filled with random numbers
+			Assert::IsTrue(kernel.max_abs() > 0, L"Kernel is expected to be nonzero");
+
+			const auto strides = Index3d{ 2, 1, 5 };
+			const auto paddings = Index3d{ 0, 3, 4 };
+			const auto conv_res = tensor.convolve(kernel, paddings, strides);
+			const auto res_size = conv_res.size_3d();
+			const auto reference = Tensor(res_size.x, res_size.y, res_size.z, true); //zero reference
+
+			const auto cost_func = CostFunction(CostFunctionId::SQUARED_ERROR);
+
+			//Act
+			const auto [cost, cost_grad] = cost_func.func_and_deriv(conv_res, reference);
+			const auto [kern_grad, in_grad] = tensor.convolution_kernel_gradient(cost_grad, kernel, paddings, strides);
+
+			//Assert
+			Assert::IsTrue(kern_grad.size_3d() == kernel.size_3d(), L"Unexpected size for the gradient of the convolution kernel.");
+
+			const auto delta = Real(1e-5);
+
+			for (auto k_x = 0ll; k_x < kernel_size.x; k_x++)
+				for (auto k_y = 0ll; k_y < kernel_size.y; k_y++)
+					for (auto k_z = 0ll; k_z < kernel_size.z; k_z++)
+					{
+						auto kern_minus_delta = kernel;
+						kern_minus_delta(k_x, k_y, k_z) -= delta;
+
+						auto kernel_plus_delts = kernel;
+						kernel_plus_delts(k_x, k_y, k_z) += delta;
+
+						const auto conv_res_minus_delta = tensor.convolve(kern_minus_delta, paddings, strides);
+						const auto cost_minus_delta = cost_func(conv_res_minus_delta, reference);
+
+						const auto conv_res_plus_delta = tensor.convolve(kernel_plus_delts, paddings, strides);
+						const auto cost_plus_delta = cost_func(conv_res_plus_delta, reference);
+
+						const auto deriv_reference = (cost_plus_delta - cost_minus_delta) / (2 * delta);
+
+						const auto abs_diff = std::abs(deriv_reference - kern_grad(k_x, k_y, k_z));
+						const auto rel_diff = deriv_reference != Real(0) ? abs_diff / std::abs(deriv_reference) : abs_diff;
+
+						Logger::WriteMessage((std::string("Rel. diff. =  ") + Utils::to_string(rel_diff) + "\n").c_str());
+						Assert::IsTrue(rel_diff < Real(5e-7), L"Too high deviation from reference.");
+					}
+		}
+
+		TEST_METHOD(ConvolutionInputGradientTest)
+		{
+			//Arrange
+			const auto tensor_size = Index3d{ 10, 11, 9 };
+			const auto tensor = TensorFactory(tensor_size.x, tensor_size.y, tensor_size.z);//filled with random numbers
+			Assert::IsTrue(tensor.max_abs() > 0, L"Tensor is expected to be nonzero");
+
+			const auto kernel_size = Index3d{ 3, 5, 7 };
+			const auto kernel = TensorFactory(kernel_size.x, kernel_size.y, kernel_size.z);//filled with random numbers
+			Assert::IsTrue(kernel.max_abs() > 0, L"Kernel is expected to be nonzero");
+
+			const auto strides = Index3d{ 2, 1, 5 };
+			const auto paddings = Index3d{ 0, 3, 4 };
+			const auto conv_res = tensor.convolve(kernel, paddings, strides);
+			const auto res_size = conv_res.size_3d();
+			const auto reference = Tensor(res_size.x, res_size.y, res_size.z, true); //zero reference
+
+			const auto cost_func = CostFunction(CostFunctionId::SQUARED_ERROR);
+
+			//Act
+			const auto [cost, cost_grad] = cost_func.func_and_deriv(conv_res, reference);
+			const auto [kern_grad, in_grad] = tensor.convolution_kernel_gradient(cost_grad, kernel, paddings, strides);
+
+			//Assert
+			Assert::IsTrue(kern_grad.size_3d() == kernel.size_3d(), L"Unexpected size for the gradient of the convolution kernel.");
+
+			const auto delta = Real(1e-5);
+
+			for (auto t_x = 0ll; t_x < tensor_size.x; t_x++)
+				for (auto t_y = 0ll; t_y < tensor_size.y; t_y++)
+					for (auto t_z = 0ll; t_z < tensor_size.z; t_z++)
+					{
+						auto tensor_minus_delta = tensor;
+						tensor_minus_delta(t_x, t_y, t_z) -= delta;
+
+						auto tensor_plus_delta = tensor;
+						tensor_plus_delta(t_x, t_y, t_z) += delta;
+
+						const auto conv_res_minus_delta = tensor_minus_delta.convolve(kernel, paddings, strides);
+						const auto cost_minus_delta = cost_func(conv_res_minus_delta, reference);
+
+						const auto conv_res_plus_delta = tensor_plus_delta.convolve(kernel, paddings, strides);
+						const auto cost_plus_delta = cost_func(conv_res_plus_delta, reference);
+
+						const auto deriv_reference = (cost_plus_delta - cost_minus_delta) / (2 * delta);
+
+						const auto abs_diff = std::abs(deriv_reference - in_grad(t_x, t_y, t_z));
+						const auto rel_diff = deriv_reference != Real(0) ? abs_diff / std::abs(deriv_reference) : abs_diff;
+
+						Logger::WriteMessage((std::string("Rel. diff. =  ") + Utils::to_string(rel_diff) + "\n").c_str());
+						Assert::IsTrue(rel_diff < Real(1e-6), L"Too high deviation from reference.");
 					}
 		}
 	};
