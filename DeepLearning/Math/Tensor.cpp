@@ -19,6 +19,7 @@
 #include "../Utilities.h"
 #include <exception>
 #include "../IndexIterator.h"
+#include "PoolOperator.h"
 
 namespace DeepLearning
 {
@@ -267,6 +268,20 @@ namespace DeepLearning
 	}
 
 	/// <summary>
+	/// Returns total size of convolution result
+	/// </summary>
+	/// <param name="tensor_size">Size of the tensor the convolution is to be applied to</param>
+	/// <param name="kernel_size">Size of the convolution kernel</param>
+	/// <param name="paddings">Sizes of zero paddings of the tensor</param>
+	/// <param name="strides">Sizes of strides to be used</param>
+	inline Index3d calc_conv_res_dim(const Index3d& tensor_size, const Index3d& kernel_size, const Index3d& paddings, const Index3d& strides)
+	{
+		return { calc_out_size_for_convolution(tensor_size.x, kernel_size.x, paddings.x, strides.x),
+				 calc_out_size_for_convolution(tensor_size.y, kernel_size.y, paddings.y, strides.y),
+				 calc_out_size_for_convolution(tensor_size.z, kernel_size.z, paddings.z, strides.z) };
+	}
+
+	/// <summary>
 	/// Linear rectifier function of integer argument
 	/// </summary>
 	inline long long relu(const long long x)
@@ -282,38 +297,59 @@ namespace DeepLearning
 		return { relu(v.x), relu(v.y), relu(v.z) };
 	}
 
+#define KERNEL_LOOP(kernel_start_offsets, kernel_stop_offsets, tensor_offsets, action)				\
+			for (auto k_x = kernel_start_offsets.x; k_x < kernel_stop_offsets.x; k_x++)				\
+			{																						\
+				const auto t_x = tensor_offsets.x + k_x;											\
+				for (auto k_y = kernel_start_offsets.y; k_y < kernel_stop_offsets.y; k_y++)			\
+				{																					\
+					const auto t_y = tensor_offsets.y + k_y;										\
+					for (auto k_z = kernel_start_offsets.z; k_z < kernel_stop_offsets.z; k_z++)		\
+					{																				\
+						const auto t_z = tensor_offsets.z + k_z;									\
+						action;																		\
+					}																				\
+				}																					\
+			}
+
+
+	/// <summary>
+	/// Calculates offsets needed to calculate convolution result item with the given offsets (3d index)
+	/// </summary>
+	/// <param name="conv_res_offsets">Offset (3d index) of the convolution result item</param>
+	/// <param name="tensor_size">Size of the tensor the convolution is applied to</param>
+	/// <param name="kernel_size">Size of the convolution kernel</param>
+	/// <param name="paddings">Zero paddings to be applied to the tensor</param>
+	/// <param name="strides">Strides to be used when shifting convolution kernel over the tensor</param>
+	/// <returns>Tuple consisting of "tensor_offsets, kernel_start_offsets, kernel_stop_offsets" in the exact same order</returns>
+	inline std::tuple<Index3d, Index3d, Index3d> calc_kernel_loop_offsets(const Index3d& conv_res_offsets, const Index3d& tensor_size,
+																		  const Index3d& kernel_size, const Index3d& paddings, const Index3d& strides)
+	{
+		const auto tensor_offsets = conv_res_offsets.hadamard_prod(strides) - paddings;
+		const auto kernel_start_offsets = relu(-tensor_offsets);
+		const auto kernel_stop_offsets = kernel_size - relu(tensor_offsets + kernel_size - tensor_size);
+
+		return std::make_tuple(tensor_offsets, kernel_start_offsets, kernel_stop_offsets);
+	}
+
 	Tensor Tensor::convolve(const Tensor& kernel, const Index3d& paddings, const Index3d& strides) const
 	{
-		const Index3d result_dim = { calc_out_size_for_convolution(_layer_dim, kernel._layer_dim, paddings.x, strides.x) ,
-									 calc_out_size_for_convolution(_row_dim, kernel._row_dim, paddings.y, strides.y) ,
-									 calc_out_size_for_convolution(_col_dim, kernel._col_dim, paddings.z, strides.z) };
-		auto result = Tensor(result_dim.x, result_dim.y, result_dim.z, false);
-
 		const auto tensor_size = size_3d();
 		const auto kernel_size = kernel.size_3d();
+
+		const auto result_dim = calc_conv_res_dim(tensor_size, kernel_size, paddings, strides);
+		auto result = Tensor(result_dim.x, result_dim.y, result_dim.z, false);
 
 		for (std::size_t res_data_id = 0; res_data_id < result.size(); res_data_id++)
 		{
 			const auto result_offsets = result.data_id_to_index_3d(res_data_id);
-			const auto tensor_offsets = result_offsets.hadamard_prod(strides) - paddings;
-			const auto kernel_start_offsets = relu(-tensor_offsets);
-			const auto kernel_stop_offsets = kernel_size - relu(tensor_offsets + kernel_size - tensor_size);
+			const auto [tensor_offsets, kernel_start_offsets, kernel_stop_offsets] =
+				calc_kernel_loop_offsets(result_offsets, tensor_size, kernel_size, paddings, strides);
 
 			Real part_res = Real(0);
 
-			for (auto k_x = kernel_start_offsets.x; k_x < kernel_stop_offsets.x; k_x++)
-			{
-				const auto t_x = tensor_offsets.x + k_x;
-				for (auto k_y = kernel_start_offsets.y; k_y < kernel_stop_offsets.y; k_y++)
-				{
-					const auto t_y = tensor_offsets.y + k_y;
-					for (auto k_z = kernel_start_offsets.z; k_z < kernel_stop_offsets.z; k_z++)
-					{
-						const auto t_z = tensor_offsets.z + k_z;
-						part_res += _data[coords_to_data_id(t_x, t_y, t_z)] * kernel(k_x, k_y, k_z);
-					}
-				}
-			}
+			KERNEL_LOOP(kernel_start_offsets, kernel_stop_offsets, tensor_offsets,
+				part_res += _data[coords_to_data_id(t_x, t_y, t_z)] * kernel(k_x, k_y, k_z);)
 
 			result._data[res_data_id] = part_res;
 		}
@@ -321,14 +357,37 @@ namespace DeepLearning
 		return result;
 	}
 
-	std::tuple<Tensor, Tensor> Tensor::convolution_kernel_gradient(const Tensor& conv_res_grad, const Tensor& kernel, const Index3d& paddings,
+	Tensor Tensor::pool(const PoolOperator& pool_operator, const Index3d& paddings, const Index3d& strides) const
+	{
+		const auto tensor_size = size_3d();
+		const auto kernel_size = pool_operator.size_3d();
+		const auto result_dim = calc_conv_res_dim(tensor_size, kernel_size, paddings, strides);
+		auto result = Tensor(result_dim.x, result_dim.y, result_dim.z, false);
+
+		for (std::size_t res_data_id = 0; res_data_id < result.size(); res_data_id++)
+		{
+			const auto result_offsets = result.data_id_to_index_3d(res_data_id);
+			const auto [tensor_offsets, kernel_start_offsets, kernel_stop_offsets] =
+				calc_kernel_loop_offsets(result_offsets, tensor_size, kernel_size, paddings, strides);
+
+			auto operator_clone = pool_operator.clone();
+
+			KERNEL_LOOP(kernel_start_offsets, kernel_stop_offsets, tensor_offsets,
+				operator_clone->add({ k_x, k_y, k_z }, _data[coords_to_data_id(t_x, t_y, t_z)]);)
+
+			result._data[res_data_id] = operator_clone->pool();
+		}
+
+		return result;
+	}
+
+	std::tuple<Tensor, Tensor> Tensor::convolution_gradient(const Tensor& conv_res_grad, const Tensor& kernel, const Index3d& paddings,
 		const Index3d& strides) const
 	{
+		const auto tensor_size = size_3d();
 		const auto kernel_size = kernel.size_3d();
 
-		const Index3d result_size_check = { calc_out_size_for_convolution(_layer_dim, kernel_size.x, paddings.x, strides.x) ,
-									        calc_out_size_for_convolution(_row_dim, kernel_size.y, paddings.y, strides.y) ,
-									        calc_out_size_for_convolution(_col_dim, kernel_size.z, paddings.z, strides.z) };
+		const Index3d result_size_check = calc_conv_res_dim(tensor_size, kernel_size, paddings, strides);;
 		const auto conv_res_grad_size = conv_res_grad.size_3d();
 
 		if (result_size_check != conv_res_grad_size)
@@ -337,33 +396,58 @@ namespace DeepLearning
 		auto kern_grad = Tensor(kernel_size.x, kernel_size.y, kernel_size.z, true);
 		auto in_grad = Tensor(_layer_dim, _row_dim, _col_dim, true);
 
-		const auto tensor_size = size_3d();
-
 		for (std::size_t res_data_id = 0; res_data_id < conv_res_grad.size(); res_data_id++)
 		{
 			const auto result_offsets = conv_res_grad.data_id_to_index_3d(res_data_id);
-			const auto tensor_offsets = result_offsets.hadamard_prod(strides) - paddings;
-			const auto kernel_start_offsets = relu(-tensor_offsets);
-			const auto kernel_stop_offsets = kernel_size - relu(tensor_offsets + kernel_size - tensor_size);
+			const auto [tensor_offsets, kernel_start_offsets, kernel_stop_offsets] =
+				calc_kernel_loop_offsets(result_offsets, tensor_size, kernel_size, paddings, strides);
 
 			const auto factor = conv_res_grad._data[res_data_id];
+			if (factor == Real(0))
+				continue;
 
-			for (auto k_x = kernel_start_offsets.x; k_x < kernel_stop_offsets.x; k_x++)
-			{
-				const auto t_x = tensor_offsets.x + k_x;
-				for (auto k_y = kernel_start_offsets.y; k_y < kernel_stop_offsets.y; k_y++)
-				{
-					const auto t_y = tensor_offsets.y + k_y;
-					for (auto k_z = kernel_start_offsets.z; k_z < kernel_stop_offsets.z; k_z++)
-					{
-						const auto t_z = tensor_offsets.z + k_z;
-						kern_grad(k_x, k_y, k_z) += _data[coords_to_data_id(t_x, t_y, t_z)] * factor;
-						in_grad(t_x, t_y, t_z) += kernel(k_x, k_y, k_z) * factor;
-					}
-				}
-			}
+			KERNEL_LOOP(kernel_start_offsets, kernel_stop_offsets, tensor_offsets,
+				kern_grad(k_x, k_y, k_z) += _data[coords_to_data_id(t_x, t_y, t_z)] * factor;
+			    in_grad(t_x, t_y, t_z) += kernel(k_x, k_y, k_z) * factor;)
 		}
 
 		return { kern_grad, in_grad };
+	}
+
+	Tensor Tensor::pool_input_gradient(const Tensor& pool_res_grad, const PoolOperator& pool_operator, const Index3d& paddings,
+		const Index3d& strides) const
+	{
+		const auto tensor_size = size_3d();
+		const auto kernel_size = pool_operator.size_3d();
+		const Index3d result_size_check = calc_conv_res_dim(tensor_size, kernel_size, paddings, strides);;
+		const auto conv_res_grad_size = pool_res_grad.size_3d();
+
+		if (result_size_check != conv_res_grad_size)
+			throw std::exception("Inconsistent input data.");
+
+		auto in_grad = Tensor(_layer_dim, _row_dim, _col_dim, true);
+
+		for (std::size_t res_data_id = 0; res_data_id < pool_res_grad.size(); res_data_id++)
+		{
+			const auto result_offsets = pool_res_grad.data_id_to_index_3d(res_data_id);
+			const auto [tensor_offsets, kernel_start_offsets, kernel_stop_offsets] =
+				calc_kernel_loop_offsets(result_offsets, tensor_size, kernel_size, paddings, strides);
+
+			const auto factor = pool_res_grad._data[res_data_id];
+			if (factor == Real(0))
+				continue;
+
+			auto pool_operator_clone = pool_operator.clone();
+
+			//Make the agent familiar with the items in the current window
+			KERNEL_LOOP(kernel_start_offsets, kernel_stop_offsets, tensor_offsets,
+				pool_operator_clone->add({ k_x, k_y, k_z }, _data[coords_to_data_id(t_x, t_y, t_z)]);)
+
+			//Add derivatives calculated by the agent
+			KERNEL_LOOP(kernel_start_offsets, kernel_stop_offsets, tensor_offsets,
+				in_grad(t_x, t_y, t_z) += pool_operator_clone->pool_deriv({ k_x, k_y, k_z }) * factor;)
+		}
+
+		return in_grad;
 	}
 }

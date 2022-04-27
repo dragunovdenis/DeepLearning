@@ -45,6 +45,11 @@ namespace DeepLearning::Utils
     Real get_random(const Real min, const Real max);
 
     /// <summary>
+    /// Returns uniformly distributed random integer value from the specified interval (ends are included)
+    /// </summary>
+    int get_random_int(const int min, const int max);
+
+    /// <summary>
     /// Functionality to fill the given range with normally distributed pseudo-random numbers
     /// </summary>
     template< class Iter>

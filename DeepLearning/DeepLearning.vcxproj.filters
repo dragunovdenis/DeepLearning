@@ -105,6 +105,9 @@
     <ClInclude Include="Math\LinAlg3d.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
+    <ClInclude Include="Math\PoolOperator.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Matrix.cpp">
@@ -153,6 +156,9 @@
       <Filter>Source Files\Math</Filter>
     </ClCompile>
     <ClCompile Include="Math\BasicCollection.cpp">
+      <Filter>Source Files\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\PoolOperator.cpp">
       <Filter>Source Files\Math</Filter>
     </ClCompile>
   </ItemGroup>

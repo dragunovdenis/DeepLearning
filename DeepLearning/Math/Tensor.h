@@ -21,9 +21,10 @@
 #include "BasicCollection.h"
 #include "LinAlg3d.h"
 
-
 namespace DeepLearning
 {
+	class PoolOperator;
+
 	/// <summary>
 	/// Representation of rank 3 
 	/// </summary>
@@ -225,7 +226,28 @@ namespace DeepLearning
 		/// <param name="paddings">Paddings used for computing the convolution</param>
 		/// <param name="strides">Strides used for computing the convolution</param>
 		/// <returns>Tuple of tensors dF/dK, dF/dI in the exact same order </returns>
-		std::tuple<Tensor, Tensor> convolution_kernel_gradient(const Tensor& conv_res_grad, const Tensor& kernel, const Index3d& paddings,
+		std::tuple<Tensor, Tensor> convolution_gradient(const Tensor& conv_res_grad, const Tensor& kernel, const Index3d& paddings,
+			const Index3d& strides) const;
+
+		/// <summary>
+		/// More general implementation of the convolution operation, that can perform pooling operations
+		/// </summary>
+		/// <param name="pool_operator">Instance of the pool operator to be applied (generalization of the convolution kernel)</param>
+		/// <param name="kernel_size">Size of the "window" for the pooling agent operate</param>
+		/// <param name="paddings">Zero paddings (will be applied to the base tensor)</param>
+		/// <param name="strides">Strides defining movement of the "window"</param>
+		Tensor pool(const PoolOperator& pool_operator, const Index3d& paddings = Index3d{ 0, 0, 0 },
+			const Index3d& strides = Index3d{ 1, 1, 1 }) const;
+
+		/// <summary>
+		/// Returns gradient of some function F (depending on the pooling result) with respect to the pooling input tensor I: dF/dI
+		/// </summary>
+		/// <param name="pool_operator">Instance of the pool operator to be applied (generalization of the convolution kernel)</param>
+		/// <param name="pool_res_grad">Gradient of the function F with respect to the result of the pooling operation R: dF/dR</param>
+		/// <param name="kernel_size">Size of the "window" for the pooling agent operate</param>
+		/// <param name="paddings">Zero paddings (will be applied to the base tensor)</param>
+		/// <param name="strides">Strides defining movement of the "window"</param>
+		Tensor pool_input_gradient(const Tensor& pool_res_grad, const PoolOperator& pool_operator, const Index3d& paddings,
 			const Index3d& strides) const;
 	};
 

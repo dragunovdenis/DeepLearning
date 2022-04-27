@@ -26,6 +26,16 @@ namespace DeepLearning::Utils
         static std::uniform_int_distribution<int> dist(0, std::numeric_limits<int>::max());
 
         const auto normalization_factor = (max - min) / std::numeric_limits<int>::max();
-        return normalization_factor * dist(gen) + min;;
+        return normalization_factor * dist(gen) + min;
+    }
+
+    int get_random_int(const int min, const int max)
+    {
+        static std::random_device rd;
+        static std::mt19937 gen(rd());
+        static std::uniform_int_distribution<int> dist(0, std::numeric_limits<int>::max());
+
+        const auto interval_length = (max - min) + 1;
+        return dist(gen) % interval_length + min;
     }
 }

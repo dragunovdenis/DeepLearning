@@ -21,6 +21,7 @@
 #include <MsgPackUtils.h>
 #include "Utilities.h"
 #include "StandardTestUtils.h"
+#include "Math/PoolOperator.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;
@@ -284,7 +285,7 @@ namespace DeepLearningTest
 
 			//Act
 			const auto [cost, cost_grad] = cost_func.func_and_deriv(conv_res, reference);
-			const auto [kern_grad, in_grad] = tensor.convolution_kernel_gradient(cost_grad, kernel, paddings, strides);
+			const auto [kern_grad, in_grad] = tensor.convolution_gradient(cost_grad, kernel, paddings, strides);
 
 			//Assert
 			Assert::IsTrue(kern_grad.size_3d() == kernel.size_3d(), L"Unexpected size for the gradient of the convolution kernel.");
@@ -313,7 +314,7 @@ namespace DeepLearningTest
 						const auto rel_diff = deriv_reference != Real(0) ? abs_diff / std::abs(deriv_reference) : abs_diff;
 
 						Logger::WriteMessage((std::string("Rel. diff. =  ") + Utils::to_string(rel_diff) + "\n").c_str());
-						Assert::IsTrue(rel_diff < Real(5e-7), L"Too high deviation from reference.");
+						Assert::IsTrue(rel_diff < Real(5e-6), L"Too high deviation from reference.");
 					}
 		}
 
@@ -338,7 +339,7 @@ namespace DeepLearningTest
 
 			//Act
 			const auto [cost, cost_grad] = cost_func.func_and_deriv(conv_res, reference);
-			const auto [kern_grad, in_grad] = tensor.convolution_kernel_gradient(cost_grad, kernel, paddings, strides);
+			const auto [kern_grad, in_grad] = tensor.convolution_gradient(cost_grad, kernel, paddings, strides);
 
 			//Assert
 			Assert::IsTrue(kern_grad.size_3d() == kernel.size_3d(), L"Unexpected size for the gradient of the convolution kernel.");
@@ -367,8 +368,97 @@ namespace DeepLearningTest
 						const auto rel_diff = deriv_reference != Real(0) ? abs_diff / std::abs(deriv_reference) : abs_diff;
 
 						Logger::WriteMessage((std::string("Rel. diff. =  ") + Utils::to_string(rel_diff) + "\n").c_str());
-						Assert::IsTrue(rel_diff < Real(1e-6), L"Too high deviation from reference.");
+						Assert::IsTrue(rel_diff < Real(3e-6), L"Too high deviation from reference.");
 					}
+		}
+
+		TEST_METHOD(PoolTest)
+		{
+			//Arrange
+			const auto tensor_size = Index3d{ 10, 11, 9 };
+			const auto tensor = TensorFactory(tensor_size.x, tensor_size.y, tensor_size.z);//filled with random numbers
+			Assert::IsTrue(tensor.max_abs() > 0, L"Tensor is expected to be nonzero");
+
+			const auto kernel_size = Index3d{ 3, 5, 7 };
+			const auto kernel = TensorFactory(kernel_size.x, kernel_size.y, kernel_size.z);//filled with random numbers
+			Assert::IsTrue(kernel.max_abs() > 0, L"Kernel is expected to be nonzero");
+
+			const auto strides = Index3d{ 2, 1, 5 };
+			const auto paddings = Index3d{ 0, 3, 4 };
+			const auto conv_res = tensor.convolve(kernel, paddings, strides);
+
+			const auto pool_operator = KernelPool(kernel);
+
+			//Act
+			const auto pool_res = tensor.pool(pool_operator, paddings, strides);
+
+			//Assert
+			Assert::IsTrue(conv_res == pool_res, L"Results of convolution and pool operations (with kernel pool operator) must coincide.");
+		}
+
+		TEST_METHOD(PoolGradientTest)
+		{
+			//Arrange
+			const auto tensor_size = Index3d{ 10, 11, 9 };
+			const auto tensor = TensorFactory(tensor_size.x, tensor_size.y, tensor_size.z);//filled with random numbers
+			Assert::IsTrue(tensor.max_abs() > 0, L"Tensor is expected to be nonzero");
+
+			const auto kernel_size = Index3d{ 3, 5, 7 };
+			const auto kernel = TensorFactory(kernel_size.x, kernel_size.y, kernel_size.z);//filled with random numbers
+			Assert::IsTrue(kernel.max_abs() > 0, L"Kernel is expected to be nonzero");
+
+			const auto strides = Index3d{ 2, 1, 5 };
+			const auto paddings = Index3d{ 0, 3, 4 };
+			const auto conv_res = tensor.convolve(kernel, paddings, strides);
+			const auto res_size = conv_res.size_3d();
+			const auto reference = Tensor(res_size.x, res_size.y, res_size.z, true); //zero reference
+
+			const auto cost_func = CostFunction(CostFunctionId::SQUARED_ERROR);
+			const auto [cost, cost_grad] = cost_func.func_and_deriv(conv_res, reference);
+			const auto [kern_grad, in_grad_ref] = tensor.convolution_gradient(cost_grad, kernel, paddings, strides);
+
+			const auto pool_operator = KernelPool(kernel);
+
+			//Act
+			const auto pool_grad = tensor.pool_input_gradient(cost_grad, pool_operator, paddings, strides);
+
+			//Assert
+			Assert::IsTrue(in_grad_ref == pool_grad, L"Gradients must coincide.");
+		}
+
+		TEST_METHOD(MaxPoolTest)
+		{
+			//Arrange
+			const auto tensor_size = Index3d{ 10, 11, 9 };
+			const auto max_item_id = Index3d{ Utils::get_random_int(0, static_cast<int>(tensor_size.x - 1)),
+											  Utils::get_random_int(0, static_cast<int>(tensor_size.y - 1)),
+											  Utils::get_random_int(0, static_cast<int>(tensor_size.z - 1)) };
+
+			const auto max_item_value = Utils::get_random(10, 100);
+
+			auto pool_input_grad_ref = Tensor(tensor_size.x, tensor_size.y, tensor_size.z, true /*assign zeros*/);
+			pool_input_grad_ref(max_item_id.x, max_item_id.y, max_item_id.z) = Real(1);
+			const auto tensor = TensorFactory(tensor_size.x, tensor_size.y, tensor_size.z) + pool_input_grad_ref * max_item_value;
+			Assert::IsTrue(tensor.max_abs() > 0, L"Tensor is expected to be nonzero");
+			const auto strides = Index3d{ 1, 1, 1 };
+			const auto paddings = Index3d{ 0, 0, 0 };
+
+			auto pool_res_gradient = Tensor(1, 1, 1);
+			pool_res_gradient(0, 0, 0) = Real(1);
+
+			//Create pool operator with the "window" of the size of the tensor
+			//(to do the "global" pooling)
+			const auto max_pool_operator = MaxPool(tensor.size_3d());
+
+			//Act
+			const auto pool_result = tensor.pool(max_pool_operator);
+			const auto pool_input_grad = tensor.pool_input_gradient(pool_res_gradient, max_pool_operator, paddings, strides);
+
+			//Assert
+			Assert::IsTrue(pool_result.size_3d() == Index3d{ 1, 1, 1 }, L"Unexpected size of the pooling result");
+			Assert::IsTrue(pool_input_grad.size_3d() == tensor_size, L"Unexpected size of the pool input gradient");
+			Assert::IsTrue(pool_result(0, 0, 0) == tensor(max_item_id.x, max_item_id.y, max_item_id.z), L"Unexpected result of the max-pool operation");
+			Assert::IsTrue(pool_input_grad_ref == pool_input_grad, L"Unexpected value of the pool input gradient");
 		}
 	};
 }

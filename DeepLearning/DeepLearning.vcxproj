@@ -169,6 +169,7 @@
     <ClInclude Include="Math\CostFunction.h" />
     <ClInclude Include="Math\LinAlg3d.h" />
     <ClInclude Include="Math\Matrix.h" />
+    <ClInclude Include="Math\PoolOperator.h" />
     <ClInclude Include="Math\Tensor.h" />
     <ClInclude Include="Math\Vector.h" />
     <ClInclude Include="Math\Dual.h" />
@@ -190,6 +191,7 @@
     <ClCompile Include="Math\BasicCollection.cpp" />
     <ClCompile Include="Math\CostFunction.cpp" />
     <ClCompile Include="Math\Matrix.cpp" />
+    <ClCompile Include="Math\PoolOperator.cpp" />
     <ClCompile Include="Math\Tensor.cpp" />
     <ClCompile Include="Math\Vector.cpp" />
     <ClCompile Include="Math\DiffFunc.cpp" />
