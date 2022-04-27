@@ -368,7 +368,7 @@ namespace DeepLearningTest
 						const auto rel_diff = deriv_reference != Real(0) ? abs_diff / std::abs(deriv_reference) : abs_diff;
 
 						Logger::WriteMessage((std::string("Rel. diff. =  ") + Utils::to_string(rel_diff) + "\n").c_str());
-						Assert::IsTrue(rel_diff < Real(3e-6), L"Too high deviation from reference.");
+						Assert::IsTrue(rel_diff < Real(2e-5), L"Too high deviation from reference.");
 					}
 		}
 

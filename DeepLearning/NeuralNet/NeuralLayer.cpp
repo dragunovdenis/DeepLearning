@@ -26,7 +26,7 @@ namespace DeepLearning
 	{
 		_biases  = Vector(out_dim, rand_low, rand_high);
 		_weights = Matrix(out_dim, in_dim, rand_low, rand_high);
-		_func_id = static_cast<unsigned int>(func_id);
+		_func_id = func_id;
 	}
 
 	NeuralLayer::NeuralLayer(const Matrix& weights, const Vector& biases, ActivationFunctionId func_id)
@@ -36,7 +36,7 @@ namespace DeepLearning
 
 		_biases = biases;
 		_weights = weights;
-		_func_id = static_cast<unsigned int>(func_id);
+		_func_id = func_id;
 	}
 
 	NeuralLayer::NeuralLayer(const NeuralLayer& anotherLayer)

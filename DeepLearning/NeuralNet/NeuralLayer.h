@@ -74,9 +74,9 @@ namespace DeepLearning
 		Matrix _weights{};
 
 		/// <summary>
-		/// Activation function id, use "unsigned int" instead of the enum in order to make msgpack happy
+		/// Activation function id
 		/// </summary>
-		unsigned int _func_id = static_cast<unsigned int>(ActivationFunctionId::UNKNOWN);
+		ActivationFunctionId _func_id = ActivationFunctionId::UNKNOWN;
 
 	public:
 

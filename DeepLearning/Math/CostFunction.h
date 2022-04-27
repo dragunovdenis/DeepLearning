@@ -59,9 +59,5 @@ namespace DeepLearning
 		/// <param name="reference">Expected output of the neural network</param>
 		template <class T>
 		std::tuple<Real, T> func_and_deriv(const T& output, const T& reference) const;
-
-
-
-
 	};
 }

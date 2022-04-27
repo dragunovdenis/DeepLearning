@@ -17,6 +17,7 @@
 
 #pragma once
 #include "DiffFunc.h"
+#include<msgpack.hpp>
 
 namespace DeepLearning
 {
@@ -57,3 +58,5 @@ namespace DeepLearning
 		std::tuple<T, T> func_and_deriv(const T& input) const;
 	};
 }
+
+MSGPACK_ADD_ENUM(DeepLearning::ActivationFunctionId)
