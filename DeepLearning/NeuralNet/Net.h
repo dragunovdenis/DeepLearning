@@ -22,6 +22,7 @@
 #include "../Math/ActivationFunction.h"
 #include "../Math/CostFunction.h"
 #include "../Math/Vector.h"
+#include "../Math/Tensor.h"
 #include <msgpack.hpp>
 
 namespace DeepLearning
@@ -61,7 +62,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Returns output of the neural network calculated for the given input
 		/// </summary>
-		Vector act(const Vector& input, std::vector<NeuralLayer::AuxLearningData>* const aux_data_ptr = nullptr) const;
+		Tensor act(const Tensor& input, std::vector<NeuralLayer::AuxLearningData>* const aux_data_ptr = nullptr) const;
 
 		/// <summary>
 		/// A method that performs training of the neural net based on the given input data with references
@@ -76,7 +77,7 @@ namespace DeepLearning
 		/// where n is the number of training items, w_{i} --- weights.</param>
 		/// <param name="epoch_callback">Callback method that will be called after each learning epoch.
 		/// It is supposed to serve diagnostic evaluation purposes.</param>
-		void learn(const std::vector<Vector>& training_items, const std::vector<Vector>& reference_items,
+		void learn(const std::vector<Tensor>& training_items, const std::vector<Tensor>& reference_items,
 			const std::size_t batch_size, const std::size_t epochs_count, const Real learning_rate, const CostFunctionId& cost_func_id,
 			const Real& lambda = Real(0),
 			const std::function<void(std::size_t)>& epoch_callback = [](const auto epoch_id) {});
@@ -91,13 +92,13 @@ namespace DeepLearning
 		/// <param name="labels">Labels for the given input data</param>
 		/// <param name="min_answer_probability">Minimal "probability" that the answer
 		/// from the neural net should have in order to be considered as a "valid"</param>
-		std::size_t count_correct_answers(const std::vector<Vector>& test_input, const std::vector<Vector>& labels,
+		std::size_t count_correct_answers(const std::vector<Tensor>& test_input, const std::vector<Tensor>& labels,
 			const Real& min_answer_probability = Real(0)) const;
 
 		/// <summary>
 		/// Evaluates the given cost function for the given pair of input and reference collections
 		/// </summary>
-		Real evaluate_cost_function(const std::vector<Vector>& test_input,
-			const std::vector<Vector>& reference_output, const CostFunctionId& cost_func_id) const;
+		Real evaluate_cost_function(const std::vector<Tensor>& test_input,
+			const std::vector<Tensor>& reference_output, const CostFunctionId& cost_func_id) const;
 	};
 }

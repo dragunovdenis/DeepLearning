@@ -659,7 +659,7 @@ namespace DeepLearningTest
 			Logger::WriteMessage((std::string("angle_diff = ") + Utils::to_string(angle_diff) + "\n").c_str());
 			Logger::WriteMessage((std::string("radius_diff = ") + Utils::to_string(radius_diff) + "\n").c_str());
 
-			Assert::IsTrue(angle_diff < 100 * std::numeric_limits<Real>::epsilon(),
+			Assert::IsTrue(angle_diff < 1000 * std::numeric_limits<Real>::epsilon(),
 				L"Too high difference between the actual and expected angles");
 			Assert::IsTrue(radius_diff < 10 * std::numeric_limits<Real>::epsilon(),
 				L"Distance to the rotation center should not change");

@@ -31,7 +31,6 @@ namespace DeepLearning
 	/// Representation of a dense rectangular matrix
 	/// </summary>
 	class Matrix : public BasicCollection
-
 	{
 		/// <summary>
 		/// Elements of the matrix in a "flattened" form
@@ -163,12 +162,12 @@ namespace DeepLearning
 		/// </summary>
 		/// <param name="mul_vec">The vector that is involved in the multiplication operation</param>
 		/// <param name="add_vec">The vector that is involved in the addition operation</param>
-		Vector mul_add(const Vector& mul_vec, const Vector& add_vec) const;
+		Vector mul_add(const BasicCollection& mul_vec, const BasicCollection& add_vec) const;
 
 		/// <summary>
 		/// Multiplication by a vector from the left
 		/// </summary>
-		Vector friend operator *(const Vector& vec, const Matrix& matr);
+		Vector friend operator *(const BasicCollection& vec, const Matrix& matr);
 
 		/// <summary>
 		/// Equality operator
@@ -219,6 +218,11 @@ namespace DeepLearning
 		/// Compound scalar multiplication operator
 		/// </summary>
 		Matrix& operator *=(const Real& scalar);
+
+		/// <summary>
+		/// Method to abandon resources (should be called when the resources are "moved")
+		/// </summary>
+		void abandon_resources() override;
 	};
 
 	/// <summary>
@@ -244,5 +248,5 @@ namespace DeepLearning
 	/// <summary>
 	/// Returns result of multiplication of the given vector-column by the given vector-row
 	/// </summary>
-	Matrix vector_col_times_vector_row(const Vector& vec_col, const Vector& vec_row);
+	Matrix vector_col_times_vector_row(const BasicCollection& vec_col, const BasicCollection& vec_row);
 }

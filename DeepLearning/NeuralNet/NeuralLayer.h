@@ -18,6 +18,8 @@
 #pragma once
 #include "../Math/Vector.h"
 #include "../Math/Matrix.h"
+#include "../Math/Tensor.h"
+#include <vector>
 #include "../Math/ActivationFunction.h"
 #include "CummulativeGradient.h"
 #include <msgpack.hpp>
@@ -38,12 +40,12 @@ namespace DeepLearning
 			/// <summary>
 			/// Container to store input of a neuron layer
 			/// </summary>
-			Vector Input{};
+			Tensor Input{};
 
 			/// <summary>
-			/// Container to store derivatives of the activation functions
+			/// Container to store derivatives of the activation function
 			/// </summary>
-			Vector Derivatives{};
+			Tensor Derivatives{};
 		};
 
 		/// <summary>
@@ -54,12 +56,12 @@ namespace DeepLearning
 			/// <summary>
 			/// Gradient with respect to the biases of the neural layer
 			/// </summary>
-			Vector Biases_grad{};
+			Tensor Biases_grad{};
 
 			/// <summary>
 			/// Gradient with respect to the weights of the neural layer
 			/// </summary>
-			Matrix Weights_grad{};
+			std::vector<Tensor> Weights_grad{};
 		};
 
 	private:
@@ -114,12 +116,12 @@ namespace DeepLearning
 		NeuralLayer(const NeuralLayer& anotherLayer);
 
 		/// <summary>
-		/// Makes a forward pass for the given input and outputs the result for the entire network
+		/// Makes a forward pass for the given input and outputs the result for the layer
 		/// </summary>
 		/// <param name="input">Input signal</param>
 		/// <param name="aux_learning_data_ptr">Pointer to the auxiliary data structure that should be provided during the training (learning) process</param>
 		/// <returns>Output signal</returns>
-		Vector act(const Vector& input, AuxLearningData* const aux_learning_data_ptr = nullptr) const;
+		Tensor act(const Tensor& input, AuxLearningData* const aux_learning_data_ptr = nullptr) const;
 
 		/// <summary>
 		/// Performs the back-propagation
@@ -132,7 +134,7 @@ namespace DeepLearning
 		/// The evaluation is redundant for the very first layer of the net</param>
 		/// <returns>Derivatives of the cost function with respect to the output of the previous neural layer
 		/// (or input of the current neural layer, which is the same)</returns>
-		std::tuple<Vector, LayerGradient> backpropagate(const Vector& deltas, const AuxLearningData& aux_learning_data,
+		std::tuple<Tensor, LayerGradient> backpropagate(const Tensor& deltas, const AuxLearningData& aux_learning_data,
 			const bool evaluate_input_gradient = true) const;
 
 		/// <summary>
@@ -141,7 +143,7 @@ namespace DeepLearning
 		/// <param name="weights_and_biases_increment">Increment for weights and biases</param>
 		/// <param name="reg_factor">Regularization factor, that (if non-zero) 
 		/// results in term "reg_factor*w_i" being added to each weight "w_i" </param>
-		void update(const std::tuple<Matrix, Vector>& weights_and_biases_increment, const Real& reg_factor);
+		void update(const std::tuple<std::vector<Tensor>, Tensor>& weights_and_biases_increment, const Real& reg_factor);
 	};
 
 }

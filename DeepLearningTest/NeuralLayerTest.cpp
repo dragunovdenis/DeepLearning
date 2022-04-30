@@ -36,10 +36,10 @@ namespace DeepLearningTest
 		{
 			const auto input_dim = 10;
 			const auto output_dim = 23;
-			const auto input_0 = Vector(input_dim, -1, 1);
+			const auto input_0 = Tensor(1, 1, input_dim, -1, 1);
 			const auto weights_0 = Matrix(output_dim, input_dim, -1, 1);
 			const auto biases_0 = Vector(output_dim, -1, 1);
-			const auto reference = Vector(output_dim, -1, 1);;
+			const auto reference = Tensor(1, 1, output_dim, -1, 1);;
 			const auto cost_func = CostFunction(cost_function_id);
 			const auto nl = NeuralLayer(weights_0, biases_0, activation_func_id);
 
@@ -56,16 +56,16 @@ namespace DeepLearningTest
 			{
 				//Calculate partial derivative with respect to the corresponding input item numerically
 				auto input_minus_delta = input_0;
-				input_minus_delta(in_item_id) -= delta;
+				input_minus_delta[in_item_id] -= delta;
 				auto input_plus_delta = input_0;
-				input_plus_delta(in_item_id) += delta;
+				input_plus_delta[in_item_id] += delta;
 
 				const auto result_minus = cost_func(nl_aux.act(input_minus_delta), reference);
 				const auto result_plus = cost_func(nl_aux.act(input_plus_delta), reference);
 				const auto deriv_numeric = (result_plus - result_minus) / (2 * delta);
 
 				//Now do the same using the back-propagation approach
-				const auto diff = std::abs(deriv_numeric - input_grad_result(in_item_id));
+				const auto diff = std::abs(deriv_numeric - input_grad_result[in_item_id]);
 				Logger::WriteMessage((std::string("Difference = ") + Utils::to_string(diff) + '\n').c_str());
 				Assert::IsTrue(diff <= (std::is_same_v<Real, double> ?  Real(1e-9) : Real(5e-3)), L"Unexpectedly high deviation!");
 			}
@@ -79,10 +79,10 @@ namespace DeepLearningTest
 		{
 			const auto input_dim = 10;
 			const auto output_dim = 23;
-			const auto input_0 = Vector(input_dim, -1, 1);
+			const auto input_0 = Tensor(1, 1, input_dim, -1, 1);
 			const auto weights_0 = Matrix(output_dim, input_dim, -1, 1);
 			const auto biases_0 = Vector(output_dim, -1, 1);
-			const auto reference = Vector(output_dim, -1, 1);;
+			const auto reference = Tensor(1, 1, output_dim, -1, 1);;
 			const auto cost_func = CostFunction(cost_function_id);
 			const auto nl = NeuralLayer(weights_0, biases_0, activation_func_id);
 
@@ -97,6 +97,7 @@ namespace DeepLearningTest
 			const auto nl_aux = NeuralLayer(weights_0, biases_0, activation_func_id);
 			const auto delta = std::is_same_v<Real, double> ? Real(1e-5) : Real(1e-3);
 
+			Assert::IsTrue(wight_grad.size() == 1, L"Unexpected size of the weight gradients vector");
 			//Check derivatives with respect to weights
 			Logger::WriteMessage("Weights:\n");
 			for (std::size_t row_id = 0; row_id < output_dim; row_id++)
@@ -113,9 +114,9 @@ namespace DeepLearningTest
 					const auto deriv_numeric = (result_plus - result_minus) / (2 * delta);
 
 					//Now do the same using the back-propagation approach
-					const auto diff = std::abs(deriv_numeric - wight_grad(row_id, col_id));
+					const auto diff = std::abs(deriv_numeric - wight_grad[0](0, row_id, col_id));
 					Logger::WriteMessage((std::string("Difference = ") + Utils::to_string(diff) + '\n').c_str());
-					Assert::IsTrue(diff <= (std::is_same_v<Real, double> ? Real(5e-10) : Real(3e-3)), L"Unexpectedly high deviation (weight derivatives)!");
+					Assert::IsTrue(diff <= (std::is_same_v<Real, double> ? Real(6e-10) : Real(3e-3)), L"Unexpectedly high deviation (weight derivatives)!");
 				}
 
 			//Check derivatives with respect to biases
@@ -133,11 +134,10 @@ namespace DeepLearningTest
 				const auto deriv_numeric = (result_plus - result_minus) / (2 * delta);
 
 				//Now do the same using the back-propagation approach
-				const auto diff = std::abs(deriv_numeric - bias_grad(row_id));
+				const auto diff = std::abs(deriv_numeric - bias_grad(0, 0, row_id));
 				Logger::WriteMessage((std::string("Difference = ") + Utils::to_string(diff) + '\n').c_str());
 				Assert::IsTrue(diff <= (std::is_same_v<Real, double> ? Real(5e-10) : Real(3e-3)), L"Unexpectedly high deviation (bias derivatives)!");
 			}
-
 		}
 
 		TEST_METHOD(DerivativeWithRespectToInputValuesCalculationSquaredErrorTest)

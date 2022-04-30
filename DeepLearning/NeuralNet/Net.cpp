@@ -54,7 +54,7 @@ namespace DeepLearning
 		}
 	}
 
-	Vector Net::act(const Vector& input, std::vector<NeuralLayer::AuxLearningData>* const aux_data_ptr) const
+	Tensor Net::act(const Tensor& input, std::vector<NeuralLayer::AuxLearningData>* const aux_data_ptr) const
 	{
 		if (aux_data_ptr != nullptr && aux_data_ptr->size() != _layers.size())
 			throw std::exception("Invalid auxiliary data.");
@@ -114,7 +114,7 @@ namespace DeepLearning
 			collectors[collector_id].reset();
 	}
 
-	void Net::learn(const std::vector<Vector>& training_items, const std::vector<Vector>& reference_items,
+	void Net::learn(const std::vector<Tensor>& training_items, const std::vector<Tensor>& reference_items,
 		const std::size_t batch_size, const std::size_t epochs_count, const Real learning_rate, const CostFunctionId& cost_func_id,
 		const Real& lambda, const std::function<void(std::size_t)>& epoch_callback)
 	{
@@ -188,8 +188,8 @@ namespace DeepLearning
 		}
 	}
 
-	Real Net::evaluate_cost_function(const std::vector<Vector>& test_input,
-		const std::vector<Vector>& reference_output, const CostFunctionId& cost_func_id) const
+	Real Net::evaluate_cost_function(const std::vector<Tensor>& test_input,
+		const std::vector<Tensor>& reference_output, const CostFunctionId& cost_func_id) const
 	{
 		if (test_input.size() != reference_output.size())
 			throw std::exception("Invalid input.");
@@ -211,8 +211,8 @@ namespace DeepLearning
 		return cost_sum / test_input.size();
 	}
 
-	std::size_t Net::count_correct_answers(const std::vector<Vector>& test_input,
-		const std::vector<Vector>& labels, const Real& min_answer_probability) const
+	std::size_t Net::count_correct_answers(const std::vector<Tensor>& test_input,
+		const std::vector<Tensor>& labels, const Real& min_answer_probability) const
 	{
 		if (test_input.size() != labels.size())
 			throw std::exception("Invalid input.");
@@ -232,7 +232,7 @@ namespace DeepLearning
 					//as a probability of the corresponding class
 					const auto trial_answer_normalized = trial_label * (Real(1) / trial_label.sum());
 					const auto trial_answer = trial_answer_normalized.max_element_id();
-					const auto trial_anwer_probability = trial_answer_normalized(trial_answer);
+					const auto trial_anwer_probability = trial_answer_normalized[trial_answer];
 
 					if (trial_answer == ref_answer && trial_anwer_probability >= min_answer_probability)
 						result++;

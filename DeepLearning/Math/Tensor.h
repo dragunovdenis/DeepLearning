@@ -24,6 +24,8 @@
 namespace DeepLearning
 {
 	class PoolOperator;
+	class Vector;
+	class Matrix;
 
 	/// <summary>
 	/// Representation of rank 3 
@@ -51,6 +53,11 @@ namespace DeepLearning
 		/// Releases allocated resources
 		/// </summary>
 		void free();
+
+		/// <summary>
+		/// Method to abandon resources (should be called when the resources are "moved")
+		/// </summary>
+		void abandon_resources();
 
 		/// <summary>
 		/// Converts given triplet of integer coordinates to a single index that can be used to access "data" array
@@ -112,6 +119,16 @@ namespace DeepLearning
 		/// <summary>
 		/// Move constructor
 		/// </summary>
+		Tensor(Vector&& vector) noexcept;
+
+		/// <summary>
+		/// Move constructor
+		/// </summary>
+		Tensor(Matrix&& matrix) noexcept;
+
+		/// <summary>
+		/// Move constructor
+		/// </summary>
 		Tensor(Tensor&& tensor) noexcept;
 
 		/// <summary>
@@ -125,6 +142,21 @@ namespace DeepLearning
 		/// Assignment operator
 		/// </summary>
 		Tensor& operator =(const Tensor& tensor);
+
+		/// <summary>
+		/// Move assignment operator for vector right-hand side operand
+		/// </summary>
+		Tensor& operator =(Vector&& vector) noexcept;
+
+		/// <summary>
+		/// Move assignment operator for matrix right-hand side operand
+		/// </summary>
+		Tensor& operator =(Matrix&& matrix) noexcept;
+
+		/// <summary>
+		/// Move assignment operator for tensor right-hand side operand
+		/// </summary>
+		Tensor& operator =(Tensor&& tensor) noexcept;
 
 		/// <summary>
 		/// Destructor

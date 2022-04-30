@@ -62,4 +62,22 @@ namespace DeepLearning
 	{
 		return size() == 0;
 	}
+
+	void BasicCollection::hadamard_prod_in_place(const BasicCollection& collection)
+	{
+		if (size() != collection.size())
+			throw std::exception("Inconsistent input");
+
+		std::transform(begin(), end(), collection.begin(), begin(), [](const auto& x, const auto& y) { return x * y; });
+	}
+
+	std::size_t BasicCollection::max_element_id(const std::function<bool(Real, Real)>& comparer) const
+	{
+		const auto id = std::max_element(begin(), end(), comparer) - begin();
+		return static_cast<std::size_t>(id);
+	}
+
+	Real& BasicCollection::operator [](const std::size_t& id) { return begin()[id]; };
+
+	const Real& BasicCollection::operator [](const std::size_t& id) const { return begin()[id]; };
 }

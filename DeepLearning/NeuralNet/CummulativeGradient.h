@@ -19,6 +19,8 @@
 
 #include "../Math/Matrix.h"
 #include "../Math/Vector.h"
+#include "../Math/Tensor.h"
+#include <vector>
 
 namespace DeepLearning
 {
@@ -32,14 +34,14 @@ namespace DeepLearning
 	class CummulativeGradient
 	{
 		/// <summary>
-		/// Sum of the derivatives with respect to layer weight
+		/// Sum of the derivatives with respect to layer weights
 		/// </summary>
-		Matrix _sum_grad_weights{};
+		std::vector<Tensor> _sum_grad_weights{};
 
 		/// <summary>
 		/// Sum of the derivatives with respect to layer biases
 		/// </summary>
-		Vector _sum_grad_biases{};
+		Tensor _sum_grad_biases{};
 
 		/// <summary>
 		/// Number of the items accumulated in the corresponding sums
@@ -60,12 +62,12 @@ namespace DeepLearning
 		/// </summary>
 		/// <param name="weight_grad">"Partial" gradient with respect to weights</param>
 		/// <param name="bias_grad">"Partial" gradient with respect to biases</param>
-		void Add(const Matrix& weight_grad, const Vector& bias_grad);
+		void Add(const std::vector<Tensor>& weight_grad, const Tensor& bias_grad);
 
 		/// <summary>
 		/// Calculates and returns the "average" gradient with respect to layer weights and biases
 		/// </summary>
-		std::tuple<Matrix, Vector> calc_average_grarient(const Real scale_factor = Real(1)) const;
+		std::tuple<std::vector<Tensor>, Tensor> calc_average_grarient(const Real scale_factor = Real(1)) const;
 
 		/// <summary>
 		/// Resets the cumulative structure

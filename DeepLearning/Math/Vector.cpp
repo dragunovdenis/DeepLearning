@@ -38,10 +38,15 @@ namespace DeepLearning
 		return *this;
 	}
 
+	void Vector::abandon_resources()
+	{
+		_data = nullptr;
+		_dim = 0;
+	}
+
 	Vector::Vector(Vector&& vec) noexcept : _dim(vec._dim), _data(vec._data)
 	{
-		vec._data = nullptr;
-		vec._dim = 0;
+		vec.abandon_resources();
 	}
 
 	Vector::Vector(const std::size_t dim, const bool assign_zero) : _dim(dim)
@@ -228,19 +233,6 @@ namespace DeepLearning
 	Vector operator *(const Real& scalar, const Vector& vec)
 	{
 		return vec * scalar;
-	}
-
-
-	std::size_t Vector::max_element_id(const std::function<bool(Real, Real)>& comparer) const
-	{
-		const auto id = std::max_element(begin(), end(), comparer) - begin();
-		return static_cast<std::size_t>(id);
-	}
-	Vector Vector::hadamard_prod(const Vector& vec) const
-	{
-		Vector result(dim());
-		std::transform(begin(), end(), vec.begin(), result.begin(), [](const auto& x, const auto& y) { return x * y; });
-		return result;
 	}
 
 	template Vector::Vector(const std::vector<unsigned char>& souurce);

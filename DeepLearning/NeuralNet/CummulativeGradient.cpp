@@ -16,36 +16,49 @@
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "CummulativeGradient.h"
+#include <algorithm>
 #include <exception>
 
 namespace DeepLearning
 {
 	CummulativeGradient::CummulativeGradient(const std::size_t in_dim, const std::size_t out_dim)
 	{
-		_sum_grad_weights = Matrix(out_dim, in_dim);
+		_sum_grad_weights = { Matrix(out_dim, in_dim) };
 		_sum_grad_biases = Vector(out_dim);
 	}
 
-	void CummulativeGradient::Add(const Matrix& weight_grad, const Vector& bias_grad)
+	void CummulativeGradient::Add(const std::vector<Tensor>& weight_grad, const Tensor& bias_grad)
 	{
-		_sum_grad_weights += weight_grad;
+		if (_sum_grad_weights.size() != weight_grad.size())
+			throw std::exception("Invalid input");
+
+		for (auto item_id = 0ull; item_id < _sum_grad_weights.size(); item_id++)
+			_sum_grad_weights[item_id] += weight_grad[item_id];
+
 		_sum_grad_biases += bias_grad;
 		_accumulated_items_count++;
 	}
 
-	std::tuple<Matrix, Vector> CummulativeGradient::calc_average_grarient(const Real scale_factor) const
+	std::tuple<std::vector<Tensor>, Tensor> CummulativeGradient::calc_average_grarient(const Real scale_factor) const
 	{
 		if (_accumulated_items_count == 0)
 			throw std::exception("No items have been added.");
 
 		const auto factor = scale_factor / _accumulated_items_count;
-		return std::make_tuple(_sum_grad_weights * factor, _sum_grad_biases * factor);
+		auto average_grad_weights = _sum_grad_weights;
+
+		for (auto item_id = 0ull; item_id < _sum_grad_weights.size(); item_id++)
+			average_grad_weights[item_id] *= factor;
+
+		return std::make_tuple(average_grad_weights, _sum_grad_biases * factor);
 	}
 
 	void CummulativeGradient::reset()
 	{
 		_sum_grad_biases.fill(Real(0));
-		_sum_grad_weights.fill(Real(0));
+		for (auto item_id = 0ull; item_id < _sum_grad_weights.size(); item_id++)
+			_sum_grad_weights[item_id].fill(Real(0));
+
 		_accumulated_items_count = 0;
 	}
 }

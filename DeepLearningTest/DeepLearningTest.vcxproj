@@ -23,7 +23,7 @@
     <ProjectGuid>{E473C9D5-5FA9-48DC-B0D6-5FC6B75A8F96}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>DeepLearningTest</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.22000.0</WindowsTargetPlatformVersion>
     <ProjectSubType>NativeUnitTestProject</ProjectSubType>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

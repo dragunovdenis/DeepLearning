@@ -20,6 +20,8 @@
 #include <exception>
 #include "../IndexIterator.h"
 #include "PoolOperator.h"
+#include "Vector.h"
+#include "Matrix.h"
 
 namespace DeepLearning
 {
@@ -39,14 +41,19 @@ namespace DeepLearning
 		std::copy(tensor.begin(), tensor.end(), begin());
 	}
 
+	void Tensor::abandon_resources()
+	{
+		_data = nullptr;
+		_layer_dim = 0;
+		_row_dim = 0;
+		_col_dim = 0;
+	}
+
 	Tensor::Tensor(Tensor&& tensor) noexcept
 		: _data(tensor._data), _layer_dim(tensor._layer_dim),
 		_row_dim(tensor._row_dim), _col_dim(tensor._col_dim)
 	{
-		tensor._data = nullptr;
-		tensor._layer_dim = 0;
-		tensor._row_dim = 0;
-		tensor._col_dim = 0;
+		tensor.abandon_resources();
 	}
 
 	Tensor::Tensor(const std::size_t layer_dim, const std::size_t row_dim,
@@ -69,6 +76,66 @@ namespace DeepLearning
 		_col_dim = tensor._col_dim;
 
 		std::copy(tensor.begin(), tensor.end(), begin());
+
+		return *this;
+	}
+
+	/// <summary>
+	/// Move constructor
+	/// </summary>
+	Tensor::Tensor(Vector&& vector) noexcept : _layer_dim(1ull),
+		_row_dim(1ull), _col_dim(vector.dim()), _data(vector.begin())
+	{
+		vector.abandon_resources();
+	}
+
+	/// <summary>
+	/// Move constructor
+	/// </summary>
+	Tensor::Tensor(Matrix&& matrix) noexcept : _layer_dim(1ull),
+		_row_dim(matrix.row_dim()), _col_dim(matrix.col_dim()), _data(matrix.begin())
+	{
+		matrix.abandon_resources();
+	}
+
+	Tensor& Tensor::operator =(Vector&& vector) noexcept
+	{
+		free();
+
+		_layer_dim = 1ull;
+		_row_dim = 1ull;
+		_col_dim = vector.dim();
+
+		_data = vector.begin();
+		vector.abandon_resources();
+
+		return *this;
+	}
+
+	Tensor& Tensor::operator =(Matrix&& matrix) noexcept
+	{
+		free();
+
+		_layer_dim = 1ull;
+		_row_dim = matrix.row_dim();
+		_col_dim = matrix.col_dim();
+
+		_data = matrix.begin();
+		matrix.abandon_resources();
+
+		return *this;
+	}
+
+	Tensor& Tensor::operator =(Tensor&& tensor) noexcept
+	{
+		free();
+
+		_layer_dim = tensor.layer_dim();
+		_row_dim = tensor.row_dim();
+		_col_dim = tensor.col_dim();
+
+		_data = tensor.begin();
+		tensor.abandon_resources();
 
 		return *this;
 	}

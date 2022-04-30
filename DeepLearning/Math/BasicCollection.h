@@ -26,7 +26,7 @@ namespace DeepLearning
 	/// </summary>
 	class BasicCollection
 	{
-	protected:
+	public:
 		/// <summary>
 		/// Element-wise sum with another collection of the same size
 		/// It is a responsibility of the caller to make sure that the collections are of the same size
@@ -44,7 +44,6 @@ namespace DeepLearning
 		/// </summary>
 		void mul(const Real& scalar);
 
-	public:
 		/// <summary>
 		/// Size of the collection
 		/// </summary>
@@ -71,6 +70,16 @@ namespace DeepLearning
 		virtual const Real* end() const = 0;
 
 		/// <summary>
+		/// Subscript operator
+		/// </summary>
+		Real& operator [](const std::size_t& id);
+
+		/// <summary>
+		/// Subscript operator (constant version)
+		/// </summary>
+		const Real& operator [](const std::size_t& id) const;
+
+		/// <summary>
 		/// "Maximal absolute value" norm ("infinity" norm) of the collection
 		/// </summary>
 		Real max_abs() const;
@@ -89,6 +98,32 @@ namespace DeepLearning
 		/// Returns "true" if the collection is empty
 		/// </summary>
 		bool empty() const;
-	};
 
+		/// <summary>
+		/// Performs the Hadamard (element-wise) product operation between the current collection and the input
+		/// </summary>
+		void hadamard_prod_in_place(const BasicCollection& collection);
+
+		/// <summary>
+		/// Performs the Hadamard (element-wise) product operation between the current collection and the input
+		/// </summary>
+		template<class T>
+		T hadamard_prod(const T& input) const
+		{
+			auto result = input;
+			result.hadamard_prod_in_place(*this);
+			return result;
+		}
+
+		/// <summary>
+		/// Returns index of the "maximal element" defined by the given comparer
+		/// or "1" if the collection contains zero elements
+		/// </summary>
+		std::size_t max_element_id(const std::function<bool(Real, Real)>& comparer = [](const auto& a, const auto& b) {return a < b; }) const;
+
+		/// <summary>
+		/// Method to abandon resources (should be called when the resources are "moved")
+		/// </summary>
+		virtual void abandon_resources() = 0;
+	};
 }

@@ -28,15 +28,15 @@ namespace DeepLearningTest
 		/// <summary>
 		/// Validates given collection of MNIST labels
 		/// </summary>
-		static void ValidateLabels(const std::vector<Vector>& labels)
+		static void ValidateLabels(const std::vector<Tensor>& labels)
 		{
 			for (std::size_t label_id = 0; label_id < labels.size(); label_id++)
 			{
 				const auto& label = labels[label_id];
-				Assert::IsTrue(label.dim() == 10, (std::wstring(L"Unexpected dimension of a label. Id = ") + std::to_wstring(label_id)).c_str());
+				Assert::IsTrue(label.size_3d() == Index3d{1ll, 1ll, 10ll}, (std::wstring(L"Unexpected dimension of a label. Id = ") + std::to_wstring(label_id)).c_str());
 				int number_of_nonzero_components = 0;
-				for (std::size_t element_id = 0; element_id < label.dim(); element_id++)
-					if (std::abs(label(element_id)) > 0)
+				for (std::size_t element_id = 0; element_id < label.size(); element_id++)
+					if (std::abs(label[element_id]) > 0)
 						number_of_nonzero_components++;
 
 				Assert::IsTrue(number_of_nonzero_components == 1,

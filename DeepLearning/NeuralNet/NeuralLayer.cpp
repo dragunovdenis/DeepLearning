@@ -56,7 +56,7 @@ namespace DeepLearning
 		return _weights.row_dim();
 	}
 
-	Vector NeuralLayer::act(const Vector& input, AuxLearningData* const aux_learning_data_ptr) const
+	Tensor NeuralLayer::act(const Tensor& input, AuxLearningData* const aux_learning_data_ptr) const
 	{
 		const auto function = ActivationFuncion(ActivationFunctionId(_func_id));
 
@@ -65,32 +65,40 @@ namespace DeepLearning
 		if (aux_learning_data_ptr)
 		{
 			aux_learning_data_ptr->Input = input;
-			const auto [result, deriv] = function.func_and_deriv(z);
-			aux_learning_data_ptr->Derivatives = deriv;
-			return result;
+			auto [result, deriv] = function.func_and_deriv(z);
+			aux_learning_data_ptr->Derivatives = std::move(deriv);
+			return std::move(result);
 		}
 
-		return function(z);
+		return std::move(function(z));
 	}
 
-	std::tuple<Vector, NeuralLayer::LayerGradient> NeuralLayer::backpropagate(const Vector& deltas,
+	std::tuple<Tensor, NeuralLayer::LayerGradient> NeuralLayer::backpropagate(const Tensor& deltas,
 		const AuxLearningData& aux_learning_data, const bool evaluate_input_gradient) const
 	{
-		const auto biases_ghrad = deltas.hadamard_prod(aux_learning_data.Derivatives);
-		const auto weights_grad = vector_col_times_vector_row(biases_ghrad, aux_learning_data.Input);
+		if (deltas.size_3d() != Index3d{ 1, 1, static_cast<long long>(_biases.dim()) })
+			throw std::exception("Invalid input");
 
-		return std::make_tuple<Vector, NeuralLayer::LayerGradient>(
-			evaluate_input_gradient ? biases_ghrad * _weights : Vector(0),
-			{ biases_ghrad, weights_grad });
+		const auto biases_ghrad = deltas.hadamard_prod(aux_learning_data.Derivatives);
+		auto weights_grad = vector_col_times_vector_row(biases_ghrad, aux_learning_data.Input);
+
+		return std::make_tuple<Tensor, NeuralLayer::LayerGradient>(
+			evaluate_input_gradient ? biases_ghrad * _weights : Tensor(0, 0, 0),
+			{ biases_ghrad, {std::move(weights_grad)} });
 	}
 
-	void NeuralLayer::update(const std::tuple<Matrix, Vector>& weights_and_biases_increment, const Real& reg_factor)
+	void NeuralLayer::update(const std::tuple<std::vector<Tensor>, Tensor>& weights_and_biases_increment, const Real& reg_factor)
 	{
-		if (reg_factor != Real(0))
-			_weights += (std::get<0>(weights_and_biases_increment) + _weights * reg_factor);
-		else
-			_weights += std::get<0>(weights_and_biases_increment);
+		const auto& weights_increment = std::get<0>(weights_and_biases_increment);
 
-		_biases += std::get<1>(weights_and_biases_increment);
+		if (weights_increment.size() != 1)
+			throw std::exception("Invalid input");
+
+		_weights.add(weights_increment[0]);
+
+		if (reg_factor != Real(0))
+			_weights += _weights * reg_factor;
+
+		_biases.add(std::get<1>(weights_and_biases_increment));
 	}
 }

@@ -198,16 +198,10 @@ namespace DeepLearning
 		/// </summary>
 		static Vector random(const std::size_t dim, const Real range_begin, const Real range_end);
 
-
 		/// <summary>
-		/// Returns index of the "maximal element" defined by the given comparer
-		/// or "1" if the vector contains zero elements
+		/// Method to abandon resources (should be called when the resources are "moved")
 		/// </summary>
-		std::size_t max_element_id(const std::function<bool(Real, Real)>&comparer = [](const auto& a, const auto& b) {return a < b; }) const;
-		/// <summary>
-		/// Returns Hadamard (element-wise) product of the current vector with the input
-		/// </summary>
-		Vector hadamard_prod(const Vector & vec) const;
+		void abandon_resources() override;
 	};
 
 	/// <summary>
