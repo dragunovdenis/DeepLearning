@@ -46,14 +46,19 @@ namespace DeepLearning
 		_func_id = anotherLayer._func_id;
 	}
 
-	std::size_t NeuralLayer::in_dim() const
+	Index3d NeuralLayer::in_size() const
 	{
-		return _weights.col_dim();
+		return { 1ll, 1ll, static_cast<long long>(_weights.col_dim()) };
 	}
 
-	std::size_t NeuralLayer::out_dim() const
+	Index3d NeuralLayer::out_size() const
 	{
-		return _weights.row_dim();
+		return { 1ll, 1ll, static_cast<long long>(_weights.row_dim()) };
+	}
+
+	Index3d NeuralLayer::weight_tensor_size() const
+	{
+		return { 1ll, static_cast<long long>(_weights.row_dim()), static_cast<long long>(_weights.col_dim()) };
 	}
 
 	Tensor NeuralLayer::act(const Tensor& input, AuxLearningData* const aux_learning_data_ptr) const

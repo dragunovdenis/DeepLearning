@@ -17,8 +17,6 @@
 
 #pragma once
 
-#include "../Math/Matrix.h"
-#include "../Math/Vector.h"
 #include "../Math/Tensor.h"
 #include <vector>
 
@@ -53,9 +51,10 @@ namespace DeepLearning
 		/// <summary>
 		/// Constructor
 		/// </summary>
-		/// <param name="in_dim">Input dimension of the corresponding neuron layer</param>
-		/// <param name="out_dim">Output dimension of the corresponding neuron layer</param>
-		CummulativeGradient(const std::size_t in_dim, const std::size_t out_dim);
+		/// <param name="weight_tensor_size">Size of a single weight kernel (filter).
+		/// Number of filters (channels) can be derived from the number of layers (channels) in the tensor of biases</param>
+		/// <param name="bias_tensor_size">Size of the tensor of biases</param>
+		CummulativeGradient(const Index3d& weight_tensor_size, const Index3d& bias_tensor_size);
 
 		/// <summary>
 		/// Adds given gradients to the corresponding "sum" structures

@@ -19,6 +19,8 @@
 #include "../Math/Vector.h"
 #include "../Math/Matrix.h"
 #include "../Math/Tensor.h"
+#include "../Math/LinAlg3d.h"
+#include "ALayer.h"
 #include <vector>
 #include "../Math/ActivationFunction.h"
 #include "CummulativeGradient.h"
@@ -29,41 +31,8 @@ namespace DeepLearning
 	/// <summary>
 	/// Representation of a single neural layer
 	/// </summary>
-	class NeuralLayer
+	class NeuralLayer : public ALayer
 	{
-	public:
-		/// <summary>
-		/// Auxiliary data to perform learning on a level of single neuron layer
-		/// </summary>
-		struct AuxLearningData
-		{
-			/// <summary>
-			/// Container to store input of a neuron layer
-			/// </summary>
-			Tensor Input{};
-
-			/// <summary>
-			/// Container to store derivatives of the activation function
-			/// </summary>
-			Tensor Derivatives{};
-		};
-
-		/// <summary>
-		/// A data structure to hold output of the back-propagation procedure
-		/// </summary>
-		struct LayerGradient
-		{
-			/// <summary>
-			/// Gradient with respect to the biases of the neural layer
-			/// </summary>
-			Tensor Biases_grad{};
-
-			/// <summary>
-			/// Gradient with respect to the weights of the neural layer
-			/// </summary>
-			std::vector<Tensor> Weights_grad{};
-		};
-
 	private:
 		/// <summary>
 		/// Vector of bias coefficients of size _out_dim;
@@ -87,12 +56,17 @@ namespace DeepLearning
 		/// <summary>
 		/// Dimensionality of the layer's input
 		/// </summary>
-		std::size_t in_dim() const;
+		Index3d in_size() const override;
 
 		/// <summary>
 		/// Dimensionality of the layer's output
 		/// </summary>
-		std::size_t out_dim() const;
+		Index3d out_size() const override;
+
+		/// <summary>
+		/// Returns size of the weights matrix (tensor)
+		/// </summary>
+		Index3d weight_tensor_size() const override;
 
 		/// <summary>
 		/// Default constructor
@@ -116,34 +90,20 @@ namespace DeepLearning
 		NeuralLayer(const NeuralLayer& anotherLayer);
 
 		/// <summary>
-		/// Makes a forward pass for the given input and outputs the result for the layer
+		/// See the summary to the corresponding method in the base class
 		/// </summary>
-		/// <param name="input">Input signal</param>
-		/// <param name="aux_learning_data_ptr">Pointer to the auxiliary data structure that should be provided during the training (learning) process</param>
-		/// <returns>Output signal</returns>
-		Tensor act(const Tensor& input, AuxLearningData* const aux_learning_data_ptr = nullptr) const;
+		Tensor act(const Tensor& input, AuxLearningData* const aux_learning_data_ptr = nullptr) const override;
 
 		/// <summary>
-		/// Performs the back-propagation
+		/// See the summary to the corresponding method in the base class
 		/// </summary>
-		/// <param name="deltas">Derivatives of the cost function with respect to the output of the current neural layer</param>
-		/// <param name="aux_learning_data">Auxiliary learning data that should be obtained from the corresponding
-		/// "forward" pass (see method "act") </param>
-		/// <param name="evaluate_input_gradient">Determines whether the gradient with respect to the
-		/// input data (the first item of the output tuple) will be actually evaluated.
-		/// The evaluation is redundant for the very first layer of the net</param>
-		/// <returns>Derivatives of the cost function with respect to the output of the previous neural layer
-		/// (or input of the current neural layer, which is the same)</returns>
 		std::tuple<Tensor, LayerGradient> backpropagate(const Tensor& deltas, const AuxLearningData& aux_learning_data,
-			const bool evaluate_input_gradient = true) const;
+			const bool evaluate_input_gradient = true) const override;
 
 		/// <summary>
-		/// Adds given increments to the weights and biases respectively
+		/// See the summary to the corresponding method in the base class
 		/// </summary>
-		/// <param name="weights_and_biases_increment">Increment for weights and biases</param>
-		/// <param name="reg_factor">Regularization factor, that (if non-zero) 
-		/// results in term "reg_factor*w_i" being added to each weight "w_i" </param>
-		void update(const std::tuple<std::vector<Tensor>, Tensor>& weights_and_biases_increment, const Real& reg_factor);
+		void update(const std::tuple<std::vector<Tensor>, Tensor>& weights_and_biases_increment, const Real& reg_factor) override;
 	};
 
 }

@@ -108,6 +108,9 @@
     <ClInclude Include="Math\PoolOperator.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
+    <ClInclude Include="NeuralNet\LayerHandle.h">
+      <Filter>Header Files\NeuralNet</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Matrix.cpp">
@@ -160,6 +163,12 @@
     </ClCompile>
     <ClCompile Include="Math\PoolOperator.cpp">
       <Filter>Source Files\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="NeuralNet\ALayer.h">
+      <Filter>Header Files\NeuralNet</Filter>
+    </ClCompile>
+    <ClCompile Include="NeuralNet\LayerHandle.cpp">
+      <Filter>Source Files\NeuralNet</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

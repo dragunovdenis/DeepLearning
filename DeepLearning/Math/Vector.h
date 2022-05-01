@@ -62,6 +62,9 @@ namespace DeepLearning
 		/// </summary>
 		std::size_t size() const;
 
+		/// <summary>
+		/// Custom "packing" method
+		/// </summary>
 		template <typename Packer> 
 		void msgpack_pack(Packer& msgpack_pk) const 
 		{ 
@@ -69,12 +72,10 @@ namespace DeepLearning
 			msgpack::type::make_define_array(proxy).msgpack_pack(msgpack_pk);
 		} 
 
-		void msgpack_unpack(msgpack::object const& msgpack_o) 
-		{ 
-			std::vector<Real> proxy;
-			msgpack::type::make_define_array(proxy).msgpack_unpack(msgpack_o);
-			assign(proxy);
-		}
+		/// <summary>
+		/// Custom "unpacking" method
+		/// </summary>
+		void msgpack_unpack(msgpack::object const& msgpack_o);
 
 		/// <summary>
 		/// Default constructor

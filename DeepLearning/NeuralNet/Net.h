@@ -23,6 +23,7 @@
 #include "../Math/CostFunction.h"
 #include "../Math/Vector.h"
 #include "../Math/Tensor.h"
+#include "LayerHandle.h"
 #include <msgpack.hpp>
 
 namespace DeepLearning
@@ -35,7 +36,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Layers of neurons
 		/// </summary>
-		std::vector<NeuralLayer> _layers{};
+		std::vector<LayerHandle> _layers{};
 
 	public:
 

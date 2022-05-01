@@ -178,6 +178,7 @@
     <ClInclude Include="MnistDataUtils.h" />
     <ClInclude Include="MsgPackUtils.h" />
     <ClInclude Include="NeuralNet\CummulativeGradient.h" />
+    <ClInclude Include="NeuralNet\LayerHandle.h" />
     <ClInclude Include="NeuralNet\Net.h" />
     <ClInclude Include="NeuralNet\NeuralLayer.h" />
     <ClInclude Include="ThirdParty\BitmapUtils.h" />
@@ -196,7 +197,9 @@
     <ClCompile Include="Math\Vector.cpp" />
     <ClCompile Include="Math\DiffFunc.cpp" />
     <ClCompile Include="MnistDataUtils.cpp" />
+    <ClCompile Include="NeuralNet\ALayer.h" />
     <ClCompile Include="NeuralNet\CummulativeGradient.cpp" />
+    <ClCompile Include="NeuralNet\LayerHandle.cpp" />
     <ClCompile Include="NeuralNet\Net.cpp" />
     <ClCompile Include="NeuralNet\NeuralLayer.cpp" />
     <ClCompile Include="ThirdParty\BitmapUtils.cpp" />

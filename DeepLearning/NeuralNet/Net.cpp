@@ -49,8 +49,8 @@ namespace DeepLearning
 
 			std::normal_distribution<Real> dist{ 0, Real(1) / Real(std::sqrt(in_dim)) };
 
-			_layers.emplace_back(Matrix(out_dim, in_dim, [&]() {return dist(gen); }),
-				Vector(out_dim, Real(-1), Real(1)), af_ids_local[id - 1]);
+			_layers.push_back(LayerHandle::make(LayerTypeId::FULL, Matrix(out_dim, in_dim, [&]() {return dist(gen); }),
+				Vector(out_dim, Real(-1), Real(1)), af_ids_local[id - 1]));
 		}
 	}
 
@@ -61,7 +61,7 @@ namespace DeepLearning
 
 		auto result = input;
 		for (std::size_t layer_id = 0; layer_id < _layers.size(); layer_id++)
-			result = _layers[layer_id].act(result, aux_data_ptr != nullptr ? &(*aux_data_ptr)[layer_id] : nullptr);
+			result = _layers[layer_id].layer().act(result, aux_data_ptr != nullptr ? &(*aux_data_ptr)[layer_id] : nullptr);
 
 		return result;
 	}
@@ -92,14 +92,14 @@ namespace DeepLearning
 	/// <summary>
 	/// Returns collection of the gradient collectors that is "compatible" with the given collection of neural layers
 	/// </summary>
-	std::vector<CummulativeGradient> init_gradient_collectors(const std::vector<NeuralLayer>& layers)
+	std::vector<CummulativeGradient> init_gradient_collectors(const std::vector<LayerHandle>& layers)
 	{
 		std::vector<CummulativeGradient> result;
 
 		for (std::size_t layer_id = 0; layer_id < layers.size(); layer_id++)
 		{
-			const auto& layer = layers[layer_id];
-			result.emplace_back(layer.in_dim(), layer.out_dim());
+			const auto& layer = layers[layer_id].layer();
+			result.emplace_back(layer.weight_tensor_size(), layer.out_size());
 		}
 
 		return result;
@@ -170,7 +170,7 @@ namespace DeepLearning
 						auto back_prop_out = std::vector<NeuralLayer::LayerGradient>(_layers.size());
 						//Back-propagate through all the layers
 						for (long long layer_id = _layers.size() - 1; layer_id >= 0; layer_id--)
-							std::tie(gradient, back_prop_out[layer_id]) = _layers[layer_id].backpropagate(
+							std::tie(gradient, back_prop_out[layer_id]) = _layers[layer_id].layer().backpropagate(
 								gradient, aux_data_ptr[layer_id], layer_id != 0);
 
 						std::lock_guard guard(mutex);
@@ -181,7 +181,7 @@ namespace DeepLearning
 				batch_start_elem_id = batch_end_elem_id;
 
 				for (std::size_t layer_id = 0; layer_id < _layers.size(); layer_id++)
-					_layers[layer_id].update(gradient_collectors[layer_id].calc_average_grarient(-learning_rate), reg_factor);
+					_layers[layer_id].layer().update(gradient_collectors[layer_id].calc_average_grarient(-learning_rate), reg_factor);
 			}
 
 			epoch_callback(epoch_id);

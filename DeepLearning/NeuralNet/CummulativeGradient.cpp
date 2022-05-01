@@ -21,10 +21,11 @@
 
 namespace DeepLearning
 {
-	CummulativeGradient::CummulativeGradient(const std::size_t in_dim, const std::size_t out_dim)
+	CummulativeGradient::CummulativeGradient(const Index3d& weight_tensor_size, const Index3d& bias_tensor_size)
 	{
-		_sum_grad_weights = { Matrix(out_dim, in_dim) };
-		_sum_grad_biases = Vector(out_dim);
+		const auto filters_cnt = bias_tensor_size.x;//Number of layers (channels) in the tensor of biases
+		_sum_grad_weights = std::vector<Tensor>(filters_cnt, Tensor(weight_tensor_size) );
+		_sum_grad_biases = Tensor(bias_tensor_size);
 	}
 
 	void CummulativeGradient::Add(const std::vector<Tensor>& weight_grad, const Tensor& bias_grad)

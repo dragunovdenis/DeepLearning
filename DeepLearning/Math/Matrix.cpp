@@ -364,4 +364,12 @@ namespace DeepLearning
 
 		return result;
 	}
+
+	void Matrix::msgpack_unpack(msgpack::object const& msgpack_o)
+	{
+		std::vector<Real> proxy;
+		msgpack::type::make_define_array(_row_dim, _col_dim, proxy).msgpack_unpack(msgpack_o);
+		_data = reinterpret_cast<Real*>(std::malloc(size() * sizeof(Real)));
+		std::copy(proxy.begin(), proxy.end(), begin());
+	}
 }

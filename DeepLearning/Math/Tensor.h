@@ -81,6 +81,9 @@ namespace DeepLearning
 		/// </summary>
 		std::size_t size() const;
 
+		/// <summary>
+		/// Custom "packing" method
+		/// </summary>
 		template <typename Packer>
 		void msgpack_pack(Packer& msgpack_pk) const
 		{
@@ -88,13 +91,10 @@ namespace DeepLearning
 			msgpack::type::make_define_array(_layer_dim, _row_dim, _col_dim, proxy).msgpack_pack(msgpack_pk);
 		}
 
-		void msgpack_unpack(msgpack::object const& msgpack_o)
-		{
-			std::vector<Real> proxy;
-			msgpack::type::make_define_array(_layer_dim, _row_dim, _col_dim, proxy).msgpack_unpack(msgpack_o);
-			_data = reinterpret_cast<Real*>(std::malloc(size() * sizeof(Real)));
-			std::copy(proxy.begin(), proxy.end(), begin());
-		}
+		/// <summary>
+		/// Custom "unpacking" method
+		/// </summary>
+		void msgpack_unpack(msgpack::object const& msgpack_o);
 
 		/// <summary>
 		/// Default constructor
@@ -110,6 +110,13 @@ namespace DeepLearning
 		/// <param name="assign_zero">The tensor will be assigned with "0" if "true"</param>
 		Tensor(const std::size_t layer_dim, const std::size_t row_dim,
 			const std::size_t col_dim, const bool assign_zero = true);
+
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		/// <param name="size">Tensor size</param>
+		/// <param name="assign_zero">The tensor will be assigned with "0" if "true"</param>
+		Tensor(const Index3d& size, const bool assign_zero = true);
 
 		/// <summary>
 		/// Copy constructor

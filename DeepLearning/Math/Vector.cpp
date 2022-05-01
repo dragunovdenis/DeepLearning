@@ -235,6 +235,13 @@ namespace DeepLearning
 		return vec * scalar;
 	}
 
+	void Vector::msgpack_unpack(msgpack::object const& msgpack_o)
+	{
+		std::vector<Real> proxy;
+		msgpack::type::make_define_array(proxy).msgpack_unpack(msgpack_o);
+		assign(proxy);
+	}
+
 	template Vector::Vector(const std::vector<unsigned char>& souurce);
 	template Vector::Vector(const std::vector<Real>& souurce);
 }

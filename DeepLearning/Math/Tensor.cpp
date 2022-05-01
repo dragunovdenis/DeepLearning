@@ -35,6 +35,10 @@ namespace DeepLearning
 			std::fill(begin(), end(), Real(0));
 	}
 
+	Tensor::Tensor(const Index3d& size, const bool assign_zero)
+		: Tensor(size.x, size.y, size.z, assign_zero)
+	{}
+
 	Tensor::Tensor(const Tensor& tensor)
 		: Tensor(tensor._layer_dim, tensor._row_dim, tensor._col_dim, false)
 	{
@@ -405,7 +409,7 @@ namespace DeepLearning
 		const auto kernel_size = kernel.size_3d();
 
 		const auto result_dim = calc_conv_res_dim(tensor_size, kernel_size, paddings, strides);
-		auto result = Tensor(result_dim.x, result_dim.y, result_dim.z, false);
+		auto result = Tensor(result_dim, false);
 
 		for (std::size_t res_data_id = 0; res_data_id < result.size(); res_data_id++)
 		{
@@ -429,7 +433,7 @@ namespace DeepLearning
 		const auto tensor_size = size_3d();
 		const auto kernel_size = pool_operator.size_3d();
 		const auto result_dim = calc_conv_res_dim(tensor_size, kernel_size, paddings, strides);
-		auto result = Tensor(result_dim.x, result_dim.y, result_dim.z, false);
+		auto result = Tensor(result_dim, false);
 
 		for (std::size_t res_data_id = 0; res_data_id < result.size(); res_data_id++)
 		{
@@ -460,8 +464,8 @@ namespace DeepLearning
 		if (result_size_check != conv_res_grad_size)
 			throw std::exception("Inconsistent input data.");
 
-		auto kern_grad = Tensor(kernel_size.x, kernel_size.y, kernel_size.z, true);
-		auto in_grad = Tensor(_layer_dim, _row_dim, _col_dim, true);
+		auto kern_grad = Tensor(kernel_size, true);
+		auto in_grad = Tensor(tensor_size, true);
 
 		for (std::size_t res_data_id = 0; res_data_id < conv_res_grad.size(); res_data_id++)
 		{
@@ -492,7 +496,7 @@ namespace DeepLearning
 		if (result_size_check != conv_res_grad_size)
 			throw std::exception("Inconsistent input data.");
 
-		auto in_grad = Tensor(_layer_dim, _row_dim, _col_dim, true);
+		auto in_grad = Tensor(tensor_size, true);
 
 		for (std::size_t res_data_id = 0; res_data_id < pool_res_grad.size(); res_data_id++)
 		{
@@ -516,5 +520,13 @@ namespace DeepLearning
 		}
 
 		return in_grad;
+	}
+
+	void Tensor::msgpack_unpack(msgpack::object const& msgpack_o)
+	{
+		std::vector<Real> proxy;
+		msgpack::type::make_define_array(_layer_dim, _row_dim, _col_dim, proxy).msgpack_unpack(msgpack_o);
+		_data = reinterpret_cast<Real*>(std::malloc(size() * sizeof(Real)));
+		std::copy(proxy.begin(), proxy.end(), begin());
 	}
 }
