@@ -401,4 +401,20 @@ namespace DeepLearning
 	/// </summary>
 	Tensor operator *(const Real& scalar, const Tensor& tensor);
 
+	/// <summary>
+	/// Compound addition operator for a 4-dimensional tensor (i.e. vector of 3d tensosrs)
+	/// </summary>
+	/// <param name="op1">Operand to add to</param>
+	/// <param name="op2">Operand to be added to</param>
+	/// <returns>Reference to the modified operand</returns>
+	std::vector<Tensor>& operator +=(std::vector<Tensor>& op1, const std::vector<Tensor>& op2);
+
+	/// <summary>
+	/// Compound scalar multiplication operator for a 4-dimensional tensor (i.e. vector of 3d tensosrs)
+	/// </summary>
+	/// <param name="op1">Operand to add to</param>
+	/// <param name="scalar">Scalar to multiply by</param>
+	/// <returns>Reference to the modified operand</returns>
+	std::vector<Tensor>& operator *=(std::vector<Tensor>& op1, const Real& scalar);
+
 }

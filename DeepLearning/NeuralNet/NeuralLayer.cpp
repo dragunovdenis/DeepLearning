@@ -99,10 +99,10 @@ namespace DeepLearning
 		if (weights_increment.size() != 1)
 			throw std::exception("Invalid input");
 
-		_weights.add(weights_increment[0]);
-
 		if (reg_factor != Real(0))
-			_weights += _weights * reg_factor;
+			_weights.add_scaled(weights_increment[0], _weights, reg_factor);
+		else
+			_weights.add(weights_increment[0]);
 
 		_biases.add(std::get<1>(weights_and_biases_increment));
 	}

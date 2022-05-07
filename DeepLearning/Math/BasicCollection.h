@@ -34,6 +34,16 @@ namespace DeepLearning
 		void add(const BasicCollection& collection);
 
 		/// <summary>
+		/// Element-wise sum with another collection of the same size scaled by the given scalar
+		/// </summary>
+		void add_scaled(const BasicCollection& collection, const Real& scalar);
+
+		/// <summary>
+		/// Element-wise sum with another pair of collections, second one of which gets scaled by the given scalar
+		/// </summary>
+		void add_scaled(const BasicCollection& collection1, const BasicCollection& collection2, const Real& scalar);
+
+		/// <summary>
 		/// Element-wise difference with another collection of the same size
 		/// It is a responsibility of the caller to make sure that the collections are of the same size
 		/// </summary>

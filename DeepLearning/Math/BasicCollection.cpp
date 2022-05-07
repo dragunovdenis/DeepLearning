@@ -30,6 +30,33 @@ namespace DeepLearning
 		std::transform(begin(), end(), collection.begin(), begin(), [](const auto& x, const auto& y) { return x + y; });
 	}
 
+	void BasicCollection::add_scaled(const BasicCollection& collection, const Real& scalar)
+	{
+		if (size() != collection.size())
+			throw std::exception("Collections must be of the same size");
+
+		std::transform(begin(), end(), collection.begin(), begin(), [scalar](const auto& x, const auto& y) { return x + y * scalar; });
+	}
+
+	void BasicCollection::add_scaled(const BasicCollection& collection1, const BasicCollection& collection2, const Real& scalar)
+	{
+		if (size() != collection1.size() || size() != collection2.size())
+			throw std::exception("Collections must be of the same size");
+
+		auto begin_ptr1 = collection1.begin();
+		auto begin_ptr2 = collection2.begin();
+		auto begin_ptr = begin();
+		const auto end_ptr = end();
+
+		while (begin_ptr != end_ptr)
+		{
+			*begin_ptr += (*begin_ptr1) + (*begin_ptr2) * scalar;
+			begin_ptr++;
+			begin_ptr1++;
+			begin_ptr2++;
+		}
+	}
+
 	void BasicCollection::sub(const BasicCollection& collection)
 	{
 		if (size() != collection.size())

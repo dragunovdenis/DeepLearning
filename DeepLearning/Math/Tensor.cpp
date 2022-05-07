@@ -613,4 +613,23 @@ namespace DeepLearning
 
 		return RealMemHandle(_data + coords_to_data_id(layer_id, 0, 0), _row_dim * _col_dim);
 	}
+
+	std::vector<Tensor>& operator +=(std::vector<Tensor>& op1, const std::vector<Tensor>& op2)
+	{
+		if (op1.size() != op2.size())
+			throw std::exception("Operands have incompatible sizes");
+
+		for (auto item_id = 0ull; item_id < op1.size(); item_id++)
+			op1[item_id] += op2[item_id];
+
+		return op1;
+	}
+
+	std::vector<Tensor>& operator *=(std::vector<Tensor>& op1, const Real& scalar)
+	{
+		for (auto item_id = 0ull; item_id < op1.size(); item_id++)
+			op1[item_id] *= scalar;
+
+		return op1;
+	}
 }

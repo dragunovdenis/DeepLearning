@@ -504,5 +504,44 @@ namespace DeepLearningTest
 				}
 			}
 		}
+
+		TEST_METHOD(AddScaleBinaryTest)
+		{
+			//Arrange
+			const auto tensor_size = Index3d{ 10, 22, 33 };
+			auto tensor1 = TensorFactory(tensor_size);//filled with random numbers
+			const auto tensor2 = TensorFactory(tensor_size);//filled with random numbers
+			const auto scalar = Utils::get_random(-1, 1) + Real(2);
+			Assert::IsTrue(tensor1.max_abs() > 0 && tensor2.max_abs() > 0 && scalar > 0,
+				L"Tensors and scalar are supposed to be nonzero");
+
+			//Act
+			auto result1 = tensor1;
+			result1.add_scaled(tensor2, scalar);
+			auto result2 = tensor1 + tensor2 * scalar;
+
+			//Assert
+			Assert::IsTrue(result1 == result2, L"Results are supposed to be the same");
+		}
+
+		TEST_METHOD(AddScaleTernaryTest)
+		{
+			//Arrange
+			const auto tensor_size = Index3d{ 10, 22, 33 };
+			auto tensor1 = TensorFactory(tensor_size);//filled with random numbers
+			const auto tensor2 = TensorFactory(tensor_size);//filled with random numbers
+			const auto tensor3 = TensorFactory(tensor_size);//filled with random numbers
+			const auto scalar = Utils::get_random(-1, 1) + Real(2);
+			Assert::IsTrue(tensor1.max_abs() > 0 && tensor2.max_abs() > 0 && tensor3.max_abs() > 0 && scalar > 0,
+				L"Tensors and scalar are supposed to be nonzero");
+
+			//Act
+			auto result1 = tensor1;
+			result1.add_scaled(tensor2, tensor3, scalar);
+			auto result2 = tensor1 + tensor2 + tensor3 * scalar;
+
+			//Assert
+			Assert::IsTrue((result1 - result2).max_abs() < 10 * std::numeric_limits<Real>::epsilon(), L"Results are supposed to be the same");
+		}
 	};
 }

@@ -30,11 +30,7 @@ namespace DeepLearning
 
 	void CummulativeGradient::Add(const std::vector<Tensor>& weight_grad, const Tensor& bias_grad)
 	{
-		if (_sum_grad_weights.size() != weight_grad.size())
-			throw std::exception("Invalid input");
-
-		for (auto item_id = 0ull; item_id < _sum_grad_weights.size(); item_id++)
-			_sum_grad_weights[item_id] += weight_grad[item_id];
+		_sum_grad_weights += weight_grad;
 
 		_sum_grad_biases += bias_grad;
 		_accumulated_items_count++;
@@ -48,8 +44,7 @@ namespace DeepLearning
 		const auto factor = scale_factor / _accumulated_items_count;
 		auto average_grad_weights = _sum_grad_weights;
 
-		for (auto item_id = 0ull; item_id < _sum_grad_weights.size(); item_id++)
-			average_grad_weights[item_id] *= factor;
+		average_grad_weights *= factor;
 
 		return std::make_tuple(average_grad_weights, _sum_grad_biases * factor);
 	}
