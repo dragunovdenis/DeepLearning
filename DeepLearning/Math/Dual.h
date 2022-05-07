@@ -194,8 +194,8 @@ namespace DeepLearning
 		/// </summary>
 		friend dual<R, Dim> sin(dual<R, Dim> arg)
 		{
-			arg.scale_dual_part(cos(arg.x));
-			arg.x = sin(arg.x);
+			arg.scale_dual_part(std::cos(arg.x));
+			arg.x = std::sin(arg.x);
 
 			return arg;
 		}
@@ -205,8 +205,8 @@ namespace DeepLearning
 		/// </summary>
 		friend dual<R, Dim> cos(dual<R, Dim> arg)
 		{
-			arg.scale_dual_part(-sin(arg.x));
-			arg.x = cos(arg.x);
+			arg.scale_dual_part(-std::sin(arg.x));
+			arg.x = std::cos(arg.x);
 
 			return arg;
 		}
@@ -217,7 +217,7 @@ namespace DeepLearning
 		friend dual<R, Dim> log(dual<R, Dim> arg)
 		{
 			arg.scale_dual_part(R(1)/(arg.x));
-			arg.x = log(arg.x);
+			arg.x = std::log(arg.x);
 
 			return arg;
 		}
@@ -227,7 +227,7 @@ namespace DeepLearning
 		/// </summary>
 		friend dual<R, Dim> exp(dual<R, Dim> arg)
 		{
-			arg.x = exp(arg.x);
+			arg.x = std::exp(arg.x);
 			arg.scale_dual_part(arg.x);
 
 			return arg;
@@ -238,8 +238,8 @@ namespace DeepLearning
 		/// </summary>
 		friend dual<R, Dim> sinh(dual<R, Dim> arg)
 		{
-			arg.scale_dual_part(cosh(arg.x));
-			arg.x = sinh(arg.x);
+			arg.scale_dual_part(std::cosh(arg.x));
+			arg.x = std::sinh(arg.x);
 
 			return arg;
 		}
@@ -249,8 +249,8 @@ namespace DeepLearning
 		/// </summary>
 		friend dual<R, Dim> cosh(dual<R, Dim> arg)
 		{
-			arg.scale_dual_part(sinh(arg.x));
-			arg.x = cosh(arg.x);
+			arg.scale_dual_part(std::sinh(arg.x));
+			arg.x = std::cosh(arg.x);
 
 			return arg;
 		}
@@ -260,9 +260,9 @@ namespace DeepLearning
 		/// </summary>
 		friend dual<R, Dim> tanh(dual<R, Dim> arg)
 		{
-			const auto temp = R(1) / cosh(arg.x);
+			const auto temp = R(1) / std::cosh(arg.x);
 			arg.scale_dual_part(temp * temp);
-			arg.x = tanh(arg.x);
+			arg.x = std::tanh(arg.x);
 
 			return arg;
 		}
@@ -272,7 +272,7 @@ namespace DeepLearning
 		/// </summary>
 		friend dual<R, Dim> sqrt(dual<R, Dim> arg)
 		{
-			arg.x = sqrt(arg.x);
+			arg.x = std::sqrt(arg.x);
 			arg.scale_dual_part(R(1) / (R(2) * arg.x));
 
 			return arg;

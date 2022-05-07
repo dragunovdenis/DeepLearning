@@ -115,6 +115,14 @@ namespace DeepLearningTest
 			return Tensor(layer_dim, row_dim, col_dim, -1, 1);
 		}
 
+		/// <summary>
+		/// Returns random instances of Tensor class of given dimensions
+		/// </summary>
+		static Tensor TensorFactory(const Index3d& size)
+		{
+			return TensorFactory(size.x, size.y, size.z);
+		}
+
 		TEST_METHOD(TensorPackingTest)
 		{
 			StandardTestUtils::PackingTest<Tensor>([]() { return TensorFactory(); });
@@ -157,11 +165,11 @@ namespace DeepLearningTest
 		{
 			//arrange
 			const auto tensor_size = Index3d{ 10, 22, 33 };
-			const auto tensor = TensorFactory(tensor_size.x, tensor_size.y, tensor_size.z);//filled with random numbers
+			const auto tensor = TensorFactory(tensor_size);//filled with random numbers
 			Assert::IsTrue(tensor.max_abs() > 0, L"Tensor is expected to be nonzero");
 
 			const auto kernel_size = Index3d{ 3, 5, 7 };
-			const auto kernel = TensorFactory(kernel_size.x, kernel_size.y, kernel_size.z);//filled with random numbers
+			const auto kernel = TensorFactory(kernel_size);//filled with random numbers
 			Assert::IsTrue(kernel.max_abs() > 0, L"Kernel is expected to be nonzero");
 
 			//Act
@@ -204,7 +212,7 @@ namespace DeepLearningTest
 		{
 			//Arrange
 			const auto tensor_size = Index3d{ 10, 22, 33 };
-			const auto tensor = TensorFactory(tensor_size.x, tensor_size.y, tensor_size.z);//filled with random numbers
+			const auto tensor = TensorFactory(tensor_size);//filled with random numbers
 			Assert::IsTrue(tensor.max_abs() > 0, L"Tensor is expected to be nonzero");
 
 			const auto padding = Index3d{ 2, 3, 5 };
@@ -219,7 +227,7 @@ namespace DeepLearningTest
 
 
 			const auto kernel_size = Index3d{ 3, 5, 7 };
-			const auto kernel = TensorFactory(kernel_size.x, kernel_size.y, kernel_size.z);//filled with random numbers
+			const auto kernel = TensorFactory(kernel_size);//filled with random numbers
 			Assert::IsTrue(kernel.max_abs() > 0, L"Kernel is expected to be nonzero");
 
 			//Act
@@ -234,13 +242,13 @@ namespace DeepLearningTest
 		{
 			//Arrange
 			const auto tensor_size = Index3d{ 10, 22, 33 };
-			const auto tensor = TensorFactory(tensor_size.x, tensor_size.y, tensor_size.z);//filled with random numbers
+			const auto tensor = TensorFactory(tensor_size);//filled with random numbers
 			Assert::IsTrue(tensor.max_abs() > 0, L"Tensor is expected to be nonzero");
 
 			const auto stride = Index3d{ 2, 3, 5 };
 
 			const auto kernel_size = Index3d{ 3, 5, 7 };
-			const auto kernel = TensorFactory(kernel_size.x, kernel_size.y, kernel_size.z);//filled with random numbers
+			const auto kernel = TensorFactory(kernel_size);//filled with random numbers
 			Assert::IsTrue(kernel.max_abs() > 0, L"Kernel is expected to be nonzero");
 
 			//Act
@@ -268,18 +276,18 @@ namespace DeepLearningTest
 		{
 			//Arrange
 			const auto tensor_size = Index3d{ 10, 22, 33 };
-			const auto tensor = TensorFactory(tensor_size.x, tensor_size.y, tensor_size.z);//filled with random numbers
+			const auto tensor = TensorFactory(tensor_size);//filled with random numbers
 			Assert::IsTrue(tensor.max_abs() > 0, L"Tensor is expected to be nonzero");
 
 			const auto kernel_size = Index3d{ 3, 5, 7 };
-			const auto kernel = TensorFactory(kernel_size.x, kernel_size.y, kernel_size.z);//filled with random numbers
+			const auto kernel = TensorFactory(kernel_size);//filled with random numbers
 			Assert::IsTrue(kernel.max_abs() > 0, L"Kernel is expected to be nonzero");
 
 			const auto strides = Index3d{ 2, 1, 5 };
 			const auto paddings = Index3d{ 0, 3, 4 };
 			const auto conv_res = tensor.convolve(kernel, paddings, strides);
 			const auto res_size = conv_res.size_3d();
-			const auto reference = Tensor(res_size.x, res_size.y, res_size.z, true); //zero reference
+			const auto reference = Tensor(res_size, true); //zero reference
 
 			const auto cost_func = CostFunction(CostFunctionId::SQUARED_ERROR);
 
@@ -322,18 +330,18 @@ namespace DeepLearningTest
 		{
 			//Arrange
 			const auto tensor_size = Index3d{ 10, 11, 9 };
-			const auto tensor = TensorFactory(tensor_size.x, tensor_size.y, tensor_size.z);//filled with random numbers
+			const auto tensor = TensorFactory(tensor_size);//filled with random numbers
 			Assert::IsTrue(tensor.max_abs() > 0, L"Tensor is expected to be nonzero");
 
 			const auto kernel_size = Index3d{ 3, 5, 7 };
-			const auto kernel = TensorFactory(kernel_size.x, kernel_size.y, kernel_size.z);//filled with random numbers
+			const auto kernel = TensorFactory(kernel_size);//filled with random numbers
 			Assert::IsTrue(kernel.max_abs() > 0, L"Kernel is expected to be nonzero");
 
 			const auto strides = Index3d{ 2, 1, 5 };
 			const auto paddings = Index3d{ 0, 3, 4 };
 			const auto conv_res = tensor.convolve(kernel, paddings, strides);
 			const auto res_size = conv_res.size_3d();
-			const auto reference = Tensor(res_size.x, res_size.y, res_size.z, true); //zero reference
+			const auto reference = Tensor(res_size, true); //zero reference
 
 			const auto cost_func = CostFunction(CostFunctionId::SQUARED_ERROR);
 
@@ -376,11 +384,11 @@ namespace DeepLearningTest
 		{
 			//Arrange
 			const auto tensor_size = Index3d{ 10, 11, 9 };
-			const auto tensor = TensorFactory(tensor_size.x, tensor_size.y, tensor_size.z);//filled with random numbers
+			const auto tensor = TensorFactory(tensor_size);//filled with random numbers
 			Assert::IsTrue(tensor.max_abs() > 0, L"Tensor is expected to be nonzero");
 
 			const auto kernel_size = Index3d{ 3, 5, 7 };
-			const auto kernel = TensorFactory(kernel_size.x, kernel_size.y, kernel_size.z);//filled with random numbers
+			const auto kernel = TensorFactory(kernel_size);//filled with random numbers
 			Assert::IsTrue(kernel.max_abs() > 0, L"Kernel is expected to be nonzero");
 
 			const auto strides = Index3d{ 2, 1, 5 };
@@ -400,18 +408,18 @@ namespace DeepLearningTest
 		{
 			//Arrange
 			const auto tensor_size = Index3d{ 10, 11, 9 };
-			const auto tensor = TensorFactory(tensor_size.x, tensor_size.y, tensor_size.z);//filled with random numbers
+			const auto tensor = TensorFactory(tensor_size);//filled with random numbers
 			Assert::IsTrue(tensor.max_abs() > 0, L"Tensor is expected to be nonzero");
 
 			const auto kernel_size = Index3d{ 3, 5, 7 };
-			const auto kernel = TensorFactory(kernel_size.x, kernel_size.y, kernel_size.z);//filled with random numbers
+			const auto kernel = TensorFactory(kernel_size);//filled with random numbers
 			Assert::IsTrue(kernel.max_abs() > 0, L"Kernel is expected to be nonzero");
 
 			const auto strides = Index3d{ 2, 1, 5 };
 			const auto paddings = Index3d{ 0, 3, 4 };
 			const auto conv_res = tensor.convolve(kernel, paddings, strides);
 			const auto res_size = conv_res.size_3d();
-			const auto reference = Tensor(res_size.x, res_size.y, res_size.z, true); //zero reference
+			const auto reference = Tensor(res_size, true); //zero reference
 
 			const auto cost_func = CostFunction(CostFunctionId::SQUARED_ERROR);
 			const auto [cost, cost_grad] = cost_func.func_and_deriv(conv_res, reference);
@@ -436,9 +444,9 @@ namespace DeepLearningTest
 
 			const auto max_item_value = Utils::get_random(10, 100);
 
-			auto pool_input_grad_ref = Tensor(tensor_size.x, tensor_size.y, tensor_size.z, true /*assign zeros*/);
+			auto pool_input_grad_ref = Tensor(tensor_size, true /*assign zeros*/);
 			pool_input_grad_ref(max_item_id.x, max_item_id.y, max_item_id.z) = Real(1);
-			const auto tensor = TensorFactory(tensor_size.x, tensor_size.y, tensor_size.z) + pool_input_grad_ref * max_item_value;
+			const auto tensor = TensorFactory(tensor_size) + pool_input_grad_ref * max_item_value;
 			Assert::IsTrue(tensor.max_abs() > 0, L"Tensor is expected to be nonzero");
 			const auto strides = Index3d{ 1, 1, 1 };
 			const auto paddings = Index3d{ 0, 0, 0 };
@@ -459,6 +467,42 @@ namespace DeepLearningTest
 			Assert::IsTrue(pool_input_grad.size_3d() == tensor_size, L"Unexpected size of the pool input gradient");
 			Assert::IsTrue(pool_result(0, 0, 0) == tensor(max_item_id.x, max_item_id.y, max_item_id.z), L"Unexpected result of the max-pool operation");
 			Assert::IsTrue(pool_input_grad_ref == pool_input_grad, L"Unexpected value of the pool input gradient");
+		}
+
+		TEST_METHOD(LayerHandleTest)
+		{
+			//Arrange
+			const auto tensor_size = Index3d{ 10, 22, 33 };
+			auto tensor = TensorFactory(tensor_size);//filled with random numbers
+			const auto const_tensor = tensor;
+			const auto expected_layer_size = tensor.row_dim() * tensor.col_dim();
+			Assert::IsTrue(tensor.max_abs() > 0, L"Tensor is expected to be nonzero");
+
+			//Act + Assert
+			for (auto layer_id = 0ull; layer_id < tensor.layer_dim(); layer_id++)
+			{
+				const auto const_layer_handle = tensor.get_layer_handle(layer_id);
+				auto layer_handle = tensor.get_layer_handle(layer_id);
+				auto layer_handle_const = const_tensor.get_layer_handle(layer_id);
+
+				Assert::IsTrue(layer_handle.size() == layer_handle_const.size() &&
+					layer_handle.size() == expected_layer_size, L"Unexpected size of the layer handles");
+
+				for (auto in_layer_id = 0ull; in_layer_id < layer_handle.size(); in_layer_id++)
+				{
+					const auto global_id = layer_id * expected_layer_size + in_layer_id;
+					const auto expected_value = layer_handle[in_layer_id];
+					Assert::IsTrue(const_layer_handle[in_layer_id] == expected_value &&
+						layer_handle_const[in_layer_id] == expected_value &&
+						const_tensor[global_id] == expected_value,
+						L"The handles are expected to point to the memory with the same data");
+
+					//Modify data and check that the corresponding element was modified in the original tensor
+					const auto random_value = Utils::get_random(-1, 1);
+					layer_handle[in_layer_id] = random_value;
+					Assert::IsTrue(tensor[global_id] == random_value, L"Handle does not point to the memory of the original tensor");
+				}
+			}
 		}
 	};
 }

@@ -20,6 +20,7 @@
 #include <msgpack.hpp>
 #include "BasicCollection.h"
 #include "LinAlg3d.h"
+#include "../Memory/MemHandle.h"
 
 namespace DeepLearning
 {
@@ -246,6 +247,34 @@ namespace DeepLearning
 		Index3d size_3d() const;
 
 		/// <summary>
+		/// Changes size of the tensor without modifying of the underlying data container
+		/// </summary>
+		/// <param name="new_shape">New sizes of the tensor. Must be consistent with the
+		/// length of the underlying data container, otherwise exception will be thrown</param>
+		Tensor& reshape(const Index3d& new_shape);
+
+		/// <summary>
+		/// Returns total size of convolution result
+		/// </summary>
+		/// <param name="tensor_size">Size of the tensor the convolution is to be applied to</param>
+		/// <param name="kernel_size">Size of the convolution kernel</param>
+		/// <param name="paddings">Sizes of zero paddings of the tensor</param>
+		/// <param name="strides">Sizes of strides to be used</param>
+		static inline Index3d calc_conv_res_size(const Index3d& tensor_size, const Index3d& kernel_size, const Index3d& paddings, const Index3d& strides);
+
+		/// <summary>
+		/// Convolution with another tensor
+		/// </summary>
+		/// <param name="result_handle">Handle of the memory allocated by the caller to store the result of the convolution.
+		/// It is supposed that the size of the handle is equal to the product of sizes in three dimensions returned by method `calc_conv_res_size()`.
+		/// Otherwise an exception will be thrown.</param>
+		/// <param name="kernel">Convolution kernel</param>
+		/// <param name="paddings">Paddings in 3-dimensional index space</param>
+		/// <param name="strides">Strides in 3-dimensional index space</param>
+		/// <returns>Size of the convolution result. To be used to interpret the memory pointed by the handle parameter.</returns>
+		Index3d convolve(RealMemHandle result_handle, const Tensor& kernel, const Index3d& paddings, const Index3d& strides) const;
+
+		/// <summary>
 		/// Convolution with another tensor
 		/// </summary>
 		/// <param name="kernel">Convolution kernel</param>
@@ -269,6 +298,20 @@ namespace DeepLearning
 			const Index3d& strides) const;
 
 		/// <summary>
+		/// Computes gradient of some scalar function F (depending on the result of some convolution)
+		/// with respect to the convolution kernel K: dF/dK
+		/// and to the input tensor of the convolution I : dF/dI
+		/// </summary>
+		/// <param name="conv_res_grad">Handle of the memory containing gradient of the function F
+		/// with respect to the result of the convolution R: dF/dR. </param>
+		/// <param name="kernel">The convolution kernel</param>
+		/// <param name="paddings">Paddings used for computing the convolution</param>
+		/// <param name="strides">Strides used for computing the convolution</param>
+		/// <returns>Tuple of tensors dF/dK, dF/dI in the exact same order </returns>
+		std::tuple<Tensor, Tensor> convolution_gradient(const RealMemHandleConst& conv_res_grad, const Tensor& kernel, const Index3d& paddings,
+			const Index3d& strides) const;
+
+		/// <summary>
 		/// More general implementation of the convolution operation, that can perform pooling operations
 		/// </summary>
 		/// <param name="pool_operator">Instance of the pool operator to be applied (generalization of the convolution kernel)</param>
@@ -276,6 +319,20 @@ namespace DeepLearning
 		/// <param name="paddings">Zero paddings (will be applied to the base tensor)</param>
 		/// <param name="strides">Strides defining movement of the "window"</param>
 		Tensor pool(const PoolOperator& pool_operator, const Index3d& paddings = Index3d{ 0, 0, 0 },
+			const Index3d& strides = Index3d{ 1, 1, 1 }) const;
+
+		/// <summary>
+		/// More general implementation of the convolution operation, that can perform pooling operations
+		/// </summary>
+		/// <param name="result_handle">Handle of the memory allocated by the caller to store the result of the convolution.
+		/// It is supposed that the size of the handle is equal to the product of sizes in three dimensions returned by method `calc_conv_res_size()`.
+		/// Otherwise an exception will be thrown.</param>
+		/// <param name="pool_operator">Instance of the pool operator to be applied (generalization of the convolution kernel)</param>
+		/// <param name="kernel_size">Size of the "window" for the pooling agent operate</param>
+		/// <param name="paddings">Zero paddings (will be applied to the base tensor)</param>
+		/// <param name="strides">Strides defining movement of the "window"</param>
+		/// <returns>Size of the convolution result. To be used to interpret the memory pointed by the handle parameter.</returns>
+		Index3d pool(RealMemHandle result_handle, const PoolOperator& pool_operator, const Index3d& paddings = Index3d{ 0, 0, 0 },
 			const Index3d& strides = Index3d{ 1, 1, 1 }) const;
 
 		/// <summary>
@@ -288,6 +345,40 @@ namespace DeepLearning
 		/// <param name="strides">Strides defining movement of the "window"</param>
 		Tensor pool_input_gradient(const Tensor& pool_res_grad, const PoolOperator& pool_operator, const Index3d& paddings,
 			const Index3d& strides) const;
+
+		/// <summary>
+		/// Returns gradient of some function F (depending on the pooling result) with respect to the pooling input tensor I: dF/dI
+		/// </summary>
+		/// <param name="pool_operator">Instance of the pool operator to be applied (generalization of the convolution kernel)</param>
+		/// <param name="pool_res_grad">Handle of the memory containing gradient of the function F with respect to the result of the pooling operation R: dF/dR</param>
+		/// <param name="kernel_size">Size of the "window" for the pooling agent operate</param>
+		/// <param name="paddings">Zero paddings (will be applied to the base tensor)</param>
+		/// <param name="strides">Strides defining movement of the "window"</param>
+		Tensor pool_input_gradient(const RealMemHandleConst& pool_res_grad, const PoolOperator& pool_operator, const Index3d& paddings,
+			const Index3d& strides) const;
+
+
+		/// <summary>
+		/// Returns read-only memory handle to the data array of the tensor
+		/// </summary>
+		RealMemHandleConst get_handle() const;
+
+		/// <summary>
+		/// Returns memory handle to the data array of the tensor
+		/// </summary>
+		RealMemHandle get_handle();
+
+		/// <summary>
+		/// Returns read-only memory handle to the layer with given index
+		/// </summary>
+		/// <param name="layer_id">Index of a layer</param>
+		RealMemHandleConst get_layer_handle(const std::size_t& layer_id) const;
+
+		/// <summary>
+		/// Returns memory handle to the layer with given index
+		/// </summary>
+		/// <param name="layer_id">Index of a layer</param>
+		RealMemHandle get_layer_handle(const std::size_t& layer_id);
 	};
 
 	/// <summary>

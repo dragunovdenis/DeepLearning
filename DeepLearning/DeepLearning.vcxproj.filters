@@ -37,6 +37,12 @@
     <Filter Include="Source Files\ImageProcessing">
       <UniqueIdentifier>{833359fd-5396-48ee-b232-036b889f80c8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Memory">
+      <UniqueIdentifier>{438c62a4-247d-4a78-8f71-f994c6ab9c64}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Memory">
+      <UniqueIdentifier>{03a08d14-5ada-4c4d-b1d4-2551930563f3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="defs.h">
@@ -110,6 +116,9 @@
     </ClInclude>
     <ClInclude Include="NeuralNet\LayerHandle.h">
       <Filter>Header Files\NeuralNet</Filter>
+    </ClInclude>
+    <ClInclude Include="Memory\MemHandle.h">
+      <Filter>Header Files\Memory</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

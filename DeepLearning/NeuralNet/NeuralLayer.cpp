@@ -88,7 +88,7 @@ namespace DeepLearning
 		auto weights_grad = vector_col_times_vector_row(biases_ghrad, aux_learning_data.Input);
 
 		return std::make_tuple<Tensor, NeuralLayer::LayerGradient>(
-			evaluate_input_gradient ? biases_ghrad * _weights : Tensor(0, 0, 0),
+			evaluate_input_gradient ? Tensor(biases_ghrad * _weights).reshape(aux_learning_data.Input.size_3d()) : Tensor(0, 0, 0),
 			{ biases_ghrad, {std::move(weights_grad)} });
 	}
 

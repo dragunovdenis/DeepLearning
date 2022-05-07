@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include <cstddef>
 //Some general definitions
 
 namespace DeepLearning

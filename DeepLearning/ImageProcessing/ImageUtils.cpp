@@ -27,9 +27,9 @@ namespace DeepLearning::ImageUtils
 	/// dimensions of the image the method returns the given "default pixel" value
 	/// </summary>
 	template <class Image>
-	Image::pixel_t access_pixel_safely(const Image& image,
+	typename Image::pixel_t access_pixel_safely(const Image& image,
 		const long long& row_id, const long long& col_id,
-		const typename Image::pixel_t& default_pixel = Image::pixel_t(0))
+		const typename Image::pixel_t& default_pixel = typename Image::pixel_t(0))
 	{
 		if (row_id < 0 || static_cast<long long>(image.height()) <= row_id ||
 			col_id < 0 || static_cast<long long>(image.width()) <= col_id)
@@ -59,7 +59,7 @@ namespace DeepLearning::ImageUtils
 				const auto col_id_base = static_cast<long long>(std::floor(tl_pt_transformed.x));
 				const auto row_id_base = static_cast<long long>(std::floor(tl_pt_transformed.y));
 
-				result(row_id, col_id) = static_cast<Image::pixel_t>(access_pixel_safely(image, row_id_base, col_id_base) *
+				result(row_id, col_id) = static_cast<typename Image::pixel_t>(access_pixel_safely(image, row_id_base, col_id_base) *
 					(col_id_base + 1 - tl_pt_transformed.x) * (row_id_base + 1 - tl_pt_transformed.y) +
 					access_pixel_safely(image, row_id_base + 1, col_id_base) *
 					(col_id_base + 1 - tl_pt_transformed.x) * (tl_pt_transformed.y - row_id_base) +

@@ -22,6 +22,7 @@
 #include <ios>
 #include "defs.h"
 #include <cmath>
+#include <sstream>
 
 namespace DeepLearning::Utils
 {
