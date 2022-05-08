@@ -39,6 +39,10 @@ namespace DeepLearning
 		: Tensor(size.x, size.y, size.z, assign_zero)
 	{}
 
+	Tensor::Tensor(const Index3d& size, const Real range_begin, const Real range_end)
+		: Tensor(size.x, size.y, size.z, range_begin, range_end)
+	{}
+
 	Tensor::Tensor(const Tensor& tensor)
 		: Tensor(tensor._layer_dim, tensor._row_dim, tensor._col_dim, false)
 	{
@@ -353,14 +357,14 @@ namespace DeepLearning
 	long long calc_out_size_for_convolution(const std::size_t in_size, const std::size_t kernel_size,
 		const long long padding, const long long stride)
 	{
-		const auto temp = static_cast<long long>(in_size) + 2 * padding - static_cast<long long>(kernel_size) + 1ll;
+		const auto temp = static_cast<long long>(in_size) + 2 * padding - static_cast<long long>(kernel_size);
 		if (temp < 0)
 			return 0;
 
-		return  temp / stride;
+		return  temp / stride + 1ull;
 	}
 
-	inline Index3d Tensor::calc_conv_res_size(const Index3d& tensor_size, const Index3d& kernel_size, const Index3d& paddings, const Index3d& strides)
+	Index3d Tensor::calc_conv_res_size(const Index3d& tensor_size, const Index3d& kernel_size, const Index3d& paddings, const Index3d& strides)
 	{
 		return { calc_out_size_for_convolution(tensor_size.x, kernel_size.x, paddings.x, strides.x),
 				 calc_out_size_for_convolution(tensor_size.y, kernel_size.y, paddings.y, strides.y),

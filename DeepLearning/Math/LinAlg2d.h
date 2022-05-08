@@ -156,6 +156,21 @@ namespace DeepLearning
 		{
 			return *this / norm();
 		}
+
+		/// <summary>
+		/// Default constructor
+		/// </summary>
+		Vector2d() {}
+
+		/// <summary>
+		/// Constructor by 2 coordinates
+		/// </summary>
+		Vector2d(const R& x_, const R& y_) :x(x_), y(y_) {}
+
+		/// <summary>
+		/// Constructors a vector with all the coordinates equal to the given value `w`
+		/// </summary>
+		Vector2d(const R& w) : x(w), y(w) {}
 	};
 
 	/// <summary>
@@ -586,4 +601,6 @@ namespace DeepLearning
 		auto result = matr1;
 		return result *= matr2;
 	}
+
+	using Index2d = Vector2d<long long>;
 }

@@ -84,12 +84,12 @@ namespace DeepLearning
 		if (deltas.size_3d() != Index3d{ 1, 1, static_cast<long long>(_biases.dim()) })
 			throw std::exception("Invalid input");
 
-		const auto biases_ghrad = deltas.hadamard_prod(aux_learning_data.Derivatives);
-		auto weights_grad = vector_col_times_vector_row(biases_ghrad, aux_learning_data.Input);
+		const auto biases_grad = deltas.hadamard_prod(aux_learning_data.Derivatives);
+		auto weights_grad = vector_col_times_vector_row(biases_grad, aux_learning_data.Input);
 
 		return std::make_tuple<Tensor, NeuralLayer::LayerGradient>(
-			evaluate_input_gradient ? Tensor(biases_ghrad * _weights).reshape(aux_learning_data.Input.size_3d()) : Tensor(0, 0, 0),
-			{ biases_ghrad, {std::move(weights_grad)} });
+			evaluate_input_gradient ? Tensor(biases_grad * _weights).reshape(aux_learning_data.Input.size_3d()) : Tensor(0, 0, 0),
+			{ biases_grad, {std::move(weights_grad)} });
 	}
 
 	void NeuralLayer::update(const std::tuple<std::vector<Tensor>, Tensor>& weights_and_biases_increment, const Real& reg_factor)

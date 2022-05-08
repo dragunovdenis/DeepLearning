@@ -126,6 +126,21 @@ namespace DeepLearning
 		{
 			return { x * vec.x, y * vec.y, z * vec.z };
 		}
+
+		/// <summary>
+		/// Default constructor
+		/// </summary>
+		Vector3d() {}
+
+		/// <summary>
+		/// Constructor by 3 coordinates
+		/// </summary>
+		Vector3d(const T& x_, const T& y_, const T& z_):x(x_), y(y_), z(z_) {}
+
+		/// <summary>
+		/// Constructors a vector with all the coordinates equal to the given value `w`
+		/// </summary>
+		Vector3d(const T& w): x(w), y(w), z(w){}
 	};
 
 	/// <summary>

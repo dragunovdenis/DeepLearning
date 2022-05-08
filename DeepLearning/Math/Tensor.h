@@ -147,6 +147,12 @@ namespace DeepLearning
 			const std::size_t col_dim, const Real range_begin, const Real range_end);
 
 		/// <summary>
+		/// Constructs dense tensor of the given dimension filled with
+		/// uniformly distributed pseudo-random values from the given range
+		/// </summary>
+		Tensor(const Index3d& size, const Real range_begin, const Real range_end);
+
+		/// <summary>
 		/// Assignment operator
 		/// </summary>
 		Tensor& operator =(const Tensor& tensor);
@@ -260,7 +266,7 @@ namespace DeepLearning
 		/// <param name="kernel_size">Size of the convolution kernel</param>
 		/// <param name="paddings">Sizes of zero paddings of the tensor</param>
 		/// <param name="strides">Sizes of strides to be used</param>
-		static inline Index3d calc_conv_res_size(const Index3d& tensor_size, const Index3d& kernel_size, const Index3d& paddings, const Index3d& strides);
+		static Index3d calc_conv_res_size(const Index3d& tensor_size, const Index3d& kernel_size, const Index3d& paddings, const Index3d& strides);
 
 		/// <summary>
 		/// Convolution with another tensor

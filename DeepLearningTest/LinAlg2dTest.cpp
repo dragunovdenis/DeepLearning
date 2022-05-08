@@ -39,7 +39,7 @@ namespace DeepLearningTest
 			const auto mean = std::accumulate(set.begin(), set.end(), Real(0.0)) / set.size();
 			double stdev = std::sqrt(std::inner_product(set.begin(), set.end(), set.begin(), Real(0.0)) / set.size() - mean * mean);
 
-			return std::make_tuple(mean, stdev);
+			return std::make_tuple(mean, Real(stdev));
 		}
 
 		/// <summary>
@@ -583,7 +583,7 @@ namespace DeepLearningTest
 		TEST_METHOD(RotationMatrixTest)
 		{
 			//Arrange
-			const auto angle = Utils::get_random(0, 2*std::numbers::pi);
+			const auto angle = Utils::get_random(0, Real(2*std::numbers::pi));
 			const auto vector = Vector2d<Real>::random();
 
 			//Act
@@ -599,7 +599,7 @@ namespace DeepLearningTest
 			const auto angle_diff = std::abs(actual_rotation_angle - angle);
 			Logger::WriteMessage((std::string("Angle difference = ") + Utils::to_string(angle_diff) + "\n").c_str());
 			Assert::IsTrue(angle_diff < 10 * std::numeric_limits<Real>::epsilon() ||
-				std::abs(angle_diff - 2 * std::numbers::pi) < 10 * std::numeric_limits<Real>::epsilon(),
+				std::abs(angle_diff - Real(2 * std::numbers::pi)) < 10 * std::numeric_limits<Real>::epsilon(),
 				L"Unexpected actual rotation angle");
 			Assert::IsTrue(std::abs(vector.norm() - vector_rotated.norm()) < 10 * std::numeric_limits<Real>::epsilon(),
 				L"distance to the rotation center should not change");
@@ -644,7 +644,7 @@ namespace DeepLearningTest
 			//Arrange
 			const auto vector = Vector2d<Real>::random();
 			const auto center = Vector2d<Real>::random() + Vector2d<Real>{ 3.0, 3.0 };
-			const auto angle = Utils::get_random(0, std::numbers::pi);
+			const auto angle = Utils::get_random(0, Real(std::numbers::pi));
 			const auto rotation = MatrixAffine2d<Real>::rotation(angle, center);
 
 			//Act

@@ -137,7 +137,7 @@ namespace DeepLearningTest
 			RunOneVariableDifferentiationTest(
 				[](const auto& x) {
 					return sinh(x * x + 2*x + 1) + cosh(-x*x) + tanh(1 + x) + 2;
-				}, arg, Real(4e-8));
+				}, arg, Real(4.1e-8));
 		}
 
 		TEST_METHOD(TwoVarGeneralFunctionsTest)

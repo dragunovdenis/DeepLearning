@@ -117,6 +117,9 @@
     <ClInclude Include="NeuralNet\LayerHandle.h">
       <Filter>Header Files\NeuralNet</Filter>
     </ClInclude>
+    <ClInclude Include="NeuralNet\CLayer.h">
+      <Filter>Header Files\NeuralNet</Filter>
+    </ClInclude>
     <ClInclude Include="Memory\MemHandle.h">
       <Filter>Header Files\Memory</Filter>
     </ClInclude>
@@ -177,6 +180,9 @@
       <Filter>Header Files\NeuralNet</Filter>
     </ClCompile>
     <ClCompile Include="NeuralNet\LayerHandle.cpp">
+      <Filter>Source Files\NeuralNet</Filter>
+    </ClCompile>
+    <ClCompile Include="NeuralNet\CLayer.cpp">
       <Filter>Source Files\NeuralNet</Filter>
     </ClCompile>
   </ItemGroup>

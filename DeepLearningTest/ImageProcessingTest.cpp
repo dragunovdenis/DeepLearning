@@ -57,8 +57,8 @@ namespace DeepLearningTest
 				0, image.height(), 0, image.width());
 
 			//Rotation around center of the image
-			const auto transformation = MatrixAffine2d<Real>::rotation(std::numbers::pi/2,
-				Vector2d<Real>{image_width * 0.5, image_height * 0.5});
+			const auto transformation = MatrixAffine2d<Real>::rotation(Real(std::numbers::pi/2),
+				Vector2d<Real>{image_width * Real(0.5), image_height * Real(0.5)});
 
 			//Act
 			const auto image_transformed = ImageUtils::transform(image, transformation);
