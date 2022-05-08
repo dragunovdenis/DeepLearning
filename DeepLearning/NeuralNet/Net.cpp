@@ -49,7 +49,7 @@ namespace DeepLearning
 
 			std::normal_distribution<Real> dist{ 0, Real(1) / Real(std::sqrt(in_dim)) };
 
-			_layers.push_back(LayerHandle::make(LayerTypeId::FULL, Matrix(out_dim, in_dim, [&]() {return dist(gen); }),
+			_layers.push_back(LayerHandle::make<NeuralLayer>(Matrix(out_dim, in_dim, [&]() {return dist(gen); }),
 				Vector(out_dim, Real(-1), Real(1)), af_ids_local[id - 1]));
 		}
 	}

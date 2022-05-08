@@ -185,6 +185,9 @@
     <ClCompile Include="NeuralNet\CLayer.cpp">
       <Filter>Source Files\NeuralNet</Filter>
     </ClCompile>
+    <ClCompile Include="NeuralNet\LayerTypeId.h">
+      <Filter>Header Files\NeuralNet</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

@@ -17,6 +17,7 @@
 
 
 #include "../Utilities.h"
+#include <msgpack.hpp>
 
 #pragma once
 
@@ -42,6 +43,8 @@ namespace DeepLearning
 		/// "z" coordinate
 		/// </summary>
 		T z{};
+
+		MSGPACK_DEFINE(x, y, z);
 
 		/// <summary>
 		/// Compound addition operator

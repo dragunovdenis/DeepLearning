@@ -18,8 +18,10 @@
 #include "CppUnitTest.h"
 #include <NeuralNet/NeuralLayer.h>
 #include <NeuralNet/CLayer.h>
+#include <NeuralNet/LayerHandle.h>
 #include <Math/CostFunction.h>
 #include <Utilities.h>
+#include <MsgPackUtils.h>
 #include <type_traits>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -220,31 +222,70 @@ namespace DeepLearningTest
 			CheckDerivativeWithRespectToWeightsAndBiasesCalculation(ActivationFunctionId::SIGMOID, CostFunctionId::CROSS_ENTROPY);
 		}
 
-		TEST_METHOD(CLayerDerivativeWithRespectToInputValuesCalculationSquaredErrorTest)
+		/// <summary>
+		/// Returns a "standard" CLayer instance to be used in testing
+		/// </summary>
+		static CLayer ConstructStandardCLayer()
 		{
 			const auto input_dim = Index3d(5, 13, 17);
 			const auto filter_window = Index2d(3);
 			const auto filters_count = 7;
 			const auto paddings = Index3d(0, 3, 6);
 			const auto strides = Index3d(2);
-			const auto nl = CLayer(input_dim, filter_window, filters_count, paddings, strides, ActivationFunctionId::SIGMOID);
+			return CLayer(input_dim, filter_window, filters_count, paddings, strides, ActivationFunctionId::SIGMOID);
+		}
+
+		TEST_METHOD(CLayerDerivativeWithRespectToInputValuesCalculationSquaredErrorTest)
+		{
+			const auto nl = ConstructStandardCLayer();
 
 			RunGeneralDerivativeWithRespectToInputValuesTest(nl, CostFunctionId::SQUARED_ERROR, (std::is_same_v<Real, double> ? Real(2e-8) : Real(8e-2)));
 		}
 
 		TEST_METHOD(CLayerDerivativeWithRespectToWeightsAndbiasesCalculationSquaredErrorTest)
 		{
-			const auto input_dim = Index3d(5, 13, 17);
-			const auto filter_window = Index2d(3);
-			const auto filters_count = 7;
-			const auto paddings = Index3d(0, 3, 6);
-			const auto strides = Index3d(2);
-			const auto nl = CLayer(input_dim, filter_window, filters_count, paddings, strides, ActivationFunctionId::SIGMOID);
+			const auto nl = ConstructStandardCLayer();
 
 			RunGeneralDerivativeWithRespectToWeightsAndBiasesTest(nl, CostFunctionId::SQUARED_ERROR,
 				(std::is_same_v<Real, double> ? Real(3e-8) : Real(2e-1)),
 				(std::is_same_v<Real, double> ? Real(3e-9) : Real(2e-2)));
 		}
 
+		/// <summary>
+		/// General method to run layer handle serialization test
+		/// </summary>
+		template <class L>
+		static void RunSerializationTest(const L& layer)
+		{
+			//Act
+			const auto layer_handle = LayerHandle::make<L>(layer);
+			const auto msg = MsgPack::pack(layer_handle);
+			const auto layer_handle_unpacked = MsgPack::unpack<LayerHandle>(msg);
+
+			//Assert
+			const auto tests_samples_count = 100;
+			for (int test_sample_id = 0; test_sample_id < tests_samples_count; test_sample_id++)
+			{
+				//take a random input sample
+				const auto input_sample = Tensor(layer.in_size(), -1, 1);
+				const auto ref_output = layer.act(input_sample);
+				//Sanity check
+				Assert::IsTrue(ref_output.max_abs() > 0 && input_sample.max_abs() > 0, L"Both input sample and reference output are expected to be non-zero.");
+
+				const auto trial_output = layer_handle_unpacked.layer().act(input_sample);
+
+				Assert::IsTrue(ref_output == trial_output, L"Layers are not the same.");
+			}
+		}
+
+		TEST_METHOD(CLayerSerializationTest)
+		{
+			RunSerializationTest(ConstructStandardCLayer());
+		}
+
+		TEST_METHOD(NLayerSerializationTest)
+		{
+			RunSerializationTest(NeuralLayer(10, 23, ActivationFunctionId::SIGMOID));
+		}
 	};
 }

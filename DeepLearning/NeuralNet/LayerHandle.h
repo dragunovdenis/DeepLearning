@@ -20,20 +20,12 @@
 #include <memory>
 #include "ALayer.h"
 #include "NeuralLayer.h"
+#include "CLayer.h"
 #include <exception>
+#include "LayerTypeId.h"
 
 namespace DeepLearning
 {
-	/// <summary>
-	/// Enumerable describes different types of neural layers
-	/// </summary>
-	enum class LayerTypeId : unsigned int {
-		UNKNOWN = 0,
-	    FULL = 1, //a fully connected neural layer
-		CONVOLUTION = 2,//a convolution neural layer
-		PULL = 3,//a pulling neural layer 
-	};
-
 	/// <summary>
 	/// A proxy type to handle serialization of layers of different types
 	/// </summary>
@@ -48,36 +40,6 @@ namespace DeepLearning
 		/// Layer pointer
 		/// </summary>
 		std::unique_ptr<ALayer> _layer_ptr = nullptr;
-
-		/// <summary>
-		/// Returns default instance of a layer container associated with the given identifier
-		/// </summary>
-		static auto get_layer_instance(const LayerTypeId id)
-		{
-			switch (id)
-			{
-			case DeepLearning::LayerTypeId::FULL:
-				return NeuralLayer();
-			case DeepLearning::LayerTypeId::CONVOLUTION:
-				throw std::exception("Not implemented option");
-				break;
-			case DeepLearning::LayerTypeId::PULL:
-				throw std::exception("Not implemented option");
-				break;
-			default:
-				throw std::exception("Unsupported layer identifier");
-				break;
-			}
-		}
-
-		/// <summary>
-		/// Factory method
-		/// </summary>
-		template <class... Types>
-		static std::unique_ptr<ALayer> make_layer_ptr(const LayerTypeId id, Types&&... args)
-		{
-			return std::make_unique<decltype(get_layer_instance(id))>(std::forward<Types>(args)...);
-		}
 
 		/// <summary>
 		/// Constructor
@@ -99,8 +61,21 @@ namespace DeepLearning
 		template <typename Packer>
 		void msgpack_pack(Packer& msgpack_pk) const
 		{
-			const auto& layer_ref_casted = static_cast<const decltype(get_layer_instance(_layer_id))&>(layer());
-			msgpack::type::make_define_array(_layer_id, layer_ref_casted).msgpack_pack(msgpack_pk);
+			if (_layer_id == NeuralLayer::ID())
+			{
+				const auto& layer_ref_casted = dynamic_cast<const NeuralLayer&>(layer());
+				msgpack::type::make_define_array(_layer_id, layer_ref_casted).msgpack_pack(msgpack_pk);
+				return;
+			}
+
+			if (_layer_id == CLayer::ID())
+			{
+				const auto& layer_ref_casted = dynamic_cast<const CLayer&>(layer());
+				msgpack::type::make_define_array(_layer_id, layer_ref_casted).msgpack_pack(msgpack_pk);
+				return;
+			}
+
+			throw std::exception("Not implemented");
 		}
 
 		/// <summary>
@@ -111,10 +86,10 @@ namespace DeepLearning
 		/// <summary>
 		/// Factory method
 		/// </summary>
-		template <class... Types>
-		static LayerHandle make(const LayerTypeId id, Types&&... args)
+		template <class L, class... Types>
+		static LayerHandle make(Types&&... args)
 		{
-			return LayerHandle(id, make_layer_ptr(id, std::forward<Types>(args)...));
+			return LayerHandle(L::ID(), std::make_unique<L>(std::forward<Types>(args)...));
 		}
 
 		/// <summary>
@@ -128,6 +103,4 @@ namespace DeepLearning
 		const ALayer& layer() const;
 	};
 }
-
-MSGPACK_ADD_ENUM(DeepLearning::LayerTypeId)
 

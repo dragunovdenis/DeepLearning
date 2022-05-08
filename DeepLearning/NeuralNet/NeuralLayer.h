@@ -25,6 +25,7 @@
 #include "../Math/ActivationFunction.h"
 #include "CummulativeGradient.h"
 #include <msgpack.hpp>
+#include "LayerTypeId.h"
 
 namespace DeepLearning
 {
@@ -50,6 +51,11 @@ namespace DeepLearning
 		ActivationFunctionId _func_id = ActivationFunctionId::UNKNOWN;
 
 	public:
+
+		/// <summary>
+		/// Layer type identifier
+		/// </summary>
+		static LayerTypeId ID() { return LayerTypeId::FULL; }
 
 		MSGPACK_DEFINE(_biases, _weights, _func_id);
 

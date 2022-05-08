@@ -21,6 +21,8 @@
 #include "../Math/Tensor.h"
 #include "../Math/LinAlg2d.h"
 #include <vector>
+#include <msgpack.hpp>
+#include "LayerTypeId.h"
 
 namespace DeepLearning
 {
@@ -35,7 +37,6 @@ namespace DeepLearning
 		Index3d _strides{};
 		ActivationFunctionId _func_id = ActivationFunctionId::UNKNOWN;
 
-	protected: //make the following fields protected (and not private) facilitate testing process
 		/// <summary>
 		/// Biases
 		/// </summary>
@@ -47,6 +48,14 @@ namespace DeepLearning
 		std::vector<Tensor> _filters{};
 
 	public:
+
+		/// <summary>
+		/// Layer type identifier
+		/// </summary>
+		static LayerTypeId ID() { return LayerTypeId::CONVOLUTION; }
+
+		MSGPACK_DEFINE(_in_size, _weight_tensor_size, _paddings, _strides, _func_id, _biases, _filters);
+
 		/// <summary>
 		/// See description in the base class
 		/// </summary>
@@ -61,6 +70,11 @@ namespace DeepLearning
 		/// See description in the base class
 		/// </summary>
 		virtual Index3d weight_tensor_size() const override;
+
+		/// <summary>
+		/// Default constructor
+		/// </summary>
+		CLayer() {}
 
 		/// <summary>
 		/// Constructor

@@ -26,10 +26,26 @@ namespace DeepLearning
 	{
 		//Read identifier only
 		msgpack::type::make_define_array(_layer_id).msgpack_unpack(msgpack_o);
-		auto proxy = get_layer_instance(_layer_id);
-		//Read once again, but this time we read the instance of the layer as well
-		msgpack::type::make_define_array(_layer_id, proxy).msgpack_unpack(msgpack_o);
-		_layer_ptr = std::make_unique<decltype(proxy)>(std::move(proxy));
+
+		if (_layer_id == NeuralLayer::ID())
+		{
+			auto proxy = NeuralLayer();
+			//Read once again, but this time we read the instance of the layer as well
+			msgpack::type::make_define_array(_layer_id, proxy).msgpack_unpack(msgpack_o);
+			_layer_ptr = std::make_unique<decltype(proxy)>(std::move(proxy));
+			return;
+		}
+
+		if (_layer_id == CLayer::ID())
+		{
+			auto proxy = CLayer();
+			//Read once again, but this time we read the instance of the layer as well
+			msgpack::type::make_define_array(_layer_id, proxy).msgpack_unpack(msgpack_o);
+			_layer_ptr = std::make_unique<decltype(proxy)>(std::move(proxy));
+			return;
+		}
+
+		throw std::exception("Not implemented");
 	}
 
 	ALayer& LayerHandle::layer()
