@@ -18,9 +18,20 @@
 #pragma once
 #include "LinAlg3d.h"
 #include "Tensor.h"
+#include <msgpack.hpp>
 
 namespace DeepLearning
 {
+	/// <summary>
+	/// Enumerable describes different types of "pooling" operators
+	/// </summary>
+	enum class PoolTypeId : unsigned int {
+		UNKNOWN = 0,
+		MAX = 1,    //"max-pooling" operator
+		MIN = 2,    //"min-pooling" operator
+		AVERAGE = 3,//"average-pooling" operator
+	};
+
 	/// <summary>
 	/// Abstract interface of a "pool operator" which is supposed to facilitate such operations as 
 	/// min/max/average pooling
@@ -67,6 +78,13 @@ namespace DeepLearning
 		/// Returns clone of the current instance of an object
 		/// </summary>
 		virtual std::shared_ptr<PoolOperator> clone() const = 0;
+
+		/// <summary>
+		/// Factory method to instantiate pool operator by the type identifier
+		/// </summary>
+		/// <param name="operation_window_size">Operation window size of the pool operator to be constructed</param>
+		/// <param name="pool_type_id">Pool operator type identifier</param>
+		static std::unique_ptr<PoolOperator> make(const Index3d& operation_window_size, const PoolTypeId& pool_type_id);
 	};
 
 	/// <summary>
@@ -147,3 +165,6 @@ namespace DeepLearning
 		std::shared_ptr<PoolOperator> clone() const override;
 	};
 }
+
+MSGPACK_ADD_ENUM(DeepLearning::PoolTypeId)
+

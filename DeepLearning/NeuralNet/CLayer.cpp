@@ -33,7 +33,7 @@ namespace DeepLearning
 
 	Tensor CLayer::act(const Tensor& input, AuxLearningData* const aux_learning_data_ptr) const
 	{
-		if (input.size_3d() != _in_size)
+		if (input.size_3d() != in_size())
 			throw std::exception("Unexpected size of the input tensor");
 
 		const auto function = ActivationFuncion(ActivationFunctionId(_func_id));

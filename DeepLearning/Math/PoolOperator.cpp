@@ -25,6 +25,19 @@ namespace DeepLearning
 		return _size;
 	}
 
+	std::unique_ptr<PoolOperator> PoolOperator::make(const Index3d& operation_window_size, const PoolTypeId& pool_type_id)
+	{
+		switch (pool_type_id)
+		{
+			case PoolTypeId::MAX:
+				return std::make_unique<MaxPool>(operation_window_size);
+			case PoolTypeId::AVERAGE: 
+				return std::make_unique<AveragePool>(operation_window_size);
+			default:
+				throw std::exception("Not implemented");
+		}
+	}
+
 	void AveragePool::add(const Index3d& id, const Real value)
 	{
 		_items_count++;

@@ -21,8 +21,8 @@
 namespace DeepLearning
 {
 	/// <summary>
-/// Enumerable describes different types of neural layers
-/// </summary>
+	/// Enumerable describes different types of neural layers
+	/// </summary>
 	enum class LayerTypeId : unsigned int {
 		UNKNOWN = 0,
 		FULL = 1, //a fully connected neural layer

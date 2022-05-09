@@ -21,6 +21,7 @@
 #include "ALayer.h"
 #include "NeuralLayer.h"
 #include "CLayer.h"
+#include "PLayer.h"
 #include <exception>
 #include "LayerTypeId.h"
 
@@ -71,6 +72,13 @@ namespace DeepLearning
 			if (_layer_id == CLayer::ID())
 			{
 				const auto& layer_ref_casted = dynamic_cast<const CLayer&>(layer());
+				msgpack::type::make_define_array(_layer_id, layer_ref_casted).msgpack_pack(msgpack_pk);
+				return;
+			}
+
+			if (_layer_id == PLayer::ID())
+			{
+				const auto& layer_ref_casted = dynamic_cast<const PLayer&>(layer());
 				msgpack::type::make_define_array(_layer_id, layer_ref_casted).msgpack_pack(msgpack_pk);
 				return;
 			}

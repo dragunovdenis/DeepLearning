@@ -23,6 +23,10 @@
 #include <Utilities.h>
 #include <MsgPackUtils.h>
 #include <type_traits>
+#include <optional>
+#include <numeric>
+#include <algorithm>
+#include <random>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;
@@ -36,9 +40,11 @@ namespace DeepLearningTest
 		/// General method to exercise back-propagation algorithm (for a single neural layer)
 		/// in the part of calculating derivatives with respect to the input 
 		/// </summary>
-		void RunGeneralDerivativeWithRespectToInputValuesTest(const ALayer& nl, const CostFunctionId cost_function_id, const Real& tolerance)
+		void RunGeneralDerivativeWithRespectToInputValuesTest(const ALayer& nl, const CostFunctionId cost_function_id, const Real& tolerance,
+			const Real& delta = std::is_same_v<Real, double> ? Real(1e-5) : Real(1e-3),
+			const std::optional<Tensor>& input_op = std::nullopt)
 		{
-			const auto input = Tensor(nl.in_size(), -1, 1);
+			const auto input = input_op.has_value() ? input_op.value() : Tensor(nl.in_size(), -1, 1);
 			const auto reference = Tensor(nl.out_size(), -1, 1);;
 
 			const auto cost_func = CostFunction(cost_function_id);
@@ -48,7 +54,6 @@ namespace DeepLearningTest
 
 			//Assert
 			Assert::IsTrue(input_grad_result.size_3d() == input.size_3d(), L"Unexpected size of the gradient with respect to the input tensor");
-			const auto delta = std::is_same_v<Real, double> ? Real(1e-5) : Real(1e-3);
 
 			auto max_diff = Real(0);
 			for (std::size_t in_item_id = 0; in_item_id < input.size(); in_item_id++)
@@ -198,7 +203,7 @@ namespace DeepLearningTest
 			const auto nl = NeuralLayer(input_dim, output_dim, activation_func_id);
 
 			RunGeneralDerivativeWithRespectToWeightsAndBiasesTest(nl, cost_function_id,
-				(std::is_same_v<Real, double> ? Real(6e-10) : Real(3e-3)),
+				(std::is_same_v<Real, double> ? Real(7e-10) : Real(3e-3)),
 				(std::is_same_v<Real, double> ? Real(5e-10) : Real(3e-3)));
 		}
 
@@ -235,6 +240,17 @@ namespace DeepLearningTest
 			return CLayer(input_dim, filter_window, filters_count, paddings, strides, ActivationFunctionId::SIGMOID);
 		}
 
+		/// <summary>
+		/// Returns a "standard" PLayer instance to be used in testing
+		/// </summary>
+		static PLayer ConstructStandardPLayer()
+		{
+			const auto input_dim = Index3d(5, 10, 7);
+			const auto filter_window = Index2d(3);
+			const auto strides = Index3d(3);
+			return PLayer(input_dim, filter_window, strides, PoolTypeId::MAX);
+		}
+
 		TEST_METHOD(CLayerDerivativeWithRespectToInputValuesCalculationSquaredErrorTest)
 		{
 			const auto nl = ConstructStandardCLayer();
@@ -248,8 +264,49 @@ namespace DeepLearningTest
 
 			RunGeneralDerivativeWithRespectToWeightsAndBiasesTest(nl, CostFunctionId::SQUARED_ERROR,
 				(std::is_same_v<Real, double> ? Real(3e-8) : Real(2e-1)),
-				(std::is_same_v<Real, double> ? Real(3e-9) : Real(2e-2)));
+				(std::is_same_v<Real, double> ? Real(3e-9) : Real(3.5e-2)));
 		}
+
+		TEST_METHOD(PLayerDerivativeWithRespectToInputValuesCalculationSquaredErrorTest)
+		{
+			const auto nl = ConstructStandardPLayer();
+			auto input = Tensor(nl.in_size(), false);
+			auto input_vals = std::vector<int>(input.size());
+			std::iota(input_vals.begin(), input_vals.end(), 0);
+
+			std::random_device rd;
+			std::mt19937 g(rd());
+			std::shuffle(input_vals.begin(), input_vals.end(), g);
+			const auto factor = Real(1) / input_vals.size();
+			//Fill the input tensor with all the different values with the minimal difference equal to 'factor'
+			//This is done in order to avoid ambiguities for the max-pulling operator 
+			std::transform(input_vals.begin(), input_vals.end(), input.begin(), [=](const auto val) { return val * factor; });
+
+			//Set "delta" parameter that will be used in the numerical differentiation procedure
+			//so that it is less than the minimal difference between the items in the input tensor
+			//(again, to avoid confusion when doing max-pooling)
+			RunGeneralDerivativeWithRespectToInputValuesTest(nl, CostFunctionId::SQUARED_ERROR,
+				(std::is_same_v<Real, double> ? Real(1e-10) : Real(4e-4)), factor/2, std::make_optional<Tensor>(input));
+		}
+
+		TEST_METHOD(PLayerDerivativeWithRespectToWeightsAndbiasesCalculationSquaredErrorTest)
+		{
+			//Arrange
+			const auto nl = ConstructStandardPLayer();
+			const auto input = Tensor(nl.in_size(), Real(-1), Real(1));
+			const auto reference = Tensor(nl.out_size(), -1, 1);;
+
+			//Act
+			const auto cost_func = CostFunction(CostFunctionId::SQUARED_ERROR);
+			auto aux_data = NeuralLayer::AuxLearningData();
+			const auto [value, cost_gradient] = cost_func.func_and_deriv(nl.act(input, &aux_data), reference);
+			const auto [input_grad_result, layer_grad_result] = nl.backpropagate(cost_gradient, aux_data);
+
+			//Assert
+			Assert::IsTrue(layer_grad_result.Biases_grad.size() == 0 &&
+				layer_grad_result.Weights_grad.size() == 0, L"Unexpected output of the back-propagation procedure");
+		}
+
 
 		/// <summary>
 		/// General method to run layer handle serialization test
@@ -276,6 +333,11 @@ namespace DeepLearningTest
 
 				Assert::IsTrue(ref_output == trial_output, L"Layers are not the same.");
 			}
+		}
+
+		TEST_METHOD(PLayerSerializationTest)
+		{
+			RunSerializationTest(ConstructStandardPLayer());
 		}
 
 		TEST_METHOD(CLayerSerializationTest)
