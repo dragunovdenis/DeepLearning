@@ -32,7 +32,7 @@ namespace DeepLearning
 	/// <summary>
 	/// Representation of a single neural layer
 	/// </summary>
-	class NeuralLayer : public ALayer
+	class NLayer : public ALayer
 	{
 	private:
 		/// <summary>
@@ -77,23 +77,23 @@ namespace DeepLearning
 		/// <summary>
 		/// Default constructor
 		/// </summary>
-		NeuralLayer() = default;
+		NLayer() = default;
 
 		/// <summary>
 		/// Constructor with random weights and biases
 		/// </summary>
-		NeuralLayer(const std::size_t in_dim, const std::size_t out_dim, ActivationFunctionId func_id = ActivationFunctionId::SIGMOID,
+		NLayer(const std::size_t in_dim, const std::size_t out_dim, ActivationFunctionId func_id = ActivationFunctionId::SIGMOID,
 			const Real rand_low = Real(-1), const Real rand_high = Real(1));
 
 		/// <summary>
 		/// Constructor from the given weights and biases
 		/// </summary>
-		NeuralLayer(const Matrix& weights, const Vector& biases, ActivationFunctionId func_id = ActivationFunctionId::SIGMOID);
+		NLayer(const Matrix& weights, const Vector& biases, ActivationFunctionId func_id = ActivationFunctionId::SIGMOID);
 
 		/// <summary>
 		/// Copy constructor
 		/// </summary>
-		NeuralLayer(const NeuralLayer& anotherLayer);
+		NLayer(const NLayer& anotherLayer);
 
 		/// <summary>
 		/// See the summary to the corresponding method in the base class

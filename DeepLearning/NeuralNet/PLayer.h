@@ -56,9 +56,10 @@ namespace DeepLearning
 		/// </summary>
 		/// <param name="in_size">Size of input tensor for the layer</param>
 		/// <param name="pool_window_size">2d window of the pool operator</param>
-		/// <param name="strides">Strides to be applied to the pooling window</param>
+		/// <param name="strides">Strides to be applied to the pooling window. If all the coordinates
+		/// of the parameter are equal to "0" then the default value will be used which is equal to the size of the "pool window" parameter</param>
 		/// <param name="pool_operator_id">Identifier of the pooling operator to be used</param>
-		PLayer(const Index3d& in_size, const Index2d& pool_window_size, const Index3d& strides, const PoolTypeId pool_operator_id);
+		PLayer(const Index3d& in_size, const Index2d& pool_window_size, const PoolTypeId pool_operator_id, const Index3d& strides = { 0 });
 
 		/// <summary>
 		/// Size of the layer's input

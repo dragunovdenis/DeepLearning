@@ -20,7 +20,7 @@
 namespace DeepLearning
 {
 	CLayer::CLayer(const Index3d& in_size, const Index2d& filter_window_size,
-		const std::size_t& filters_count, const Index3d& paddings, const Index3d& strides, const ActivationFunctionId func_id) :_in_size(in_size),
+		const std::size_t& filters_count, const ActivationFunctionId func_id, const Index3d& paddings, const Index3d& strides) :_in_size(in_size),
 		_weight_tensor_size(in_size.x, filter_window_size.x, filter_window_size.y), _paddings(paddings), _strides(strides), _func_id(func_id)
 	{
 		const auto out_channel_size = Tensor::calc_conv_res_size(_in_size, _weight_tensor_size, _paddings, _strides);

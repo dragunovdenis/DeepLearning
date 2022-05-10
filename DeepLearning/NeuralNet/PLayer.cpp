@@ -19,9 +19,12 @@
 
 namespace DeepLearning
 {
-	PLayer::PLayer(const Index3d& in_size, const Index2d& pool_window_size, const Index3d& strides, const PoolTypeId pool_operator_id)
+	PLayer::PLayer(const Index3d& in_size, const Index2d& pool_window_size, const PoolTypeId pool_operator_id, const Index3d& strides)
 		: _in_size(in_size), _pool_window_size(1, pool_window_size.x, pool_window_size.y), _strides(strides), _pool_operator_id(pool_operator_id)
-	{}
+	{
+		if (_strides == Index3d{ 0 })
+			_strides = _pool_window_size;
+	}
 
 	Index3d PLayer::in_size() const
 	{

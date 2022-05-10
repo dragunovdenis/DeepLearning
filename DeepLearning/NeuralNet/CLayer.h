@@ -86,7 +86,7 @@ namespace DeepLearning
 		/// <param name="strides">Define the minimal movement of the filter window (in 3 dimensions) when convolution is going on</param>
 		/// <param name="funcId">Id of the activation function to be used in the layer</param>
 		CLayer(const Index3d& in_size, const Index2d& filter_window_size,
-			const std::size_t& filters_count, const Index3d& paddings, const Index3d& strides, const ActivationFunctionId func_id);
+			const std::size_t& filters_count, const ActivationFunctionId func_id, const Index3d& paddings = { 0 }, const Index3d& strides = {1});
 
 		/// <summary>
 		/// See description in the base class

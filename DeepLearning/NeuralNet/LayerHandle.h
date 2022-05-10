@@ -19,7 +19,7 @@
 #include <msgpack.hpp>
 #include <memory>
 #include "ALayer.h"
-#include "NeuralLayer.h"
+#include "NLayer.h"
 #include "CLayer.h"
 #include "PLayer.h"
 #include <exception>
@@ -62,9 +62,9 @@ namespace DeepLearning
 		template <typename Packer>
 		void msgpack_pack(Packer& msgpack_pk) const
 		{
-			if (_layer_id == NeuralLayer::ID())
+			if (_layer_id == NLayer::ID())
 			{
-				const auto& layer_ref_casted = dynamic_cast<const NeuralLayer&>(layer());
+				const auto& layer_ref_casted = dynamic_cast<const NLayer&>(layer());
 				msgpack::type::make_define_array(_layer_id, layer_ref_casted).msgpack_pack(msgpack_pk);
 				return;
 			}

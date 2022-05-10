@@ -18,7 +18,7 @@
 #pragma once
 #include <vector>
 #include "../defs.h"
-#include "NeuralLayer.h"
+#include "NLayer.h"
 #include "../Math/ActivationFunction.h"
 #include "../Math/CostFunction.h"
 #include "../Math/Vector.h"
@@ -63,7 +63,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Returns output of the neural network calculated for the given input
 		/// </summary>
-		Tensor act(const Tensor& input, std::vector<NeuralLayer::AuxLearningData>* const aux_data_ptr = nullptr) const;
+		Tensor act(const Tensor& input, std::vector<ALayer::AuxLearningData>* const aux_data_ptr = nullptr) const;
 
 		/// <summary>
 		/// A method that performs training of the neural net based on the given input data with references

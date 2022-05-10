@@ -49,12 +49,12 @@ namespace DeepLearning
 
 			std::normal_distribution<Real> dist{ 0, Real(1) / Real(std::sqrt(in_dim)) };
 
-			_layers.push_back(LayerHandle::make<NeuralLayer>(Matrix(out_dim, in_dim, [&]() {return dist(gen); }),
+			_layers.push_back(LayerHandle::make<NLayer>(Matrix(out_dim, in_dim, [&]() {return dist(gen); }),
 				Vector(out_dim, Real(-1), Real(1)), af_ids_local[id - 1]));
 		}
 	}
 
-	Tensor Net::act(const Tensor& input, std::vector<NeuralLayer::AuxLearningData>* const aux_data_ptr) const
+	Tensor Net::act(const Tensor& input, std::vector<ALayer::AuxLearningData>* const aux_data_ptr) const
 	{
 		if (aux_data_ptr != nullptr && aux_data_ptr->size() != _layers.size())
 			throw std::exception("Invalid auxiliary data.");
@@ -163,11 +163,11 @@ namespace DeepLearning
 						const auto input_item_id = data_index_mapping[elem_id];
 						const auto& input = training_items[input_item_id];
 						const auto& reference = reference_items[input_item_id];
-						auto aux_data_ptr = std::vector<NeuralLayer::AuxLearningData>(_layers.size());
+						auto aux_data_ptr = std::vector<ALayer::AuxLearningData>(_layers.size());
 						const auto output = act(input, &aux_data_ptr);
 						auto [cost, gradient] = cost_function.func_and_deriv(output, reference);
 
-						auto back_prop_out = std::vector<NeuralLayer::LayerGradient>(_layers.size());
+						auto back_prop_out = std::vector<ALayer::LayerGradient>(_layers.size());
 						//Back-propagate through all the layers
 						for (long long layer_id = _layers.size() - 1; layer_id >= 0; layer_id--)
 							std::tie(gradient, back_prop_out[layer_id]) = _layers[layer_id].layer().backpropagate(

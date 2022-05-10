@@ -15,13 +15,13 @@
 //OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#include "NeuralLayer.h"
+#include "NLayer.h"
 #include "../Math/ActivationFunction.h"
 #include <exception>
 
 namespace DeepLearning
 {
-	NeuralLayer::NeuralLayer(const std::size_t in_dim, const std::size_t out_dim, ActivationFunctionId func_id,
+	NLayer::NLayer(const std::size_t in_dim, const std::size_t out_dim, ActivationFunctionId func_id,
 		const Real rand_low, const Real rand_high)
 	{
 		_biases  = Vector(out_dim, rand_low, rand_high);
@@ -29,7 +29,7 @@ namespace DeepLearning
 		_func_id = func_id;
 	}
 
-	NeuralLayer::NeuralLayer(const Matrix& weights, const Vector& biases, ActivationFunctionId func_id)
+	NLayer::NLayer(const Matrix& weights, const Vector& biases, ActivationFunctionId func_id)
 	{
 		if (weights.row_dim() != biases.dim())
 			throw std::exception("incompatible dimensions of the weight and biases containers");
@@ -39,29 +39,29 @@ namespace DeepLearning
 		_func_id = func_id;
 	}
 
-	NeuralLayer::NeuralLayer(const NeuralLayer& anotherLayer)
+	NLayer::NLayer(const NLayer& anotherLayer)
 	{
 		_biases = anotherLayer._biases;
 		_weights = anotherLayer._weights;
 		_func_id = anotherLayer._func_id;
 	}
 
-	Index3d NeuralLayer::in_size() const
+	Index3d NLayer::in_size() const
 	{
 		return { 1ll, 1ll, static_cast<long long>(_weights.col_dim()) };
 	}
 
-	Index3d NeuralLayer::out_size() const
+	Index3d NLayer::out_size() const
 	{
 		return { 1ll, 1ll, static_cast<long long>(_weights.row_dim()) };
 	}
 
-	Index3d NeuralLayer::weight_tensor_size() const
+	Index3d NLayer::weight_tensor_size() const
 	{
 		return { 1ll, static_cast<long long>(_weights.row_dim()), static_cast<long long>(_weights.col_dim()) };
 	}
 
-	Tensor NeuralLayer::act(const Tensor& input, AuxLearningData* const aux_learning_data_ptr) const
+	Tensor NLayer::act(const Tensor& input, AuxLearningData* const aux_learning_data_ptr) const
 	{
 		const auto function = ActivationFuncion(ActivationFunctionId(_func_id));
 
@@ -78,7 +78,7 @@ namespace DeepLearning
 		return std::move(function(z));
 	}
 
-	std::tuple<Tensor, NeuralLayer::LayerGradient> NeuralLayer::backpropagate(const Tensor& deltas,
+	std::tuple<Tensor, NLayer::LayerGradient> NLayer::backpropagate(const Tensor& deltas,
 		const AuxLearningData& aux_learning_data, const bool evaluate_input_gradient) const
 	{
 		if (deltas.size_3d() != Index3d{ 1, 1, static_cast<long long>(_biases.dim()) })
@@ -87,12 +87,12 @@ namespace DeepLearning
 		const auto biases_grad = deltas.hadamard_prod(aux_learning_data.Derivatives);
 		auto weights_grad = vector_col_times_vector_row(biases_grad, aux_learning_data.Input);
 
-		return std::make_tuple<Tensor, NeuralLayer::LayerGradient>(
+		return std::make_tuple<Tensor, NLayer::LayerGradient>(
 			evaluate_input_gradient ? Tensor(biases_grad * _weights).reshape(aux_learning_data.Input.size_3d()) : Tensor(0, 0, 0),
 			{ biases_grad, {std::move(weights_grad)} });
 	}
 
-	void NeuralLayer::update(const std::tuple<std::vector<Tensor>, Tensor>& weights_and_biases_increment, const Real& reg_factor)
+	void NLayer::update(const std::tuple<std::vector<Tensor>, Tensor>& weights_and_biases_increment, const Real& reg_factor)
 	{
 		const auto& weights_increment = std::get<0>(weights_and_biases_increment);
 

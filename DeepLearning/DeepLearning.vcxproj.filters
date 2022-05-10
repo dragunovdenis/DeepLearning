@@ -66,7 +66,7 @@
     <ClInclude Include="Math\ActivationFunction.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
-    <ClInclude Include="NeuralNet\NeuralLayer.h">
+    <ClInclude Include="NeuralNet\NLayer.h">
       <Filter>Header Files\NeuralNet</Filter>
     </ClInclude>
     <ClInclude Include="MnistDataUtils.h">
@@ -137,7 +137,7 @@
     <ClCompile Include="Math\ActivationFunction.cpp">
       <Filter>Source Files\Math</Filter>
     </ClCompile>
-    <ClCompile Include="NeuralNet\NeuralLayer.cpp">
+    <ClCompile Include="NeuralNet\NLayer.cpp">
       <Filter>Source Files\NeuralNet</Filter>
     </ClCompile>
     <ClCompile Include="Image8Bit.cpp">

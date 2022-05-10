@@ -182,7 +182,7 @@
     <ClInclude Include="NeuralNet\CummulativeGradient.h" />
     <ClInclude Include="NeuralNet\LayerHandle.h" />
     <ClInclude Include="NeuralNet\Net.h" />
-    <ClInclude Include="NeuralNet\NeuralLayer.h" />
+    <ClInclude Include="NeuralNet\NLayer.h" />
     <ClInclude Include="NeuralNet\PLayer.h" />
     <ClInclude Include="ThirdParty\BitmapUtils.h" />
     <ClInclude Include="Utilities.h" />
@@ -206,7 +206,7 @@
     <ClCompile Include="NeuralNet\LayerHandle.cpp" />
     <ClCompile Include="NeuralNet\LayerTypeId.h" />
     <ClCompile Include="NeuralNet\Net.cpp" />
-    <ClCompile Include="NeuralNet\NeuralLayer.cpp" />
+    <ClCompile Include="NeuralNet\NLayer.cpp" />
     <ClCompile Include="NeuralNet\PLayer.cpp" />
     <ClCompile Include="ThirdParty\BitmapUtils.cpp" />
     <ClCompile Include="Utilities.cpp" />
