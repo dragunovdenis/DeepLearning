@@ -25,6 +25,7 @@
 #include "../Math/Tensor.h"
 #include "LayerHandle.h"
 #include <msgpack.hpp>
+#include <filesystem>
 
 namespace DeepLearning
 {
@@ -101,5 +102,27 @@ namespace DeepLearning
 		/// </summary>
 		Real evaluate_cost_function(const std::vector<Tensor>& test_input,
 			const std::vector<Tensor>& reference_output, const CostFunctionId& cost_func_id) const;
+
+		/// <summary>
+		/// Method to append layer to the net
+		/// </summary>
+		/// <typeparam name="L">Later type</typeparam>
+		/// <typeparam name="...Types">Types of arguments required by a constructor of type "L"</typeparam>
+		/// <param name="...args">Actual arguments required by a constructor of type "L"</param>
+		/// <returns>Output size of the appended layer</returns>
+		template <class L, class... Types>
+		Index3d append_layer(Types&&... args)
+		{
+			_layers.push_back(LayerHandle::make<L>(std::forward<Types>(args)...));
+			return _layers.rbegin()->layer().out_size();
+		}
+
+		/// <summary>
+		/// Logs the net into the given directory (will be created if it does not exist) 
+		/// Logs of all the data are supposed to be done in a human-readable text format, since 
+		/// the main purpose of the logging functionality is diagnostics
+		/// </summary>
+		/// <param name="directory">The directory of disk to log to</param>
+		void log(const std::filesystem::path& directory) const;
 	};
 }

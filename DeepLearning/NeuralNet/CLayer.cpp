@@ -16,6 +16,8 @@
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "CLayer.h"
+#include <algorithm>
+#include "../Diagnostics/Logging.h"
 
 namespace DeepLearning
 {
@@ -28,7 +30,9 @@ namespace DeepLearning
 			throw std::exception("Unexpected channel size");
 
 		_biases = Tensor(filters_count, out_channel_size.y, out_channel_size.z, Real(-1), Real(1));
-		_filters = std::vector(filters_count, Tensor(_weight_tensor_size, Real(-1), Real(1)));
+		_filters = std::vector(filters_count, Tensor(_weight_tensor_size, false));
+
+		std::for_each(_filters.begin(), _filters.end(), [](auto& filter) { filter.standard_random_fill(); });
 	}
 
 	Tensor CLayer::act(const Tensor& input, AuxLearningData* const aux_learning_data_ptr) const
@@ -109,5 +113,24 @@ namespace DeepLearning
 	Index3d CLayer::weight_tensor_size() const
 	{
 		return _weight_tensor_size;
+	}
+
+	void CLayer::log(const std::filesystem::path& directory) const
+	{
+		if (!std::filesystem::is_directory(directory))
+			throw std::exception("Directory does not exist");
+
+		const auto biases_folder = directory / "biases";
+		Logging::make_path(biases_folder);
+
+		_biases.log(biases_folder, "channel");
+
+		for (auto filter_id = 0ull; filter_id < _filters.size(); filter_id++)
+		{
+			const auto filter_folder = directory / (std::string("filter_") + std::to_string(filter_id));
+			Logging::make_path(filter_folder);
+
+			_filters[filter_id].log(filter_folder, "channel");
+		}
 	}
 }

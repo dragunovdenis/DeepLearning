@@ -106,4 +106,13 @@ namespace DeepLearning
 
 		_biases.add(std::get<1>(weights_and_biases_increment));
 	}
+
+	void NLayer::log(const std::filesystem::path& directory) const
+	{
+		if (!std::filesystem::is_directory(directory))
+			throw std::exception("Directory does not exist");
+
+		_weights.log(directory / "weights.txt");
+		_biases.log(directory / "biases.txt");
+	}
 }

@@ -160,7 +160,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Default constructor
 		/// </summary>
-		Vector2d() {}
+		Vector2d() = default;
 
 		/// <summary>
 		/// Constructor by 2 coordinates

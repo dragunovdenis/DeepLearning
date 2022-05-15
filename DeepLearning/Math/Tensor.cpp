@@ -22,6 +22,7 @@
 #include "PoolOperator.h"
 #include "Vector.h"
 #include "Matrix.h"
+#include "../Diagnostics/Logging.h"
 
 namespace DeepLearning
 {
@@ -588,16 +589,6 @@ namespace DeepLearning
 		std::copy(proxy.begin(), proxy.end(), begin());
 	}
 
-	RealMemHandleConst Tensor::get_handle() const
-	{
-		return RealMemHandleConst(_data, size());
-	}
-
-	RealMemHandle Tensor::get_handle()
-	{
-		return RealMemHandle(_data, size());
-	}
-
 	RealMemHandleConst Tensor::get_layer_handle(const std::size_t& layer_id) const
 	{
 #ifdef CHECK_BOUNDS
@@ -635,5 +626,26 @@ namespace DeepLearning
 			op1[item_id] *= scalar;
 
 		return op1;
+	}
+
+	void Tensor::log_layer(const std::size_t& layer_id, const std::filesystem::path& filename) const
+	{
+		if (!check_bounds(layer_id, 0, 0))
+			throw std::exception("Invalid layer ID");
+
+		Logging::log_as_table(get_layer_handle(layer_id), row_dim(), col_dim(), filename);
+	}
+
+	void Tensor::log(const std::filesystem::path& directory, const std::filesystem::path& base_log_name) const
+	{
+		if (!std::filesystem::is_directory(directory))
+			throw std::exception("Directory does not exist");
+
+		for (auto layer_id = 0ull; layer_id < layer_dim(); layer_id++)
+		{
+			auto layer_log_file = directory / base_log_name;
+			layer_log_file += "_" + std::to_string(layer_id) + ".txt";
+			log_layer(layer_id, layer_log_file);
+		}
 	}
 }

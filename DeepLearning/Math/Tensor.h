@@ -19,8 +19,8 @@
 #include "../defs.h"
 #include <msgpack.hpp>
 #include "BasicCollection.h"
+#include <filesystem>
 #include "LinAlg3d.h"
-#include "../Memory/MemHandle.h"
 
 namespace DeepLearning
 {
@@ -88,7 +88,7 @@ namespace DeepLearning
 		template <typename Packer>
 		void msgpack_pack(Packer& msgpack_pk) const
 		{
-			const auto proxy = std::vector<Real>(begin(), end());
+			const auto proxy = to_stdvector();
 			msgpack::type::make_define_array(_layer_dim, _row_dim, _col_dim, proxy).msgpack_pack(msgpack_pk);
 		}
 
@@ -363,17 +363,6 @@ namespace DeepLearning
 		Tensor pool_input_gradient(const RealMemHandleConst& pool_res_grad, const PoolOperator& pool_operator, const Index3d& paddings,
 			const Index3d& strides) const;
 
-
-		/// <summary>
-		/// Returns read-only memory handle to the data array of the tensor
-		/// </summary>
-		RealMemHandleConst get_handle() const;
-
-		/// <summary>
-		/// Returns memory handle to the data array of the tensor
-		/// </summary>
-		RealMemHandle get_handle();
-
 		/// <summary>
 		/// Returns read-only memory handle to the layer with given index
 		/// </summary>
@@ -385,6 +374,20 @@ namespace DeepLearning
 		/// </summary>
 		/// <param name="layer_id">Index of a layer</param>
 		RealMemHandle get_layer_handle(const std::size_t& layer_id);
+
+		/// <summary>
+		/// Writes layer with the given id to a text file on disk in a form of rectangular table
+		/// </summary>
+		/// <param name="layer_id">Layer identifier</param>
+		/// <param name="filename">Full file path to write to</param>
+		void log_layer(const std::size_t& layer_id, const std::filesystem::path& filename) const;
+
+		/// <summary>
+		/// Logs entire tensor to a text files into the specified directory (each layer to separate file)
+		/// </summary>
+		/// <param name="directory">The directory to log to. Must exist when the method is called</param>
+		/// <param name="base_log_name">Basic name of the layer-wise log files (no extension)</param>
+		void log(const std::filesystem::path& directory, const std::filesystem::path& base_log_name) const;
 	};
 
 	/// <summary>

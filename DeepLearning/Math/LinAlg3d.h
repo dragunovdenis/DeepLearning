@@ -133,7 +133,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Default constructor
 		/// </summary>
-		Vector3d() {}
+		Vector3d() = default;
 
 		/// <summary>
 		/// Constructor by 3 coordinates
@@ -144,6 +144,21 @@ namespace DeepLearning
 		/// Constructors a vector with all the coordinates equal to the given value `w`
 		/// </summary>
 		Vector3d(const T& w): x(w), y(w), z(w){}
+
+		/// <summary>
+		/// Creates vector with the given base type out of the three given
+		/// coordinate values (that can be of different types)
+		/// </summary>
+		Vector3d(const auto& x_, const auto& y_, const auto& z_) : x(static_cast<T>(x_)), y(static_cast<T>(y_)), z(static_cast<T>(z_))
+		{}
+
+		/// <summary>
+		/// Returns product of coordinates
+		/// </summary>
+		T coord_prod() const
+		{
+			return x * y * z;
+		}
 	};
 
 	/// <summary>

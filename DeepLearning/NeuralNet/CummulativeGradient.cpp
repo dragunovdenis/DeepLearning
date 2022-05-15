@@ -30,9 +30,12 @@ namespace DeepLearning
 
 	void CummulativeGradient::Add(const std::vector<Tensor>& weight_grad, const Tensor& bias_grad)
 	{
-		_sum_grad_weights += weight_grad;
+		if (weight_grad.size() != 0)
+			_sum_grad_weights += weight_grad;
 
-		_sum_grad_biases += bias_grad;
+		if (bias_grad.size() != 0)
+			_sum_grad_biases += bias_grad;
+
 		_accumulated_items_count++;
 	}
 

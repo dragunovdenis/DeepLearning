@@ -54,7 +54,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Default constructor
 		/// </summary>
-		LayerHandle() {}
+		LayerHandle() = default;
 
 		/// <summary>
 		/// Custom "packing" method

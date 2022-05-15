@@ -25,6 +25,7 @@
 #include <algorithm>
 #include "AvxAcceleration.h"
 #include "../IndexIterator.h"
+#include "../Diagnostics/Logging.h"
 
 #define USE_AVX2 //to use AVX2 instructions below
 
@@ -371,5 +372,10 @@ namespace DeepLearning
 		msgpack::type::make_define_array(_row_dim, _col_dim, proxy).msgpack_unpack(msgpack_o);
 		_data = reinterpret_cast<Real*>(std::malloc(size() * sizeof(Real)));
 		std::copy(proxy.begin(), proxy.end(), begin());
+	}
+
+	void Matrix::log(const std::filesystem::path& filename) const
+	{
+		Logging::log_as_table(get_handle(), row_dim(), col_dim(), filename);
 	}
 }

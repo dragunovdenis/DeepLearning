@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <numeric>
 #include <exception>
+#include <random>
 
 namespace DeepLearning
 {
@@ -107,4 +108,31 @@ namespace DeepLearning
 	Real& BasicCollection::operator [](const std::size_t& id) { return begin()[id]; };
 
 	const Real& BasicCollection::operator [](const std::size_t& id) const { return begin()[id]; };
+
+	std::vector<Real> BasicCollection::to_stdvector() const
+	{
+		return std::vector<Real>(begin(), end());
+	}
+
+	RealMemHandleConst BasicCollection::get_handle() const
+	{
+		return RealMemHandleConst(begin(), size());
+	}
+
+	RealMemHandle BasicCollection::get_handle()
+	{
+		return RealMemHandle(begin(), size());
+	}
+
+	void BasicCollection::standard_random_fill()
+	{
+		if (empty())
+			return;
+
+		static std::random_device rd;
+		static std::mt19937 gen(rd());
+		std::normal_distribution<Real> dist{ 0, Real(1) / Real(std::sqrt(size())) };
+
+		std::generate(begin(), end(), [&]() {return dist(gen); });
+	}
 }

@@ -24,6 +24,7 @@
 #include <thread>
 #include <ppl.h>
 #include "../IndexIterator.h"
+#include "../Diagnostics/Logging.h"
 
 namespace DeepLearning
 {
@@ -99,7 +100,7 @@ namespace DeepLearning
 		for (std::size_t layer_id = 0; layer_id < layers.size(); layer_id++)
 		{
 			const auto& layer = layers[layer_id].layer();
-			result.emplace_back(layer.weight_tensor_size(), layer.out_size());
+			result.emplace_back(layer.init_cumulative_gradient());
 		}
 
 		return result;
@@ -241,5 +242,16 @@ namespace DeepLearning
 			}, std::plus<int>());
 
 		return  correct_answers;
+	}
+
+	void Net::log(const std::filesystem::path& directory) const
+	{
+		for (auto layer_id = 0ull; layer_id < _layers.size(); layer_id++)
+		{
+			const auto layer_directory = directory / (std::string("layer_") + std::to_string(layer_id));
+			Logging::make_path(layer_directory);
+
+			_layers[layer_id].layer().log(layer_directory);
+		}
 	}
 }

@@ -18,6 +18,8 @@
 #pragma once
 #include <vector>
 #include "../Math/Tensor.h"
+#include "CummulativeGradient.h"
+#include <filesystem>
 
 namespace DeepLearning
 {
@@ -106,6 +108,20 @@ namespace DeepLearning
 		/// <param name="reg_factor">Regularization factor, that (if non-zero) 
 		/// results in term "reg_factor*w_i" being added to each weight "w_i" </param>
 		virtual void update(const std::tuple<std::vector<Tensor>, Tensor>& weights_and_biases_increment, const Real& reg_factor) = 0;
+
+		/// <summary>
+		/// Returns zero initialized instance of cumulative gradient suitable for the current instance of the layer
+		/// </summary>
+		virtual CummulativeGradient init_cumulative_gradient() const
+		{
+			return CummulativeGradient(weight_tensor_size(), out_size());
+		}
+
+		/// <summary>
+		/// Logs layer to the given directory (for diagnostic purposes)
+		/// </summary>
+		/// <param name="directory">Directory to log to</param>
+		virtual void log(const std::filesystem::path& directory) const = 0;
 	};
 
 }

@@ -160,6 +160,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="defs.h" />
+    <ClInclude Include="Diagnostics\Logging.h" />
     <ClInclude Include="Image8Bit.h" />
     <ClInclude Include="ImageProcessing\ImageUtils.h" />
     <ClInclude Include="IndexIterator.h" />
@@ -188,6 +189,7 @@
     <ClInclude Include="Utilities.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Diagnostics\Logging.cpp" />
     <ClCompile Include="Image8Bit.cpp" />
     <ClCompile Include="ImageProcessing\ImageUtils.cpp" />
     <ClCompile Include="Math\ActivationFunction.cpp" />

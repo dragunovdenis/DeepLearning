@@ -110,6 +110,11 @@ namespace DeepLearning
 		/// See the summary to the corresponding method in the base class
 		/// </summary>
 		void update(const std::tuple<std::vector<Tensor>, Tensor>& weights_and_biases_increment, const Real& reg_factor) override;
+
+		/// <summary>
+		/// See the summary to the corresponding method in the base class
+		/// </summary>
+		virtual void log(const std::filesystem::path& directory) const;
 	};
 
 }

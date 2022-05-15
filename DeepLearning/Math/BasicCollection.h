@@ -18,6 +18,7 @@
 #pragma once
 #include "../defs.h"
 #include <functional>
+#include "../Memory/MemHandle.h"
 
 namespace DeepLearning
 {
@@ -135,5 +136,27 @@ namespace DeepLearning
 		/// Method to abandon resources (should be called when the resources are "moved")
 		/// </summary>
 		virtual void abandon_resources() = 0;
+
+		/// <summary>
+		/// Converter to std::vector
+		/// </summary>
+		/// <returns></returns>
+		std::vector<Real> to_stdvector() const;
+
+		/// <summary>
+		/// Returns read-only memory handle to the data array of the tensor
+		/// </summary>
+		RealMemHandleConst get_handle() const;
+
+		/// <summary>
+		/// Returns memory handle to the data array of the tensor
+		/// </summary>
+		RealMemHandle get_handle();
+
+		/// <summary>
+		/// Fills the collection with normally distributed random values with zero mean
+		/// and standard deviation equal to one divided by the square root of the elements in the collection
+ 		/// </summary>
+		void standard_random_fill();
 	};
 }

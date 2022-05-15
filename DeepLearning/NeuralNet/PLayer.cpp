@@ -63,6 +63,9 @@ namespace DeepLearning
 		if (deltas.size_3d() != out_size())
 			throw std::exception("Unexpected size of the input tensor of derivatives");
 
+		if (!evaluate_input_gradient)
+			return std::make_tuple<Tensor, PLayer::LayerGradient>(Tensor(), { Tensor(), std::vector<Tensor>() });
+
 		const auto pool_operator_ptr = PoolOperator::make(weight_tensor_size(), _pool_operator_id);
 		auto input_grad = aux_learning_data.Input.pool_input_gradient(deltas, *pool_operator_ptr, _paddings, _strides);
 
@@ -74,5 +77,10 @@ namespace DeepLearning
 		//Sanity check 
 		if (std::get<0>(weights_and_biases_increment).size() != 0 || std::get<1>(weights_and_biases_increment).size() != 0)
 			throw std::exception("There should be no increments for weights and/or biases");
+	}
+
+	CummulativeGradient PLayer::init_cumulative_gradient() const
+	{
+		return CummulativeGradient(0, 0);
 	}
 }

@@ -22,6 +22,7 @@
 #include <functional>
 #include "../defs.h"
 #include "BasicCollection.h"
+#include <filesystem>
 
 namespace DeepLearning
 {
@@ -74,7 +75,7 @@ namespace DeepLearning
 		template <typename Packer>
 		void msgpack_pack(Packer& msgpack_pk) const
 		{
-			const auto proxy = std::vector<Real>(begin(), end());
+			const auto proxy = to_stdvector();
 			msgpack::type::make_define_array(_row_dim, _col_dim, proxy).msgpack_pack(msgpack_pk);
 		}
 
@@ -223,6 +224,12 @@ namespace DeepLearning
 		/// Method to abandon resources (should be called when the resources are "moved")
 		/// </summary>
 		void abandon_resources() override;
+
+		/// <summary>
+		/// Logs the matrix to a text file
+		/// </summary>
+		/// <param name="filename">Full name of the log file on disk</param>
+		void log(const std::filesystem::path& filename) const;
 	};
 
 	/// <summary>

@@ -43,6 +43,12 @@
     <Filter Include="Source Files\Memory">
       <UniqueIdentifier>{03a08d14-5ada-4c4d-b1d4-2551930563f3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Diagnostics">
+      <UniqueIdentifier>{b4bd6bf2-96be-4923-98e9-4efaf0260def}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Diagnostics">
+      <UniqueIdentifier>{a62ec974-f938-40ca-ae9f-c6debe1cb211}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="defs.h">
@@ -126,6 +132,9 @@
     <ClInclude Include="NeuralNet\PLayer.h">
       <Filter>Header Files\NeuralNet</Filter>
     </ClInclude>
+    <ClInclude Include="Diagnostics\Logging.h">
+      <Filter>Header Files\Diagnostics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Matrix.cpp">
@@ -193,6 +202,9 @@
     </ClCompile>
     <ClCompile Include="NeuralNet\PLayer.cpp">
       <Filter>Source Files\NeuralNet</Filter>
+    </ClCompile>
+    <ClCompile Include="Diagnostics\Logging.cpp">
+      <Filter>Source Files\Diagnostics</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

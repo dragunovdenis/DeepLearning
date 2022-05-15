@@ -49,7 +49,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Default constructor
 		/// </summary>
-		PLayer() {}
+		PLayer() = default;
 
 		/// <summary>
 		/// Constructor
@@ -91,5 +91,15 @@ namespace DeepLearning
 		/// For the "pooling" layer this method does nothing except a sanity check that the input increments are empty
 		/// </summary>
 		virtual void update(const std::tuple<std::vector<Tensor>, Tensor>& weights_and_biases_increment, const Real& reg_factor) override;
+
+		/// <summary>
+		/// Returns zero initialized instance of cumulative gradient suitable for the current instance of the layer
+		/// </summary>
+		virtual CummulativeGradient init_cumulative_gradient() const override;
+
+		/// <summary>
+		/// See description in the base class
+		/// </summary>
+		virtual void log(const std::filesystem::path& directory) const {/*do nothing since this layer does not have a "state" to log anything*/ }
 	};
 }

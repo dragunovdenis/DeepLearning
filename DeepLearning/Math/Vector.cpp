@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <numeric>
 #include "../IndexIterator.h"
+#include "..//Diagnostics/Logging.h"
 
 namespace DeepLearning
 {
@@ -92,11 +93,6 @@ namespace DeepLearning
 			_data = nullptr;
 		}
 		_dim = 0;
-	}
-
-	std::vector<Real> Vector::ToStdVector() const
-	{
-		return std::vector<Real>(begin(), end());
 	}
 
 	template <class S>
@@ -240,6 +236,11 @@ namespace DeepLearning
 		std::vector<Real> proxy;
 		msgpack::type::make_define_array(proxy).msgpack_unpack(msgpack_o);
 		assign(proxy);
+	}
+
+	void Vector::log(const std::filesystem::path& filename) const
+	{
+		Logging::log_as_table(get_handle(), dim(), 1, filename);
 	}
 
 	template Vector::Vector(const std::vector<unsigned char>& souurce);
