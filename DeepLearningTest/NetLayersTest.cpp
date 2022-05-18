@@ -189,7 +189,7 @@ namespace DeepLearningTest
 			const auto output_dim = 23;
 			const auto nl = NLayer(input_dim, output_dim, activation_func_id);
 
-			RunGeneralDerivativeWithRespectToInputValuesTest(nl, cost_function_id, (std::is_same_v<Real, double> ? Real(1e-9) : Real(5e-3)));
+			RunGeneralDerivativeWithRespectToInputValuesTest(nl, cost_function_id, (std::is_same_v<Real, double> ? Real(2e-9) : Real(5e-3)));
 		}
 
 		/// <summary>
@@ -263,7 +263,7 @@ namespace DeepLearningTest
 
 			RunGeneralDerivativeWithRespectToWeightsAndBiasesTest(nl, CostFunctionId::SQUARED_ERROR,
 				(std::is_same_v<Real, double> ? Real(3e-8) : Real(2e-1)),
-				(std::is_same_v<Real, double> ? Real(3e-9) : Real(3.5e-2)));
+				(std::is_same_v<Real, double> ? Real(5e-9) : Real(3.5e-2)));
 		}
 
 		TEST_METHOD(PLayerDerivativeWithRespectToInputValuesCalculationSquaredErrorTest)

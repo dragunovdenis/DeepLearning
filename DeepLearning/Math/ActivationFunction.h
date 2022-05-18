@@ -18,9 +18,12 @@
 #pragma once
 #include "DiffFunc.h"
 #include<msgpack.hpp>
+#include <memory>
 
 namespace DeepLearning
 {
+	class BasicCollection;
+
 	/// <summary>
 	/// Identifiers of different activation functions
 	/// </summary>
@@ -29,12 +32,64 @@ namespace DeepLearning
 		SIGMOID = 1, //Sigmoid activation function
 		TANH = 2, //Hyperbolic tangent activation function
 		RELU = 3, // rectified linear activation (unit)
+		SOFTMAX = 4,//soft-max function
 	};
 
 	/// <summary>
-	/// Interface for an activation function
+	/// General interface of an activation function
 	/// </summary>
-	class ActivationFuncion
+	template <class T>
+	class AFunction
+	{
+	public:
+
+		/// <summary>
+		/// The function
+		/// </summary>
+		virtual T operator ()(const T& input) const = 0;
+
+		/// <summary>
+		/// Calculates function and auxiliary data needed to calculate gradient with respect to the input
+		/// </summary>
+		virtual std::tuple<T, T> func_and_aux(const T& input) const = 0;
+
+		/// <summary>
+		/// Calculates gradient with respect to the function's input 
+		/// </summary>
+		/// <param name="out_grad">Gradient with respect to the function's output</param>
+		/// <param name="aux_data">Auxiliary data calculated by function "func_and_aux"</param>
+		virtual T calc_input_gradient(const BasicCollection& out_grad, const T& aux_data) const = 0;
+
+		/// <summary>
+		/// Virtual destructor to ensure proper releasing of the resources of descending classes
+		/// </summary>
+		virtual ~AFunction() {}
+	};
+
+	/// <summary>
+	/// Factory for instantiating activation functions by their identifiers
+	/// </summary>
+	template <class T>
+	class ActivationWrapper
+	{
+		std::unique_ptr<AFunction<T>> _func{};
+	public:
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		ActivationWrapper(const ActivationFunctionId id);
+
+		/// <summary>
+		/// Operator to access the reference to "wrapped" function
+		/// </summary>
+		const AFunction<T>& operator()() const;
+	};
+
+	/// <summary>
+	/// Activation function
+	/// </summary>
+	template <class T>
+	class ActivationFuncion : public AFunction<T>
 	{
 		std::unique_ptr<DiffFunc> _func{};
 
@@ -48,14 +103,55 @@ namespace DeepLearning
 		/// <summary>
 		/// The function
 		/// </summary>
-		template <class T>
-		T operator ()(const T& input) const;
+		virtual T operator ()(const T& input) const override;
 
 		/// <summary>
-		/// Calculates function and derivative with respect to the given input vector
+		/// Calculates function and auxiliary data needed to calculate gradient with respect to the input
 		/// </summary>
-		template <class T>
-		std::tuple<T, T> func_and_deriv(const T& input) const;
+		virtual std::tuple<T, T> func_and_aux(const T& input) const override;
+
+		/// <summary>
+		/// Calculates gradient with respect to the function's input 
+		/// </summary>
+		/// <param name="out_grad">Gradient with respect to the function's output</param>
+		/// <param name="aux_data">Auxiliary data calculated by function "func_and_aux"</param>
+		virtual T calc_input_gradient(const BasicCollection& out_grad, const T& aux_data) const override;
+	};
+
+	/// <summary>
+	/// Sort-max activation function
+	/// </summary>
+	template <class T>
+	class SoftMaxActivationFuncion : public AFunction<T>
+	{
+		/// <summary>
+		/// Calculates a collection containing exponents of the normalized input elements
+		/// </summary>
+		T calc_aux_data(const T& input) const;
+
+	public:
+
+		/// <summary>
+		/// Default constructor
+		/// </summary>
+		SoftMaxActivationFuncion() = default;
+
+		/// <summary>
+		/// The function
+		/// </summary>
+		virtual T operator ()(const T& input) const override;
+
+		/// <summary>
+		/// Calculates function and auxiliary data needed to calculate gradient with respect to the input
+		/// </summary>
+		virtual std::tuple<T, T> func_and_aux(const T& input) const override;
+
+		/// <summary>
+		/// Calculates gradient with respect to the function's input 
+		/// </summary>
+		/// <param name="out_grad">Gradient with respect to the function's output</param>
+		/// <param name="aux_data">Auxiliary data calculated by function "func_and_aux"</param>
+		virtual T calc_input_gradient(const BasicCollection& out_grad, const T& aux_data) const override;
 	};
 }
 

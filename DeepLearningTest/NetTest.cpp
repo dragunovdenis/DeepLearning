@@ -82,7 +82,6 @@ namespace DeepLearningTest
 
 			auto net = Net({ 784, (run_long_test ? 100ull : 30ull), 10 }, activ_func_ids);
 			const auto batch_size = 10;
-			const auto long_test = true;
 			const auto epochs_count = run_long_test ? 30 : 6;
 
 			const auto evaluation_action = [&](const auto epoch_id)
@@ -107,19 +106,19 @@ namespace DeepLearningTest
 		TEST_METHOD(TrainingWithQuadraticCostTest)
 		{
 			const bool long_test = false;
-			RunMnistBasedTrainingTest(CostFunctionId::SQUARED_ERROR, Real(2.0), long_test ? Real(0.97) : Real(0.95), long_test);
+			RunMnistBasedTrainingTest(CostFunctionId::SQUARED_ERROR, Real(1.0), long_test ? Real(0.976) : Real(0.95), long_test);
 		}
 
 		TEST_METHOD(TrainingWithQuadraticCostRegularizedTest)
 		{
 			const bool long_test = false;
-			RunMnistBasedTrainingTest(CostFunctionId::SQUARED_ERROR, Real(2.0), long_test ? Real(0.97) : Real(0.95), long_test, Real(1.0));
+			RunMnistBasedTrainingTest(CostFunctionId::SQUARED_ERROR, Real(1.0), long_test ? Real(0.976) : Real(0.95), long_test, Real(1.0));
 		}
 
 		TEST_METHOD(TrainingWithCrossEntropyCostTest)
 		{
 			const bool long_test = false;
-			RunMnistBasedTrainingTest(CostFunctionId::CROSS_ENTROPY, Real(0.5), long_test ? Real(0.97) : Real(0.95), long_test);
+			RunMnistBasedTrainingTest(CostFunctionId::CROSS_ENTROPY, Real(0.5), long_test ? Real(0.977) : Real(0.95), long_test);
 		}
 
 		TEST_METHOD(TrainingWithCrossEntropyCostRegularizedTest)
@@ -128,7 +127,7 @@ namespace DeepLearningTest
 			const bool long_test = false;
 			const auto trials_count = 1;
 			for (int i = 0; i < trials_count; i++)
-				average_accuracy += RunMnistBasedTrainingTest(CostFunctionId::CROSS_ENTROPY, Real(0.5), long_test ? Real(0.97) : Real(0.94), long_test, Real(6.0));
+				average_accuracy += RunMnistBasedTrainingTest(CostFunctionId::CROSS_ENTROPY, Real(0.2), long_test ? Real(0.97) : Real(0.95), long_test, Real(6.0));
 
 			Logger::WriteMessage((std::string("Average accuracy = ") +
 				std::to_string(average_accuracy/trials_count)).c_str());
@@ -137,14 +136,21 @@ namespace DeepLearningTest
 		TEST_METHOD(TrainingWithCrossEntropyCostAndTanhActivationTest)
 		{
 			const bool long_test = false;
-			RunMnistBasedTrainingTest(CostFunctionId::CROSS_ENTROPY, Real(0.1), long_test ? Real(0.97) : Real(0.946), long_test, Real(0),
+			RunMnistBasedTrainingTest(CostFunctionId::CROSS_ENTROPY, Real(0.1), long_test ? Real(0.974) : Real(0.946), long_test, Real(0),
 				{ActivationFunctionId::TANH, ActivationFunctionId::SIGMOID});
+		}
+
+		TEST_METHOD(TrainingWithCrossEntropyCostAndSoftMaxActivationTest)
+		{
+			const bool long_test = false;
+			RunMnistBasedTrainingTest(CostFunctionId::CROSS_ENTROPY, Real(0.1), long_test ? Real(0.978) : Real(0.95), long_test, Real(0),
+				{ ActivationFunctionId::SIGMOID, ActivationFunctionId::SOFTMAX });
 		}
 
 		TEST_METHOD(TrainingWithCrossEntropyCostAndReluActivationTest)
 		{
 			const bool long_test = false;
-			RunMnistBasedTrainingTest(CostFunctionId::CROSS_ENTROPY, Real(0.1), long_test ? Real(0.97) : Real(0.95), long_test, Real(0),
+			RunMnistBasedTrainingTest(CostFunctionId::CROSS_ENTROPY, Real(0.075), long_test ? Real(0.977) : Real(0.95), long_test, Real(0),
 				{ ActivationFunctionId::RELU, ActivationFunctionId::SIGMOID });
 		}
 

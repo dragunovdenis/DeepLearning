@@ -40,7 +40,7 @@ namespace DeepLearning
 		if (input.size_3d() != in_size())
 			throw std::exception("Unexpected size of the input tensor");
 
-		const auto function = ActivationFuncion(ActivationFunctionId(_func_id));
+		const auto function = ActivationWrapper<Tensor>(ActivationFunctionId(_func_id));
 
 		auto temp = Tensor(out_size(), false);
 
@@ -52,12 +52,12 @@ namespace DeepLearning
 		if (aux_learning_data_ptr)
 		{
 			aux_learning_data_ptr->Input = input;
-			auto [result, deriv] = function.func_and_deriv(temp);
+			auto [result, deriv] = function().func_and_aux(temp);
 			aux_learning_data_ptr->Derivatives = std::move(deriv);
 			return std::move(result);
 		}
 
-		return std::move(function(temp));
+		return std::move(function()(temp));
 	}
 
 	std::tuple<Tensor, CLayer::LayerGradient> CLayer::backpropagate(const Tensor& deltas, const AuxLearningData& aux_learning_data,
@@ -66,7 +66,8 @@ namespace DeepLearning
 		if (deltas.size_3d() != aux_learning_data.Derivatives.size_3d())
 			throw std::exception("Unexpected size of the input tensor of derivatives");
 
-		auto biases_grad = deltas.hadamard_prod(aux_learning_data.Derivatives);
+		const auto function = ActivationWrapper<Tensor>(ActivationFunctionId(_func_id));
+		auto biases_grad = function().calc_input_gradient(deltas, aux_learning_data.Derivatives);
 
 		auto filters_grad = std::vector<Tensor>(_filters.size());
 		Tensor input_grad(in_size(), true);

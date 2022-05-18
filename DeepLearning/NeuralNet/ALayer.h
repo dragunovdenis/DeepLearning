@@ -122,6 +122,11 @@ namespace DeepLearning
 		/// </summary>
 		/// <param name="directory">Directory to log to</param>
 		virtual void log(const std::filesystem::path& directory) const = 0;
+
+		/// <summary>
+		/// Virtual destructor to ensure that the resources of descending classes are properly released
+		/// </summary>
+		virtual ~ALayer() {}
 	};
 
 }

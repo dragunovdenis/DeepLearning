@@ -22,10 +22,18 @@
 namespace DeepLearning
 {
 	NLayer::NLayer(const std::size_t in_dim, const std::size_t out_dim, ActivationFunctionId func_id,
-		const Real rand_low, const Real rand_high)
+		const Real rand_low, const Real rand_high, const bool standard_init_for_weights)
 	{
 		_biases  = Vector(out_dim, rand_low, rand_high);
-		_weights = Matrix(out_dim, in_dim, rand_low, rand_high);
+
+		if (standard_init_for_weights)
+		{
+			_weights = Matrix(out_dim, in_dim, false);
+			_weights.standard_random_fill(Real(1) / std::sqrt(in_dim));
+		}
+		else
+			_weights = Matrix(out_dim, in_dim, rand_low, rand_high);
+
 		_func_id = func_id;
 	}
 
@@ -63,19 +71,19 @@ namespace DeepLearning
 
 	Tensor NLayer::act(const Tensor& input, AuxLearningData* const aux_learning_data_ptr) const
 	{
-		const auto function = ActivationFuncion(ActivationFunctionId(_func_id));
+		const auto function = ActivationWrapper<Vector>(ActivationFunctionId(_func_id));
 
 		const auto z = _weights.mul_add(input, _biases);
 
 		if (aux_learning_data_ptr)
 		{
 			aux_learning_data_ptr->Input = input;
-			auto [result, deriv] = function.func_and_deriv(z);
+			auto [result, deriv] = function().func_and_aux(z);
 			aux_learning_data_ptr->Derivatives = std::move(deriv);
 			return std::move(result);
 		}
 
-		return std::move(function(z));
+		return std::move(function()(z));
 	}
 
 	std::tuple<Tensor, NLayer::LayerGradient> NLayer::backpropagate(const Tensor& deltas,
@@ -84,7 +92,8 @@ namespace DeepLearning
 		if (deltas.size_3d() != Index3d{ 1, 1, static_cast<long long>(_biases.dim()) })
 			throw std::exception("Invalid input");
 
-		const auto biases_grad = deltas.hadamard_prod(aux_learning_data.Derivatives);
+		const auto function = ActivationWrapper<Tensor>(ActivationFunctionId(_func_id));
+		const auto biases_grad = function().calc_input_gradient(deltas, aux_learning_data.Derivatives);
 		auto weights_grad = vector_col_times_vector_row(biases_grad, aux_learning_data.Input);
 
 		return std::make_tuple<Tensor, NLayer::LayerGradient>(

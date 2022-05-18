@@ -27,8 +27,6 @@
 #include "../IndexIterator.h"
 #include "../Diagnostics/Logging.h"
 
-#define USE_AVX2 //to use AVX2 instructions below
-
 namespace DeepLearning
 {
 	/// <summary>

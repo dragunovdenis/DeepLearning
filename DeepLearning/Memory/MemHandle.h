@@ -50,6 +50,11 @@ namespace DeepLearning
 		/// <param name="size">Number of elements in handled memory</param>
 		MemHandleBase(T* const data, const std::size_t& size) : _size(size), _data(data)
 		{}
+
+		/// <summary>
+		/// Virtual destructor to ensure that the resources of descendant classes will be released properly
+		/// </summary>
+		virtual ~MemHandleBase() {};
 	};
 
 	/// <summary>

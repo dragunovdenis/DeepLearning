@@ -20,6 +20,7 @@
 #include <numeric>
 #include <exception>
 #include <random>
+#include "AvxAcceleration.h"
 
 namespace DeepLearning
 {
@@ -99,10 +100,30 @@ namespace DeepLearning
 		std::transform(begin(), end(), collection.begin(), begin(), [](const auto& x, const auto& y) { return x * y; });
 	}
 
+	Real BasicCollection::dot_product(const BasicCollection& collection) const
+	{
+		if (size() != collection.size())
+			throw std::exception("Inconsistent input data");
+
+#ifdef USE_AVX2
+		return Avx::mm256_dot_product(&*begin(), &*collection.begin(), size());
+#else
+		return std::inner_product(begin(), end(), collection.begin(), Real(0));
+#endif // USE_AVX2
+	}
+
 	std::size_t BasicCollection::max_element_id(const std::function<bool(Real, Real)>& comparer) const
 	{
 		const auto id = std::max_element(begin(), end(), comparer) - begin();
 		return static_cast<std::size_t>(id);
+	}
+
+	Real BasicCollection::max_element(const std::function<bool(Real, Real)>& comparer) const
+	{
+		if (empty())
+			return std::numeric_limits<Real>::quiet_NaN();
+
+		return *std::max_element(begin(), end(), comparer);
 	}
 
 	Real& BasicCollection::operator [](const std::size_t& id) { return begin()[id]; };
@@ -124,15 +145,25 @@ namespace DeepLearning
 		return RealMemHandle(begin(), size());
 	}
 
-	void BasicCollection::standard_random_fill()
+	void BasicCollection::standard_random_fill(const Real& sigma)
 	{
 		if (empty())
 			return;
 
 		static std::random_device rd;
 		static std::mt19937 gen(rd());
-		std::normal_distribution<Real> dist{ 0, Real(1) / Real(std::sqrt(size())) };
+		std::normal_distribution<Real> dist{ 0, sigma < Real(0) ? Real(1) / Real(std::sqrt(size())) : sigma };
 
 		std::generate(begin(), end(), [&]() {return dist(gen); });
+	}
+
+	bool BasicCollection::is_nan() const
+	{
+		return std::any_of(begin(), end(), [](const auto& x) { return std::isnan(x); });
+	}
+
+	bool BasicCollection::is_inf() const
+	{
+		return std::any_of(begin(), end(), [](const auto& x) { return std::isinf(x); });
 	}
 }

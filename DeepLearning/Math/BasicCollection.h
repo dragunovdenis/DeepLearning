@@ -127,10 +127,20 @@ namespace DeepLearning
 		}
 
 		/// <summary>
+		/// Calculates dot product with another collection of the same size
+		/// </summary>
+		Real dot_product(const BasicCollection& collection) const;
+
+		/// <summary>
 		/// Returns index of the "maximal element" defined by the given comparer
 		/// or "1" if the collection contains zero elements
 		/// </summary>
 		std::size_t max_element_id(const std::function<bool(Real, Real)>& comparer = [](const auto& a, const auto& b) {return a < b; }) const;
+
+		/// <summary>
+		/// Returns maximal element of the collection according to the given comparer or "nan" if the collection is empty
+		/// </summary>
+		Real max_element(const std::function<bool(Real, Real)>& comparer = [](const auto& a, const auto& b) {return a < b; }) const;
 
 		/// <summary>
 		/// Method to abandon resources (should be called when the resources are "moved")
@@ -155,8 +165,24 @@ namespace DeepLearning
 
 		/// <summary>
 		/// Fills the collection with normally distributed random values with zero mean
-		/// and standard deviation equal to one divided by the square root of the elements in the collection
+		/// and the given standard deviation "sigma", which is by default equal to one divided
+		/// by the square root of the elements in the collection
  		/// </summary>
-		void standard_random_fill();
+		void standard_random_fill(const Real& sigma = -1);
+
+		/// <summary>
+		/// Returns "true" if at least one element of the collection is "nan"
+		/// </summary>
+		bool is_nan() const;
+
+		/// <summary>
+		/// Returns "true" if at least one element of the collection is infinite (positive or negative)
+		/// </summary>
+		bool is_inf() const;
+
+		/// <summary>
+		/// Virtual destructor to ensure that resources of the descending classes are properly released
+		/// </summary>
+		virtual ~BasicCollection() {}
 	};
 }

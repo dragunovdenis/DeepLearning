@@ -17,7 +17,6 @@
 
 #include "Net.h"
 #include <numeric>
-#include <random>
 #include <algorithm>
 #include <exception>
 #include "CummulativeGradient.h"
@@ -40,18 +39,11 @@ namespace DeepLearning
 		if (layers_count != af_ids_local.size())
 			throw std::exception("Invalid collection of activation function identifiers.");
 
-		static std::random_device rd;
-		static std::mt19937 gen(rd());
-
 		for (std::size_t id = 1; id < layer_dimensions.size(); id++)
 		{
 			const auto in_dim = layer_dimensions[id - 1];
 			const auto out_dim = layer_dimensions[id];
-
-			std::normal_distribution<Real> dist{ 0, Real(1) / Real(std::sqrt(in_dim)) };
-
-			_layers.push_back(LayerHandle::make<NLayer>(Matrix(out_dim, in_dim, [&]() {return dist(gen); }),
-				Vector(out_dim, Real(-1), Real(1)), af_ids_local[id - 1]));
+			_layers.push_back(LayerHandle::make<NLayer>(in_dim, out_dim, af_ids_local[id - 1], Real(-1), Real(1), true));
 		}
 	}
 
@@ -135,7 +127,7 @@ namespace DeepLearning
 		//For some reason, this exact number of threads (when used in the parallel "for" loop below)
 		//gives the best performance on a PC with i7-10750H (the only PC where this code was
 		//tested so far). Whoever is reading this comment, feel free to try other numbers of the threads.
-		const auto threads_to_use = std::max<int>(1, physical_cores_count - 1);
+		const auto threads_to_use = std::max<int>(1, physical_cores_count);
 
 		std::mutex mutex;
 
@@ -157,7 +149,7 @@ namespace DeepLearning
 				const long long batch_end_elem_id = (training_items.size() - batch_start_elem_id) < 1.5 * batch_size ? 
 					training_items.size() : batch_start_elem_id + batch_size;
 
-				Concurrency::simple_partitioner splitter((batch_end_elem_id - batch_start_elem_id) / threads_to_use);
+				Concurrency::simple_partitioner splitter(std::max(2ull, (batch_end_elem_id - batch_start_elem_id) / threads_to_use));
 				concurrency::parallel_for<std::size_t>(batch_start_elem_id, batch_end_elem_id,
 					[&](const std::size_t elem_id)
 					{
