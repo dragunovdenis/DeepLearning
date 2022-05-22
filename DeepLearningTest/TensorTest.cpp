@@ -543,5 +543,46 @@ namespace DeepLearningTest
 			//Assert
 			Assert::IsTrue((result1 - result2).max_abs() < 10 * std::numeric_limits<Real>::epsilon(), L"Results are supposed to be the same");
 		}
+
+		void Pool2dTestGeneral(const bool max)
+		{
+			//Arrange
+			const auto tensor_size = Index3d{ 10, 11, 9 };
+			const auto tensor = TensorFactory(tensor_size);//filled with random numbers
+			Assert::IsTrue(tensor.max_abs() > 0, L"Tensor is expected to be nonzero");
+			const auto pool_window_size = Index2d(3, 4);
+
+			//Calculate reference
+			const auto kernel_size = Index3d(1, pool_window_size.x, pool_window_size.y);
+			const auto strides = kernel_size;
+			const auto paddings = Index3d{ 0, 0, 0 };
+			const auto pool_operator = max ? MaxPool(kernel_size).clone() : MinPool(kernel_size).clone();
+			//pool result reference
+			const auto pool_res_reference = tensor.pool(*pool_operator, paddings, strides);
+
+			const auto res_grad = Tensor(pool_res_reference.size_3d(), Real(-1), Real(1));
+			Assert::IsTrue(res_grad.max_abs() > Real(0), L"Result gradient is expected to be nonzero");
+
+			//pool input gradient reference
+			const auto input_gradient_reference = tensor.pool_input_gradient(res_grad, *pool_operator, paddings, strides);
+
+			//Act
+			const auto [pool_2d_res, out_to_in_mapping] = tensor.min_max_pool_2d(pool_window_size, max);
+			const auto input_2d__gradient = tensor.min_max_pool_2d_input_gradient(res_grad, out_to_in_mapping);
+
+			//Assert
+			Assert::IsTrue(pool_2d_res == pool_res_reference, L"Actual and expected values of the max pool result are different");
+			Assert::IsTrue(input_2d__gradient == input_gradient_reference, L"Actual and expected values of the max pool input gradient are different");
+		}
+
+		TEST_METHOD(MaxPool2dTest)
+		{
+			Pool2dTestGeneral(true /*max*/);
+		}
+
+		TEST_METHOD(MinPool2dTest)
+		{
+			Pool2dTestGeneral(false /*min*/);
+		}
 	};
 }

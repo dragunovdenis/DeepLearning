@@ -168,7 +168,7 @@ namespace DeepLearning
 
 						std::lock_guard guard(mutex);
 						for (std::size_t layer_id = 0; layer_id < _layers.size(); layer_id++)
-							gradient_collectors[layer_id].Add(back_prop_out[layer_id].Weights_grad, back_prop_out[layer_id].Biases_grad);
+							gradient_collectors[layer_id].add(back_prop_out[layer_id].Weights_grad, back_prop_out[layer_id].Biases_grad);
 					}, splitter);
 
 				batch_start_elem_id = batch_end_elem_id;

@@ -28,7 +28,7 @@ namespace DeepLearning
 		_sum_grad_biases = Tensor(bias_tensor_size);
 	}
 
-	void CummulativeGradient::Add(const std::vector<Tensor>& weight_grad, const Tensor& bias_grad)
+	void CummulativeGradient::add(const std::vector<Tensor>& weight_grad, const Tensor& bias_grad)
 	{
 		if (weight_grad.size() != 0)
 			_sum_grad_weights += weight_grad;
@@ -37,6 +37,17 @@ namespace DeepLearning
 			_sum_grad_biases += bias_grad;
 
 		_accumulated_items_count++;
+	}
+
+	void CummulativeGradient::add(const CummulativeGradient& gradient)
+	{
+		if (gradient._sum_grad_weights.size() != 0)
+			_sum_grad_weights += gradient._sum_grad_weights;
+
+		if (gradient._sum_grad_biases.size() != 0)
+			_sum_grad_biases += gradient._sum_grad_biases;
+
+		_accumulated_items_count += gradient._accumulated_items_count;
 	}
 
 	std::tuple<std::vector<Tensor>, Tensor> CummulativeGradient::calc_average_grarient(const Real scale_factor) const

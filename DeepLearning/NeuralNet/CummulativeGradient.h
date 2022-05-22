@@ -61,7 +61,12 @@ namespace DeepLearning
 		/// </summary>
 		/// <param name="weight_grad">"Partial" gradient with respect to weights</param>
 		/// <param name="bias_grad">"Partial" gradient with respect to biases</param>
-		void Add(const std::vector<Tensor>& weight_grad, const Tensor& bias_grad);
+		void add(const std::vector<Tensor>& weight_grad, const Tensor& bias_grad);
+
+		/// <summary>
+		/// Adds data from another cummulative gradient
+		/// </summary>
+		void add(const CummulativeGradient& gradient);
 
 		/// <summary>
 		/// Calculates and returns the "average" gradient with respect to layer weights and biases

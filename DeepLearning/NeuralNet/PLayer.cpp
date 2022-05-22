@@ -19,11 +19,10 @@
 
 namespace DeepLearning
 {
-	PLayer::PLayer(const Index3d& in_size, const Index2d& pool_window_size, const PoolTypeId pool_operator_id, const Index3d& strides)
-		: _in_size(in_size), _pool_window_size(1, pool_window_size.x, pool_window_size.y), _strides(strides), _pool_operator_id(pool_operator_id)
+	PLayer::PLayer(const Index3d& in_size, const Index2d& pool_window_size, const PoolTypeId pool_operator_id)
+		: _in_size(in_size), _pool_window_size(1, pool_window_size.x, pool_window_size.y), _pool_operator_id(pool_operator_id)
 	{
-		if (_strides == Index3d{ 0 })
-			_strides = _pool_window_size;
+		_strides = _pool_window_size;
 	}
 
 	Index3d PLayer::in_size() const
@@ -46,14 +45,23 @@ namespace DeepLearning
 		if (input.size_3d() != in_size())
 			throw std::exception("Unexpected size of the input tensor");
 
-		const auto pool_operator_ptr = PoolOperator::make(weight_tensor_size(), _pool_operator_id);
-
 		if (aux_learning_data_ptr)
 		{
 			aux_learning_data_ptr->Input = input;
 			aux_learning_data_ptr->Derivatives = Tensor({0});
 		}
 
+		if (_pool_operator_id == PoolTypeId::MIN || _pool_operator_id == PoolTypeId::MAX)
+		{
+			auto [pool_result, index_mapping] = input.min_max_pool_2d({ _pool_window_size.y, _pool_window_size.z }, _pool_operator_id == PoolTypeId::MAX);
+
+			if (aux_learning_data_ptr)
+				aux_learning_data_ptr->IndexMapping = std::move(index_mapping);
+
+			return std::move(pool_result);
+		}
+
+		const auto pool_operator_ptr = PoolOperator::make(weight_tensor_size(), _pool_operator_id);
 		return std::move(input.pool(*pool_operator_ptr, _paddings, _strides));
 	}
 
@@ -65,6 +73,15 @@ namespace DeepLearning
 
 		if (!evaluate_input_gradient)
 			return std::make_tuple<Tensor, PLayer::LayerGradient>(Tensor(), { Tensor(), std::vector<Tensor>() });
+
+		if (_pool_operator_id == PoolTypeId::MIN || _pool_operator_id == PoolTypeId::MAX)
+		{
+			if (aux_learning_data.IndexMapping.size() != out_size().coord_prod())
+				throw std::exception("Invalid index mapping");
+
+			auto input_grad = aux_learning_data.Input.min_max_pool_2d_input_gradient(deltas, aux_learning_data.IndexMapping);
+			return std::make_tuple<Tensor, PLayer::LayerGradient>(std::move(input_grad), { Tensor(), std::vector<Tensor>() });
+		}
 
 		const auto pool_operator_ptr = PoolOperator::make(weight_tensor_size(), _pool_operator_id);
 		auto input_grad = aux_learning_data.Input.pool_input_gradient(deltas, *pool_operator_ptr, _paddings, _strides);

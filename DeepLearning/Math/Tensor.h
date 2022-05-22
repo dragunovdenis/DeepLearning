@@ -21,6 +21,7 @@
 #include "BasicCollection.h"
 #include <filesystem>
 #include "LinAlg3d.h"
+#include "LinAlg2d.h"
 
 namespace DeepLearning
 {
@@ -362,6 +363,25 @@ namespace DeepLearning
 		/// <param name="strides">Strides defining movement of the "window"</param>
 		Tensor pool_input_gradient(const RealMemHandleConst& pool_res_grad, const PoolOperator& pool_operator, const Index3d& paddings,
 			const Index3d& strides) const;
+
+		/// <summary>
+		/// Min-max specialized version of pool algorithm, which is more optimal than the "pool" method above with the corresponding pool-operator.
+		/// Simplified version, with zero paddings and strides equal to the window dimensions.
+		/// Returns a tuple containing the result of pooling and an vector of indices which is a mapping from the indices of flattened result
+		/// of the pooling to the flattened indices of input elements that have been pooled pooling.
+		/// The mapping allows to simplify a back-propagation procedure.
+		/// </summary>
+		/// <param name="window">Operation window size</param>
+		/// <param name="max">If "true" the method implements "max pulling" otherwise -- "min pulling";</param>
+		/// <returns></returns>
+		std::tuple<Tensor, std::vector<std::size_t>> min_max_pool_2d(const Index2d& window_size, const bool max) const;
+
+		/// <summary>
+		/// Returns gradient of some function F with respect to the min/max 2d pool input tensor I: dF/dI
+		/// </summary>
+		/// <param name="pool_res_gradient">Gradient of the function F with respect to the min/max 2d pool output tensor O: dF/dO</param>
+		/// <param name="out_to_in_mapping">Min/max 2d pool output to input flattened index mapping (the second item in the tuple returned by min_max_pool_2d)</param>
+		Tensor min_max_pool_2d_input_gradient(const Tensor& pool_res_gradient, const std::vector<std::size_t>& out_to_in_mapping) const;
 
 		/// <summary>
 		/// Returns read-only memory handle to the layer with given index

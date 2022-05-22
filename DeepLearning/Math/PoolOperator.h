@@ -85,6 +85,11 @@ namespace DeepLearning
 		/// <param name="operation_window_size">Operation window size of the pool operator to be constructed</param>
 		/// <param name="pool_type_id">Pool operator type identifier</param>
 		static std::unique_ptr<PoolOperator> make(const Index3d& operation_window_size, const PoolTypeId& pool_type_id);
+
+		/// <summary>
+		/// Virtual destructor to ensure that instances of descending classes do not have issues with not released resources
+		/// </summary>
+		virtual ~PoolOperator() {};
 	};
 
 	/// <summary>
@@ -117,6 +122,7 @@ namespace DeepLearning
 	/// </summary>
 	class MaxPool : public PoolOperator
 	{
+	protected:
 		Real _max_val{};
 		Index3d _max_val_id{};
 	public:
@@ -135,6 +141,26 @@ namespace DeepLearning
 
 		std::shared_ptr<PoolOperator> clone() const override;
 	};
+
+	/// <summary>
+	/// An agent to facilitate "min pool" operation
+	/// </summary>
+	class MinPool : public MaxPool
+	{
+	public:
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		/// <param name="size"></param>
+		MinPool(const Index3d& size) : MaxPool(size) { reset(); }
+
+		void add(const Index3d& id, const Real value) override;
+
+		void reset() override;
+
+		std::shared_ptr<PoolOperator> clone() const override;
+	};
+
 
 	class Tensor;
 

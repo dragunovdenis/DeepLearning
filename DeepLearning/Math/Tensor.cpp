@@ -581,6 +581,66 @@ namespace DeepLearning
 		return pool_input_gradient(pool_res_grad.get_handle(), pool_operator, paddings, strides);
 	}
 
+	std::tuple<Tensor, std::vector<std::size_t>> Tensor::min_max_pool_2d(const Index2d& window_size, const bool max) const
+	{
+		const auto paddings = Index3d{ 0 };
+		const auto kernel_size = Index3d(1ll, window_size.x, window_size.y);
+		const auto strides = kernel_size;
+			const auto tensor_size = size_3d();
+		const auto result_size = calc_conv_res_size(tensor_size, kernel_size, paddings, strides);
+
+		auto result = Tensor(result_size, false);
+		auto out_to_in_map = std::vector<std::size_t>(result.size());
+
+		const auto init_val = max ? -std::numeric_limits<Real>::max() : std::numeric_limits<Real>::max();
+
+		const auto comparer = max ? (std::function<bool(const Real&, const Real&)>)[](const auto& a, const auto& b) { return a < b; } : [](const auto& a, const auto& b) { return a > b; };
+
+		for (std::size_t res_data_id = 0; res_data_id < result.size(); res_data_id++)
+		{
+			const auto result_offsets = data_id_to_index_3d_internal(res_data_id, result_size);
+			const auto [tensor_offsets, kernel_start_offsets, kernel_stop_offsets] =
+				calc_kernel_loop_offsets(result_offsets, tensor_size, kernel_size, paddings, strides);
+
+			auto pool_res = init_val;
+			const auto t_x = tensor_offsets.x + kernel_start_offsets.x;
+			for (auto k_y = kernel_start_offsets.y; k_y < kernel_stop_offsets.y; k_y++)
+			{										
+				const auto t_y = tensor_offsets.y + k_y;	
+				for (auto k_z = kernel_start_offsets.z; k_z < kernel_stop_offsets.z; k_z++)
+				{
+					const auto t_z = tensor_offsets.z + k_z;
+
+					const auto tensor_data_id = coords_to_data_id(t_x, t_y, t_z);
+					const auto& current_val = _data[tensor_data_id];
+					if (comparer(pool_res, current_val))
+					{
+						pool_res = current_val;
+						out_to_in_map[res_data_id] = tensor_data_id;
+					}
+				}
+			}
+
+			result._data[res_data_id] = pool_res;
+		}
+
+		return std::make_tuple(result, out_to_in_map);
+	}
+
+	Tensor Tensor::min_max_pool_2d_input_gradient(const Tensor& pool_res_gradient, const std::vector<std::size_t>& out_to_in_mapping) const
+	{
+		if (pool_res_gradient.size() != out_to_in_mapping.size())
+			throw std::exception("Inconsistent input");
+
+		auto result = Tensor(size_3d(), true/*zeros initialization*/);
+
+		auto map_ptr = out_to_in_mapping.begin();
+		for (auto grad_ptr = pool_res_gradient.begin(); grad_ptr != pool_res_gradient.end(); grad_ptr++, map_ptr++)
+			result._data[*map_ptr] = *grad_ptr;
+
+		return result;
+	}
+
 	void Tensor::msgpack_unpack(msgpack::object const& msgpack_o)
 	{
 		std::vector<Real> proxy;

@@ -43,6 +43,11 @@ namespace DeepLearning
 			/// Container to store derivatives of the activation function
 			/// </summary>
 			Tensor Derivatives{};
+
+			/// <summary>
+			/// Place holder for index mappings
+			/// </summary>
+			std::vector<std::size_t> IndexMapping{};
 		};
 
 		/// <summary>

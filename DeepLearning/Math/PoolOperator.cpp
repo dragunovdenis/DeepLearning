@@ -108,6 +108,27 @@ namespace DeepLearning
 		return std::make_shared<MaxPool>(*this);
 	}
 
+	void MinPool::add(const Index3d& id, const Real value)
+	{
+		if (value < _max_val)
+		{
+			_max_val = value;
+			_max_val_id = id;
+		}
+	}
+
+	void MinPool::reset()
+	{
+		_max_val = std::numeric_limits<Real>::max();
+		_max_val_id = { -1, -1, -1 };
+	}
+
+	std::shared_ptr<PoolOperator> MinPool::clone() const
+	{
+		return std::make_shared<MinPool>(*this);
+	}
+
+
 	void KernelPool::add(const Index3d& id, const Real value)
 	{
 		_conv_result += _kernel(id.x, id.y, id.z) * value;
