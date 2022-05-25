@@ -27,7 +27,7 @@
 namespace DeepLearning
 {
 	/// <summary>
-	/// "Convolution" layer
+	/// Convolutional layer
 	/// </summary>
 	class CLayer : public ALayer
 	{
