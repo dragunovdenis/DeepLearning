@@ -100,4 +100,11 @@ namespace DeepLearning
 	{
 		return CummulativeGradient(0, 0);
 	}
+
+	std::string PLayer::to_string() const
+	{
+		return DeepLearning::to_string(PLayer::ID()) + "; Input size: " + in_size().to_string() +
+			"; Out size: " + out_size().to_string() + "; Filter size: " + weight_tensor_size().to_string() +
+			"; Pool type: " + DeepLearning::to_string(_pool_operator_id);
+	}
 }

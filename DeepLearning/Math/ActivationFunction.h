@@ -36,6 +36,16 @@ namespace DeepLearning
 	};
 
 	/// <summary>
+	/// Returns string representation of the given activation function type identifier
+	/// </summary>
+	std::string to_string(const ActivationFunctionId& activation_type_id);
+
+	/// <summary>
+	/// Parses given string to the activation function identifier
+	/// </summary>
+	ActivationFunctionId parse_activation_type(const std::string& str);
+
+	/// <summary>
 	/// General interface of an activation function
 	/// </summary>
 	template <class T>

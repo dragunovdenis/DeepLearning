@@ -124,4 +124,10 @@ namespace DeepLearning
 		_weights.log(directory / "weights.txt");
 		_biases.log(directory / "biases.txt");
 	}
+
+	std::string NLayer::to_string() const
+	{
+		return DeepLearning::to_string(NLayer::ID()) + "; Input size: " + in_size().to_string() + "; Out size: " + out_size().to_string() + 
+			"; Activation: " + DeepLearning::to_string(_func_id);
+	}
 }

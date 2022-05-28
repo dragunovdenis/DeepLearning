@@ -206,6 +206,7 @@
     <ClCompile Include="NeuralNet\CLayer.cpp" />
     <ClCompile Include="NeuralNet\CummulativeGradient.cpp" />
     <ClCompile Include="NeuralNet\LayerHandle.cpp" />
+    <ClCompile Include="NeuralNet\LayerTypeId.cpp" />
     <ClCompile Include="NeuralNet\LayerTypeId.h" />
     <ClCompile Include="NeuralNet\Net.cpp" />
     <ClCompile Include="NeuralNet\NLayer.cpp" />

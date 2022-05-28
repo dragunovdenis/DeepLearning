@@ -33,6 +33,17 @@ namespace DeepLearning
 	};
 
 	/// <summary>
+	/// Returns string representation of the given pool type type identifier
+	/// </summary>
+	std::string to_string(const PoolTypeId& pool_type_id);
+
+	/// <summary>
+	/// Parses given string to the pool type identifier
+	/// </summary>
+	PoolTypeId parse_pool_type(const std::string& str);
+
+
+	/// <summary>
 	/// Abstract interface of a "pool operator" which is supposed to facilitate such operations as 
 	/// min/max/average pooling
 	/// </summary>

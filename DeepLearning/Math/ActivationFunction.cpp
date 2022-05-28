@@ -149,6 +149,32 @@ namespace DeepLearning
 		return *_func;
 	}
 
+	std::string to_string(const ActivationFunctionId& activation_type_id)
+	{
+		switch (activation_type_id)
+		{
+		case ActivationFunctionId::SIGMOID: return "SIGMOID";
+		case ActivationFunctionId::TANH: return "TANH";
+		case ActivationFunctionId::RELU: return "RELU";
+		case ActivationFunctionId::SOFTMAX: return "SOFTMAX";
+		default:
+			return "UNKNOWN";
+		}
+	}
+
+	ActivationFunctionId parse_activation_type(const std::string& str)
+	{
+		const auto str_normalized = Utils::to_upper_case(Utils::remove_leading_trailing_extra_spaces(str));
+
+		for (unsigned int id = (unsigned int)ActivationFunctionId::SIGMOID; id <= (unsigned int)ActivationFunctionId::SOFTMAX; id++)
+		{
+			if (to_string((ActivationFunctionId)id) == str_normalized)
+				return (ActivationFunctionId)id;
+		}
+
+		return ActivationFunctionId::UNKNOWN;
+	}
+
 	template class ActivationFuncion<Vector>;
 	template class ActivationFuncion<Matrix>;
 	template class ActivationFuncion<Tensor>;

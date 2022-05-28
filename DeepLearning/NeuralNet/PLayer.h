@@ -99,5 +99,10 @@ namespace DeepLearning
 		/// See description in the base class
 		/// </summary>
 		virtual void log(const std::filesystem::path& directory) const {/*do nothing since this layer does not have a "state" to log anything*/ }
+
+		/// <summary>
+		/// See the summary to the corresponding method in the base class
+		/// </summary>
+		virtual std::string to_string() const override;
 	};
 }

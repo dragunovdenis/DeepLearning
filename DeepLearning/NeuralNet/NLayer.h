@@ -115,6 +115,11 @@ namespace DeepLearning
 		/// See the summary to the corresponding method in the base class
 		/// </summary>
 		virtual void log(const std::filesystem::path& directory) const;
+
+		/// <summary>
+		/// See the summary to the corresponding method in the base class
+		/// </summary>
+		virtual std::string to_string() const override;
 	};
 
 }

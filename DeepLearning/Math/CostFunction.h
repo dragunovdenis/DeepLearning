@@ -32,6 +32,16 @@ namespace DeepLearning
 	};
 
 	/// <summary>
+	/// Returns string representation of the given cost function type identifier
+	/// </summary>
+	std::string to_string(const CostFunctionId& cost_type_id);
+
+	/// <summary>
+	/// Parses given string to the cost function identifier
+	/// </summary>
+	CostFunctionId parse_cost_type(const std::string& str);
+
+	/// <summary>
 	/// Representation of the cost function that is used in the neural networks learning process
 	/// </summary>
 	class CostFunction

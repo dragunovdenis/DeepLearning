@@ -15,31 +15,33 @@
 //OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#pragma once
-#include <msgpack.hpp>
-#include <string>
+#include "LayerTypeId.h"
+#include "../Utilities.h"
 
 namespace DeepLearning
 {
-	/// <summary>
-	/// Enumerable describes different types of neural layers
-	/// </summary>
-	enum class LayerTypeId : unsigned int {
-		UNKNOWN = 0,
-		FULL = 1, //a fully connected neural layer
-		CONVOLUTION = 2,//a convolution neural layer
-		PULL = 3,//a pulling neural layer 
-	};
+	std::string to_string(const LayerTypeId& layer_type_id)
+	{
+		switch (layer_type_id)
+		{
+		case LayerTypeId::CONVOLUTION: return "CONVOLUTION";
+		case LayerTypeId::FULL: return "FULL";
+		case LayerTypeId::PULL: return "PULL";
+		default:
+			return "UNKNOWN";
+		}
+	}
 
-	/// <summary>
-	/// Returns string representation of the given later type identifier
-	/// </summary>
-	std::string to_string(const LayerTypeId& layer_type_id);
+	LayerTypeId parse_layer_type(const std::string& str)
+	{
+		const auto str_normalized = Utils::to_upper_case(Utils::remove_leading_trailing_extra_spaces(str));
 
-	/// <summary>
-	/// Parses given string to the layer identifier
-	/// </summary>
-	LayerTypeId parse_layer_type(const std::string& str);
+		for (unsigned int id = (unsigned int)LayerTypeId::FULL; id <= (unsigned int)LayerTypeId::PULL; id++)
+		{
+			if (to_string((LayerTypeId)id) == str_normalized)
+				return (LayerTypeId)id;
+		}
+
+		return LayerTypeId::UNKNOWN;
+	}
 }
-
-MSGPACK_ADD_ENUM(DeepLearning::LayerTypeId)

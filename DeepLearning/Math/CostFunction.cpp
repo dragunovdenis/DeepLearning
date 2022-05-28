@@ -85,6 +85,30 @@ namespace DeepLearning
 		return std::make_tuple(func_val, deriv);
 	}
 
+	std::string to_string(const CostFunctionId& cost_type_id)
+	{
+		switch (cost_type_id)
+		{
+		case CostFunctionId::SQUARED_ERROR: return "SQUARED_ERROR";
+		case CostFunctionId::CROSS_ENTROPY: return "CROSS_ENTROPY";
+		default:
+			return "UNKNOWN";
+		}
+	}
+
+	CostFunctionId parse_cost_type(const std::string& str)
+	{
+		const auto str_normalized = Utils::to_upper_case(Utils::remove_leading_trailing_extra_spaces(str));
+
+		for (unsigned int id = (unsigned int)CostFunctionId::SQUARED_ERROR; id <= (unsigned int)CostFunctionId::CROSS_ENTROPY; id++)
+		{
+			if (to_string((CostFunctionId)id) == str_normalized)
+				return (CostFunctionId)id;
+		}
+
+		return CostFunctionId::UNKNOWN;
+	}
+
 	template Real CostFunction::operator ()(const Vector& output, const Vector& reference) const;
 	template Real CostFunction::operator ()(const Matrix& output, const Matrix& reference) const;
 	template Real CostFunction::operator ()(const Tensor& output, const Tensor& reference) const;

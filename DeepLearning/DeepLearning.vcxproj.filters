@@ -206,6 +206,9 @@
     <ClCompile Include="Diagnostics\Logging.cpp">
       <Filter>Source Files\Diagnostics</Filter>
     </ClCompile>
+    <ClCompile Include="NeuralNet\LayerTypeId.cpp">
+      <Filter>Source Files\NeuralNet</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

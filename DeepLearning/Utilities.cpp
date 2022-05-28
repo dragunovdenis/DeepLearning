@@ -16,6 +16,7 @@
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "Utilities.h"
+#include <regex>
 
 namespace DeepLearning::Utils
 {
@@ -37,5 +38,36 @@ namespace DeepLearning::Utils
 
         const auto interval_length = (max - min) + 1;
         return dist(gen) % interval_length + min;
+    }
+
+    std::string extract_vector_sub_string(std::string& str)
+    {
+        const auto vector_end_pos = str.find("}");
+
+        if (vector_end_pos == std::string::npos)
+            throw std::exception("Closing bracket not found");
+
+        const auto vector_start_pos = str.find("{");
+
+        if (vector_start_pos == std::string::npos || vector_start_pos > vector_end_pos)
+            throw std::exception("Opening bracket not found");
+
+        const auto result = str.substr(vector_start_pos + 1, vector_end_pos - vector_start_pos - 1);
+        str.erase(vector_start_pos, vector_end_pos - vector_start_pos + 1);
+
+        return result;
+    }
+
+    std::string remove_leading_trailing_extra_spaces(const std::string& str)
+    {
+        return std::regex_replace(str, std::regex("^ +| +$|( ) +"), "$1");
+    }
+
+    std::string to_upper_case(const std::string& str)
+    {
+        auto result = str;
+        std::transform(str.begin(), str.end(), result.begin(), ::toupper);
+
+        return result;
     }
 }

@@ -22,7 +22,9 @@
 #include <ios>
 #include "defs.h"
 #include <cmath>
+#include <string>
 #include <sstream>
+#include <vector>
 
 namespace DeepLearning::Utils
 {
@@ -92,4 +94,56 @@ namespace DeepLearning::Utils
 
         return val;
     }
+
+    /// <summary>
+    /// Parses given string, which is supposed to contain comma, semicolon or space separated values of type `R`
+    /// Does not parse past the first illegal character
+    /// </summary>
+    template <class R>
+    std::vector<R> parse_scalars(const std::string& str)
+    {
+        std::string str_clean;
+        std::replace_copy_if(str.begin(), str.end(), std::back_inserter<std::string>(str_clean),
+            [](const auto x) {
+                return x == ',' || x == ';';
+            }, ' ');
+
+        std::istringstream str_clean_stream(str_clean);
+
+        std::vector<R> result;
+
+        R temp;
+        while (str_clean_stream >> temp)
+            result.push_back(temp);
+
+        return result;
+    }
+
+    /// <summary>
+    /// From the given string extracts the leftmost sub-string of the form "{...}" (the input string gets updated)
+    /// Returns what is enclosed in curly brackets of the extracted sub-string
+    /// Throws an exception if no valid sub-string of the form "{...}" is found
+    /// </summary>
+    std::string extract_vector_sub_string(std::string& str);
+
+    /// <summary>
+    /// From the given string extracts and parse the leftmost sub-string of the form "{...}" (the input string gets updated)
+    /// The sub-string in the brackets is supposed to contain comma, semicolon or space separated strings that can be parsed
+    /// into variables of type `R`; Returns vector of parsed values
+    /// </summary>
+    template <class R>
+    std::vector<R> parse_vector(std::string& str)
+    {
+        return parse_scalars<R>(extract_vector_sub_string(str));
+    }
+
+    /// <summary>
+    /// Removes leading trailing and extra spaces from the input string and returns the result
+    /// </summary>
+    std::string remove_leading_trailing_extra_spaces(const std::string& str);
+
+    /// <summary>
+    /// Converts the given string to upper case and returns the result
+    /// </summary>
+    std::string to_upper_case(const std::string& str);
 }

@@ -20,6 +20,7 @@
 #include "../Math/Tensor.h"
 #include "CummulativeGradient.h"
 #include <filesystem>
+#include <string>
 
 namespace DeepLearning
 {
@@ -132,6 +133,10 @@ namespace DeepLearning
 		/// Virtual destructor to ensure that the resources of descending classes are properly released
 		/// </summary>
 		virtual ~ALayer() {}
-	};
 
+		/// <summary>
+		/// Returns a human-readable description of the layer
+		/// </summary>
+		virtual std::string to_string() const = 0;
+	};
 }

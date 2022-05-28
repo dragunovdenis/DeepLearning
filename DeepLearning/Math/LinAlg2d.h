@@ -171,6 +171,40 @@ namespace DeepLearning
 		/// Constructors a vector with all the coordinates equal to the given value `w`
 		/// </summary>
 		Vector2d(const R& w) : x(w), y(w) {}
+
+		/// <summary>
+		/// Returns a human-readable representation of the vector
+		/// </summary>
+		std::string to_string() const
+		{
+			return std::string("{") + Utils::to_string(x) + ", " + Utils::to_string(y) + "}";
+		}
+
+		/// <summary>
+		/// Tries to parse the given string consisting of 2 comma, semicolon or space separated sub-strings that are "compatible" with type `R`
+		/// into an instance of Vector2d<R>. Returns "true" if parsing succeeds, in which case "out" argument is assigned with parsed values.
+		/// Otherwise, "out" argument is assumed to be invalid
+		/// </summary>
+		static bool try_parse(const std::string& str, Vector2d<R>& out)
+		{
+			const auto scalars = Utils::parse_scalars(str);
+
+			if (scalars.size() == 1)
+			{
+				out.x = scalars[0];
+				out.y = scalars[0];
+				return true;
+			}
+
+			if (scalars.size() == 2)
+			{
+				out.x = scalars[0];
+				out.y = scalars[1];
+				return true;
+			}
+
+			return false;
+		}
 	};
 
 	/// <summary>

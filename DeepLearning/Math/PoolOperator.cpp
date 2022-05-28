@@ -153,4 +153,29 @@ namespace DeepLearning
 	{
 		return std::make_shared<KernelPool>(*this);
 	}
+
+	std::string to_string(const PoolTypeId& pool_type_id)
+	{
+		switch (pool_type_id)
+		{
+		case PoolTypeId::MAX: return "MAX";
+		case PoolTypeId::MIN: return "MIN";
+		case PoolTypeId::AVERAGE: return "AVERAGE";
+		default:
+			return "UNKNOWN";
+		}
+	}
+
+	PoolTypeId parse_pool_type(const std::string& str)
+	{
+		const auto str_normalized = Utils::to_upper_case(Utils::remove_leading_trailing_extra_spaces(str));
+
+		for (unsigned int id = (unsigned int)PoolTypeId::MAX; id <= (unsigned int)PoolTypeId::AVERAGE; id++)
+		{
+			if (to_string((PoolTypeId)id) == str_normalized)
+				return (PoolTypeId)id;
+		}
+
+		return PoolTypeId::UNKNOWN;
+	}
 }

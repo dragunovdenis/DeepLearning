@@ -134,4 +134,11 @@ namespace DeepLearning
 			_filters[filter_id].log(filter_folder, "channel");
 		}
 	}
+
+	std::string CLayer::to_string() const
+	{
+		return DeepLearning::to_string(CLayer::ID()) + "; Input size: " + in_size().to_string() +
+			"; Out size: " + out_size().to_string() + "; Filter size: " + weight_tensor_size().to_string() +
+			"; Activation: " + DeepLearning::to_string(_func_id);
+	}
 }
