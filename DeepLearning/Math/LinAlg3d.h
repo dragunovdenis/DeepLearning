@@ -175,7 +175,7 @@ namespace DeepLearning
 		/// </summary>
 		static bool try_parse(const std::string& str, Vector3d<T>& out)
 		{
-			const auto scalars = Utils::parse_scalars(str);
+			const auto scalars = Utils::parse_scalars<T>(str);
 
 			if (scalars.size() == 1)
 			{

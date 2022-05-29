@@ -96,22 +96,21 @@ namespace DeepLearning::Utils
     }
 
     /// <summary>
+    /// Substitutes "," and ";" characters with spaces
+    /// </summary>
+    std::string normalize_separator_characters(const std::string& str);
+
+    /// <summary>
     /// Parses given string, which is supposed to contain comma, semicolon or space separated values of type `R`
     /// Does not parse past the first illegal character
     /// </summary>
     template <class R>
     std::vector<R> parse_scalars(const std::string& str)
     {
-        std::string str_clean;
-        std::replace_copy_if(str.begin(), str.end(), std::back_inserter<std::string>(str_clean),
-            [](const auto x) {
-                return x == ',' || x == ';';
-            }, ' ');
-
+        const auto str_clean = normalize_separator_characters(str);
         std::istringstream str_clean_stream(str_clean);
 
         std::vector<R> result;
-
         R temp;
         while (str_clean_stream >> temp)
             result.push_back(temp);
@@ -120,11 +119,25 @@ namespace DeepLearning::Utils
     }
 
     /// <summary>
+    /// Extracts and returns a single leftmost word from the given string (the given string is updated)
+    /// By word we mean a sequence of characters without spaces (whose boundaries are defined by spaces)
+    /// </summary>
+    std::string extract_word(std::string& str);
+
+    /// <summary>
     /// From the given string extracts the leftmost sub-string of the form "{...}" (the input string gets updated)
     /// Returns what is enclosed in curly brackets of the extracted sub-string
     /// Throws an exception if no valid sub-string of the form "{...}" is found
     /// </summary>
     std::string extract_vector_sub_string(std::string& str);
+
+    /// <summary>
+    /// A "try" pattern version of the corresponding method above that does not throw
+    /// exceptions in case it is not possible to extract the sub-string
+    /// </summary>
+    /// <param name="str">Input string that gets modified in case method succeeds</param>
+    /// <param name="out">The extracted sub-string in case method succeeds or "garbage" otherwise</param>
+    bool try_extract_vector_sub_string(std::string& str, std::string& out);
 
     /// <summary>
     /// From the given string extracts and parse the leftmost sub-string of the form "{...}" (the input string gets updated)
@@ -146,4 +159,21 @@ namespace DeepLearning::Utils
     /// Converts the given string to upper case and returns the result
     /// </summary>
     std::string to_upper_case(const std::string& str);
+
+    /// <summary>
+    /// Returns a "normalized" version of the given string, which is a string
+    /// with all "," and ";" characters replaced with spaces,
+    /// containing nor leading, trailing or extra spaces, with all the letters in the upper case
+    /// </summary>
+    std::string normalize_string(const std::string& str);
+
+    /// <summary>
+    /// Tries to extract vector of type "V" from the given string
+    /// The corresponding part of the given string gets removed in case function succeeds
+    /// </summary>
+    /// <param name="str">given input string. It will be modified in case call succeeds</param>
+    /// <param name="out">Parsed vector (in case call succeeds) or "garbage" (otherwise)</param>
+    /// <returns></returns>
+    template <class V>
+    bool try_extract_vector(std::string& str, V& out);
 }

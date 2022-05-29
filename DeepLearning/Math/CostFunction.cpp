@@ -98,7 +98,7 @@ namespace DeepLearning
 
 	CostFunctionId parse_cost_type(const std::string& str)
 	{
-		const auto str_normalized = Utils::to_upper_case(Utils::remove_leading_trailing_extra_spaces(str));
+		const auto str_normalized = Utils::normalize_string(str);
 
 		for (unsigned int id = (unsigned int)CostFunctionId::SQUARED_ERROR; id <= (unsigned int)CostFunctionId::CROSS_ENTROPY; id++)
 		{

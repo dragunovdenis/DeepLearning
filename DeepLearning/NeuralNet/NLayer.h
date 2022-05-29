@@ -50,6 +50,17 @@ namespace DeepLearning
 		/// </summary>
 		ActivationFunctionId _func_id = ActivationFunctionId::UNKNOWN;
 
+		/// <summary>
+		/// Initializes the layer according to the given set of parameters
+		/// </summary>
+		/// <param name="in_dim">Input dimension of the later</param>
+		/// <param name="out_dim">Output dimension of the later</param>
+		/// <param name="func_id">Identifier of the activation function of the layer</param>
+		/// <param name="rand_low">Lower boundary for the random initialization of weight and biases</param>
+		/// <param name="rand_high">Higher boundary for the random initialization of weights and biases</param>
+		/// <param name="standard_init_for_weights">Applies "special" random initialization for the weights if "true"</param>
+		void initialize(const std::size_t in_dim, const std::size_t out_dim, ActivationFunctionId func_id,
+			const Real rand_low, const Real rand_high, const bool standard_init_for_weights);
 	public:
 
 		/// <summary>
@@ -86,14 +97,14 @@ namespace DeepLearning
 			const Real rand_low = Real(-1), const Real rand_high = Real(1), const bool standard_init_for_weights = false);
 
 		/// <summary>
-		/// Constructor from the given weights and biases
-		/// </summary>
-		NLayer(const Matrix& weights, const Vector& biases, ActivationFunctionId func_id = ActivationFunctionId::SIGMOID);
-
-		/// <summary>
 		/// Copy constructor
 		/// </summary>
 		NLayer(const NLayer& anotherLayer);
+
+		/// <summary>
+		/// Constructor to instantiate layer from the given string of certain format
+		/// </summary>
+		NLayer(const std::string& str);
 
 		/// <summary>
 		/// See the summary to the corresponding method in the base class

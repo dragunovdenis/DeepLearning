@@ -19,10 +19,41 @@
 
 namespace DeepLearning
 {
-	PLayer::PLayer(const Index3d& in_size, const Index2d& pool_window_size, const PoolTypeId pool_operator_id)
-		: _in_size(in_size), _pool_window_size(1, pool_window_size.x, pool_window_size.y), _pool_operator_id(pool_operator_id)
+	void PLayer::initialize(const Index3d& in_size, const Index2d& pool_window_size, const PoolTypeId pool_operator_id)
 	{
+		_in_size = in_size;
+		_pool_window_size = { 1, pool_window_size.x, pool_window_size.y };
+		_pool_operator_id = pool_operator_id;
 		_strides = _pool_window_size;
+	}
+
+	PLayer::PLayer(const Index3d& in_size, const Index2d& pool_window_size, const PoolTypeId pool_operator_id)
+	{
+		initialize(in_size, pool_window_size, pool_operator_id);
+	}
+
+	PLayer::PLayer(const std::string& str)
+	{
+		auto str_norm = Utils::normalize_string(str);
+
+		Index3d temp_3d;
+		if (!Utils::try_extract_vector(str_norm, temp_3d))
+			throw std::exception("Can't parse input dimensions of PLayer");
+
+		const auto in_size = temp_3d;
+
+		Index2d temp_2d;
+		if (!Utils::try_extract_vector(str_norm, temp_2d))
+			throw std::exception("Can't parse input dimensions of PLayer");
+
+		const auto pool_window_size = temp_2d;
+
+		const auto pool_operator_id = parse_pool_type(Utils::extract_word(str_norm));
+
+		if (pool_operator_id == PoolTypeId::UNKNOWN)
+			throw std::exception("Failed to parse pool operator type");
+
+		initialize(in_size, pool_window_size, pool_operator_id);
 	}
 
 	Index3d PLayer::in_size() const

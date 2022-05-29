@@ -47,6 +47,17 @@ namespace DeepLearning
 		/// </summary>
 		std::vector<Tensor> _filters{};
 
+		/// <summary>
+		/// Initializes the layer according to the given set of parameters
+		/// </summary>
+		/// <param name="in_size">Input size of the layer</param>
+		/// <param name="filter_window_size">2d window size of a single filter</param>
+		/// <param name="filters_count">Number of filters (that defines number of output channels)</param>
+		/// <param name="func_id">Identifier of an activation function to use</param>
+		/// <param name="paddings">Zero paddings to be applied to the input tensor when running convolution with the filters</param>
+		/// <param name="strides">Stride used in the convolution</param>
+		void initialize(const Index3d& in_size, const Index2d& filter_window_size,
+			const std::size_t& filters_count, const ActivationFunctionId func_id, const Index3d& paddings, const Index3d& strides);
 	public:
 
 		/// <summary>
@@ -87,6 +98,11 @@ namespace DeepLearning
 		/// <param name="funcId">Id of the activation function to be used in the layer</param>
 		CLayer(const Index3d& in_size, const Index2d& filter_window_size,
 			const std::size_t& filters_count, const ActivationFunctionId func_id, const Index3d& paddings = { 0 }, const Index3d& strides = {1});
+
+		/// <summary>
+		/// Constructor to instantiate layer from the given string of certain format
+		/// </summary>
+		CLayer(const std::string& str);
 
 		/// <summary>
 		/// See description in the base class

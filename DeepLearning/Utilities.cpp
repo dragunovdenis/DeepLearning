@@ -16,6 +16,8 @@
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "Utilities.h"
+#include "Math/LinAlg2d.h"
+#include "Math/LinAlg3d.h"
 #include <regex>
 
 namespace DeepLearning::Utils
@@ -40,6 +42,28 @@ namespace DeepLearning::Utils
         return dist(gen) % interval_length + min;
     }
 
+    std::string extract_word(std::string& str)
+    {
+        const auto word_start_pos = str.find_first_not_of(' ');
+
+        if (word_start_pos == std::string::npos) // there are no words
+        {
+            str = std::string();
+            return std::string();
+        }
+
+        auto word_end_pos = str.find_first_of(' ', word_start_pos);
+
+        if (word_end_pos == std::string::npos)
+            word_end_pos = str.length();
+
+        const auto result = str.substr(word_start_pos, word_end_pos - word_start_pos);
+
+        str.erase(0, word_end_pos);
+
+        return result;
+    }
+
     std::string extract_vector_sub_string(std::string& str)
     {
         const auto vector_end_pos = str.find("}");
@@ -58,6 +82,31 @@ namespace DeepLearning::Utils
         return result;
     }
 
+    std::string normalize_separator_characters(const std::string& str)
+    {
+        std::string result;
+        std::replace_copy_if(str.begin(), str.end(), std::back_inserter<std::string>(result),
+            [](const auto x) {
+                return x == ',' || x == ';';
+            }, ' ');
+
+        return result;
+    }
+
+    bool try_extract_vector_sub_string(std::string& str, std::string& out)
+    {
+        try
+        {
+            out = extract_vector_sub_string(str);
+        }
+        catch (const std::exception&)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
     std::string remove_leading_trailing_extra_spaces(const std::string& str)
     {
         return std::regex_replace(str, std::regex("^ +| +$|( ) +"), "$1");
@@ -70,4 +119,24 @@ namespace DeepLearning::Utils
 
         return result;
     }
+
+    std::string normalize_string(const std::string& str)
+    {
+        return to_upper_case(Utils::remove_leading_trailing_extra_spaces(normalize_separator_characters(str)));
+    }
+
+    template <class V>
+    bool try_extract_vector(std::string& str, V& out)
+    {
+        std::string vector_str;
+        if (try_extract_vector_sub_string(str, vector_str)&& V::try_parse(vector_str, out))
+            return true;
+
+        return false;
+    }
+
+    template bool try_extract_vector(std::string& str, Vector2d<Real>& out);
+    template bool try_extract_vector(std::string& str, Vector3d<Real>& out);
+    template bool try_extract_vector(std::string& str, Index2d& out);
+    template bool try_extract_vector(std::string& str, Index3d& out);
 }

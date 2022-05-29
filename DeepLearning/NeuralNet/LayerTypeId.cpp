@@ -34,7 +34,7 @@ namespace DeepLearning
 
 	LayerTypeId parse_layer_type(const std::string& str)
 	{
-		const auto str_normalized = Utils::to_upper_case(Utils::remove_leading_trailing_extra_spaces(str));
+		const auto str_normalized = Utils::normalize_string(str);
 
 		for (unsigned int id = (unsigned int)LayerTypeId::FULL; id <= (unsigned int)LayerTypeId::PULL; id++)
 		{

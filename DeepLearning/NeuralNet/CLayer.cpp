@@ -21,10 +21,15 @@
 
 namespace DeepLearning
 {
-	CLayer::CLayer(const Index3d& in_size, const Index2d& filter_window_size,
-		const std::size_t& filters_count, const ActivationFunctionId func_id, const Index3d& paddings, const Index3d& strides) :_in_size(in_size),
-		_weight_tensor_size(in_size.x, filter_window_size.x, filter_window_size.y), _paddings(paddings), _strides(strides), _func_id(func_id)
+	void CLayer::initialize(const Index3d& in_size, const Index2d& filter_window_size,
+		const std::size_t& filters_count, const ActivationFunctionId func_id, const Index3d& paddings, const Index3d& strides)
 	{
+		_in_size = in_size;
+		_weight_tensor_size = { in_size.x, filter_window_size.x, filter_window_size.y };
+		_paddings = paddings;
+		_strides = strides;
+		_func_id = func_id;
+
 		const auto out_channel_size = Tensor::calc_conv_res_size(_in_size, _weight_tensor_size, _paddings, _strides);
 		if (out_channel_size.x != 1)
 			throw std::exception("Unexpected channel size");
@@ -33,6 +38,44 @@ namespace DeepLearning
 		_filters = std::vector(filters_count, Tensor(_weight_tensor_size, false));
 
 		std::for_each(_filters.begin(), _filters.end(), [](auto& filter) { filter.standard_random_fill(); });
+	}
+
+
+	CLayer::CLayer(const Index3d& in_size, const Index2d& filter_window_size,
+		const std::size_t& filters_count, const ActivationFunctionId func_id, const Index3d& paddings, const Index3d& strides)
+	{
+		initialize(in_size, filter_window_size,	filters_count, func_id, paddings, strides);
+	}
+
+	CLayer::CLayer(const std::string& str)
+	{
+		auto str_norm = Utils::normalize_string(str);
+
+		Index3d temp_3d;
+		if (!Utils::try_extract_vector(str_norm, temp_3d))
+			throw std::exception("Can't parse input dimensions of CLayer");
+
+		const auto in_size = temp_3d;
+
+		Index2d temp_2d;
+		if (!Utils::try_extract_vector(str_norm, temp_2d))
+			throw std::exception("Can't parse filter window size");
+
+		const auto filter_window_size = temp_2d;
+
+		const auto scalars = Utils::parse_scalars<long long>(Utils::extract_word(str_norm));
+
+		if (scalars.size() != 1 || scalars[0] <= 0ll)
+			throw std::exception("Can't parse number of filters");
+
+		const auto filters_count = scalars[0];
+
+		const auto func_id = parse_activation_type(Utils::extract_word(str_norm));
+
+		if (func_id == ActivationFunctionId::UNKNOWN)
+			throw std::exception("Failed to parse activation function type of CLayer");
+
+		initialize(in_size, filter_window_size, filters_count, func_id, { 0, 0, 0 }, {1, 1, 1});
 	}
 
 	Tensor CLayer::act(const Tensor& input, AuxLearningData* const aux_learning_data_ptr) const

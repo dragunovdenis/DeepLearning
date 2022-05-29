@@ -21,10 +21,10 @@
 
 namespace DeepLearning
 {
-	NLayer::NLayer(const std::size_t in_dim, const std::size_t out_dim, ActivationFunctionId func_id,
+	void NLayer::initialize(const std::size_t in_dim, const std::size_t out_dim, ActivationFunctionId func_id,
 		const Real rand_low, const Real rand_high, const bool standard_init_for_weights)
 	{
-		_biases  = Vector(out_dim, rand_low, rand_high);
+		_biases = Vector(out_dim, rand_low, rand_high);
 
 		if (standard_init_for_weights)
 		{
@@ -37,14 +37,10 @@ namespace DeepLearning
 		_func_id = func_id;
 	}
 
-	NLayer::NLayer(const Matrix& weights, const Vector& biases, ActivationFunctionId func_id)
+	NLayer::NLayer(const std::size_t in_dim, const std::size_t out_dim, ActivationFunctionId func_id,
+		const Real rand_low, const Real rand_high, const bool standard_init_for_weights)
 	{
-		if (weights.row_dim() != biases.dim())
-			throw std::exception("incompatible dimensions of the weight and biases containers");
-
-		_biases = biases;
-		_weights = weights;
-		_func_id = func_id;
+		initialize(in_dim, out_dim, func_id, rand_low, rand_high, standard_init_for_weights);
 	}
 
 	NLayer::NLayer(const NLayer& anotherLayer)
@@ -52,6 +48,34 @@ namespace DeepLearning
 		_biases = anotherLayer._biases;
 		_weights = anotherLayer._weights;
 		_func_id = anotherLayer._func_id;
+	}
+
+	NLayer::NLayer(const std::string& str)
+	{
+		auto str_norm = Utils::normalize_string(str);
+
+		Index3d temp;
+		if (!Utils::try_extract_vector(str_norm, temp))
+			throw std::exception("Can't parse input dimensions of NLayer");
+
+		if (temp.x != 1ll || temp.y != 1ll || temp.z <= 0ll)
+			throw std::exception("Invalid input dimensions of NLayer");
+
+		const auto in_dim = temp.z;
+
+		if (!Utils::try_extract_vector(str_norm, temp))
+			throw std::exception("Can't parse output dimensions of NLayer");
+
+		if (temp.x != 1ll || temp.y != 1ll || temp.z <= 0ll)
+			throw std::exception("Invalid output dimensions of NLayer");
+
+		const auto out_dim = temp.z;
+
+		const auto func_id = parse_activation_type(str_norm);
+		if (func_id == ActivationFunctionId::UNKNOWN)
+			throw std::exception("Failed to parse activation function type of NLayer");
+
+		initialize(in_dim, out_dim, func_id, Real(-1), Real(1), true);
 	}
 
 	Index3d NLayer::in_size() const

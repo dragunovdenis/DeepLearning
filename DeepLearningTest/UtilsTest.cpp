@@ -132,5 +132,50 @@ namespace DeepLearningTest
 			//Assert
 			Assert::IsTrue(result == expected_result, L"Unexpected result");
 		}
+
+		TEST_METHOD(ExtractWordTest)
+		{
+			//Arrange
+			std::string input_string = "    word1    some   other  word   ";
+			const std::string input_string_after_extraction_expected = "    some   other  word   ";
+			const std::string expected_result = "word1";
+
+			//Act
+			const auto result = Utils::extract_word(input_string);
+
+			//Assert
+			Assert::IsTrue(input_string == input_string_after_extraction_expected, L"Unexpected value of the input string after extraction");
+			Assert::IsTrue(expected_result == result, L"Unexpected extraction result");
+		}
+
+		TEST_METHOD(ExtractLastWordTest)
+		{
+			//Arrange
+			std::string input_string = "    word1";
+			const std::string input_string_after_extraction_expected = "";
+			const std::string expected_result = "word1";
+
+			//Act
+			const auto result = Utils::extract_word(input_string);
+
+			//Assert
+			Assert::IsTrue(input_string == input_string_after_extraction_expected, L"Unexpected value of the input string after extraction");
+			Assert::IsTrue(expected_result == result, L"Unexpected extraction result");
+		}
+
+		TEST_METHOD(ExtractWordWhereThereIsNoWordsTest)
+		{
+			//Arrange
+			std::string input_string = "    ";
+			const std::string input_string_after_extraction_expected = "";
+			const std::string expected_result = "";
+
+			//Act
+			const auto result = Utils::extract_word(input_string);
+
+			//Assert
+			Assert::IsTrue(input_string == input_string_after_extraction_expected, L"Unexpected value of the input string after extraction");
+			Assert::IsTrue(expected_result == result, L"Unexpected extraction result");
+		}
 	};
 }

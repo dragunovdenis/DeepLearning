@@ -37,6 +37,14 @@ namespace DeepLearning
 
 		PoolTypeId _pool_operator_id = PoolTypeId::UNKNOWN;
 
+		/// <summary>
+		/// Initializes the layer according to the given set of parameters
+		/// </summary>
+		/// <param name="in_size">Input dimension of the layer</param>
+		/// <param name="pool_window_size">Size of 2d pooling window</param>
+		/// <param name="pool_operator_id">Identifier of the pooling operation to be used by the layer</param>
+		void initialize(const Index3d& in_size, const Index2d& pool_window_size, const PoolTypeId pool_operator_id);
+
 	public:
 
 		/// <summary>
@@ -58,6 +66,12 @@ namespace DeepLearning
 		/// <param name="pool_window_size">2d window of the pool operator</param>
 		/// <param name="pool_operator_id">Identifier of the pooling operator to be used</param>
 		PLayer(const Index3d& in_size, const Index2d& pool_window_size, const PoolTypeId pool_operator_id);
+
+		/// <summary>
+		/// Constructor to instantiate layer from the given string of certain format
+		/// </summary>
+		/// <param name="str"></param>
+		PLayer(const std::string& str);
 
 		/// <summary>
 		/// Size of the layer's input
