@@ -260,7 +260,7 @@ namespace DeepLearningTest
 			//Arrange
 			const auto in_dimension = 784;
 			const auto out_dimension = 10;
-			const auto net = Net({ in_dimension, 100, out_dimension });
+			const auto net = Net(std::vector<std::size_t>{ in_dimension, 100, out_dimension });
 
 			//Act
 			const auto msg = MsgPack::pack(net);
@@ -280,6 +280,27 @@ namespace DeepLearningTest
 
 				Assert::IsTrue(ref_output == trial_output, L"Nets are not the same.");
 			}
+		}
+
+		TEST_METHOD(NetScriptInstantiationTest)
+		{
+			//Arrange
+			Net net;
+			auto size_in_next = Index3d{1, 222, 333};
+			const auto out_size = 10;
+			size_in_next = net.append_layer<CLayer>(size_in_next, Index2d{ 5 }, 20, ActivationFunctionId::RELU);
+			size_in_next = net.append_layer<PLayer>(size_in_next, Index2d{ 2 }, PoolTypeId::MAX);
+			size_in_next = net.append_layer<CLayer>(size_in_next, Index2d{ 5 }, 10, ActivationFunctionId::RELU);
+			size_in_next = net.append_layer<PLayer>(size_in_next, Index2d{ 2 }, PoolTypeId::MAX);
+			size_in_next = net.append_layer<NLayer>(size_in_next.coord_prod(), 100, ActivationFunctionId::RELU, Real(-1), Real(1), true);
+			size_in_next = net.append_layer<NLayer>(size_in_next.coord_prod(), out_size, ActivationFunctionId::SOFTMAX, Real(-1), Real(1), true);
+
+			//Act
+			const auto script_str = net.to_script();
+			const auto net_restored = Net(script_str);
+
+			//Assert
+			Assert::IsTrue(net.equal_hyperparams(net_restored), L"Original and restored nets are different");
 		}
 	};
 }

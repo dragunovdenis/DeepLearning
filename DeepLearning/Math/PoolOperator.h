@@ -33,7 +33,7 @@ namespace DeepLearning
 	};
 
 	/// <summary>
-	/// Returns string representation of the given pool type type identifier
+	/// Returns string representation of the given pool type identifier
 	/// </summary>
 	std::string to_string(const PoolTypeId& pool_type_id);
 

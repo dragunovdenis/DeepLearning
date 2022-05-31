@@ -138,4 +138,21 @@ namespace DeepLearning
 			"; Out size: " + out_size().to_string() + "; Filter size: " + weight_tensor_size().to_string() +
 			"; Pool type: " + DeepLearning::to_string(_pool_operator_id);
 	}
+
+	bool PLayer::equal_hyperparams(const ALayer& layer) const
+	{
+		const auto other_player_ptr = dynamic_cast<const PLayer*>(&layer);
+		return _in_size == layer.in_size() && _pool_window_size == layer.weight_tensor_size() &&
+			_strides == other_player_ptr->_strides && _pool_operator_id == other_player_ptr->_pool_operator_id;
+	}
+
+	std::string PLayer::to_script() const
+	{
+		return _in_size.to_string() + _pool_window_size.yz().to_string()+ ";" + DeepLearning::to_string(_pool_operator_id);
+	}
+
+	LayerTypeId PLayer::get_type_id() const
+	{
+		return ID();
+	}
 }

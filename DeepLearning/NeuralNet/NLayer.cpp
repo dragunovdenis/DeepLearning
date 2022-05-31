@@ -58,10 +58,7 @@ namespace DeepLearning
 		if (!Utils::try_extract_vector(str_norm, temp))
 			throw std::exception("Can't parse input dimensions of NLayer");
 
-		if (temp.x != 1ll || temp.y != 1ll || temp.z <= 0ll)
-			throw std::exception("Invalid input dimensions of NLayer");
-
-		const auto in_dim = temp.z;
+		const auto in_dim = temp.coord_prod();
 
 		if (!Utils::try_extract_vector(str_norm, temp))
 			throw std::exception("Can't parse output dimensions of NLayer");
@@ -153,5 +150,21 @@ namespace DeepLearning
 	{
 		return DeepLearning::to_string(NLayer::ID()) + "; Input size: " + in_size().to_string() + "; Out size: " + out_size().to_string() + 
 			"; Activation: " + DeepLearning::to_string(_func_id);
+	}
+
+	bool NLayer::equal_hyperparams(const ALayer& layer) const
+	{
+		const auto other_nlayer_ptr = dynamic_cast<const NLayer*>(&layer);
+		return other_nlayer_ptr != nullptr && in_size() == layer.in_size() && out_size() == layer.out_size() && _func_id == other_nlayer_ptr->_func_id;
+	}
+
+	std::string NLayer::to_script() const
+	{
+		return in_size().to_string() + out_size().to_string() + ";" + DeepLearning::to_string(_func_id);
+	}
+
+	LayerTypeId NLayer::get_type_id() const
+	{
+		return ID();
 	}
 }

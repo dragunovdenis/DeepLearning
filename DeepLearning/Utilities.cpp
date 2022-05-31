@@ -19,6 +19,7 @@
 #include "Math/LinAlg2d.h"
 #include "Math/LinAlg3d.h"
 #include <regex>
+#include <fstream>
 
 namespace DeepLearning::Utils
 {
@@ -133,6 +134,30 @@ namespace DeepLearning::Utils
             return true;
 
         return false;
+    }
+
+    std::vector<std::string> split_by_char(const std::string& str, const char delim)
+    {
+        std::stringstream ss(str);
+        std::string part;
+        std::vector<std::string> result;
+
+        while (std::getline(ss, part, delim))
+            result.push_back(part);
+
+        return result;
+    }
+
+    std::string read_all_text(const std::filesystem::path& file_name)
+    {
+        std::ifstream input_file(file_name);
+        if (!input_file.is_open()) {
+            throw std::exception("Can't open file");
+        }
+
+        const auto text = std::string((std::istreambuf_iterator<char>(input_file)), std::istreambuf_iterator<char>());
+
+        return text;
     }
 
     template bool try_extract_vector(std::string& str, Vector2d<Real>& out);

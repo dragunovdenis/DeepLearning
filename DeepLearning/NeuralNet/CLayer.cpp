@@ -75,7 +75,10 @@ namespace DeepLearning
 		if (func_id == ActivationFunctionId::UNKNOWN)
 			throw std::exception("Failed to parse activation function type of CLayer");
 
-		initialize(in_size, filter_window_size, filters_count, func_id, { 0, 0, 0 }, {1, 1, 1});
+		const auto paddings = Utils::try_extract_vector(str_norm, temp_3d) ? temp_3d : Index3d{ 0, 0, 0 };
+		const auto strides  = Utils::try_extract_vector(str_norm, temp_3d) ? temp_3d : Index3d{ 1, 1, 1 };
+
+		initialize(in_size, filter_window_size, filters_count, func_id, paddings, strides);
 	}
 
 	Tensor CLayer::act(const Tensor& input, AuxLearningData* const aux_learning_data_ptr) const
@@ -183,5 +186,27 @@ namespace DeepLearning
 		return DeepLearning::to_string(CLayer::ID()) + "; Input size: " + in_size().to_string() +
 			"; Out size: " + out_size().to_string() + "; Filter size: " + weight_tensor_size().to_string() +
 			"; Activation: " + DeepLearning::to_string(_func_id);
+	}
+
+	bool CLayer::equal_hyperparams(const ALayer& layer) const
+	{
+		const auto other_clayer_ptr = dynamic_cast<const CLayer*>(&layer);
+		return other_clayer_ptr != nullptr && _in_size == layer.in_size() &&
+			_weight_tensor_size == layer.weight_tensor_size() &&
+			_paddings == other_clayer_ptr->_paddings &&
+			_strides == other_clayer_ptr->_strides &&
+			_func_id == other_clayer_ptr->_func_id;
+	}
+
+	std::string CLayer::to_script() const
+	{
+		return in_size().to_string() + weight_tensor_size().yz().to_string()
+			+ ";" + Utils::to_string(out_size().x) + ";"
+			+ DeepLearning::to_string(_func_id) + ";"+ _paddings.to_string() + _strides.to_string();
+	}
+
+	LayerTypeId CLayer::get_type_id() const
+	{
+		return ID();
 	}
 }

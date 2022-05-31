@@ -24,6 +24,7 @@
 #include <ppl.h>
 #include "../IndexIterator.h"
 #include "../Diagnostics/Logging.h"
+#include <fstream>
 
 namespace DeepLearning
 {
@@ -44,6 +45,47 @@ namespace DeepLearning
 			const auto in_dim = layer_dimensions[id - 1];
 			const auto out_dim = layer_dimensions[id];
 			_layers.push_back(LayerHandle::make<NLayer>(in_dim, out_dim, af_ids_local[id - 1], Real(-1), Real(1), true));
+		}
+	}
+
+	Net::Net(const std::string& script_str)
+	{
+		const auto layer_scripts = Utils::split_by_char(script_str, '\n');
+
+		Index3d prev_layer_out_size = { -1, -1, -1 };
+		for (const auto& script : layer_scripts)
+		{
+			auto script_normalized = Utils::normalize_string(script);
+			const auto layer_type_id = parse_layer_type(Utils::extract_word(script_normalized));
+
+			if (layer_type_id == LayerTypeId::UNKNOWN)
+				throw std::exception("Unknown layer type");
+
+			if (prev_layer_out_size.x >= 0)
+			{
+				Index3d in_size;
+				if (Utils::try_extract_vector(script_normalized, in_size))
+				{
+					if (layer_type_id != LayerTypeId::FULL && prev_layer_out_size != in_size || 
+						layer_type_id == LayerTypeId::FULL && prev_layer_out_size.coord_prod() != in_size.coord_prod())
+						throw std::exception("Inconsistent input/output dimensions");
+				}
+
+				//This covers also a situation when script omits input size of the layer so that
+				//it is deduced from the output size of the previous layer
+				script_normalized = prev_layer_out_size.to_string() + script_normalized;
+			}
+
+			switch (layer_type_id)
+			{
+			case LayerTypeId::CONVOLUTION: append_layer<CLayer>(script_normalized); break;
+			case LayerTypeId::FULL: append_layer<NLayer>(script_normalized); break;
+			case LayerTypeId::PULL: append_layer<PLayer>(script_normalized); break;
+			default:
+				throw std::exception("Unexpected identifier of the layer type");
+			}
+
+			prev_layer_out_size = _layers.rbegin()->layer().out_size();
 		}
 	}
 
@@ -245,5 +287,42 @@ namespace DeepLearning
 
 			_layers[layer_id].layer().log(layer_directory);
 		}
+	}
+
+	std::string Net::to_script() const
+	{
+		std::string result;
+
+		for (const auto& layer_handel : _layers)
+			result +=  DeepLearning::to_string(layer_handel.layer().get_type_id()) + ";" + layer_handel.layer().to_script() + '\n';
+
+		return result;
+	}
+
+	void Net::save_script(const std::filesystem::path& scrypt_path) const
+	{
+		std::ofstream file(scrypt_path);
+
+		if (!file.is_open())
+			throw std::exception("Can't create file");
+
+		file << to_script();
+	}
+
+	Net Net::load_script(const std::filesystem::path& scrypt_path)
+	{
+		return Net(Utils::read_all_text(scrypt_path));
+	}
+
+	bool Net::equal_hyperparams(const Net& net) const
+	{
+		if (_layers.size() != net._layers.size())
+			return false;
+
+		for (auto layer_id = 0ull; layer_id < _layers.size(); layer_id++)
+			if (!_layers[layer_id].layer().equal_hyperparams(net._layers[layer_id].layer()))
+				return false;
+
+		return true;
 	}
 }

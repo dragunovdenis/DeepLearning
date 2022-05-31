@@ -25,6 +25,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <filesystem>
 
 namespace DeepLearning::Utils
 {
@@ -176,4 +177,18 @@ namespace DeepLearning::Utils
     /// <returns></returns>
     template <class V>
     bool try_extract_vector(std::string& str, V& out);
+
+    /// <summary>
+    /// Splits given string with respect to the given delimiter
+    /// </summary>
+    /// <param name="str">String to split</param>
+    /// <param name="delim">Delimiter</param>
+    /// <returns></returns>
+    std::vector<std::string> split_by_char(const std::string& str, const char delim);
+
+    /// <summary>
+    /// Reads all the text from the given text file and returns it as a string
+    /// </summary>
+    /// <param name="file_name">Full path to a text file to read</param>
+    std::string read_all_text(const std::filesystem::path& file_name);
 }

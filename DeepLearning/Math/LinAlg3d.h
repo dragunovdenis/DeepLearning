@@ -18,6 +18,7 @@
 
 #include "../Utilities.h"
 #include <msgpack.hpp>
+#include "LinAlg2d.h"
 
 #pragma once
 
@@ -194,6 +195,30 @@ namespace DeepLearning
 			}
 
 			return false;
+		}
+
+		/// <summary>
+		/// Returns XY projection of the vector
+		/// </summary>
+		Vector2d<T> xy() const
+		{
+			return { x, y };
+		}
+
+		/// <summary>
+		/// Returns XZ projection of the vector
+		/// </summary>
+		Vector2d<T> xz() const
+		{
+			return { x, z };
+		}
+
+		/// <summary>
+		/// Returns YZ projection of the vector
+		/// </summary>
+		Vector2d<T> yz() const
+		{
+			return { y, z };
 		}
 	};
 

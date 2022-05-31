@@ -62,6 +62,12 @@ namespace DeepLearning
 		Net(const std::vector<std::size_t>& layer_dimensions, const std::vector<ActivationFunctionId>& activ_func_ids = std::vector<ActivationFunctionId>());
 
 		/// <summary>
+		/// Instantiates net from the given script-string (see `to_script()` method below)
+		/// </summary>
+		/// <param name="script_str">Script-string, which can be output of `to_script()` method</param>
+		Net(const std::string& script_str);
+
+		/// <summary>
 		/// Returns output of the neural network calculated for the given input
 		/// </summary>
 		Tensor act(const Tensor& input, std::vector<ALayer::AuxLearningData>* const aux_data_ptr = nullptr) const;
@@ -124,5 +130,28 @@ namespace DeepLearning
 		/// </summary>
 		/// <param name="directory">The directory of disk to log to</param>
 		void log(const std::filesystem::path& directory) const;
+
+		/// <summary>
+		/// Encodes hyper-parameters of all the layers in a string-script which then can be used to instantiate 
+		/// another instance of the net with the same set of hyper-parameters (see the constructor taking string argument)
+		/// </summary>
+		std::string to_script() const;
+
+		/// <summary>
+		/// Saves net as a script-like string to the given file
+		/// </summary>
+		/// <param name="scrypt_path">Path to the file to save script to</param>
+		void save_script(const std::filesystem::path& scrypt_path) const;
+
+		/// <summary>
+		/// Instantiates net from the script in the given file on disk
+		/// </summary>
+		static Net load_script(const std::filesystem::path& scrypt_path);
+
+		/// <summary>
+		/// Returns "true" if the current and the given networks coincide in terms of hyper-parameters,
+		/// i.e. layer types, their architecture etc.
+		/// </summary>
+		bool equal_hyperparams(const Net& net) const;
 	};
 }

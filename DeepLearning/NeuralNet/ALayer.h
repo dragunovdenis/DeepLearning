@@ -21,6 +21,7 @@
 #include "CummulativeGradient.h"
 #include <filesystem>
 #include <string>
+#include "LayerTypeId.h"
 
 namespace DeepLearning
 {
@@ -138,5 +139,21 @@ namespace DeepLearning
 		/// Returns a human-readable description of the layer
 		/// </summary>
 		virtual std::string to_string() const = 0;
+
+		/// <summary>
+		/// Encodes hyper-parameters of the layer in a string-script which then can be used to instantiate 
+		/// another instance of the layer with the same set of hyper-parameters (see the constructor taking string argument)
+		/// </summary>
+		virtual std::string to_script() const = 0;
+
+		/// <summary>
+		/// Returns identifier of the layer's type
+		/// </summary>
+		virtual LayerTypeId get_type_id() const = 0;
+
+		/// <summary>
+		/// Returns "true" if the current instance of the layer has the same set of hyper-parameters as the given one
+		/// </summary>
+		virtual bool equal_hyperparams(const ALayer& layer) const = 0;
 	};
 }

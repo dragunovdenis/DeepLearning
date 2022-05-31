@@ -24,7 +24,7 @@ namespace DeepLearning
 	{
 		switch (layer_type_id)
 		{
-		case LayerTypeId::CONVOLUTION: return "CONVOLUTION";
+		case LayerTypeId::CONVOLUTION: return "CONV";
 		case LayerTypeId::FULL: return "FULL";
 		case LayerTypeId::PULL: return "PULL";
 		default:

@@ -118,5 +118,21 @@ namespace DeepLearning
 		/// See the summary to the corresponding method in the base class
 		/// </summary>
 		virtual std::string to_string() const override;
+
+		/// <summary>
+		/// Returns "true" if the current instance of the layer has the same set of hyper-parameters as the given one
+		/// </summary>
+		bool equal_hyperparams(const ALayer& layer) const override;
+
+		/// <summary>
+		/// Encodes hyper-parameters of the layer in a string-script which then can be used to instantiate 
+		/// another instance of the layer with the same set of hyper-parameters (see the constructor taking string argument)
+		/// </summary>
+		std::string to_script() const override;
+
+		/// <summary>
+		/// See the summary to the corresponding method in the base class
+		/// </summary>
+		LayerTypeId get_type_id() const override;
 	};
 }
