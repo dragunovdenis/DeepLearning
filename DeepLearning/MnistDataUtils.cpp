@@ -16,6 +16,7 @@
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "MnistDataUtils.h"
+#include "Math/Vector.h"
 #include <fstream>
 
 namespace DeepLearning
@@ -40,6 +41,9 @@ namespace DeepLearning
 	{
 		std::ifstream file;
 		file.open(path, std::ios::in | std::ios::binary);
+
+		if (!std::filesystem::exists(path))
+			throw std::exception((std::string("File does not exist : ") + path.string()).c_str());
 
 		if (file.fail())
 			throw std::exception("Can't open file");
@@ -122,5 +126,42 @@ namespace DeepLearning
 		}
 
 		return result;
+	}
+
+	std::vector<Tensor> MnistDataUtils::scale_images(const std::vector<Image8Bit>& images, const bool flatten_images, const Real& max_value)
+	{
+		if (images.empty())
+			return std::vector<Tensor>();
+
+		std::vector<Tensor> result(images.begin(), images.end());
+
+		const auto image_size = result.begin()->size();
+		if (!std::all_of(result.begin(), result.end(), [=](const auto& im) { return im.size() == image_size; }))
+			throw std::exception("Images are supposed to be of same size");
+
+		const auto scale_factor = max_value / 256;
+
+		for (auto& result_item : result)
+			result_item *= scale_factor;
+
+		if (!flatten_images)
+		{
+			const auto shape = Index3d{ 1, images.begin()->height(), images.begin()->width() };
+			for (auto& result_item : result)
+				result_item.reshape(shape);
+		}
+
+		return result;
+	}
+
+	std::tuple<std::vector<Tensor>, std::vector<Tensor>> MnistDataUtils::load_labeled_data(
+		const std::filesystem::path& data_path, const std::filesystem::path& labels_path,
+		const std::size_t expected_items_count, const bool flatten_images, const Real& max_value)
+	{
+		const auto images = MnistDataUtils::read_images(data_path, expected_items_count);
+		const auto images_scaled = scale_images(images, flatten_images, max_value);
+		const auto labels = MnistDataUtils::read_labels(labels_path, expected_items_count);
+
+		return std::make_tuple(images_scaled, labels);
 	}
 }

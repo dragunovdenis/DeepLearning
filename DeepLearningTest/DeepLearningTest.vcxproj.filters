@@ -60,10 +60,18 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="TestData\MNIST\t10k-images.idx3-ubyte" />
-    <None Include="TestData\MNIST\t10k-labels.idx1-ubyte" />
-    <None Include="TestData\MNIST\train-images.idx3-ubyte" />
-    <None Include="TestData\MNIST\train-labels.idx1-ubyte" />
+    <None Include="..\Shared\TestData\MNIST\t10k-images.idx3-ubyte">
+      <Filter>TestData\MNIST</Filter>
+    </None>
+    <None Include="..\Shared\TestData\MNIST\t10k-labels.idx1-ubyte">
+      <Filter>TestData\MNIST</Filter>
+    </None>
+    <None Include="..\Shared\TestData\MNIST\train-images.idx3-ubyte">
+      <Filter>TestData\MNIST</Filter>
+    </None>
+    <None Include="..\Shared\TestData\MNIST\train-labels.idx1-ubyte">
+      <Filter>TestData\MNIST</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="StandardTestUtils.h">

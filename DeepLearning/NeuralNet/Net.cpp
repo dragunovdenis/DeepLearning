@@ -68,7 +68,7 @@ namespace DeepLearning
 				{
 					if (layer_type_id != LayerTypeId::FULL && prev_layer_out_size != in_size || 
 						layer_type_id == LayerTypeId::FULL && prev_layer_out_size.coord_prod() != in_size.coord_prod())
-						throw std::exception("Inconsistent input/output dimensions");
+						throw std::exception((std::string("Inconsistent input/output dimensions : ") + script_normalized).c_str());
 				}
 
 				//This covers also a situation when script omits input size of the layer so that
@@ -151,7 +151,7 @@ namespace DeepLearning
 
 	void Net::learn(const std::vector<Tensor>& training_items, const std::vector<Tensor>& reference_items,
 		const std::size_t batch_size, const std::size_t epochs_count, const Real learning_rate, const CostFunctionId& cost_func_id,
-		const Real& lambda, const std::function<void(std::size_t)>& epoch_callback)
+		const Real& lambda, const std::function<void(const std::size_t, const Real)>& epoch_callback)
 	{
 		if (training_items.size() != reference_items.size())
 			throw std::exception("Incompatible collection of training and reference items.");
@@ -219,12 +219,18 @@ namespace DeepLearning
 					_layers[layer_id].layer().update(gradient_collectors[layer_id].calc_average_grarient(-learning_rate), reg_factor);
 			}
 
-			epoch_callback(epoch_id);
+			epoch_callback(epoch_id, Real(0.5) * reg_factor);
 		}
 	}
 
+	Real Net::squared_weights_sum() const
+	{
+		return std::accumulate(_layers.begin(), _layers.end(), Real(0),
+			[](const auto& sum, const auto& layer_handle) { return sum + layer_handle.layer().squared_weights_sum(); });
+	}
+
 	Real Net::evaluate_cost_function(const std::vector<Tensor>& test_input,
-		const std::vector<Tensor>& reference_output, const CostFunctionId& cost_func_id) const
+		const std::vector<Tensor>& reference_output, const CostFunctionId& cost_func_id, const Real l2_reg_factor) const
 	{
 		if (test_input.size() != reference_output.size())
 			throw std::exception("Invalid input.");
@@ -243,7 +249,7 @@ namespace DeepLearning
 				return result;
 			}, std::plus<Real>());
 
-		return cost_sum / test_input.size();
+		return cost_sum / test_input.size() + l2_reg_factor * squared_weights_sum();
 	}
 
 	std::size_t Net::count_correct_answers(const std::vector<Tensor>& test_input,
@@ -324,5 +330,15 @@ namespace DeepLearning
 				return false;
 
 		return true;
+	}
+
+	std::string Net::to_string() const
+	{
+		std::string result{};
+
+		for (const auto& layer_handle : _layers)
+			result += layer_handle.layer().to_string() + "\n";
+
+		return result;
 	}
 }

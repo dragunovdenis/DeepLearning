@@ -60,5 +60,17 @@ namespace DeepLearning
 		/// <returns></returns>
 		static std::vector<Tensor> read_labels(const std::filesystem::path& path,
 			const std::size_t expected_label_count);
+
+		/// <summary>
+		/// Scales intensities of the given images so that they are all between 0 and 1.0;
+		/// </summary>
+		static std::vector<Tensor> scale_images(const std::vector<Image8Bit>& images, const bool flatten_images = true, const Real& max_value = Real(1));
+
+		/// <summary>
+		/// Return collections of MNIST data and labels (in this exact order)
+		/// </summary>
+		static std::tuple<std::vector<Tensor>, std::vector<Tensor>> load_labeled_data(
+			const std::filesystem::path& data_path, const std::filesystem::path& labels_path,
+			const std::size_t expected_items_count, const bool flatten_images = true, const Real& max_value = Real(1));
 	};
 }

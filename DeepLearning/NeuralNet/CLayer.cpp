@@ -17,6 +17,7 @@
 
 #include "CLayer.h"
 #include <algorithm>
+#include <numeric>
 #include "../Diagnostics/Logging.h"
 
 namespace DeepLearning
@@ -208,5 +209,10 @@ namespace DeepLearning
 	LayerTypeId CLayer::get_type_id() const
 	{
 		return ID();
+	}
+
+	Real CLayer::squared_weights_sum() const
+	{
+		return std::accumulate(_filters.begin(), _filters.end(), Real(0), [](const auto& sum, const auto& filter) { return sum + filter.sum([](const auto& x) { return x * x; }); });
 	}
 }

@@ -167,4 +167,9 @@ namespace DeepLearning
 	{
 		return ID();
 	}
+
+	Real NLayer::squared_weights_sum() const
+	{
+		return _weights.sum([](const auto& x) { return x * x; });
+	}
 }

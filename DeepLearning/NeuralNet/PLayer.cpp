@@ -155,4 +155,9 @@ namespace DeepLearning
 	{
 		return ID();
 	}
+
+	Real PLayer::squared_weights_sum() const
+	{
+		return Real(0);
+	}
 }

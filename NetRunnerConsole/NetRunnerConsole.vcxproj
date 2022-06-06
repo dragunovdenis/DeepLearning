@@ -13,19 +13,19 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{50160b3b-7ff2-43c0-b650-54332ef4fa75}</ProjectGuid>
-    <RootNamespace>DeepLearning</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.22000.0</WindowsTargetPlatformVersion>
+    <ProjectGuid>{34341a31-567a-4037-8346-b4f3e1808db0}</ProjectGuid>
+    <RootNamespace>NetRunnerConsole</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -45,26 +45,28 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>bin\$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <OutDir>bin\$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>CHECK_BOUNDS;_DEBUG;_LIB;%(PreprocessorDefinitions);USE_AVX2</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>..\DeepLearning;..\packages\tclap.1.2.1\build\native\include\tclap;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
-      <SubSystem>
-      </SubSystem>
+      <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy "..\Shared\TestData" "bin\$(Platform)\$(Configuration)\TestData" /e /y /i /r</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -72,88 +74,52 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions);USE_AVX2</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>..\DeepLearning;..\packages\tclap.1.2.1\build\native\include\tclap;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
-      <SubSystem>
-      </SubSystem>
+      <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy "..\Shared\TestData" "bin\$(Platform)\$(Configuration)\TestData" /e /y /i /r</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="defs.h" />
-    <ClInclude Include="Diagnostics\Logging.h" />
-    <ClInclude Include="Image8Bit.h" />
-    <ClInclude Include="ImageProcessing\ImageUtils.h" />
-    <ClInclude Include="IndexIterator.h" />
-    <ClInclude Include="Math\ActivationFunction.h" />
-    <ClInclude Include="Math\AvxAcceleration.h" />
-    <ClInclude Include="Math\BasicCollection.h" />
-    <ClInclude Include="Math\CostFunction.h" />
-    <ClInclude Include="Math\LinAlg3d.h" />
-    <ClInclude Include="Math\Matrix.h" />
-    <ClInclude Include="Math\PoolOperator.h" />
-    <ClInclude Include="Math\Tensor.h" />
-    <ClInclude Include="Math\Vector.h" />
-    <ClInclude Include="Math\Dual.h" />
-    <ClInclude Include="Math\DiffFunc.h" />
-    <ClInclude Include="Math\LinAlg2d.h" />
-    <ClInclude Include="Memory\MemHandle.h" />
-    <ClInclude Include="MnistDataUtils.h" />
-    <ClInclude Include="MsgPackUtils.h" />
-    <ClInclude Include="NeuralNet\CLayer.h" />
-    <ClInclude Include="NeuralNet\CummulativeGradient.h" />
-    <ClInclude Include="NeuralNet\LayerHandle.h" />
-    <ClInclude Include="NeuralNet\Net.h" />
-    <ClInclude Include="NeuralNet\NLayer.h" />
-    <ClInclude Include="NeuralNet\PLayer.h" />
-    <ClInclude Include="ThirdParty\BitmapUtils.h" />
-    <ClInclude Include="Utilities.h" />
+    <ClCompile Include="LearningRateReporter.cpp" />
+    <ClCompile Include="NetRunnerConsole.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Diagnostics\Logging.cpp" />
-    <ClCompile Include="Image8Bit.cpp" />
-    <ClCompile Include="ImageProcessing\ImageUtils.cpp" />
-    <ClCompile Include="Math\ActivationFunction.cpp" />
-    <ClCompile Include="Math\AvxAcceleration.cpp" />
-    <ClCompile Include="Math\BasicCollection.cpp" />
-    <ClCompile Include="Math\CostFunction.cpp" />
-    <ClCompile Include="Math\Matrix.cpp" />
-    <ClCompile Include="Math\PoolOperator.cpp" />
-    <ClCompile Include="Math\Tensor.cpp" />
-    <ClCompile Include="Math\Vector.cpp" />
-    <ClCompile Include="Math\DiffFunc.cpp" />
-    <ClCompile Include="MnistDataUtils.cpp" />
-    <ClCompile Include="NeuralNet\ALayer.h" />
-    <ClCompile Include="NeuralNet\CLayer.cpp" />
-    <ClCompile Include="NeuralNet\CummulativeGradient.cpp" />
-    <ClCompile Include="NeuralNet\LayerHandle.cpp" />
-    <ClCompile Include="NeuralNet\LayerTypeId.cpp" />
-    <ClCompile Include="NeuralNet\LayerTypeId.h" />
-    <ClCompile Include="NeuralNet\Net.cpp" />
-    <ClCompile Include="NeuralNet\NLayer.cpp" />
-    <ClCompile Include="NeuralNet\PLayer.cpp" />
-    <ClCompile Include="ThirdParty\BitmapUtils.cpp" />
-    <ClCompile Include="Utilities.cpp" />
+    <ProjectReference Include="..\DeepLearning\DeepLearning.vcxproj">
+      <Project>{50160b3b-7ff2-43c0-b650-54332ef4fa75}</Project>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="net_script.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Launch.bat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="LearningRateReporter.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\packages\tclap.1.2.1\build\native\tclap.targets" Condition="Exists('..\packages\tclap.1.2.1\build\native\tclap.targets')" />
     <Import Project="..\packages\msgpack-c-cpp-3.1.1-winsoft666.1.0.0.2\build\native\msgpack-c-cpp-3.1.1-winsoft666.targets" Condition="Exists('..\packages\msgpack-c-cpp-3.1.1-winsoft666.1.0.0.2\build\native\msgpack-c-cpp-3.1.1-winsoft666.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
+    <Error Condition="!Exists('..\packages\tclap.1.2.1\build\native\tclap.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\tclap.1.2.1\build\native\tclap.targets'))" />
     <Error Condition="!Exists('..\packages\msgpack-c-cpp-3.1.1-winsoft666.1.0.0.2\build\native\msgpack-c-cpp-3.1.1-winsoft666.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\msgpack-c-cpp-3.1.1-winsoft666.1.0.0.2\build\native\msgpack-c-cpp-3.1.1-winsoft666.targets'))" />
   </Target>
 </Project>

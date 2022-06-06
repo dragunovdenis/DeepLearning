@@ -39,6 +39,11 @@ namespace DeepLearning
 		/// </summary>
 		std::vector<LayerHandle> _layers{};
 
+		/// <summary>
+		/// Returns sum of squared weight of all the layers
+		/// </summary>
+		Real squared_weights_sum() const;
+
 	public:
 
 		MSGPACK_DEFINE(_layers);
@@ -88,7 +93,7 @@ namespace DeepLearning
 		void learn(const std::vector<Tensor>& training_items, const std::vector<Tensor>& reference_items,
 			const std::size_t batch_size, const std::size_t epochs_count, const Real learning_rate, const CostFunctionId& cost_func_id,
 			const Real& lambda = Real(0),
-			const std::function<void(std::size_t)>& epoch_callback = [](const auto epoch_id) {});
+			const std::function<void(const std::size_t, const Real)>& epoch_callback = [](const auto epoch_id, const auto scaled_l2_reg_factor) {});
 
 		/// <summary>
 		/// Evaluates number of "correct answers" for the given collection of the
@@ -107,7 +112,7 @@ namespace DeepLearning
 		/// Evaluates the given cost function for the given pair of input and reference collections
 		/// </summary>
 		Real evaluate_cost_function(const std::vector<Tensor>& test_input,
-			const std::vector<Tensor>& reference_output, const CostFunctionId& cost_func_id) const;
+			const std::vector<Tensor>& reference_output, const CostFunctionId& cost_func_id, const Real l2_reg_factor) const;
 
 		/// <summary>
 		/// Method to append layer to the net
@@ -153,5 +158,10 @@ namespace DeepLearning
 		/// i.e. layer types, their architecture etc.
 		/// </summary>
 		bool equal_hyperparams(const Net& net) const;
+
+		/// <summary>
+		/// Returns a human-readable description of the net through description of all its layers
+		/// </summary>
+		std::string to_string() const;
 	};
 }

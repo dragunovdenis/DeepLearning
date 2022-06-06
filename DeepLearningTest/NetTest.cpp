@@ -33,49 +33,6 @@ namespace DeepLearningTest
 	TEST_CLASS(NetTest)
 	{
 		/// <summary>
-		/// Scales intensities of the given images so that they are all between 0 and 1.0;
-		/// </summary>
-		static std::vector<Tensor> scale_images(const std::vector<Image8Bit>& images, const bool flatten_images = true, const Real& max_value = Real(1))
-		{
-			if (images.empty())
-				return std::vector<Tensor>();
-
-			std::vector<Tensor> result(images.begin(), images.end());
-
-			const auto image_size = result.begin()->size();
-			if (!std::all_of(result.begin(), result.end(), [=](const auto& im) { return im.size() == image_size; }))
-				throw std::exception("Images are supposed to be of same size");
-
-			const auto scale_factor = max_value / 256;
-
-			for (auto& result_item : result)
-				result_item *= scale_factor;
-
-			if (!flatten_images)
-			{
-				const auto shape = Index3d{ 1, images.begin()->height(), images.begin()->width() };
-				for (auto& result_item : result)
-					result_item.reshape(shape);
-			}
-
-			return result;
-		}
-
-		/// <summary>
-		/// Return collections of data and labels (in this exact order)
-		/// </summary>
-		static std::tuple<std::vector<Tensor>, std::vector<Tensor>> load_labeled_data(
-			const std::filesystem::path& data_path, const std::filesystem::path& labels_path,
-			const std::size_t expected_items_count, const bool flatten_images = true, const Real& max_value = Real(1))
-		{
-			const auto images = MnistDataUtils::read_images(data_path, expected_items_count);
-			const auto images_scaled = scale_images(images, flatten_images, max_value);
-			const auto labels = MnistDataUtils::read_labels(labels_path, expected_items_count);
-
-			return std::make_tuple(images_scaled, labels);
-		}
-
-		/// <summary>
 		/// A general method to run MNIST-based training and evaluation
 		/// </summary>
 		/// <param name="cost_func_id">Id of the cost function we want to use for training.</param>
@@ -88,13 +45,13 @@ namespace DeepLearningTest
 		{
 			//Arrange
 			const auto training_images_count = 60000;
-			const auto [training_data, training_labels] = load_labeled_data(
+			const auto [training_data, training_labels] = MnistDataUtils::load_labeled_data(
 				"TestData\\MNIST\\train-images.idx3-ubyte",
 				"TestData\\MNIST\\train-labels.idx1-ubyte",
 				training_images_count);
 
 			const auto test_images_count = 10000;
-			const auto [test_data, test_labels] = load_labeled_data(
+			const auto [test_data, test_labels] = MnistDataUtils::load_labeled_data(
 				"TestData\\MNIST\\t10k-images.idx3-ubyte",
 				"TestData\\MNIST\\t10k-labels.idx1-ubyte",
 				test_images_count);
@@ -103,10 +60,10 @@ namespace DeepLearningTest
 			const auto batch_size = 10;
 			const auto epochs_count = run_long_test ? 30 : 6;
 
-			const auto evaluation_action = [&](const auto epoch_id)
+			const auto evaluation_action = [&](const auto epoch_id, const auto scaled_l2_reg_factor)
 			{
-				const auto correct_unswers = net.count_correct_answers(test_data, test_labels);
-				Logger::WriteMessage((std::string("Epoch: ") + std::to_string(epoch_id) +  ". Correct answers : " + std::to_string(correct_unswers) + "\n").c_str());
+				const auto correct_answers = net.count_correct_answers(test_data, test_labels);
+				Logger::WriteMessage((std::string("Epoch: ") + std::to_string(epoch_id) +  ". Correct answers : " + std::to_string(correct_answers) + "\n").c_str());
 			};
 
 			//Act
@@ -137,13 +94,13 @@ namespace DeepLearningTest
 		{
 			//Arrange
 			const auto training_images_count = 60000;
-			auto [training_data, training_labels] = load_labeled_data(
+			auto [training_data, training_labels] = MnistDataUtils::load_labeled_data(
 				"TestData\\MNIST\\train-images.idx3-ubyte",
 				"TestData\\MNIST\\train-labels.idx1-ubyte",
 				training_images_count, /*flatten images*/false);
 
 			const auto test_images_count = 10000;
-			const auto [test_data, test_labels] = load_labeled_data(
+			const auto [test_data, test_labels] = MnistDataUtils::load_labeled_data(
 				"TestData\\MNIST\\t10k-images.idx3-ubyte",
 				"TestData\\MNIST\\t10k-labels.idx1-ubyte",
 				test_images_count, /*flatten images*/false);
@@ -167,10 +124,10 @@ namespace DeepLearningTest
 			std::chrono::steady_clock::time_point start;
 			std::chrono::steady_clock::time_point epoch_start;
 
-			const auto evaluation_action = [&](const auto epoch_id)
+			const auto evaluation_action = [&](const auto epoch_id, const auto scaled_l2_reg_factor)
 			{
-				const auto correct_unswers = net.count_correct_answers(test_data, test_labels);
-				Logger::WriteMessage((std::string("Epoch: ") + std::to_string(epoch_id) + ". Correct answers : " + std::to_string(correct_unswers)).c_str());
+				const auto correct_answers = net.count_correct_answers(test_data, test_labels);
+				Logger::WriteMessage((std::string("Epoch: ") + std::to_string(epoch_id) + ". Correct answers : " + std::to_string(correct_answers)).c_str());
 				auto epoch_end = std::chrono::steady_clock::now();
 				Logger::WriteMessage((" Epoch time : " +
 					std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(epoch_end - epoch_start).count()) + " ms.\n").c_str());

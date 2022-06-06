@@ -147,5 +147,10 @@ namespace DeepLearning
 		/// See the summary to the corresponding method in the base class
 		/// </summary>
 		LayerTypeId get_type_id() const override;
+
+		/// <summary>
+		/// See the summary to the corresponding method in the base class
+		/// </summary>
+		Real squared_weights_sum() const override;
 	};
 }
