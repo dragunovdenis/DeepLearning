@@ -51,10 +51,13 @@ namespace DeepLearningTest
 				training_images_count);
 
 			const auto test_images_count = 10000;
-			const auto [test_data, test_labels] = MnistDataUtils::load_labeled_data(
+			const auto test_data_tuple = MnistDataUtils::load_labeled_data(
 				"TestData\\MNIST\\t10k-images.idx3-ubyte",
 				"TestData\\MNIST\\t10k-labels.idx1-ubyte",
 				test_images_count);
+
+			const auto& test_data = std::get<0>(test_data_tuple);
+			const auto& test_labels = std::get<1>(test_data_tuple);
 
 			auto net = Net({ 784, (run_long_test ? 100ull : 30ull), 10 }, activ_func_ids);
 			const auto batch_size = 10;
@@ -100,7 +103,7 @@ namespace DeepLearningTest
 				training_images_count, /*flatten images*/false);
 
 			const auto test_images_count = 10000;
-			const auto [test_data, test_labels] = MnistDataUtils::load_labeled_data(
+			const auto test_data_tuple = MnistDataUtils::load_labeled_data(
 				"TestData\\MNIST\\t10k-images.idx3-ubyte",
 				"TestData\\MNIST\\t10k-labels.idx1-ubyte",
 				test_images_count, /*flatten images*/false);
@@ -123,6 +126,9 @@ namespace DeepLearningTest
 
 			std::chrono::steady_clock::time_point start;
 			std::chrono::steady_clock::time_point epoch_start;
+
+			const auto& test_data = std::get<0>(test_data_tuple);
+			const auto& test_labels = std::get<1>(test_data_tuple);
 
 			const auto evaluation_action = [&](const auto epoch_id, const auto scaled_l2_reg_factor)
 			{

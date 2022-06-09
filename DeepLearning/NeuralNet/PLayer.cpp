@@ -76,10 +76,10 @@ namespace DeepLearning
 		if (input.size_3d() != in_size())
 			throw std::exception("Unexpected size of the input tensor");
 
-		if (aux_learning_data_ptr)
+		if (aux_learning_data_ptr) 
 		{
 			aux_learning_data_ptr->Input = input;
-			aux_learning_data_ptr->Derivatives = Tensor({0});
+			aux_learning_data_ptr->Derivatives = Tensor(Index3d(0));
 		}
 
 		if (_pool_operator_id == PoolTypeId::MIN || _pool_operator_id == PoolTypeId::MAX)

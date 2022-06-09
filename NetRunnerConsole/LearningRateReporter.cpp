@@ -99,6 +99,9 @@ namespace NetRunnerConsole
 	{
 		TrainingReport result{};
 
+		if (_data.empty())
+			return result;
+
 		const auto elements_cnt = std::max_element(_data.begin(), _data.end(),
 			[](const auto& x, const auto& y ) { return x.size() < y.size(); })->size();
 

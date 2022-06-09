@@ -25,6 +25,9 @@
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="net_script.txt" />
+    <None Include="Launch.bat">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LearningRateReporter.h">
