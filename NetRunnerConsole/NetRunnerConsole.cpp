@@ -52,9 +52,9 @@ std::string format_time(const std::chrono::system_clock::time_point& time_pt)
 }
 
 /// <summary>
-/// Returns formated duration between the start and stop time points
+/// Returns formatted duration between the start and stop time points
 /// </summary>
-std::string get_elapsed_time_formated(const std::chrono::system_clock::time_point& start_pt, const std::chrono::system_clock::time_point& stop_pt)
+std::string get_elapsed_time_formatted(const std::chrono::system_clock::time_point& start_pt, const std::chrono::system_clock::time_point& stop_pt)
 {
 	const auto epoch_time_sec = std::chrono::duration_cast<std::chrono::seconds>(stop_pt - start_pt);
 	std::string result = std::format("{:%T}", epoch_time_sec);
@@ -62,14 +62,14 @@ std::string get_elapsed_time_formated(const std::chrono::system_clock::time_poin
 }
 
 /// <summary>
-/// Return string with formated elapsed time and updates given time-point with new measurement
+/// Return string with formatted elapsed time and updates given time-point with new measurement
 /// </summary>
 /// <param name="start_pt">Start time point</param>
 /// <returns></returns>
-std::string get_elapsed_time_formated(std::chrono::system_clock::time_point& start_pt)
+std::string get_elapsed_time_formatted(std::chrono::system_clock::time_point& start_pt)
 {
 	const auto stop_pt = std::chrono::system_clock::now();
-	const auto result = get_elapsed_time_formated(start_pt, stop_pt);
+	const auto result = get_elapsed_time_formatted(start_pt, stop_pt);
 	start_pt = stop_pt;
 	return result;
 }
@@ -162,7 +162,7 @@ int main(int argc, char** argv)
 			const auto correct_answers_training_data = net_to_train.count_correct_answers(training_data, training_labels) * Real(1) / training_data.size();
 			const auto cost_function = net_to_train.evaluate_cost_function(training_data, training_labels, cost_func_id, scaled_l2_reg_factor);
 			reporter.add_data(correct_answers_test_data, correct_answers_training_data, cost_function);
-			const auto elapsed_time_str = get_elapsed_time_formated(epoch_start);
+			const auto elapsed_time_str = get_elapsed_time_formatted(epoch_start);
 			std::cout << "Iteration : " << iter_id << "; Epoch : " << epoch_id << "; success rate : "
 				<< correct_answers_test_data << " %; time: " << elapsed_time_str << std::endl;
 		};
@@ -173,7 +173,7 @@ int main(int argc, char** argv)
 
 	const auto stop = std::chrono::system_clock::now();
 	std::cout << "Finished at: " << format_time(stop) << std::endl;
-	std::cout << "Total execution time : " << get_elapsed_time_formated(start, stop) << std::endl;
+	std::cout << "Total execution time : " << get_elapsed_time_formatted(start, stop) << std::endl;
 
 	//Save report
 	const auto start_time_str = format_time(start);
