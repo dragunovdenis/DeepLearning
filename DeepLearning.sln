@@ -12,19 +12,25 @@ EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
+		IntelCompiler2022|x64 = IntelCompiler2022|x64
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{50160B3B-7FF2-43C0-B650-54332EF4FA75}.Debug|x64.ActiveCfg = Debug|x64
 		{50160B3B-7FF2-43C0-B650-54332EF4FA75}.Debug|x64.Build.0 = Debug|x64
+		{50160B3B-7FF2-43C0-B650-54332EF4FA75}.IntelCompiler2022|x64.ActiveCfg = IntelCompiler2022|x64
+		{50160B3B-7FF2-43C0-B650-54332EF4FA75}.IntelCompiler2022|x64.Build.0 = IntelCompiler2022|x64
 		{50160B3B-7FF2-43C0-B650-54332EF4FA75}.Release|x64.ActiveCfg = Release|x64
 		{50160B3B-7FF2-43C0-B650-54332EF4FA75}.Release|x64.Build.0 = Release|x64
 		{E473C9D5-5FA9-48DC-B0D6-5FC6B75A8F96}.Debug|x64.ActiveCfg = Debug|x64
 		{E473C9D5-5FA9-48DC-B0D6-5FC6B75A8F96}.Debug|x64.Build.0 = Debug|x64
+		{E473C9D5-5FA9-48DC-B0D6-5FC6B75A8F96}.IntelCompiler2022|x64.ActiveCfg = IntelCompiler2022|x64
 		{E473C9D5-5FA9-48DC-B0D6-5FC6B75A8F96}.Release|x64.ActiveCfg = Release|x64
 		{E473C9D5-5FA9-48DC-B0D6-5FC6B75A8F96}.Release|x64.Build.0 = Release|x64
 		{34341A31-567A-4037-8346-B4F3E1808DB0}.Debug|x64.ActiveCfg = Debug|x64
 		{34341A31-567A-4037-8346-B4F3E1808DB0}.Debug|x64.Build.0 = Debug|x64
+		{34341A31-567A-4037-8346-B4F3E1808DB0}.IntelCompiler2022|x64.ActiveCfg = IntelCompiler2022|x64
+		{34341A31-567A-4037-8346-B4F3E1808DB0}.IntelCompiler2022|x64.Build.0 = IntelCompiler2022|x64
 		{34341A31-567A-4037-8346-B4F3E1808DB0}.Release|x64.ActiveCfg = Release|x64
 		{34341A31-567A-4037-8346-B4F3E1808DB0}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection

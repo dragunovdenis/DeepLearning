@@ -135,6 +135,12 @@
     <ClInclude Include="Diagnostics\Logging.h">
       <Filter>Header Files\Diagnostics</Filter>
     </ClInclude>
+    <ClInclude Include="NeuralNet\ALayer.h">
+      <Filter>Header Files\NeuralNet</Filter>
+    </ClInclude>
+    <ClInclude Include="NeuralNet\LayerTypeId.h">
+      <Filter>Header Files\NeuralNet</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Matrix.cpp">
@@ -188,17 +194,11 @@
     <ClCompile Include="Math\PoolOperator.cpp">
       <Filter>Source Files\Math</Filter>
     </ClCompile>
-    <ClCompile Include="NeuralNet\ALayer.h">
-      <Filter>Header Files\NeuralNet</Filter>
-    </ClCompile>
     <ClCompile Include="NeuralNet\LayerHandle.cpp">
       <Filter>Source Files\NeuralNet</Filter>
     </ClCompile>
     <ClCompile Include="NeuralNet\CLayer.cpp">
       <Filter>Source Files\NeuralNet</Filter>
-    </ClCompile>
-    <ClCompile Include="NeuralNet\LayerTypeId.h">
-      <Filter>Header Files\NeuralNet</Filter>
     </ClCompile>
     <ClCompile Include="NeuralNet\PLayer.cpp">
       <Filter>Source Files\NeuralNet</Filter>
