@@ -159,7 +159,8 @@ namespace DeepLearning
 		if (training_items.size() == 0)
 			return;
 
-		const auto reg_factor = -learning_rate * lambda / training_items.size();
+		const auto lambda_scaled = lambda / training_items.size();
+		const auto reg_factor = -learning_rate * lambda_scaled;
 
 		const auto cost_function = CostFunction(cost_func_id);
 
@@ -219,7 +220,7 @@ namespace DeepLearning
 					_layers[layer_id].layer().update(gradient_collectors[layer_id].calc_average_grarient(-learning_rate), reg_factor);
 			}
 
-			epoch_callback(epoch_id, Real(0.5) * reg_factor);
+			epoch_callback(epoch_id, Real(0.5) * lambda_scaled);
 		}
 	}
 
