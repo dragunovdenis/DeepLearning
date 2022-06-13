@@ -71,12 +71,6 @@ namespace DeepLearning
 		Utils::fill_with_random_values(begin(), end(), range_begin, range_end);
 	}
 
-	Vector::Vector(const std::size_t dim, const std::function<Real()>& generator)
-		: Vector(dim, false)
-	{
-		std::generate(begin(), end(), generator);
-	}
-
 	Vector::~Vector()
 	{
 		free();

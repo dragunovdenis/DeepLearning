@@ -30,89 +30,27 @@ namespace DeepLearningTest
 {
 	TEST_CLASS(TensorTest)
 	{
-		TEST_METHOD(TensorCopyConstructorTest)
-		{
-			//Arrange
-			const auto layer_dim = 10;
-			const auto row_dim = 13;
-			const auto col_dim = 17;
-			const auto tensor = Tensor(layer_dim, row_dim, col_dim, -1, 1);
-
-			//Act
-			const auto tensor_copy = Tensor(tensor);
-
-			//Assert
-			Assert::IsTrue(tensor == tensor_copy, L"Tensors are not the same");
-			Assert::IsTrue(tensor.begin() != tensor_copy.begin(), L"Tensors share the same memory");
-		}
-
-		TEST_METHOD(TensorCopyAssignmentOperatorTest)
-		{
-			//Arrange
-			const auto row_dim = 10;
-			const auto col_dim = 13;
-			const auto layer_dim = 7;
-
-			const auto row_dim1 = 11;
-			const auto col_dim1 = 15;
-			const auto layer_dim1 = 17;
-
-			auto tensor_to_assign = Tensor(layer_dim, row_dim, col_dim, -1, 1);
-			const auto ptr_before_assignment = tensor_to_assign.begin();
-
-			auto tensor_to_assign1 = Tensor(layer_dim, row_dim, col_dim, -1, 1);
-			const auto ptr_before_assignment1 = tensor_to_assign1.begin();
-
-			//Below, layer and row dimensions a swapped on purpose, that way we create
-			//a tensor that has different number of layers and rows but its the overall memory
-			//footprint is the same as for the tensors above
-			const auto tensor_to_copy = Tensor(row_dim, layer_dim, col_dim, -1, 1);
-			const auto tensor_to_copy1 = Tensor(layer_dim1, row_dim1, col_dim1, -1, 1);
-
-			Assert::IsTrue(tensor_to_assign != tensor_to_copy && tensor_to_assign != tensor_to_copy1,
-				L"Tensors are supposed to be different");
-
-			//Act
-			tensor_to_assign = tensor_to_copy;//Assign tensor with the same memory footprint
-			tensor_to_assign1 = tensor_to_copy1;//Assign tensor of different memory footprint
-
-			//Assert
-			Assert::IsTrue(tensor_to_assign == tensor_to_copy, L"Copying failed (same memory footprint)");
-			Assert::IsTrue(ptr_before_assignment == tensor_to_assign.begin(), L"Memory was re-allocated when copying vector of the same memory footprint");
-
-			Assert::IsTrue(tensor_to_assign1 == tensor_to_copy1, L"Copying failed (different memory footprints)");
-			Assert::IsTrue(tensor_to_assign1.begin() != tensor_to_copy1.begin(), L"Tensors share the same memory");
-		}
-
-		TEST_METHOD(TensorMoveConstructorTest)
-		{
-			//Arrange
-			const auto row_dim = 10;
-			const auto col_dim = 13;
-			const auto layer_dim = 7;
-
-			auto tensor_to_move = Tensor(layer_dim, row_dim, col_dim, -1, 1);
-			const auto begin_pointer_before_move = tensor_to_move.begin();
-			const auto end_pointer_before_move = tensor_to_move.end();
-
-			//Act
-			const Tensor vector(std::move(tensor_to_move));
-
-			//Assert
-			Assert::IsTrue(begin_pointer_before_move == vector.begin()
-				&& end_pointer_before_move == vector.end(), L"Move operator does not work as expected");
-
-			Assert::IsTrue(tensor_to_move.begin() == nullptr && tensor_to_move.layer_dim() == 0 &&
-				tensor_to_move.row_dim() == 0 && tensor_to_move.col_dim() == 0,
-				L"Unexpected state for a vector after being moved");
-		}
-
 		/// <summary>
 		/// Returns random instances of Tensor class of given dimensions
 		/// </summary>
 		static Tensor TensorFactory(const std::size_t layer_dim = 7, const std::size_t row_dim = 10, const std::size_t col_dim = 13)
 		{
 			return Tensor(layer_dim, row_dim, col_dim, -1, 1);
+		}
+
+		TEST_METHOD(TensorCopyConstructorTest)
+		{
+			StandardTestUtils::CopyConstructorTest<Tensor>([]() {return TensorFactory();  });
+		}
+
+		TEST_METHOD(TensorCopyAssignmentOperatorTest)
+		{
+			StandardTestUtils::AssignmentOperatorTest<Tensor>([]() {return TensorFactory(7, 10, 13);  }, []() {return TensorFactory(5, 11, 15); });
+		}
+
+		TEST_METHOD(TensorMoveConstructorTest)
+		{
+			StandardTestUtils::MoveConstructorTest<Tensor>([]() {return TensorFactory();  });
 		}
 
 		/// <summary>
@@ -524,21 +462,20 @@ namespace DeepLearningTest
 			Assert::IsTrue(result1 == result2, L"Results are supposed to be the same");
 		}
 
-		TEST_METHOD(AddScaleTernaryTest)
+		TEST_METHOD(ScaleAndAddTest)
 		{
 			//Arrange
 			const auto tensor_size = Index3d{ 10, 22, 33 };
 			auto tensor1 = TensorFactory(tensor_size);//filled with random numbers
 			const auto tensor2 = TensorFactory(tensor_size);//filled with random numbers
-			const auto tensor3 = TensorFactory(tensor_size);//filled with random numbers
 			const auto scalar = Utils::get_random(-1, 1) + Real(2);
-			Assert::IsTrue(tensor1.max_abs() > 0 && tensor2.max_abs() > 0 && tensor3.max_abs() > 0 && scalar > 0,
+			Assert::IsTrue(tensor1.max_abs() > 0 && tensor2.max_abs() > 0 && scalar > 0,
 				L"Tensors and scalar are supposed to be nonzero");
 
 			//Act
 			auto result1 = tensor1;
-			result1.add_scaled(tensor2, tensor3, scalar);
-			auto result2 = tensor1 + tensor2 + tensor3 * scalar;
+			result1.scale_and_add(tensor2, scalar);
+			auto result2 = tensor1 * scalar  + tensor2;
 
 			//Assert
 			Assert::IsTrue((result1 - result2).max_abs() < 10 * std::numeric_limits<Real>::epsilon(), L"Results are supposed to be the same");

@@ -49,6 +49,12 @@
     <Filter Include="Source Files\Diagnostics">
       <UniqueIdentifier>{a62ec974-f938-40ca-ae9f-c6debe1cb211}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Math\CUDA">
+      <UniqueIdentifier>{4421ce5d-6827-4b30-b785-e3b472d3c8a5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Math\CUDA">
+      <UniqueIdentifier>{e577e042-1adc-4f4f-9d18-bc8df40aef25}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="defs.h">
@@ -141,6 +147,18 @@
     <ClInclude Include="NeuralNet\LayerTypeId.h">
       <Filter>Header Files\NeuralNet</Filter>
     </ClInclude>
+    <ClInclude Include="Math\BasicCudaCollection.cuh">
+      <Filter>Header Files\Math\CUDA</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\CudaSetup.h">
+      <Filter>Header Files\Math\CUDA</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\CudaVector.cuh">
+      <Filter>Header Files\Math\CUDA</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\CudaUtils.cuh">
+      <Filter>Header Files\Math\CUDA</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Matrix.cpp">
@@ -209,8 +227,22 @@
     <ClCompile Include="NeuralNet\LayerTypeId.cpp">
       <Filter>Source Files\NeuralNet</Filter>
     </ClCompile>
+    <ClCompile Include="Math\CudaSetup.cpp">
+      <Filter>Source Files\Math\CUDA</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="Math\BasicCudaCollection.cu">
+      <Filter>Source Files\Math\CUDA</Filter>
+    </CudaCompile>
+    <CudaCompile Include="Math\CudaVector.cu">
+      <Filter>Source Files\Math\CUDA</Filter>
+    </CudaCompile>
+    <CudaCompile Include="Math\CudaUtils.cu">
+      <Filter>Source Files\Math\CUDA</Filter>
+    </CudaCompile>
   </ItemGroup>
 </Project>

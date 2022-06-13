@@ -51,7 +51,7 @@ namespace DeepLearning::Utils
     /// <summary>
     /// Returns uniformly distributed random integer value from the specified interval (ends are included)
     /// </summary>
-    int get_random_int(const int min, const int max);
+    int get_random_int(const int min = 0, const int max = std::numeric_limits<int>::max());
 
     /// <summary>
     /// Functionality to fill the given range with normally distributed pseudo-random numbers

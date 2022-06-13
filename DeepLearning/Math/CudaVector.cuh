@@ -20,19 +20,19 @@
 #include <vector>
 #include "../defs.h"
 #include <msgpack.hpp>
-#include <functional>
-#include "BasicCollection.h"
+#include "Vector.h"
 #include <filesystem>
+#include "BasicCudaCollection.cuh"
 
 namespace DeepLearning
 {
 	/// <summary>
 	/// Represents a dense vector of arbitrary dimension
 	/// </summary>
-	class Vector : public BasicCollection
+	class CudaVector : public BasicCudaCollection
 	{
 		/// <summary>
-		/// Pointer to the data array
+		/// Pointer to the data array (device memory)
 		/// </summary>
 		Real* _data{};
 		/// <summary>
@@ -41,20 +41,25 @@ namespace DeepLearning
 		std::size_t _dim{};
 
 		/// <summary>
-		/// Returns "true" if the given index is valid (within the boundaries of the underlying "data" collection)
-		/// </summary>
-		bool check_bounds(const ::std::size_t id) const;
-
-		/// <summary>
 		/// Frees the allocated memory
 		/// </summary>
 		void free();
 
 		/// <summary>
-		/// Assignment from another Vector
+		/// Assignment from another CUDA collection
 		/// </summary>
-		template <class S>
-		void assign(const S& source);
+		void assign(const BasicCudaCollection& source);
+
+		/// <summary>
+		/// Assignment from a "host" collection
+		/// </summary>
+		void assign(const BasicCollection& source);
+
+		/// <summary>
+		/// Reallocates memory of the vector to meet the given number of elements
+		/// (if the current size does not coincide with the given "new" size)
+		/// </summary>
+		void resize(const std::size_t& new_size);
 
 	public:
 
@@ -64,14 +69,19 @@ namespace DeepLearning
 		std::size_t size() const;
 
 		/// <summary>
+		/// Converts the current instance of CUDA vector into its "host" counterpart
+		/// </summary>
+		Vector to_host_vector() const;
+
+		/// <summary>
 		/// Custom "packing" method
 		/// </summary>
-		template <typename Packer> 
-		void msgpack_pack(Packer& msgpack_pk) const 
-		{ 
-			const auto proxy = to_stdvector();
+		template <typename Packer>
+		void msgpack_pack(Packer& msgpack_pk) const
+		{
+			const auto proxy = to_host_vector();
 			msgpack::type::make_define_array(proxy).msgpack_pack(msgpack_pk);
-		} 
+		}
 
 		/// <summary>
 		/// Custom "unpacking" method
@@ -81,44 +91,38 @@ namespace DeepLearning
 		/// <summary>
 		/// Default constructor
 		/// </summary>
-		Vector() = default;
+		CudaVector() = default;
 
 		/// <summary>
 		/// Copy constructor
 		/// </summary>
-		Vector(const Vector& vec);
+		CudaVector(const CudaVector& vec);
 
 		/// <summary>
 		/// Move constructor
 		/// </summary>
-		Vector(Vector&& vec) noexcept;
+		CudaVector(CudaVector&& vec) noexcept;
 
 		/// <summary>
 		/// Copy assignment operator
 		/// </summary>
-		Vector& operator=(const Vector& vec);
+		CudaVector& operator=(const CudaVector& vec);
 
 		/// <summary>
 		/// Constructs dense vector of the given dimension
 		/// </summary>
-		Vector(const std::size_t dim, const bool assign_zero = true);
-
-		/// <summary>
-		/// Constructor from given source vector
-		/// </summary>
-		template <class T>
-		Vector(const std::vector<T>& source);
+		CudaVector(const std::size_t dim, const bool assign_zero = true);
 
 		/// <summary>
 		/// Constructs dense vector of the given dimension filled with
 		/// uniformly distributed pseudo-random values from the given range
 		/// </summary>
-		Vector(const std::size_t dim, const Real range_begin, const Real range_end);
+		CudaVector(const std::size_t dim, const Real range_begin, const Real range_end);
 
 		/// <summary>
 		/// Destructor
 		/// </summary>
-		~Vector();
+		~CudaVector();
 
 		/// <summary>
 		/// Returns dimension of the vector
@@ -126,43 +130,29 @@ namespace DeepLearning
 		std::size_t dim() const;
 
 		/// <summary>
-		/// Element access operator
-		/// </summary>
-		/// <param name="id">Index of the element to be accessed</param>
-		/// <returns>Reference to the element</returns>
-		Real& operator ()(const std::size_t id);
-
-		/// <summary>
-		/// Element access operator (constant version)
-		/// </summary>
-		/// <param name="id">Index of the element to be accessed</param>
-		/// <returns>Constant reference to the element</returns>
-		const Real& operator ()(const std::size_t id) const;
-
-		/// <summary>
 		/// Compound addition operator
 		/// </summary>
-		Vector& operator += (const Vector& vec);
+		CudaVector& operator += (const CudaVector& vec);
 
 		/// <summary>
 		/// Compound subtraction operator
 		/// </summary>
-		Vector& operator -= (const Vector& vec);
+		CudaVector& operator -= (const CudaVector& vec);
 
 		/// <summary>
 		/// Compound scalar multiplication operator
 		/// </summary>
-		Vector& operator *= (const Real& scalar);
+		CudaVector& operator *= (const Real& scalar);
 
 		/// <summary>
 		/// Equality operator
 		/// </summary>
-		bool operator ==(const Vector& vect) const;
+		bool operator ==(const CudaVector& vect) const;
 
 		/// <summary>
 		/// Inequality operator
 		/// </summary>
-		bool operator !=(const Vector& vect) const;
+		bool operator !=(const CudaVector& vect) const;
 
 		/// <summary>
 		/// Pointer to the first element of the vector
@@ -187,7 +177,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Generates a vector filled with uniformly distributed pseudo random values
 		/// </summary>
-		static Vector random(const std::size_t dim, const Real range_begin, const Real range_end);
+		static CudaVector random(const std::size_t dim, const Real range_begin, const Real range_end);
 
 		/// <summary>
 		/// Method to abandon resources (should be called when the resources are "moved")
@@ -204,20 +194,21 @@ namespace DeepLearning
 	/// <summary>
 	/// Vector addition operator
 	/// </summary>
-	Vector operator + (const Vector& vec1, const Vector& vec2);
+	CudaVector operator + (const CudaVector& vec1, const CudaVector& vec2);
 
 	/// <summary>
 	/// Vector subtraction operator
 	/// </summary>
-	Vector operator -(const Vector& vec1, const Vector& vec2);
+	CudaVector operator -(const CudaVector& vec1, const CudaVector& vec2);
 
 	/// <summary>
 	/// Vector-Scalar multiplication operator
 	/// </summary>
-	Vector operator *(const Vector& vec, const Real& scalar);
+	CudaVector operator *(const CudaVector& vec, const Real& scalar);
 
 	/// <summary>
 	/// Scalar-vector multiplication operator
 	/// </summary>
-	Vector operator *(const Real& scalar, const Vector& vec);
+	CudaVector operator *(const Real& scalar, const CudaVector& vec);
+
 }

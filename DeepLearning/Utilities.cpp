@@ -39,7 +39,7 @@ namespace DeepLearning::Utils
         static std::mt19937 gen(rd());
         static std::uniform_int_distribution<int> dist(0, std::numeric_limits<int>::max());
 
-        const auto interval_length = (max - min) + 1;
+        const auto interval_length = (static_cast<long long>(max) - min) + 1;
         return dist(gen) % interval_length + min;
     }
 

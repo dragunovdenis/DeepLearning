@@ -130,7 +130,7 @@ namespace DeepLearning
 			throw std::exception("Invalid input");
 
 		if (reg_factor != Real(0))
-			_weights.add_scaled(weights_increment[0], _weights, reg_factor);
+			_weights.scale_and_add(weights_increment[0], Real(1) + reg_factor);
 		else
 			_weights.add(weights_increment[0]);
 

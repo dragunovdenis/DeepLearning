@@ -140,7 +140,7 @@ namespace DeepLearning
 
 		if (reg_factor != Real(0))
 			for (auto filter_id = 0ull; filter_id < _filters.size(); filter_id++)
-				_filters[filter_id].add_scaled(weights_increment[filter_id], _filters[filter_id], reg_factor);
+				_filters[filter_id].scale_and_add(weights_increment[filter_id], Real(1) + reg_factor);
 		else
 			for (auto filter_id = 0ull; filter_id < _filters.size(); filter_id++)
 				_filters[filter_id].add(weights_increment[filter_id]);

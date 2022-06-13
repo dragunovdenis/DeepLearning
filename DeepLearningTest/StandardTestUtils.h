@@ -201,4 +201,83 @@ namespace DeepLearningTest::StandardTestUtils
 		Assert::IsTrue(instance == double_minus_instance, L"Minus operator should be inverse to itself!");
 		Assert::IsTrue((instance + minus_instance).max_abs() == 0, L"Minus operator should result in an additionally inverse instance!");
 	}
+
+	/// <summary>
+	/// Performs a "standard" test of the copy constructor of class "T"
+	/// </summary>
+	/// <param name="factory">A factory method returning random instances of class "T"</param>
+	template <class T>
+	void CopyConstructorTest(const std::function<T()>& factory)
+	{
+		//Arrange
+		const auto dim = 10;
+		const auto instance = factory();
+
+		//Act
+		const T instance_copy(instance);
+
+		//Assert
+		Assert::IsTrue(instance == instance_copy, L"Instances are not the same");
+		Assert::IsTrue(instance.begin() != instance_copy.begin(), L"Instances share the same memory");
+	}
+
+	/// <summary>
+	/// Performs "standard" test of copy operator of class "T"
+	/// </summary>
+	/// <param name="factory">A factory method returning random instances of class "T"</param>
+	/// <param name="factory_diff_size">A factory method returning random instances of class "T"
+	/// occupying different amount of memory than those instantiated by "factory"</param>
+	template <class T>
+	void AssignmentOperatorTest(const std::function<T()>& factory, const std::function<T()>& factory_diff_size)
+	{
+		//Arrange
+		auto inst_to_assign = factory();
+		const auto ptr_before_assignment = inst_to_assign.begin();
+
+		auto inst_to_assign1 = factory();
+		const auto ptr_before_assignment1 = inst_to_assign1.begin();
+
+		const auto inst_to_copy = factory();
+		const auto inst_to_copy1 = factory_diff_size();
+
+		Assert::IsTrue(inst_to_assign != inst_to_copy && inst_to_assign != inst_to_copy1,
+			L"Instances are supposed to be different");
+
+		Assert::IsTrue(inst_to_assign1.size() != inst_to_copy1.size(),
+			L"Instances are supposed to be of different sizes");
+
+		//Act
+		inst_to_assign = inst_to_copy;//Assign instance of the same size
+		inst_to_assign1 = inst_to_copy1;//Assign instance of different size
+
+		//Assert
+		Assert::IsTrue(inst_to_assign == inst_to_copy, L"Copying failed (same size)");
+		Assert::IsTrue(ptr_before_assignment == inst_to_assign.begin(), L"Memory was re-allocated when copying instances of the same size");
+
+		Assert::IsTrue(inst_to_assign1 == inst_to_copy1, L"Copying failed (different sizes)");
+		Assert::IsTrue(inst_to_assign1.begin() != inst_to_copy1.begin(), L"Instances share the same memory");
+	}
+
+	/// <summary>
+	/// Performs a "standard" move constructor test of class "T"
+	/// </summary>
+	/// <param name="factory">A factory method returning random instances of class "T"</param>
+	template <class T>
+	void MoveConstructorTest(const std::function<T()>& factory)
+	{
+		//Arrange
+		auto instance_to_move = factory();
+		const auto begin_pointer_before_move = instance_to_move.begin();
+		const auto end_pointer_before_move = instance_to_move.end();
+
+		//Act
+		const T instance(std::move(instance_to_move));
+
+		//Assert
+		Assert::IsTrue(begin_pointer_before_move == instance.begin()
+			&& end_pointer_before_move == instance.end(), L"Move operator does not work as expected");
+
+		Assert::IsTrue(instance_to_move.begin() == nullptr && instance_to_move.size() == 0,
+			L"Unexpected state for a vector after being moved");
+	}
 }
