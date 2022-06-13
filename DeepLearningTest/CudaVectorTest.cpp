@@ -85,5 +85,95 @@ namespace DeepLearningTest
 		{
 			StandardTestUtils::ScalarMultiplicationByOneTest<CudaVector>([]() { return CudaVectorFactory(); });
 		}
+
+		template <class T>
+		T mixed_arithmetic_function(const T& v1, const T& v2, const T& v3)
+		{
+			return (0.5 * v1 + v1 * 3.4 - 5.1 * v3) * 0.75;
+		}
+
+		TEST_METHOD(MixedArithmeticTest)
+		{
+			//Arrange
+			const auto cuda_v1 = CudaVectorFactory();
+			const auto cuda_v2 = CudaVectorFactory();
+			const auto cuda_v3 = CudaVectorFactory();
+
+			Assert::IsTrue(cuda_v1 != cuda_v2 &&
+				cuda_v1 != cuda_v3 && cuda_v2 != cuda_v3, L"Vectors are supposed to be different");
+
+			//Act
+			const auto cuda_result = mixed_arithmetic_function(cuda_v1, cuda_v2, cuda_v3);
+
+			//Assert
+			const auto host_result = mixed_arithmetic_function(
+				cuda_v1.to_host_vector(), cuda_v2.to_host_vector(), cuda_v3.to_host_vector());
+
+			Assert::IsTrue((cuda_result.to_host_vector() - host_result).max_abs() < 
+				10 * std::numeric_limits<Real>::epsilon(),
+				L"Too high deviation from reference");
+		}
+
+		TEST_METHOD(MaxAbsTest)
+		{
+			//Arrange
+			const auto cuda_v1 = CudaVectorFactory();
+
+			//Act
+			const auto max_abs = cuda_v1.max_abs();
+
+			//Assert
+			Assert::IsTrue(max_abs == cuda_v1.to_host_vector().max_abs(), L"Actual and expected values are not equal");
+			Assert::IsTrue(max_abs > 0, L"Vector is supposed to be nonzero");
+		}
+
+		TEST_METHOD(HadamardProdTest)
+		{
+			//Arrange
+			const auto cuda_v1 = CudaVectorFactory();
+			const auto cuda_v2 = CudaVectorFactory();
+
+			Assert::IsTrue(cuda_v1 != cuda_v2, L"Vectors are supposed to be different");
+
+			//Act
+			const auto cuda_result = cuda_v1.hadamard_prod(cuda_v2);
+
+			//Assert
+			const auto host_result = cuda_v1.to_host_vector().hadamard_prod(cuda_v2.to_host_vector());
+			Assert::IsTrue(cuda_result.to_host_vector() == host_result, L"Actual and reference vectors are not equal");
+		}
+
+		TEST_METHOD(DotProdTest)
+		{
+			//Arrange
+			const auto cuda_v1 = CudaVectorFactory();
+			const auto cuda_v2 = CudaVectorFactory();
+
+			Assert::IsTrue(cuda_v1 != cuda_v2, L"Vectors are supposed to be different");
+
+			//Act
+			const auto cuda_result = cuda_v1.dot_product(cuda_v2);
+
+			//Assert
+			const auto host_result = cuda_v1.to_host_vector().dot_product(cuda_v2.to_host_vector());
+			Assert::IsTrue(std::abs(cuda_result - host_result) < 10 * std::numeric_limits<Real>::epsilon(),
+				L"Too high deviation from reference");
+		}
+
+		TEST_METHOD(ElementSumTest)
+		{
+			//Arrange
+			const auto cuda_v1 = CudaVectorFactory();
+
+			Assert::IsTrue(cuda_v1.max_abs() > 0, L"Vectors is supposed to be nonzero");
+
+			//Act
+			const auto cuda_result = cuda_v1.sum();
+
+			//Assert
+			const auto host_result = cuda_v1.to_host_vector().sum();
+			Assert::IsTrue(std::abs(cuda_result - host_result) < 10 * std::numeric_limits<Real>::epsilon(),
+				L"Too high deviation from reference");
+		}
 	};
 }
