@@ -81,6 +81,26 @@ namespace DeepLearning
 		return size() == 0;
 	}
 
+	Real* BasicCollection::begin()
+	{
+		return _data;
+	}
+
+	const Real* BasicCollection::begin() const
+	{
+		return _data;
+	}
+
+	Real* BasicCollection::end()
+	{
+		return _data + size();
+	}
+
+	const Real* BasicCollection::end() const
+	{
+		return _data + size();
+	}
+
 	void BasicCollection::hadamard_prod_in_place(const BasicCollection& collection)
 	{
 		if (size() != collection.size())

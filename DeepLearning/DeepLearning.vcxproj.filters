@@ -159,6 +159,9 @@
     <ClInclude Include="Math\CudaUtils.cuh">
       <Filter>Header Files\Math\CUDA</Filter>
     </ClInclude>
+    <ClInclude Include="Math\CudaMatrix.cuh">
+      <Filter>Header Files\Math\CUDA</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Matrix.cpp">
@@ -242,6 +245,9 @@
       <Filter>Source Files\Math\CUDA</Filter>
     </CudaCompile>
     <CudaCompile Include="Math\CudaUtils.cu">
+      <Filter>Source Files\Math\CUDA</Filter>
+    </CudaCompile>
+    <CudaCompile Include="Math\CudaMatrix.cu">
       <Filter>Source Files\Math\CUDA</Filter>
     </CudaCompile>
   </ItemGroup>

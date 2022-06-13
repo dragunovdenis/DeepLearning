@@ -280,4 +280,59 @@ namespace DeepLearningTest::StandardTestUtils
 		Assert::IsTrue(instance_to_move.begin() == nullptr && instance_to_move.size() == 0,
 			L"Unexpected state for a vector after being moved");
 	}
+
+	template <class T>
+	T mixed_arithmetic_function(const T& v1, const T& v2, const T& v3)
+	{
+		return (0.5 * v1 + v1 * 3.4 - 5.1 * v3) * 0.75;
+	}
+
+	/// <summary>
+	/// General test for basic arithmetic operations of class T. It is assumed that
+	/// any instance of class T can be converted to its "host" counterpart by calling "to_host()" method.
+	/// The test is conducted with respect to the results of the "host" implementation
+	/// </summary>
+	/// <param name="factory">A factory method returning random instances of class "T"</param>
+	template <class T>
+	void CudaMixedArithmeticTest(const std::function<T()>& factory)
+	{
+		//Arrange
+		const auto inst1 = factory();
+		const auto inst2 = factory();
+		const auto inst3 = factory();
+
+		Assert::IsTrue(inst1 != inst2 &&
+			inst1 != inst3 && inst2 != inst3, L"Vectors are supposed to be different");
+
+		//Act
+		const auto result = mixed_arithmetic_function(inst1, inst2, inst3);
+
+		//Assert
+		const auto host_result = mixed_arithmetic_function(
+			inst1.to_host(), inst2.to_host(), inst3.to_host());
+
+		Assert::IsTrue((result.to_host() - host_result).max_abs() <
+			10 * std::numeric_limits<Real>::epsilon(),
+			L"Too high deviation from reference");
+	}
+
+	/// <summary>
+	/// "MaxAbs" method of class T. It is assumed that
+	/// any instance of class T can be converted to its "host" counterpart by calling "to_host()" method.
+	/// The test is conducted with respect to the results of the "host" implementation
+	/// </summary>
+	/// <param name="factory">A factory method returning random instances of class "T"</param>
+	template <class T>
+	void CudaMaxAbsTest(const std::function<T()>& factory)
+	{
+		//Arrange
+		const auto inst = factory();
+
+		//Act
+		const auto max_abs = inst.max_abs();
+
+		//Assert
+		Assert::IsTrue(max_abs == inst.to_host().max_abs(), L"Actual and expected values are not equal");
+		Assert::IsTrue(max_abs > 0, L"Vector is supposed to be nonzero");
+	}
 }

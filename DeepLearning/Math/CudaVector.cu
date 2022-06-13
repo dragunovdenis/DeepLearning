@@ -18,10 +18,8 @@
 #include "CudaVector.cuh"
 #include <cuda_runtime.h>
 #include "CudaUtils.cuh"
-#include <nvfunctional>
 #include <thrust/execution_policy.h>
 #include <thrust/generate.h>
-#include <thrust/tuple.h>
 #include <thrust/equal.h>
 
 namespace DeepLearning
@@ -67,7 +65,7 @@ namespace DeepLearning
 		return _dim;
 	}
 
-	Vector CudaVector::to_host_vector() const
+	Vector CudaVector::to_host() const
 	{
 		Vector result(size(), false/*assign zero*/);
 		CudaUtils::cuda_copy_device2host(result.begin(), begin(), size());
@@ -82,9 +80,8 @@ namespace DeepLearning
 		assign(proxy);
 	}
 
-	CudaVector::CudaVector(const std::size_t dim, const bool assign_zero)
+	CudaVector::CudaVector(const std::size_t dim, const bool assign_zero) : _dim(dim)
 	{
-		_dim = dim;
 		_data = CudaUtils::cuda_allocate<Real>(_dim);
 
 		if (assign_zero)
@@ -103,8 +100,9 @@ namespace DeepLearning
 		uniform_random_fill(range_begin, range_end);
 	}
 
-	CudaVector::CudaVector(CudaVector&& vec) noexcept : _dim(vec._dim), _data(vec._data)
+	CudaVector::CudaVector(CudaVector&& vec) noexcept : _dim(vec._dim)
 	{
+		_data = vec._data;
 		vec.abandon_resources();
 	}
 
@@ -161,34 +159,14 @@ namespace DeepLearning
 		return !(*this == vect);
 	}
 
-	Real* CudaVector::begin()
-	{
-		return _data;
-	}
-
-	const Real* CudaVector::begin() const
-	{
-		return _data;
-	}
-
-	Real* CudaVector::end()
-	{
-		return _data + size();
-	}
-
-	const Real* CudaVector::end() const
-	{
-		return _data + size();
-	}
-
 	CudaVector CudaVector::random(const std::size_t dim, const Real range_begin, const Real range_end)
 	{
 		return CudaVector(dim, range_begin, range_end);
 	}
 
-	void CudaVector::log(const std::filesystem::path& filename) const
+	void CudaVector::log(const std::filesystem::path& file_name) const
 	{
-		to_host_vector().log(filename);
+		to_host().log(file_name);
 	}
 
 	CudaVector operator + (const CudaVector& vec1, const CudaVector& vec2)

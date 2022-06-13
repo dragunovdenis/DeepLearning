@@ -45,8 +45,9 @@ namespace DeepLearning
 		_dim = 0;
 	}
 
-	Vector::Vector(Vector&& vec) noexcept : _dim(vec._dim), _data(vec._data)
+	Vector::Vector(Vector&& vec) noexcept : _dim(vec._dim)
 	{
+		_data = vec._data;
 		vec.abandon_resources();
 	}
 
@@ -148,26 +149,6 @@ namespace DeepLearning
 	bool Vector::operator !=(const Vector& vect) const
 	{
 		return !(*this == vect);
-	}
-
-	Real* Vector::begin()
-	{
-		return _data;
-	}
-
-	const Real* Vector::begin() const
-	{
-		return _data;
-	}
-
-	Real* Vector::end()
-	{
-		return _data + _dim;
-	}
-
-	const Real* Vector::end() const
-	{
-		return _data + _dim;
 	}
 
 	static Vector random(const std::size_t dim, const Real range_begin, const Real range_end)

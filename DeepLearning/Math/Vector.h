@@ -32,10 +32,6 @@ namespace DeepLearning
 	class Vector : public BasicCollection
 	{
 		/// <summary>
-		/// Pointer to the data array
-		/// </summary>
-		Real* _data{};
-		/// <summary>
 		/// Number of elements in the vector
 		/// </summary>
 		std::size_t _dim{};
@@ -163,26 +159,6 @@ namespace DeepLearning
 		/// Inequality operator
 		/// </summary>
 		bool operator !=(const Vector& vect) const;
-
-		/// <summary>
-		/// Pointer to the first element of the vector
-		/// </summary>
-		Real* begin();
-
-		/// <summary>
-		/// Pointer to the first element of the vector (constant version)
-		/// </summary>
-		const Real* begin() const;
-
-		/// <summary>
-		/// Pointer to the "behind last" element of the vector
-		/// </summary>
-		Real* end();
-
-		/// <summary>
-		/// Pointer to the "behind last" element of the vector (constant version)
-		/// </summary>
-		const Real* end() const;
 
 		/// <summary>
 		/// Generates a vector filled with uniformly distributed pseudo random values

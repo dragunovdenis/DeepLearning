@@ -34,8 +34,6 @@ namespace DeepLearning
 	/// </summary>
 	class Tensor : public BasicCollection
 	{
-		Real* _data{};
-
 		/// <summary>
 		/// Number of layers (matrices) in the tensor
 		/// </summary>
@@ -177,26 +175,6 @@ namespace DeepLearning
 		/// Destructor
 		/// </summary>
 		~Tensor();
-
-		/// <summary>
-		/// Pointer to the first element of the tensor
-		/// </summary>
-		Real* begin();
-
-		/// <summary>
-		/// Pointer to the first element of the tensor (constant version)
-		/// </summary>
-		const Real* begin() const;
-
-		/// <summary>
-		/// Pointer to the "behind last" element of the tensor
-		/// </summary>
-		Real* end();
-
-		/// <summary>
-		/// Pointer to the "behind last" element of the tensor (constant version)
-		/// </summary>
-		const Real* end() const;
 
 		/// <summary>
 		/// Number of "layers"

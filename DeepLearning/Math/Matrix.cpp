@@ -98,12 +98,6 @@ namespace DeepLearning
 	}
 
 	Matrix::Matrix(const std::size_t row_dim, const std::size_t col_dim,
-		const std::function<Real()>& generator) : Matrix(row_dim, col_dim, false)
-	{
-		std::generate(begin(), end(), generator);
-	}
-
-	Matrix::Matrix(const std::size_t row_dim, const std::size_t col_dim,
 		const Real range_begin, const Real range_end) : Matrix(row_dim, col_dim, false)
 	{
 		Utils::fill_with_random_values(begin(), end(), range_begin, range_end);
@@ -138,8 +132,9 @@ namespace DeepLearning
 	}
 
 	Matrix::Matrix(Matrix&& matr) noexcept 
-		: _col_dim(matr._col_dim), _row_dim(matr._row_dim), _data(matr._data)
+		: _col_dim(matr._col_dim), _row_dim(matr._row_dim)
 	{
+		_data = matr._data;
 		matr.abandon_resources();
 	}
 
@@ -259,26 +254,6 @@ namespace DeepLearning
 	bool Matrix::operator !=(const Matrix& matr) const
 	{
 		return !(*this == matr);
-	}
-
-	Real* Matrix::begin()
-	{
-		return _data;
-	}
-
-	const Real* Matrix::begin() const
-	{
-		return _data;
-	}
-
-	Real* Matrix::end()
-	{
-		return _data + size();
-	}
-
-	const Real* Matrix::end() const
-	{
-		return _data + size();
 	}
 
 	static inline Matrix random(const std::size_t row_dim, const std::size_t col_dim, const Real range_begin, const Real range_end)

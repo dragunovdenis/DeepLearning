@@ -59,9 +59,10 @@ namespace DeepLearning
 	}
 
 	Tensor::Tensor(Tensor&& tensor) noexcept
-		: _data(tensor._data), _layer_dim(tensor._layer_dim),
+		: _layer_dim(tensor._layer_dim),
 		_row_dim(tensor._row_dim), _col_dim(tensor._col_dim)
 	{
+		_data = tensor._data;
 		tensor.abandon_resources();
 	}
 
@@ -93,8 +94,9 @@ namespace DeepLearning
 	/// Move constructor
 	/// </summary>
 	Tensor::Tensor(Vector&& vector) noexcept : _layer_dim(1ull),
-		_row_dim(1ull), _col_dim(vector.dim()), _data(vector.begin())
+		_row_dim(1ull), _col_dim(vector.dim())
 	{
+		_data = vector.begin();
 		vector.abandon_resources();
 	}
 
@@ -102,8 +104,9 @@ namespace DeepLearning
 	/// Move constructor
 	/// </summary>
 	Tensor::Tensor(Matrix&& matrix) noexcept : _layer_dim(1ull),
-		_row_dim(matrix.row_dim()), _col_dim(matrix.col_dim()), _data(matrix.begin())
+		_row_dim(matrix.row_dim()), _col_dim(matrix.col_dim())
 	{
+		_data = matrix.begin();
 		matrix.abandon_resources();
 	}
 
@@ -170,26 +173,6 @@ namespace DeepLearning
 	std::size_t Tensor::size() const
 	{
 		return _layer_dim * _row_dim * _col_dim;
-	}
-
-	Real* Tensor::begin()
-	{
-		return _data;
-	}
-
-	const Real* Tensor::begin() const
-	{
-		return _data;
-	}
-
-	Real* Tensor::end()
-	{
-		return _data + size();
-	}
-
-	const Real* Tensor::end() const
-	{
-		return _data + size();
 	}
 
 	std::size_t Tensor::layer_dim() const

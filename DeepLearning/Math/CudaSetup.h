@@ -60,11 +60,11 @@ namespace DeepLearning
 		/// <summary>
 		/// Returns maximal allowed number of threads per block for the chosen device (provided that the initialization went successful) 
 		/// </summary>
-		static std::size_t threads_per_block();
+		static unsigned int threads_per_block();
 
 		/// <summary>
 		/// Calculates number of blocks needed to launch a 1D kernel for the given number of items
 		/// </summary>
-		static std::size_t calc_blocks(const std::size_t& items_cnt);
+		static unsigned int calc_blocks(const std::size_t& items_cnt);
 	};
 }

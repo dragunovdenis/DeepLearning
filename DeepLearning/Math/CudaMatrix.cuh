@@ -18,20 +18,20 @@
 #pragma once
 
 #include <vector>
-#include <msgpack.hpp>
-#include <functional>
 #include "../defs.h"
-#include "BasicCollection.h"
+#include <msgpack.hpp>
 #include <filesystem>
+#include "BasicCudaCollection.cuh"
+#include "Matrix.h"
 
 namespace DeepLearning
 {
-	class Vector;
+	class CudaVector;
 
 	/// <summary>
-	/// Representation of a dense rectangular matrix
+	/// Represents a dense vector of arbitrary dimension
 	/// </summary>
-	class Matrix : public BasicCollection
+	class CudaMatrix : public BasicCudaCollection
 	{
 		/// <summary>
 		/// Matrix dimensions
@@ -40,22 +40,25 @@ namespace DeepLearning
 		std::size_t _col_dim{};
 
 		/// <summary>
-		/// Returns true if the given row and column indices are valid
-		/// </summary>
-		bool check_bounds(const std::size_t row_id, const std::size_t col_id) const;
-
-		/// <summary>
-		/// Converts the given row and column indices into a single index in the data collection
-		/// The caller is responsible for index validation
-		/// </summary>
-		/// <param name="row_id">Row index</param>
-		/// <param name="col_id">Column index</param>
-		std::size_t row_col_to_data_id(const std::size_t row_id, const std::size_t col_id) const;
-
-		/// <summary>
 		/// Method to free the data array
 		/// </summary>
 		void free();
+
+		/// <summary>
+		/// Assignment from another CUDA collection
+		/// </summary>
+		void assign(const CudaMatrix& source);
+
+		/// <summary>
+		/// Assignment from a "host" collection
+		/// </summary>
+		void assign(const Matrix& source);
+
+		/// <summary>
+		/// Reallocates memory of the vector to meet the given number of elements
+		/// (if the current size does not coincide with the given "new" size)
+		/// </summary>
+		void resize(const std::size_t& new_row_dim, const std::size_t& new_col_dim);
 
 	public:
 
@@ -65,13 +68,18 @@ namespace DeepLearning
 		std::size_t size() const;
 
 		/// <summary>
+		/// Converts the current instance of CUDA vector into its "host" counterpart
+		/// </summary>
+		Matrix to_host() const;
+
+		/// <summary>
 		/// Custom "packing" method
 		/// </summary>
 		template <typename Packer>
 		void msgpack_pack(Packer& msgpack_pk) const
 		{
-			const auto proxy = to_stdvector();
-			msgpack::type::make_define_array(_row_dim, _col_dim, proxy).msgpack_pack(msgpack_pk);
+			const auto proxy = to_host();
+			msgpack::type::make_define_array(proxy).msgpack_pack(msgpack_pk);
 		}
 
 		/// <summary>
@@ -92,60 +100,44 @@ namespace DeepLearning
 		/// <summary>
 		/// Default constructor, constructs an empty matrix (i.e. a matrix having "zero" dimensions)
 		/// </summary>
-		Matrix() = default;
+		CudaMatrix() = default;
 
 		/// <summary>
 		/// Constructs a dense matrix of the given dimensions
 		/// </summary>
-		Matrix(const std::size_t row_dim, const std::size_t col_dim, const bool assign_zero = true);
+		CudaMatrix(const std::size_t row_dim, const std::size_t col_dim, const bool assign_zero = true);
 
 		/// <summary>
 		/// Constructs a dense matrix of the given dimensions filled
 		/// with a uniformly distributed pseudo-random values from the given range
 		/// </summary>
-		Matrix(const std::size_t row_dim, const std::size_t col_dim,
+		CudaMatrix(const std::size_t row_dim, const std::size_t col_dim,
 			const Real range_begin, const Real range_end);
 
 		/// <summary>
 		/// Copy constructor
 		/// </summary>
-		Matrix(const Matrix& matr);
+		CudaMatrix(const CudaMatrix& matr);
 
 		/// <summary>
 		/// Assignment operator
 		/// </summary>
-		Matrix& operator =(const Matrix& matr);
+		CudaMatrix& operator =(const CudaMatrix& matr);
 
 		/// <summary>
 		/// Move constructor
 		/// </summary>
-		Matrix(Matrix&& matr) noexcept;
+		CudaMatrix(CudaMatrix&& matr) noexcept;
 
 		/// <summary>
 		/// Destructor
 		/// </summary>
-		~Matrix();
-
-		/// <summary>
-		/// Element access operator
-		/// </summary>
-		/// <param name="row_id">Index of the row</param>
-		/// <param name="col_idj">Index of the column</param>
-		/// <returns>Reference to the element with the given row and column indices</returns>
-		Real& operator ()(const std::size_t row_id, const std::size_t col_id);
-
-		/// <summary>
-		/// Element access operator (constant version)
-		/// </summary>
-		/// <param name="row_id">Index of the row</param>
-		/// <param name="col_idj">Index of the column</param>
-		/// <returns>Constant reference to the element with the given row and column indices</returns>
-		const Real& operator ()(const std::size_t row_id, const std::size_t col_id) const;
+		~CudaMatrix();
 
 		/// <summary>
 		/// Multiplication by a vector from the right
 		/// </summary>
-		Vector friend operator *(const Matrix& matr, const Vector& vec);
+		CudaVector friend operator *(const CudaMatrix& matr, const CudaVector & vec);
 
 		/// <summary>
 		/// Performs multiplication by the given vector (from the right)
@@ -153,42 +145,42 @@ namespace DeepLearning
 		/// </summary>
 		/// <param name="mul_vec">The vector that is involved in the multiplication operation</param>
 		/// <param name="add_vec">The vector that is involved in the addition operation</param>
-		Vector mul_add(const BasicCollection& mul_vec, const BasicCollection& add_vec) const;
+		CudaVector mul_add(const BasicCudaCollection & mul_vec, const BasicCudaCollection & add_vec) const;
 
 		/// <summary>
 		/// Multiplication by a vector from the left
 		/// </summary>
-		Vector friend operator *(const BasicCollection& vec, const Matrix& matr);
+		CudaVector friend operator *(const BasicCudaCollection & vec, const CudaMatrix& matr);
 
 		/// <summary>
 		/// Equality operator
 		/// </summary>
-		bool operator ==(const Matrix& matr) const;
+		bool operator ==(const CudaMatrix& matr) const;
 
 		/// <summary>
 		/// Inequality operator
 		/// </summary>
-		bool operator !=(const Matrix& matr) const;
+		bool operator !=(const CudaMatrix & matr) const;
 
 		/// <summary>
 		/// Generates a vector filled with uniformly distributed pseudo random values
 		/// </summary>
-		static inline Matrix random(const std::size_t row_dim, const std::size_t col_dim, const Real range_begin, const Real range_end);
+		static CudaMatrix random(const std::size_t row_dim, const std::size_t col_dim, const Real range_begin, const Real range_end);
 
 		/// <summary>
 		/// Compound addition operator
 		/// </summary>
-		Matrix& operator +=(const Matrix &mat);
+		CudaMatrix& operator +=(const CudaMatrix& mat);
 
 		/// <summary>
 		/// Compound subtraction operator
 		/// </summary>
-		Matrix& operator -=(const Matrix &mat);
+		CudaMatrix& operator -=(const CudaMatrix& mat);
 
 		/// <summary>
 		/// Compound scalar multiplication operator
 		/// </summary>
-		Matrix& operator *=(const Real& scalar);
+		CudaMatrix& operator *=(const Real & scalar);
 
 		/// <summary>
 		/// Method to abandon resources (should be called when the resources are "moved")
@@ -199,31 +191,31 @@ namespace DeepLearning
 		/// Logs the matrix to a text file
 		/// </summary>
 		/// <param name="filename">Full name of the log file on disk</param>
-		void log(const std::filesystem::path& filename) const;
+		void log(const std::filesystem::path & file_name) const;
 	};
 
 	/// <summary>
 	/// Matrix addition operator
 	/// </summary>
-	Matrix operator +(const Matrix& mat1, const Matrix& mat2);
+	CudaMatrix operator +(const CudaMatrix& mat1, const CudaMatrix& mat2);
 
 	/// <summary>
 	/// Matrix subtraction operator
 	/// </summary>
-	Matrix operator -(const Matrix& mat1, const Matrix& mat2);
+	CudaMatrix operator -(const CudaMatrix& mat1, const CudaMatrix& mat2);
 
 	/// <summary>
 	/// Matrix by scalar multiplication operator
 	/// </summary>
-	Matrix operator *(const Matrix& mat, const Real& scalar);
+	CudaMatrix operator *(const CudaMatrix& mat, const Real& scalar);
 
 	/// <summary>
 	/// Scalar by matrix multiplication operator
 	/// </summary>
-	Matrix operator *(const Real& scalar, const Matrix& mat);
+	CudaMatrix operator *(const Real& scalar, const CudaMatrix& mat);
 
 	/// <summary>
 	/// Returns result of multiplication of the given vector-column by the given vector-row
 	/// </summary>
-	Matrix vector_col_times_vector_row(const BasicCollection& vec_col, const BasicCollection& vec_row);
+	CudaMatrix vector_col_times_vector_row(const BasicCudaCollection& vec_col, const BasicCudaCollection& vec_row);
 }

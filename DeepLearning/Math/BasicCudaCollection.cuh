@@ -30,6 +30,12 @@ namespace DeepLearning
 	/// </summary>
 	class BasicCudaCollection
 	{
+	protected:
+		/// <summary>
+		/// Elements of the matrix in the collection
+		/// </summary>
+		Real* _data{};
+
 	public:
 		/// <summary>
 		/// Element-wise sum with another collection of the same size
@@ -66,22 +72,22 @@ namespace DeepLearning
 		/// <summary>
 		/// Pointer to the first element of the vector
 		/// </summary>
-		virtual Real* begin() = 0;
+		Real* begin();
 
 		/// <summary>
 		/// Pointer to the first element of the vector (constant version)
 		/// </summary>
-		virtual const Real* begin() const = 0;
+		const Real* begin() const;
 
 		/// <summary>
 		/// Pointer to the "behind last" element of the vector
 		/// </summary>
-		virtual Real* end() = 0;
+		Real* end();
 
 		/// <summary>
 		/// Pointer to the "behind last" element of the vector (constant version)
 		/// </summary>
-		virtual const Real* end() const = 0;
+		const Real* end() const;
 
 		/// <summary>
 		/// "Maximal absolute value" norm ("infinity" norm) of the collection

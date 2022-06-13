@@ -111,6 +111,26 @@ namespace DeepLearning
 		return size() == 0;
 	}
 
+	Real* BasicCudaCollection::begin()
+	{
+		return _data;
+	}
+
+	const Real* BasicCudaCollection::begin() const
+	{
+		return _data;
+	}
+
+	Real* BasicCudaCollection::end()
+	{
+		return _data + size();
+	}
+
+	const Real* BasicCudaCollection::end() const
+	{
+		return _data + size();
+	}
+
 	void BasicCudaCollection::hadamard_prod_in_place(const BasicCudaCollection& collection)
 	{
 		if (size() != collection.size())

@@ -60,6 +60,9 @@
     <ClCompile Include="CudaVectorTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CudaMatrixTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

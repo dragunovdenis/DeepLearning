@@ -32,10 +32,6 @@ namespace DeepLearning
 	class CudaVector : public BasicCudaCollection
 	{
 		/// <summary>
-		/// Pointer to the data array (device memory)
-		/// </summary>
-		Real* _data{};
-		/// <summary>
 		/// Number of elements in the vector
 		/// </summary>
 		std::size_t _dim{};
@@ -71,7 +67,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Converts the current instance of CUDA vector into its "host" counterpart
 		/// </summary>
-		Vector to_host_vector() const;
+		Vector to_host() const;
 
 		/// <summary>
 		/// Custom "packing" method
@@ -79,7 +75,7 @@ namespace DeepLearning
 		template <typename Packer>
 		void msgpack_pack(Packer& msgpack_pk) const
 		{
-			const auto proxy = to_host_vector();
+			const auto proxy = to_host();
 			msgpack::type::make_define_array(proxy).msgpack_pack(msgpack_pk);
 		}
 
@@ -155,26 +151,6 @@ namespace DeepLearning
 		bool operator !=(const CudaVector& vect) const;
 
 		/// <summary>
-		/// Pointer to the first element of the vector
-		/// </summary>
-		Real* begin();
-
-		/// <summary>
-		/// Pointer to the first element of the vector (constant version)
-		/// </summary>
-		const Real* begin() const;
-
-		/// <summary>
-		/// Pointer to the "behind last" element of the vector
-		/// </summary>
-		Real* end();
-
-		/// <summary>
-		/// Pointer to the "behind last" element of the vector (constant version)
-		/// </summary>
-		const Real* end() const;
-
-		/// <summary>
 		/// Generates a vector filled with uniformly distributed pseudo random values
 		/// </summary>
 		static CudaVector random(const std::size_t dim, const Real range_begin, const Real range_end);
@@ -188,7 +164,7 @@ namespace DeepLearning
 		/// Logs the vector to a text file
 		/// </summary>
 		/// <param name="filename">Full name of the log file on disk</param>
-		void log(const std::filesystem::path& filename) const;
+		void log(const std::filesystem::path& file_name) const;
 	};
 
 	/// <summary>
