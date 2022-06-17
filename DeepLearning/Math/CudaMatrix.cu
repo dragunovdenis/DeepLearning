@@ -209,6 +209,9 @@ namespace DeepLearning
 		return mat * scalar;
 	}
 
+
+#define CUDA_WARP_SIZE 32
+
 	/// <summary>
 	/// CUDA kernel to perform matrix vector multiplication
 	/// </summary>
@@ -220,17 +223,67 @@ namespace DeepLearning
 	__global__  void matrix_vector_multiply_kernel(const int row_dim, const int col_dim,
 		const Real* matr_data, const Real* vect_data, Real* result)
 	{
-		const int row_id = blockIdx.x * blockDim.x + threadIdx.x;
+		const auto row_id = threadIdx.x + blockIdx.x * blockDim.x;
 
-		if (row_id >= row_dim)
-			return;
+		Real vect_shfl_src, vect_shfl_dest;
+		const auto matr_size = row_dim * col_dim;
 
-		Real accumulator = Real(0.0);
+		Real accumulator = Real(0);
 
-		for (int col_id = 0; col_id < col_dim; col_id++)
-			accumulator += matr_data[row_id * col_dim + col_id] * vect_data[col_id];
+		#pragma unroll
+		for (unsigned int m = 0; m < ((col_dim + CUDA_WARP_SIZE - 1) / CUDA_WARP_SIZE); ++m)
+		{
+			const auto col_id = m * CUDA_WARP_SIZE + threadIdx.x;
+			vect_shfl_src = (col_id < col_dim) ? vect_data[col_id] : Real(0);
 
-		result[row_id] = accumulator;
+			__syncthreads();
+
+			//#pragma unroll
+
+			for (int e = 0; e < CUDA_WARP_SIZE; ++e) {
+				vect_shfl_dest = __shfl_sync(0xFFFFFFFF, vect_shfl_src, e, CUDA_WARP_SIZE);
+				const auto matr_id = row_id * col_dim + (e + CUDA_WARP_SIZE * m);
+				if (matr_id < matr_size)
+					accumulator += matr_data[matr_id] * vect_shfl_dest;
+			}
+
+			__syncthreads();
+		}
+
+		if (row_id < row_dim) result[row_id] = accumulator;
+	}
+
+	__global__ void vector_matrix_multiply_kernel(const int row_dim, const int col_dim,
+		const Real* matr_data, const Real* vect_data, Real* result)
+	{
+		const auto row_id = threadIdx.x + blockIdx.x * blockDim.x;
+
+		Real vect_shfl_src, vect_shfl_dest;
+		const auto matr_size = row_dim * col_dim;
+
+		Real accumulator = Real(0);
+
+		#pragma unroll
+		for (unsigned int m = 0; m < ((row_dim + CUDA_WARP_SIZE - 1) / CUDA_WARP_SIZE); ++m)
+		{
+			const auto col_id = m * CUDA_WARP_SIZE + threadIdx.x;
+			vect_shfl_src = (col_id < row_dim) ? vect_data[col_id] : Real(0);
+
+			__syncthreads();
+
+			//#pragma unroll
+
+			for (int e = 0; e < CUDA_WARP_SIZE; ++e) {
+				vect_shfl_dest = __shfl_sync(0xFFFFFFFF, vect_shfl_src, e, CUDA_WARP_SIZE);
+				const auto matr_id = row_id + (e + CUDA_WARP_SIZE * m) * col_dim;
+				if (matr_id < matr_size)
+					accumulator += matr_data[matr_id] * vect_shfl_dest;
+			}
+
+			__syncthreads();
+		}
+
+		if (row_id < col_dim) result[row_id] = accumulator;
 	}
 
 	CudaVector operator *(const CudaMatrix& matr, const CudaVector& vec)
@@ -240,9 +293,8 @@ namespace DeepLearning
 
 		CudaVector result(matr.row_dim(), false /*assign zero*/);
 
-		const auto blocks_cnt = CudaSetup::calc_blocks(matr.row_dim());
-		const auto threads_per_block = CudaSetup::threads_per_block();
-		matrix_vector_multiply_kernel << <blocks_cnt, threads_per_block >> > (
+		const auto blocks_cnt = CudaSetup::calc_blocks(matr.row_dim(), CUDA_WARP_SIZE);
+		matrix_vector_multiply_kernel << <blocks_cnt, CUDA_WARP_SIZE >> > (
 			static_cast<int>(matr.row_dim()), static_cast<int>(matr.col_dim()),
 			matr.begin(), vec.begin(), result.begin());
 
@@ -258,20 +310,36 @@ namespace DeepLearning
 	/// <param name="vect_to_mul_data">Vector operand to multiply</param>
 	/// <param name="vect_to_add_data">Vector operand to add</param>
 	/// <param name="result">Result of the matrix-vector multiplication</param>
-	__global__  void matrix_vector_multiply_add_kernel(const int row_dim, const int col_dim,
+	__global__ void matrix_vector_multiply_add_kernel(const int row_dim, const int col_dim,
 		const Real* matr_data, const Real* mul_vect_data, const Real* add_vect_data, Real* result)
 	{
-		const int row_id = blockIdx.x * blockDim.x + threadIdx.x;
+		const auto row_id = threadIdx.x + blockIdx.x * blockDim.x;
 
-		if (row_id >= row_dim)
-			return;
+		Real vect_shfl_src, vect_shfl_dest;
+		const auto matr_size = row_dim * col_dim;
 
-		Real accumulator = Real(0.0);
+		Real accumulator = Real(0);
 
-		for (int col_id = 0; col_id < col_dim; col_id++)
-			accumulator += matr_data[row_id * col_dim + col_id] * mul_vect_data[col_id];
+		#pragma unroll
+		for (unsigned int m = 0; m < ((col_dim + CUDA_WARP_SIZE - 1) / CUDA_WARP_SIZE); ++m)
+		{
+			const auto col_id = m * CUDA_WARP_SIZE + threadIdx.x;
+			vect_shfl_src = (col_id < col_dim) ? mul_vect_data[col_id] : Real(0);
 
-		result[row_id] = accumulator + add_vect_data[row_id];
+			__syncthreads();
+
+			//#pragma unroll
+			for (int e = 0; e < CUDA_WARP_SIZE; ++e) {
+				vect_shfl_dest = __shfl_sync(0xFFFFFFFF, vect_shfl_src, e, CUDA_WARP_SIZE);
+				const auto matr_id = row_id * col_dim + (e + CUDA_WARP_SIZE * m);
+				if (matr_id < matr_size)
+					accumulator += matr_data[matr_id] * vect_shfl_dest;
+			}
+
+			__syncthreads();
+		}
+
+		if (row_id < row_dim) result[row_id] = accumulator + add_vect_data[row_id];
 	}
 
 	CudaVector CudaMatrix::mul_add(const BasicCudaCollection& mul_vec, const BasicCudaCollection& add_vec) const
@@ -282,37 +350,12 @@ namespace DeepLearning
 
 		CudaVector result(row_dim(), false /*assign zero*/);
 
-		const auto blocks_cnt = CudaSetup::calc_blocks(row_dim());
-		const auto threads_per_block = CudaSetup::threads_per_block();
-		matrix_vector_multiply_add_kernel << <blocks_cnt, threads_per_block >> > (
+		const auto blocks_cnt = CudaSetup::calc_blocks(row_dim(), CUDA_WARP_SIZE);
+		matrix_vector_multiply_add_kernel << <blocks_cnt, CUDA_WARP_SIZE >> > (
 			static_cast<int>(row_dim()), static_cast<int>(col_dim()),
 			begin(), mul_vec.begin(), add_vec.begin(), result.begin());
 
 		return result;
-	}
-
-	/// <summary>
-	/// CUDA kernel to perform vector-matrix multiplication (vector from the left)
-	/// </summary>
-	/// <param name="row_dim">Number of rows in the input matrix</param>
-	/// <param name="col_dim">Number of columns in the input matrix (must coincide with the vector size)</param>
-	/// <param name="matr_data">Matrix operand</param>
-	/// <param name="vect_data">Vector operand</param>
-	/// <param name="result">Result of the matrix-vector multiplication</param>
-	__global__  void vector_matrix_multiply_kernel(const int row_dim, const int col_dim,
-		const Real* matr_data, const Real* vect_data, Real* result)
-	{
-		const int col_id = blockIdx.x * blockDim.x + threadIdx.x;
-
-		if (col_id >= col_dim)
-			return;
-
-		Real accumulator = Real(0.0);
-
-		for (int row_id = 0; row_id < row_dim; row_id++)
-			accumulator += matr_data[row_id * col_dim + col_id] * vect_data[row_id];
-
-		result[col_id] = accumulator;
 	}
 
 	CudaVector operator *(const BasicCudaCollection& vec, const CudaMatrix& matr)
@@ -322,9 +365,8 @@ namespace DeepLearning
 
 		CudaVector result(matr.col_dim(), false /*assign zero*/);
 
-		const auto blocks_cnt = CudaSetup::calc_blocks(matr.col_dim());
-		const auto threads_per_block = CudaSetup::threads_per_block();
-		vector_matrix_multiply_kernel << <blocks_cnt, threads_per_block >> > (
+		const auto blocks_cnt = CudaSetup::calc_blocks(matr.col_dim(), CUDA_WARP_SIZE);
+		vector_matrix_multiply_kernel << <blocks_cnt, CUDA_WARP_SIZE >> > (
 			static_cast<int>(matr.row_dim()), static_cast<int>(matr.col_dim()),
 			matr.begin(), vec.begin(), result.begin());
 
@@ -342,7 +384,7 @@ namespace DeepLearning
 	__global__ void vector_col_times_vector_row_kernel(const int vec_col_size, const Real* vec_col_data,
 		const int vec_row_size, const Real* vec_row_data, Real* result)
 	{
-		const int id = blockIdx.x * blockDim.x + threadIdx.x;
+		const auto id = blockIdx.x * blockDim.x + threadIdx.x;
 
 		if (id >= vec_col_size * vec_row_size) return;
 
@@ -357,10 +399,10 @@ namespace DeepLearning
 		CudaMatrix result(vec_col.size(), vec_row.size(), false /*assign zero*/);
 
 		const auto blocks_cnt = CudaSetup::calc_blocks(result.size());
-		const auto threads_per_block = CudaSetup::threads_per_block();
+		const auto threads_per_block = CudaSetup::max_threads_per_block();
 
-		vector_col_times_vector_row_kernel << <blocks_cnt, threads_per_block >> > (vec_col.size(), vec_col.begin(),
-			vec_row.size(), vec_row.begin(), result.begin());
+		vector_col_times_vector_row_kernel << <blocks_cnt, threads_per_block >> > (static_cast<int>(vec_col.size()), vec_col.begin(),
+			static_cast<int>(vec_row.size()), vec_row.begin(), result.begin());
 
 		return result;
 	}

@@ -66,13 +66,15 @@ namespace DeepLearning
 		return _instance._status;
 	}
 
-	unsigned int CudaSetup::threads_per_block()
+	unsigned int CudaSetup::max_threads_per_block()
 	{
 		return static_cast<unsigned int>(_instance._device_props.maxThreadsPerBlock);
 	}
 
-	unsigned int CudaSetup::calc_blocks(const std::size_t& items_cnt)
+	unsigned int CudaSetup::calc_blocks(const std::size_t& total_threads, const unsigned int threads_per_block)
 	{
-		return static_cast<unsigned int>((items_cnt + threads_per_block() - 1) / threads_per_block());
+		const auto threads_per_block_to_use = (threads_per_block == 0) ? max_threads_per_block() : threads_per_block;
+
+		return static_cast<unsigned int>((total_threads + threads_per_block_to_use - 1) / threads_per_block_to_use);
 	}
 }

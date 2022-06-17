@@ -97,8 +97,8 @@ namespace DeepLearningTest
 		TEST_METHOD(MatrixVectorMultiplicationTest)
 		{
 			//Arrange
-			const auto row_dim = 10;
-			const auto col_dim = 13;
+			const auto row_dim = 100;
+			const auto col_dim = 1000;
 			const auto matr = CudaMatrixFactory(row_dim, col_dim);
 			const auto vect = CudaVector(col_dim, -1, 1);
 
@@ -112,14 +112,36 @@ namespace DeepLearningTest
 			const auto host_result = matr.to_host() * vect.to_host();
 			const auto diff = (result.to_host() - host_result).max_abs();
 			Logger::WriteMessage((std::string("Diff = ") + Utils::to_string(diff) + "\n").c_str());
-			Assert::IsTrue(diff < 10 * std::numeric_limits<Real>::epsilon(), L"too high deviation from reference");
+			Assert::IsTrue(diff < 500 * std::numeric_limits<Real>::epsilon(), L"too high deviation from reference");
+		}
+
+		TEST_METHOD(MatrixVectorMulAddTest)
+		{
+			//Arrange
+			const auto row_dim = 100;
+			const auto col_dim = 1000;
+			const auto matr = CudaMatrixFactory(row_dim, col_dim);
+			const auto vect_mul = CudaVector(col_dim, -1, 1);
+			const auto vect_add = CudaVector(row_dim, -1, 1);
+
+			Assert::IsTrue(matr.max_abs() > 0, L"Matrix is supposed to be non-zero");
+			Assert::IsTrue(vect_mul.max_abs() > 0 && vect_add.max_abs() > 0, L"Vectors are supposed to be non-zero");
+
+			//Act
+			const auto result = matr.mul_add(vect_mul, vect_add);;
+
+			//Assert
+			const auto host_result = matr.to_host().mul_add(vect_mul.to_host(), vect_add.to_host());
+			const auto diff = (result.to_host() - host_result).max_abs();
+			Logger::WriteMessage((std::string("Diff = ") + Utils::to_string(diff) + "\n").c_str());
+			Assert::IsTrue(diff < 500 * std::numeric_limits<Real>::epsilon(), L"too high deviation from reference");
 		}
 
 		TEST_METHOD(VectorMatrixMultiplicationTest)
 		{
 			//Arrange
-			const auto row_dim = 10;
-			const auto col_dim = 13;
+			const auto row_dim = 100;
+			const auto col_dim = 1000;
 			const auto matr = CudaMatrixFactory(row_dim, col_dim);
 			const auto vect = CudaVector(row_dim, -1, 1);
 
@@ -133,14 +155,14 @@ namespace DeepLearningTest
 			const auto host_result = vect.to_host() * matr.to_host();
 			const auto diff = (result.to_host() - host_result).max_abs();
 			Logger::WriteMessage((std::string("Diff = ") + Utils::to_string(diff) + "\n").c_str());
-			Assert::IsTrue(diff < 10 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference");
+			Assert::IsTrue(diff < 50 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference");
 		}
 
 		TEST_METHOD(VectorColByVectorRowMultiplicationTest)
 		{
 			//Arrange
-			const auto row_dim = 10;
-			const auto col_dim = 13;
+			const auto row_dim = 110;
+			const auto col_dim = 135;
 			const auto vect_col = CudaVector(row_dim, -1, 1);
 			const auto vect_row = CudaVector(col_dim, -1, 1);
 

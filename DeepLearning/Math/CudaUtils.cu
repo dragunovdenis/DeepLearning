@@ -23,7 +23,7 @@ namespace DeepLearning::CudaUtils
     {
         if (code != cudaSuccess)
         {
-            throw std::exception((std::string(cudaGetErrorString(code)) + file + std::to_string(line)).c_str());
+            throw std::exception((std::string(cudaGetErrorString(code)) + "; " + file + std::to_string(line)).c_str());
         }
     }
 }
