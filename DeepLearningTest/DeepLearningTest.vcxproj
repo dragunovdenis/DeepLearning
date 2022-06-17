@@ -92,6 +92,7 @@
       <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
       <AdditionalOptions>—expt-extended-lambda --std c++17 %(AdditionalOptions)</AdditionalOptions>
       <GPUDebugInfo>false</GPUDebugInfo>
+      <CodeGeneration>compute_60,sm_60</CodeGeneration>
     </CudaCompile>
     <PostBuildEvent>
       <Command>xcopy "..\Shared\TestData" "$(SolutionDir)$(Platform)\$(Configuration)\TestData" /e /y /i /r</Command>
@@ -121,6 +122,7 @@
       <TargetMachinePlatform>64</TargetMachinePlatform>
       <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
       <AdditionalOptions>—expt-extended-lambda --std c++17 %(AdditionalOptions)</AdditionalOptions>
+      <CodeGeneration>compute_60,sm_60</CodeGeneration>
     </CudaCompile>
     <PostBuildEvent>
       <Command>xcopy "..\Shared\TestData" "$(SolutionDir)$(Platform)\$(Configuration)\TestData" /e /y /i /r</Command>
@@ -150,6 +152,7 @@
       <TargetMachinePlatform>64</TargetMachinePlatform>
       <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
       <AdditionalOptions>—expt-extended-lambda --std c++17 %(AdditionalOptions)</AdditionalOptions>
+      <CodeGeneration>compute_60,sm_60</CodeGeneration>
     </CudaCompile>
     <PostBuildEvent>
       <Command>xcopy "..\Shared\TestData" "$(SolutionDir)$(Platform)\$(Configuration)\TestData" /e /y /i /r</Command>
