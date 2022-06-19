@@ -21,7 +21,6 @@
 #include "Vector.h"
 #include "device_launch_parameters.h"
 #include <thrust/execution_policy.h>
-#include <thrust/generate.h>
 #include <thrust/equal.h>
 #include "CudaSetup.h"
 
@@ -57,11 +56,11 @@ namespace DeepLearning
 
 	void CudaMatrix::resize(const std::size_t& new_row_dim, const std::size_t& new_col_dim)
 	{
-		const auto _new_size = new_row_dim * new_col_dim;
-		if (size() != _new_size)
+		const auto new_size = new_row_dim * new_col_dim;
+		if (size() != new_size)
 		{
 			free();
-			_data = CudaUtils::cuda_allocate<Real>(_new_size);
+			_data = CudaUtils::cuda_allocate<Real>(new_size);
 		}
 
 		_row_dim = new_row_dim;
@@ -123,8 +122,7 @@ namespace DeepLearning
 	void CudaMatrix::abandon_resources()
 	{
 		_data = nullptr;
-		_col_dim = 0;
-		_row_dim = 0;
+		free();
 	}
 
 	CudaMatrix::CudaMatrix(CudaMatrix&& matr) noexcept :
@@ -147,10 +145,8 @@ namespace DeepLearning
 
 	bool CudaMatrix::operator ==(const CudaMatrix& matr) const
 	{
-		if (_row_dim != matr.row_dim() || _col_dim != matr.col_dim())
-			return false;
-
-		return thrust::equal(thrust::device,  begin(), end(), matr.begin());
+		return _row_dim == matr.row_dim() && _col_dim == matr.col_dim() &&
+			thrust::equal(thrust::device, begin(), end(), matr.begin());
 	}
 
 	bool CudaMatrix::operator !=(const CudaMatrix& matr) const

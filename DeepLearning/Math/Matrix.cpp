@@ -127,8 +127,7 @@ namespace DeepLearning
 	void Matrix::abandon_resources()
 	{
 		_data = nullptr;
-		_col_dim = 0;
-		_row_dim = 0;
+		free();
 	}
 
 	Matrix::Matrix(Matrix&& matr) noexcept 

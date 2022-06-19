@@ -150,7 +150,8 @@ namespace DeepLearning
 		/// Creates vector with the given base type out of the three given
 		/// coordinate values (that can be of different types)
 		/// </summary>
-		Vector3d(const auto& x_, const auto& y_, const auto& z_) : x(static_cast<T>(x_)), y(static_cast<T>(y_)), z(static_cast<T>(z_))
+		template <class P>
+		Vector3d(const P& x_, const P& y_, const P& z_) : x(static_cast<T>(x_)), y(static_cast<T>(y_)), z(static_cast<T>(z_))
 		{}
 
 		/// <summary>

@@ -53,9 +53,7 @@ namespace DeepLearning
 	void Tensor::abandon_resources()
 	{
 		_data = nullptr;
-		_layer_dim = 0;
-		_row_dim = 0;
-		_col_dim = 0;
+		free();
 	}
 
 	Tensor::Tensor(Tensor&& tensor) noexcept

@@ -42,7 +42,7 @@ namespace DeepLearning
 	void Vector::abandon_resources()
 	{
 		_data = nullptr;
-		_dim = 0;
+		free();
 	}
 
 	Vector::Vector(Vector&& vec) noexcept : _dim(vec._dim)

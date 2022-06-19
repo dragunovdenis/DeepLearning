@@ -160,6 +160,7 @@
     <ClInclude Include="Math\BasicCudaCollection.cuh" />
     <ClInclude Include="Math\CostFunction.h" />
     <ClInclude Include="Math\CudaMatrix.cuh" />
+    <ClInclude Include="Math\CudaTensor.cuh" />
     <ClInclude Include="Math\CudaUtils.cuh" />
     <ClInclude Include="Math\CudaVector.cuh" />
     <ClInclude Include="Math\LinAlg3d.h" />
@@ -216,6 +217,7 @@
   <ItemGroup>
     <CudaCompile Include="Math\BasicCudaCollection.cu" />
     <CudaCompile Include="Math\CudaMatrix.cu" />
+    <CudaCompile Include="Math\CudaTensor.cu" />
     <CudaCompile Include="Math\CudaUtils.cu" />
     <CudaCompile Include="Math\CudaVector.cu" />
   </ItemGroup>

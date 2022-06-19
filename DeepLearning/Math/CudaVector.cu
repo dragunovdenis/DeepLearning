@@ -19,7 +19,6 @@
 #include <cuda_runtime.h>
 #include "CudaUtils.cuh"
 #include <thrust/execution_policy.h>
-#include <thrust/generate.h>
 #include <thrust/equal.h>
 
 namespace DeepLearning
@@ -125,7 +124,7 @@ namespace DeepLearning
 	void CudaVector::abandon_resources()
 	{
 		_data = nullptr;
-		_dim = 0;
+		free();
 	}
 
 	CudaVector& CudaVector::operator += (const CudaVector& vec)
@@ -148,10 +147,8 @@ namespace DeepLearning
 
 	bool CudaVector::operator == (const CudaVector & vect) const
 	{
-		if (size() != vect.size())
-			return false;
-
-		return thrust::equal(thrust::device, begin(), end(), vect.begin());
+		return size() == vect.size() &&
+			   thrust::equal(thrust::device, begin(), end(), vect.begin());
 	}
 
 	bool CudaVector::operator !=(const CudaVector& vect) const

@@ -45,17 +45,17 @@ namespace DeepLearning
 		void free();
 
 		/// <summary>
-		/// Assignment from another CUDA collection
+		/// Assignment from another CUDA matrix
 		/// </summary>
 		void assign(const CudaMatrix& source);
 
 		/// <summary>
-		/// Assignment from a "host" collection
+		/// Assignment from a "host" matrix
 		/// </summary>
 		void assign(const Matrix& source);
 
 		/// <summary>
-		/// Reallocates memory of the vector to meet the given number of elements
+		/// Reallocates memory of the matrix to meet the given number of elements
 		/// (if the current size does not coincide with the given "new" size)
 		/// </summary>
 		void resize(const std::size_t& new_row_dim, const std::size_t& new_col_dim);

@@ -146,7 +146,7 @@ namespace DeepLearning
 
 		if (!flatten_images)
 		{
-			const auto shape = Index3d{ 1, images.begin()->height(), images.begin()->width() };
+			const auto shape = Index3d{ 1ull, images.begin()->height(), images.begin()->width() };
 			for (auto& result_item : result)
 				result_item.reshape(shape);
 		}
