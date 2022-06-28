@@ -165,6 +165,9 @@
     <ClInclude Include="Math\CudaTensor.cuh">
       <Filter>Header Files\Math\CUDA</Filter>
     </ClInclude>
+    <ClInclude Include="Math\ConvolutionUtils.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Matrix.cpp">
@@ -235,6 +238,9 @@
     </ClCompile>
     <ClCompile Include="Math\CudaSetup.cpp">
       <Filter>Source Files\Math\CUDA</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\ConvolutionUtils.cpp">
+      <Filter>Source Files\Math</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

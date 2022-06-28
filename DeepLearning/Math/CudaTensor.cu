@@ -20,8 +20,11 @@
 #include "CudaTensor.cuh"
 #include <cuda_runtime.h>
 #include "CudaUtils.cuh"
+#include "device_launch_parameters.h"
 #include <thrust/execution_policy.h>
 #include <thrust/equal.h>
+#include "ConvolutionUtils.h"
+#include "CudaSetup.h"
 
 namespace DeepLearning
 {
@@ -300,14 +303,127 @@ namespace DeepLearning
 		return *this;
 	}
 
+	template <class T>
+	__device__  T coords_to_data_id(const T& layer_id, const T& row_id, const T& col_id,
+		const T& row_dim, const T& col_dim)
+	{
+		return col_dim * (layer_id * row_dim + row_id) + col_id;
+	}
+
+	/// <summary>
+	/// CUDA kernel to perform convolution operation
+	/// </summary>
+	/// <param name="tensor">The input tensor to apply convolution to</param>
+	/// <param name="tensor_size">Size of the input tensor</param>
+	/// <param name="kernel">Convolution kernel tensor</param>
+	/// <param name="kernel_size">Size of the convolution kernel tensor</param>
+	/// <param name="paddings">Zero paddings to be applied to the input kernel when convolving </param>
+	/// <param name="strides">Convolution strides (shifts of the convolution window)</param>
+	/// <param name="result">Placeholder for the result of the convolution (tensor)</param>
+	/// <param name="result_size">Size of the convolution result (tensor)</param>
+	__global__ void convolve_kernel(const Real* tensor, const Index3d tensor_size,
+							   const Real* kernel, const Index3d kernel_size,
+							   const Index3d paddings, const Index3d strides,
+		                       Real* result, const Index3d result_size)
+	{
+		const auto result_flatten_id = threadIdx.x + blockIdx.x * blockDim.x;
+		const auto result_flatten_size = result_size.coord_prod();
+
+		if (result_flatten_id >= result_flatten_size)
+			return;
+
+		const auto result_offsets = ConvolutionUtils::data_id_to_index_3d(result_flatten_id, result_size);
+		const auto [tensor_offsets, kernel_start_offsets, kernel_stop_offsets] =
+			ConvolutionUtils::calc_kernel_loop_offsets(result_offsets, tensor_size, kernel_size, paddings, strides);
+
+		Real part_res = Real(0);
+
+		KERNEL_LOOP(kernel_start_offsets, kernel_stop_offsets, tensor_offsets,
+			part_res += tensor[coords_to_data_id(t_x, t_y, t_z, tensor_size.y, tensor_size.z)] *
+			kernel[coords_to_data_id(k_x, k_y, k_z, kernel_size.y, kernel_size.z)];)
+
+		result[result_flatten_id] = part_res;
+	}
+
+	/// <summary>
+	/// CUDA kernel to perform convolution operation; version that uses shared memory
+	/// </summary>
+	/// <param name="tensor">The input tensor to apply convolution to</param>
+	/// <param name="tensor_size">Size of the input tensor</param>
+	/// <param name="kernel">Convolution kernel tensor</param>
+	/// <param name="kernel_size">Size of the convolution kernel tensor</param>
+	/// <param name="paddings">Zero paddings to be applied to the input kernel when convolving </param>
+	/// <param name="strides">Convolution strides (shifts of the convolution window)</param>
+	/// <param name="result">Placeholder for the result of the convolution (tensor)</param>
+	/// <param name="result_size">Size of the convolution result (tensor)</param>
+	__global__ void convolve_shared_kernel(const Real* tensor, const Index3d tensor_size,
+		const Real* kernel, const Index3d kernel_size,
+		const Index3d paddings, const Index3d strides,
+		Real* result, const Index3d result_size)
+	{
+		const auto result_flatten_id = threadIdx.x + blockIdx.x * blockDim.x;
+		const auto result_flatten_size = result_size.coord_prod();
+		const auto kernel_flatten_size = kernel_size.coord_prod();
+
+		extern __shared__ Real kernel_shared[];
+
+		const auto items_per_thread = Utils::cuda_max(10ll, (kernel_flatten_size + blockDim.x - 1) / blockDim.x);
+		const auto element_start_id = items_per_thread * threadIdx.x;
+		const auto element_stop_id = Utils::cuda_min(kernel_flatten_size, element_start_id + items_per_thread);
+
+		for (auto element_id = element_start_id; element_id < element_stop_id; element_id++)
+			kernel_shared[element_id] = kernel[element_id];
+
+		__syncthreads();
+
+		if (result_flatten_id >= result_flatten_size)
+			return;
+
+		const auto result_offsets = ConvolutionUtils::data_id_to_index_3d(result_flatten_id, result_size);
+		const auto [tensor_offsets, kernel_start_offsets, kernel_stop_offsets] =
+			ConvolutionUtils::calc_kernel_loop_offsets(result_offsets, tensor_size, kernel_size, paddings, strides);
+
+		Real part_res = Real(0);
+
+		KERNEL_LOOP(kernel_start_offsets, kernel_stop_offsets, tensor_offsets,
+			part_res += tensor[coords_to_data_id(t_x, t_y, t_z, tensor_size.y, tensor_size.z)] *
+			kernel_shared[coords_to_data_id(k_x, k_y, k_z, kernel_size.y, kernel_size.z)];)
+
+			result[result_flatten_id] = part_res;
+	}
+
 	Index3d CudaTensor::convolve(RealMemHandle result_handle, const CudaTensor& kernel, const Index3d& paddings, const Index3d& strides) const
 	{
-		throw std::exception("Not implemented");
+		const auto kernel_size = kernel.size_3d();
+		const auto tensor_size = size_3d();
+		const auto result_size = ConvolutionUtils::calc_conv_res_size(tensor_size, kernel_size, paddings, strides);
+
+		if (result_handle.size() != result_size.x * result_size.y * result_size.z)
+			throw std::exception("Unexpected amount of memory to store the result");
+
+		const auto blocks_cnt = CudaSetup::calc_blocks(result_handle.size());
+		const auto kernel_size_bytes = sizeof(Real) * kernel.size();
+
+		if (kernel_size_bytes > CudaSetup::shared_memory_per_block())
+			convolve_kernel<<<blocks_cnt , CudaSetup::max_threads_per_block() >>>(_data, tensor_size,
+				kernel.begin(), kernel_size, paddings, strides,
+				result_handle.data(), result_size);
+		else
+			convolve_shared_kernel << <blocks_cnt, CudaSetup::max_threads_per_block(), kernel_size_bytes >> > (_data, tensor_size,
+				kernel.begin(), kernel_size, paddings, strides,
+				result_handle.data(), result_size);
+
+		return result_size;
 	}
 
 	CudaTensor CudaTensor::convolve(const CudaTensor& kernel, const Index3d& paddings, const Index3d& strides) const
 	{
-		throw std::exception("Not implemented");
+		const auto result_dim = ConvolutionUtils::calc_conv_res_size(size_3d(), kernel.size_3d(), paddings, strides);
+		auto result = CudaTensor(result_dim, false);
+
+		convolve(result.get_handle(), kernel, paddings, strides);
+
+		return result;
 	}
 
 	std::tuple<CudaTensor, CudaTensor> CudaTensor::convolution_gradient(const CudaTensor& conv_res_grad, const CudaTensor& kernel, const Index3d& paddings,

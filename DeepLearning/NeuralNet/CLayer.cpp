@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <numeric>
 #include "../Diagnostics/Logging.h"
+#include "../Math/ConvolutionUtils.h"
 
 namespace DeepLearning
 {
@@ -31,7 +32,7 @@ namespace DeepLearning
 		_strides = strides;
 		_func_id = func_id;
 
-		const auto out_channel_size = Tensor::calc_conv_res_size(_in_size, _weight_tensor_size, _paddings, _strides);
+		const auto out_channel_size = ConvolutionUtils::calc_conv_res_size(_in_size, _weight_tensor_size, _paddings, _strides);
 		if (out_channel_size.x != 1)
 			throw std::exception("Unexpected channel size");
 

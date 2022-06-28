@@ -73,6 +73,14 @@ namespace DeepLearning
 		}
 
 		/// <summary>
+		/// Constant pointer to the beginning of the underlying memory
+		/// </summary>
+		const T* data() const
+		{
+			return this->_data;
+		}
+
+		/// <summary>
 		/// Constructor
 		/// </summary>
 		MemHandleConst(const T* const data, const std::size_t& size) : MemHandleBase<const T>(data, size) {}
@@ -99,6 +107,22 @@ namespace DeepLearning
 		T& operator [](const std::size_t& id)
 		{
 			return this->_data[id];
+		}
+
+		/// <summary>
+		/// Constant pointer to the beginning of the underlying memory
+		/// </summary>
+		const T* data() const
+		{
+			return this->_data;
+		}
+
+		/// <summary>
+		/// Pointer to the beginning of the underlying memory
+		/// </summary>
+		T* data()
+		{
+			return this->_data;
 		}
 
 		/// <summary>

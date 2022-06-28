@@ -16,6 +16,7 @@
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "PLayer.h"
+#include "../Math/ConvolutionUtils.h"
 
 namespace DeepLearning
 {
@@ -63,7 +64,7 @@ namespace DeepLearning
 
 	Index3d PLayer::out_size() const
 	{
-		return Tensor::calc_conv_res_size(_in_size, _pool_window_size, _paddings, _strides);
+		return ConvolutionUtils::calc_conv_res_size(_in_size, _pool_window_size, _paddings, _strides);
 	}
 
 	Index3d PLayer::weight_tensor_size() const

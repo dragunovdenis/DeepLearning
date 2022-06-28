@@ -50,7 +50,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Compound addition operator
 		/// </summary>
-		Vector3d<T>& operator +=(const Vector3d<T>& vec)
+		CUDA_CALLABLE Vector3d<T>& operator +=(const Vector3d<T>& vec)
 		{
 			x += vec.x;
 			y += vec.y;
@@ -62,7 +62,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Compound subtraction operator
 		/// </summary>
-		Vector3d<T>& operator -=(const Vector3d<T>& vec)
+		CUDA_CALLABLE Vector3d<T>& operator -=(const Vector3d<T>& vec)
 		{
 			x -= vec.x;
 			y -= vec.y;
@@ -74,7 +74,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Compound multiplication operator
 		/// </summary>
-		Vector3d<T>& operator *=(const T& scalar)
+		CUDA_CALLABLE Vector3d<T>& operator *=(const T& scalar)
 		{
 			x *= scalar;
 			y *= scalar;
@@ -118,7 +118,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Negation operator
 		/// </summary>
-		Vector3d<T> operator -() const
+		CUDA_CALLABLE Vector3d<T> operator -() const
 		{
 			return { -x, -y, -z };
 		}
@@ -126,7 +126,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Hadamard (component-wise) product of the vectors
 		/// </summary>
-		Vector3d<T> hadamard_prod(const Vector3d<T>& vec) const
+		CUDA_CALLABLE Vector3d<T> hadamard_prod(const Vector3d<T>& vec) const
 		{
 			return { x * vec.x, y * vec.y, z * vec.z };
 		}
@@ -139,25 +139,25 @@ namespace DeepLearning
 		/// <summary>
 		/// Constructor by 3 coordinates
 		/// </summary>
-		Vector3d(const T& x_, const T& y_, const T& z_):x(x_), y(y_), z(z_) {}
+		CUDA_CALLABLE Vector3d(const T& x_, const T& y_, const T& z_):x(x_), y(y_), z(z_) {}
 
 		/// <summary>
 		/// Constructors a vector with all the coordinates equal to the given value `w`
 		/// </summary>
-		Vector3d(const T& w): x(w), y(w), z(w){}
+		CUDA_CALLABLE Vector3d(const T& w): x(w), y(w), z(w){}
 
 		/// <summary>
 		/// Creates vector with the given base type out of the three given
 		/// coordinate values (that can be of different types)
 		/// </summary>
 		template <class P>
-		Vector3d(const P& x_, const P& y_, const P& z_) : x(static_cast<T>(x_)), y(static_cast<T>(y_)), z(static_cast<T>(z_))
+		CUDA_CALLABLE Vector3d(const P& x_, const P& y_, const P& z_) : x(static_cast<T>(x_)), y(static_cast<T>(y_)), z(static_cast<T>(z_))
 		{}
 
 		/// <summary>
 		/// Returns product of coordinates
 		/// </summary>
-		T coord_prod() const
+		CUDA_CALLABLE T coord_prod() const
 		{
 			return x * y * z;
 		}
@@ -227,7 +227,7 @@ namespace DeepLearning
 	/// Addition operator
 	/// </summary>
 	template <class T>
-	Vector3d<T> operator +(const Vector3d<T>& vec1, const Vector3d<T>& vec2)
+	CUDA_CALLABLE Vector3d<T> operator +(const Vector3d<T>& vec1, const Vector3d<T>& vec2)
 	{
 		auto result = vec1;
 		return result += vec2;
@@ -237,24 +237,40 @@ namespace DeepLearning
 	/// Subtraction operator
 	/// </summary>
 	template <class T>
-	Vector3d<T> operator -(const Vector3d<T>& vec1, const Vector3d<T>& vec2)
+	CUDA_CALLABLE Vector3d<T> operator -(const Vector3d<T>& vec1, const Vector3d<T>& vec2)
 	{
 		auto result = vec1;
 		return result -= vec2;
 	}
 
 	template <class T>
-	Vector3d<T> operator *(const Vector3d<T>& vec, const T& scalar)
+	CUDA_CALLABLE Vector3d<T> operator *(const Vector3d<T>& vec, const T& scalar)
 	{
 		auto result = vec;
 		return result *= scalar;
 	}
 
 	template <class T>
-	Vector3d<T> operator *(const T& scalar, const Vector3d<T>& vec)
+	CUDA_CALLABLE Vector3d<T> operator *(const T& scalar, const Vector3d<T>& vec)
 	{
 		return vec * scalar;
 	}
 
 	using Index3d = Vector3d<long long>;
+
+	/// <summary>
+	/// Linear rectifier function of integer argument
+	/// </summary>
+	inline CUDA_CALLABLE  long long relu(const long long x)
+	{
+		return x > 0ll ? x : 0ll;
+	}
+
+	/// <summary>
+	/// Linear rectifier function, 3d version
+	/// </summary>
+	inline CUDA_CALLABLE  Index3d relu(const Index3d& v)
+	{
+		return { relu(v.x), relu(v.y), relu(v.z) };
+	}
 }

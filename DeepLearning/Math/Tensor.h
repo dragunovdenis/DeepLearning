@@ -239,15 +239,6 @@ namespace DeepLearning
 		Tensor& reshape(const Index3d& new_shape);
 
 		/// <summary>
-		/// Returns total size of convolution result
-		/// </summary>
-		/// <param name="tensor_size">Size of the tensor the convolution is to be applied to</param>
-		/// <param name="kernel_size">Size of the convolution kernel</param>
-		/// <param name="paddings">Sizes of zero paddings of the tensor</param>
-		/// <param name="strides">Sizes of strides to be used</param>
-		static Index3d calc_conv_res_size(const Index3d& tensor_size, const Index3d& kernel_size, const Index3d& paddings, const Index3d& strides);
-
-		/// <summary>
 		/// Convolution with another tensor
 		/// </summary>
 		/// <param name="result_handle">Handle of the memory allocated by the caller to store the result of the convolution.

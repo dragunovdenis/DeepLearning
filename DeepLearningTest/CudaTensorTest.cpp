@@ -20,6 +20,7 @@
 #include <Utilities.h>
 #include "StandardTestUtils.h"
 #include <string>
+#include <chrono>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;
@@ -139,6 +140,26 @@ namespace DeepLearningTest
 			auto result_host = to_host(tensor_4d);
 			result_host *= scalar;
 			Assert::IsTrue(result_host == to_host(result));
+		}
+
+		TEST_METHOD(ConvolutionTest)
+		{
+			//Arrange
+			const CudaTensor tensor(20, 128, 128, -1, 1);
+			const CudaTensor kernel(11, 5, 5, -1, 1);
+			Assert::IsTrue(tensor.max_abs() > 0, L"The tensor is supposed to be non-zero");
+			Assert::IsTrue(kernel.max_abs() > 0, L"The kernel is supposed to be non-zero");
+			const Index3d paddings = { 0, 1, 2 };
+			const Index3d strides = { 1, 2, 3 };
+
+			//Act
+			const auto result = tensor.convolve(kernel, paddings, strides);
+
+			//Assert
+			const auto result_reference_host = tensor.to_host().convolve(kernel.to_host(), paddings, strides);
+			const auto diff = (result.to_host() - result_reference_host).max_abs();
+			Logger::WriteMessage((std::string("Diff = ") + Utils::to_string(diff)).c_str());
+			Assert::IsTrue(diff < 100 * std::numeric_limits<Real>::epsilon(), L"Unexpectedly high deviation from reference");
 		}
 	};
 }

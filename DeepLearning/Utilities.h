@@ -29,6 +29,30 @@
 
 namespace DeepLearning::Utils
 {
+#ifdef __CUDACC__
+#define CUDA_CALLABLE __host__ __device__
+#else
+#define CUDA_CALLABLE
+#endif
+
+    /// <summary>
+    /// A "cuda-callable" max function
+    /// </summary>
+    template<class T>
+    CUDA_CALLABLE T cuda_max(const T& a, const T& b)
+    {
+        return a > b ? a : b;
+    }
+
+    /// <summary>
+    /// A "cuda-callable" min function
+    /// </summary>
+    template<class T>
+    CUDA_CALLABLE T cuda_min(const T& a, const T& b)
+    {
+        return a < b ? a : b;
+    }
+
     /// <summary>
     /// Functionality to fill the given range with uniformly distributed pseudo-random numbers
     /// </summary>

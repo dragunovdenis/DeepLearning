@@ -23,6 +23,7 @@
 #include "Vector.h"
 #include "Matrix.h"
 #include "../Diagnostics/Logging.h"
+#include "ConvolutionUtils.h"
 
 namespace DeepLearning
 {
@@ -193,25 +194,9 @@ namespace DeepLearning
 		return _col_dim * (layer_id * _row_dim + row_id) + col_id;
 	}
 
-	/// <summary>
-	/// Converts given index of an element in the "data" array to a triplet of layer, row and column indices of the same element
-	/// </summary>
-    /// <param name="data_id">Index of an element in the "data" array</param>
-	/// <param name="tensor_size">3d size of the tensor</param>
-	inline Index3d data_id_to_index_3d_internal(const long long data_id, const Index3d& tensor_size)
-	{
-		const auto temp = std::div(data_id, static_cast<long long>(tensor_size.z));
-		const auto col_id = temp.rem;
-		const auto temp1 = std::div(temp.quot, static_cast<long long>(tensor_size.y));
-		const auto row_id = temp1.rem;
-		const auto layer_id = temp1.quot;
-
-		return { layer_id, row_id, col_id };
-	}
-
 	Index3d Tensor::data_id_to_index_3d(const long long data_id) const
 	{
-		return data_id_to_index_3d_internal(data_id, size_3d());
+		return ConvolutionUtils::data_id_to_index_3d(data_id, size_3d());
 	}
 
 	bool Tensor::check_bounds(const std::size_t layer_id, const std::size_t row_id, const std::size_t col_id) const
@@ -329,95 +314,20 @@ namespace DeepLearning
 		return *this;
 	}
 
-	/// <summary>
-	/// Returns size of convolution result in certain dimension
-	/// </summary>
-	/// <param name="in_size">Input size (in the chosen dimension)</param>
-	/// <param name="kernel_size">Kernel size (in the chosen dimension)</param>
-	/// <param name="padding">Padding size (in the chosen dimension)</param>
-	/// <param name="stride">Stride size (in the chosen dimension)</param>
-	long long calc_out_size_for_convolution(const std::size_t in_size, const std::size_t kernel_size,
-		const long long padding, const long long stride)
-	{
-		const auto temp = static_cast<long long>(in_size) + 2 * padding - static_cast<long long>(kernel_size);
-		if (temp < 0)
-			return 0;
-
-		return  temp / stride + 1ull;
-	}
-
-	Index3d Tensor::calc_conv_res_size(const Index3d& tensor_size, const Index3d& kernel_size, const Index3d& paddings, const Index3d& strides)
-	{
-		return { calc_out_size_for_convolution(tensor_size.x, kernel_size.x, paddings.x, strides.x),
-				 calc_out_size_for_convolution(tensor_size.y, kernel_size.y, paddings.y, strides.y),
-				 calc_out_size_for_convolution(tensor_size.z, kernel_size.z, paddings.z, strides.z) };
-	}
-
-	/// <summary>
-	/// Linear rectifier function of integer argument
-	/// </summary>
-	inline long long relu(const long long x)
-	{
-		return x > 0ll ? x : 0ll;
-	}
-
-	/// <summary>
-	/// Linear rectifier function, 3d version
-	/// </summary>
-	inline Index3d relu(const Index3d& v)
-	{
-		return { relu(v.x), relu(v.y), relu(v.z) };
-	}
-
-#define KERNEL_LOOP(kernel_start_offsets, kernel_stop_offsets, tensor_offsets, action)				\
-			for (auto k_x = kernel_start_offsets.x; k_x < kernel_stop_offsets.x; k_x++)				\
-			{																						\
-				const auto t_x = tensor_offsets.x + k_x;											\
-				for (auto k_y = kernel_start_offsets.y; k_y < kernel_stop_offsets.y; k_y++)			\
-				{																					\
-					const auto t_y = tensor_offsets.y + k_y;										\
-					for (auto k_z = kernel_start_offsets.z; k_z < kernel_stop_offsets.z; k_z++)		\
-					{																				\
-						const auto t_z = tensor_offsets.z + k_z;									\
-						action;																		\
-					}																				\
-				}																					\
-			}
-
-
-	/// <summary>
-	/// Calculates offsets needed to calculate convolution result item with the given offsets (3d index)
-	/// </summary>
-	/// <param name="conv_res_offsets">Offset (3d index) of the convolution result item</param>
-	/// <param name="tensor_size">Size of the tensor the convolution is applied to</param>
-	/// <param name="kernel_size">Size of the convolution kernel</param>
-	/// <param name="paddings">Zero paddings to be applied to the tensor</param>
-	/// <param name="strides">Strides to be used when shifting convolution kernel over the tensor</param>
-	/// <returns>Tuple consisting of "tensor_offsets, kernel_start_offsets, kernel_stop_offsets" in the exact same order</returns>
-	inline std::tuple<Index3d, Index3d, Index3d> calc_kernel_loop_offsets(const Index3d& conv_res_offsets, const Index3d& tensor_size,
-																		  const Index3d& kernel_size, const Index3d& paddings, const Index3d& strides)
-	{
-		const auto tensor_offsets = conv_res_offsets.hadamard_prod(strides) - paddings;
-		const auto kernel_start_offsets = relu(-tensor_offsets);
-		const auto kernel_stop_offsets = kernel_size - relu(tensor_offsets + kernel_size - tensor_size);
-
-		return std::make_tuple(tensor_offsets, kernel_start_offsets, kernel_stop_offsets);
-	}
-
 	Index3d Tensor::convolve(RealMemHandle result_handle, const Tensor& kernel, const Index3d& paddings, const Index3d& strides) const
 	{
 		const auto kernel_size = kernel.size_3d();
 		const auto tensor_size = size_3d();
-		const auto result_size = calc_conv_res_size(tensor_size, kernel_size, paddings, strides);
+		const auto result_size = ConvolutionUtils::calc_conv_res_size(tensor_size, kernel_size, paddings, strides);
 
 		if (result_handle.size() != result_size.x * result_size.y * result_size.z)
 			throw std::exception("Unexpected amount of memory to store the result");
 
 		for (std::size_t res_data_id = 0; res_data_id < result_handle.size(); res_data_id++)
 		{
-			const auto result_offsets = data_id_to_index_3d_internal(res_data_id, result_size);
+			const auto result_offsets = ConvolutionUtils::data_id_to_index_3d(res_data_id, result_size);
 			const auto [tensor_offsets, kernel_start_offsets, kernel_stop_offsets] =
-				calc_kernel_loop_offsets(result_offsets, tensor_size, kernel_size, paddings, strides);
+				ConvolutionUtils::calc_kernel_loop_offsets(result_offsets, tensor_size, kernel_size, paddings, strides);
 
 			Real part_res = Real(0);
 
@@ -432,7 +342,7 @@ namespace DeepLearning
 
 	Tensor Tensor::convolve(const Tensor& kernel, const Index3d& paddings, const Index3d& strides) const
 	{
-		const auto result_dim = calc_conv_res_size(size_3d(), kernel.size_3d(), paddings, strides);
+		const auto result_dim = ConvolutionUtils::calc_conv_res_size(size_3d(), kernel.size_3d(), paddings, strides);
 		auto result = Tensor(result_dim, false);
 
 		convolve(result.get_handle(), kernel, paddings, strides);
@@ -445,16 +355,16 @@ namespace DeepLearning
 	{
 		const auto kernel_size = pool_operator.size_3d();
 		const auto tensor_size = size_3d();
-		const auto result_size = calc_conv_res_size(tensor_size, kernel_size, paddings, strides);
+		const auto result_size = ConvolutionUtils::calc_conv_res_size(tensor_size, kernel_size, paddings, strides);
 
 		if (result_handle.size() != result_size.x * result_size.y * result_size.z)
 			throw std::exception("Unexpected amount of memory to store the result");
 
 		for (std::size_t res_data_id = 0; res_data_id < result_handle.size(); res_data_id++)
 		{
-			const auto result_offsets = data_id_to_index_3d_internal(res_data_id, result_size);
+			const auto result_offsets = ConvolutionUtils::data_id_to_index_3d(res_data_id, result_size);
 			const auto [tensor_offsets, kernel_start_offsets, kernel_stop_offsets] =
-				calc_kernel_loop_offsets(result_offsets, tensor_size, kernel_size, paddings, strides);
+				ConvolutionUtils::calc_kernel_loop_offsets(result_offsets, tensor_size, kernel_size, paddings, strides);
 
 			auto operator_clone = pool_operator.clone();
 
@@ -469,7 +379,7 @@ namespace DeepLearning
 
 	Tensor Tensor::pool(const PoolOperator& pool_operator, const Index3d& paddings, const Index3d& strides) const
 	{
-		const auto result_dim = calc_conv_res_size(size_3d(), pool_operator.size_3d(), paddings, strides);
+		const auto result_dim = ConvolutionUtils::calc_conv_res_size(size_3d(), pool_operator.size_3d(), paddings, strides);
 		auto result = Tensor(result_dim, false);
 
 		pool(result.get_handle(), pool_operator, paddings, strides);
@@ -482,7 +392,7 @@ namespace DeepLearning
 	{
 		const auto tensor_size = size_3d();
 		const auto kernel_size = kernel.size_3d();
-		const auto conv_result_size = calc_conv_res_size(tensor_size, kernel_size, paddings, strides);
+		const auto conv_result_size = ConvolutionUtils::calc_conv_res_size(tensor_size, kernel_size, paddings, strides);
 
 		if (conv_res_grad.size() != conv_result_size.x * conv_result_size.y * conv_result_size.z)
 			throw std::exception("Unexpected size of the convolution result gradient");
@@ -492,9 +402,9 @@ namespace DeepLearning
 
 		for (std::size_t res_data_id = 0; res_data_id < conv_res_grad.size(); res_data_id++)
 		{
-			const auto result_offsets = data_id_to_index_3d_internal(res_data_id, conv_result_size);
+			const auto result_offsets = ConvolutionUtils::data_id_to_index_3d(res_data_id, conv_result_size);
 			const auto [tensor_offsets, kernel_start_offsets, kernel_stop_offsets] =
-				calc_kernel_loop_offsets(result_offsets, tensor_size, kernel_size, paddings, strides);
+				ConvolutionUtils::calc_kernel_loop_offsets(result_offsets, tensor_size, kernel_size, paddings, strides);
 
 			const auto factor = conv_res_grad[res_data_id];
 			if (factor == Real(0))
@@ -511,7 +421,7 @@ namespace DeepLearning
 	std::tuple<Tensor, Tensor> Tensor::convolution_gradient(const Tensor& conv_res_grad, const Tensor& kernel, const Index3d& paddings,
 		const Index3d& strides) const
 	{
-		if (calc_conv_res_size(size_3d(), kernel.size_3d(), paddings, strides) != conv_res_grad.size_3d())
+		if (ConvolutionUtils::calc_conv_res_size(size_3d(), kernel.size_3d(), paddings, strides) != conv_res_grad.size_3d())
 			throw std::exception("Inconsistent input data.");
 
 		return convolution_gradient(conv_res_grad.get_handle(), kernel, paddings, strides);
@@ -522,7 +432,7 @@ namespace DeepLearning
 	{
 		const auto tensor_size = size_3d();
 		const auto kernel_size = pool_operator.size_3d();
-		const auto conv_result_size = calc_conv_res_size(tensor_size, kernel_size, paddings, strides);;
+		const auto conv_result_size = ConvolutionUtils::calc_conv_res_size(tensor_size, kernel_size, paddings, strides);;
 
 		if (conv_result_size.x * conv_result_size.y * conv_result_size.z != pool_res_grad.size())
 			throw std::exception("Unexpected size of the pool result gradient");
@@ -531,9 +441,9 @@ namespace DeepLearning
 
 		for (std::size_t res_data_id = 0; res_data_id < pool_res_grad.size(); res_data_id++)
 		{
-			const auto result_offsets = data_id_to_index_3d_internal(res_data_id, conv_result_size);
+			const auto result_offsets = ConvolutionUtils::data_id_to_index_3d(res_data_id, conv_result_size);
 			const auto [tensor_offsets, kernel_start_offsets, kernel_stop_offsets] =
-				calc_kernel_loop_offsets(result_offsets, tensor_size, kernel_size, paddings, strides);
+				ConvolutionUtils::calc_kernel_loop_offsets(result_offsets, tensor_size, kernel_size, paddings, strides);
 
 			const auto factor = pool_res_grad[res_data_id];
 			if (factor == Real(0))
@@ -556,7 +466,7 @@ namespace DeepLearning
 	Tensor Tensor::pool_input_gradient(const Tensor& pool_res_grad, const PoolOperator& pool_operator, const Index3d& paddings,
 		const Index3d& strides) const
 	{
-		if (calc_conv_res_size(size_3d(), pool_operator.size_3d(), paddings, strides) != pool_res_grad.size_3d())
+		if (ConvolutionUtils::calc_conv_res_size(size_3d(), pool_operator.size_3d(), paddings, strides) != pool_res_grad.size_3d())
 			throw std::exception("Inconsistent input data.");
 
 		return pool_input_gradient(pool_res_grad.get_handle(), pool_operator, paddings, strides);
@@ -568,7 +478,7 @@ namespace DeepLearning
 		const auto kernel_size = Index3d(1ll, window_size.x, window_size.y);
 		const auto strides = kernel_size;
 			const auto tensor_size = size_3d();
-		const auto result_size = calc_conv_res_size(tensor_size, kernel_size, paddings, strides);
+		const auto result_size = ConvolutionUtils::calc_conv_res_size(tensor_size, kernel_size, paddings, strides);
 
 		auto result = Tensor(result_size, false);
 		auto out_to_in_map = std::vector<std::size_t>(result.size());
@@ -579,9 +489,9 @@ namespace DeepLearning
 
 		for (std::size_t res_data_id = 0; res_data_id < result.size(); res_data_id++)
 		{
-			const auto result_offsets = data_id_to_index_3d_internal(res_data_id, result_size);
+			const auto result_offsets = ConvolutionUtils::data_id_to_index_3d(res_data_id, result_size);
 			const auto [tensor_offsets, kernel_start_offsets, kernel_stop_offsets] =
-				calc_kernel_loop_offsets(result_offsets, tensor_size, kernel_size, paddings, strides);
+				ConvolutionUtils::calc_kernel_loop_offsets(result_offsets, tensor_size, kernel_size, paddings, strides);
 
 			auto pool_res = init_val;
 			const auto t_x = tensor_offsets.x + kernel_start_offsets.x;

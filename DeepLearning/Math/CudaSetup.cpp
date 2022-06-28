@@ -71,6 +71,11 @@ namespace DeepLearning
 		return static_cast<unsigned int>(_instance._device_props.maxThreadsPerBlock);
 	}
 
+	std::size_t CudaSetup::shared_memory_per_block()
+	{
+		return _instance._device_props.sharedMemPerBlock;
+	}
+
 	unsigned int CudaSetup::calc_blocks(const std::size_t& total_threads, const unsigned int threads_per_block)
 	{
 		const auto threads_per_block_to_use = (threads_per_block == 0) ? max_threads_per_block() : threads_per_block;

@@ -63,6 +63,11 @@ namespace DeepLearning
 		static unsigned int max_threads_per_block();
 
 		/// <summary>
+		/// Returns amount of shared memory per block in bytes
+		/// </summary>
+		static std::size_t shared_memory_per_block();
+
+		/// <summary>
 		/// Calculates number of blocks needed to launch a 1D kernel for the given number of items
 		/// <param name="total_threads">Total number of threads</param>
 		/// <param name="threads_per_block">Number of threads per block; if "0" maximal
