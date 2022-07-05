@@ -17,6 +17,8 @@
 
 #include "CppUnitTest.h"
 #include <Math/CudaTensor.cuh>
+#include <Math/ConvolutionUtils.h>
+#include "Math/PoolOperator.h"
 #include <Utilities.h>
 #include "StandardTestUtils.h"
 #include <string>
@@ -160,6 +162,70 @@ namespace DeepLearningTest
 			const auto diff = (result.to_host() - result_reference_host).max_abs();
 			Logger::WriteMessage((std::string("Diff = ") + Utils::to_string(diff)).c_str());
 			Assert::IsTrue(diff < 100 * std::numeric_limits<Real>::epsilon(), L"Unexpectedly high deviation from reference");
+		}
+
+		TEST_METHOD(ConvolutionWithCollectionOfKernelsTest)
+		{
+			//Arrange
+			const CudaTensor tensor(20, 128, 128, -1, 1);
+			Assert::IsTrue(tensor.max_abs() > 0, L"Input tensor is supposed to be nonzero");
+			std::vector<CudaTensor> kernels(10, { 20, 5, 5 });
+			const Index3d paddings = { 0, 1, 2 };
+			const Index3d strides = { 1, 2, 3 };
+
+			for (auto kernel_id = 0; kernel_id < 10; kernel_id++)
+			{
+				kernels[kernel_id].uniform_random_fill(-1, 1);
+				Assert::IsTrue(kernels[kernel_id].max_abs() > 0, L"Kernels are supposed to be nonzero");
+			}
+			const auto channel_size = ConvolutionUtils::calc_conv_res_size(tensor.size_3d(), kernels[0].size_3d(), paddings, strides);
+			Assert::IsTrue(channel_size.x == 1, L"Unexpected number of layers in a single channel");
+			CudaTensor result(kernels.size(), channel_size.y, channel_size.z, false);
+
+			//Act
+			tensor.convolve(result, kernels, paddings, strides);
+
+			//Assert
+			std::vector<Tensor> kernels_host;
+			for (const auto& kernel : kernels)
+				kernels_host.push_back(kernel.to_host());
+
+			Tensor result_host(kernels.size(), channel_size.y, channel_size.z, false);
+			const auto tensor_host = tensor.to_host();
+			tensor_host.convolve(result_host, kernels_host, paddings, strides);
+
+			const auto diff = (result.to_host() - result_host).max_abs();
+
+			Logger::WriteMessage((std::string("Diff = ") + Utils::to_string(diff)).c_str());
+			Assert::IsTrue(diff < 100 * std::numeric_limits<Real>::epsilon(), L"Unexpectedly high deviation from reference");
+		}
+
+		TEST_METHOD(ConvolutionGradientTest)
+		{
+			//Arrange
+			const CudaTensor tensor(10, 28, 30, -1, 1);
+			const CudaTensor kernel(10, 5, 4, -1, 1);
+			const Index3d paddings = { 0, 1, 2 };
+			const Index3d strides = { 1, 2, 3 };
+			const CudaTensor res_grad(ConvolutionUtils::calc_conv_res_size(tensor.size_3d(), kernel.size_3d(), paddings, strides), -1, 1);
+			Assert::IsTrue(tensor.max_abs() > 0, L"The tensor is supposed to be non-zero");
+			Assert::IsTrue(res_grad.max_abs() > 0, L"The convolution gradient is supposed to be non-zero");
+			Assert::IsTrue(kernel.max_abs() > 0, L"The kernel is supposed to be non-zero");
+
+			//Act
+			const auto [kernel_grad, input_grad] = tensor.convolution_gradient(res_grad, kernel, paddings, strides);
+
+			//Assert
+			const auto [kernel_grad_host, input_grad_host] = tensor.to_host().convolution_gradient(res_grad.to_host(), kernel.to_host(), paddings, strides);
+
+			const auto kernel_grad_diff = (kernel_grad.to_host() - kernel_grad_host).max_abs();
+			const auto input_grad_diff = (input_grad.to_host() - input_grad_host).max_abs();
+
+			Logger::WriteMessage((std::string("kernel_grad_diff= ") + Utils::to_string(kernel_grad_diff) + "\n").c_str());
+			Logger::WriteMessage((std::string("input_grad_diff= ") + Utils::to_string(input_grad_diff) + "\n").c_str());
+
+			Assert::IsTrue(kernel_grad_diff < 50 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference for the kernel gradient");
+			Assert::IsTrue(input_grad_diff < 50 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference for the input gradient");
 		}
 	};
 }

@@ -21,6 +21,7 @@
 #include <MsgPackUtils.h>
 #include "Utilities.h"
 #include <functional>
+#include <chrono>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;
@@ -334,5 +335,25 @@ namespace DeepLearningTest::StandardTestUtils
 		//Assert
 		Assert::IsTrue(max_abs == inst.to_host().max_abs(), L"Actual and expected values are not equal");
 		Assert::IsTrue(max_abs > 0, L"Vector is supposed to be nonzero");
+	}
+
+	/// <summary>
+	/// Executes the given action for the given number of iterations and
+	/// returns average execution time in milliseconds
+	/// </summary>
+	/// <param name="action">Action method to measure execution time</param>
+	/// <param name="number_of_iterations">Number of iterations the action
+	/// should be executed in order to calculate the average execution time</param>
+	template <class A>
+	double ReportExecutionTime(const A& action, const std::size_t& number_of_iterations)
+	{
+		const auto start = std::chrono::steady_clock::now();
+
+		for (auto iter_id = 0ull; iter_id < number_of_iterations; iter_id++)
+			action();
+
+		const auto end = std::chrono::steady_clock::now();
+
+		return std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() * 1.0e-3 /number_of_iterations;
 	}
 }

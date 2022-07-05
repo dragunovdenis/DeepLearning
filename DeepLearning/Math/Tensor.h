@@ -251,6 +251,18 @@ namespace DeepLearning
 		Index3d convolve(RealMemHandle result_handle, const Tensor& kernel, const Index3d& paddings, const Index3d& strides) const;
 
 		/// <summary>
+		/// A special version of convolution with a collection of kernels of the same size.
+		/// It is assumed that the result of convolution with each particular kernel from the collection is a tensor with a single "layer"
+		/// so that the result of convolution with all the collection of kernels can "fit" into another tensor
+		/// with the corresponding number of kernels (a typical situation for the convolution neural layers)
+		/// </summary>
+		/// <param name="result">Place-holder for the result of the convolution. Should be allocated by the caller</param>
+		/// <param name="kernels">Collection of kernels (tensors of the same size with the number of layers equal to that of the "input" tensor)</param>
+		/// <param name="paddings">Zero paddings to be used when calculating convolution with each kernel from the collection</param>
+		/// <param name="strides">Strides to be used in each particular convolution operation</param>
+		void convolve(Tensor& result, const std::vector<Tensor>& kernels, const Index3d& paddings, const Index3d& strides) const;
+
+		/// <summary>
 		/// Convolution with another tensor
 		/// </summary>
 		/// <param name="kernel">Convolution kernel</param>
@@ -274,17 +286,21 @@ namespace DeepLearning
 			const Index3d& strides) const;
 
 		/// <summary>
-		/// Computes gradient of some scalar function F (depending on the result of some convolution)
+		/// Computes gradient of some scalar function F (depending on the result of the convolution of the current tensor I with some kernel K)
 		/// with respect to the convolution kernel K: dF/dK
 		/// and to the input tensor of the convolution I : dF/dI
 		/// </summary>
 		/// <param name="conv_res_grad">Handle of the memory containing gradient of the function F
 		/// with respect to the result of the convolution R: dF/dR. </param>
+		/// <param name="input_grad">Gradient with respect to the elements of the "input" (i.e., the current tensor),
+		/// The caller is responsible for its allocation it and initialization. The gradient calculated within
+		/// the call of the method will be added to the given container</param>
 		/// <param name="kernel">The convolution kernel</param>
 		/// <param name="paddings">Paddings used for computing the convolution</param>
 		/// <param name="strides">Strides used for computing the convolution</param>
-		/// <returns>Tuple of tensors dF/dK, dF/dI in the exact same order </returns>
-		std::tuple<Tensor, Tensor> convolution_gradient(const RealMemHandleConst& conv_res_grad, const Tensor& kernel, const Index3d& paddings,
+		/// <returns>Tensor dF/dK</returns>
+		template <bool CALC_INPUT_GRAD = true>
+		Tensor convolution_gradient(const RealMemHandleConst& conv_res_grad, Tensor& input_grad, const Tensor& kernel, const Index3d& paddings,
 			const Index3d& strides) const;
 
 		/// <summary>

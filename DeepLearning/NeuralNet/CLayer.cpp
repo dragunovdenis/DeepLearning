@@ -91,9 +91,7 @@ namespace DeepLearning
 		const auto function = ActivationWrapper<Tensor>(ActivationFunctionId(_func_id));
 
 		auto temp = Tensor(out_size(), false);
-
-		for (auto filter_id = 0ull; filter_id < _filters.size(); filter_id++)
-			input.convolve(temp.get_layer_handle(filter_id), _filters[filter_id], _paddings, _strides);
+		input.convolve(temp, _filters, _paddings, _strides);
 
 		temp += _biases;
 
@@ -118,18 +116,15 @@ namespace DeepLearning
 		auto biases_grad = function().calc_input_gradient(deltas, aux_learning_data.Derivatives);
 
 		auto filters_grad = std::vector<Tensor>(_filters.size());
-		Tensor input_grad(in_size(), true);
+		Tensor input_grad = evaluate_input_gradient ? Tensor(in_size(), true) : Tensor();
 		const auto& input_tensor = aux_learning_data.Input;
 
 		for (auto filter_id = 0ull; filter_id < _filters.size(); filter_id++)
 		{
-			auto [filter_grad, input_grad_partial] = input_tensor.convolution_gradient(
-				static_cast<const Tensor&>(biases_grad).get_layer_handle(filter_id), _filters[filter_id], _paddings, _strides);
-
-			if (evaluate_input_gradient)
-				input_grad += input_grad_partial;
-
-			filters_grad[filter_id] = std::move(filter_grad);
+			filters_grad[filter_id] = evaluate_input_gradient ? input_tensor.convolution_gradient<true>(
+				static_cast<const Tensor&>(biases_grad).get_layer_handle(filter_id), input_grad, _filters[filter_id], _paddings, _strides) :
+				input_tensor.convolution_gradient<false>(
+					static_cast<const Tensor&>(biases_grad).get_layer_handle(filter_id), input_grad, _filters[filter_id], _paddings, _strides);
 		}
 
 		return std::make_tuple<Tensor, CLayer::LayerGradient>(std::move(input_grad), { std::move(biases_grad), std::move(filters_grad) });

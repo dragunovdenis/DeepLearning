@@ -340,6 +340,15 @@ namespace DeepLearning
 		return result_size;
 	}
 
+	void Tensor::convolve(Tensor& result, const std::vector<Tensor>& kernels, const Index3d& paddings, const Index3d& strides) const
+	{
+		if (result.layer_dim() != kernels.size())
+			throw std::exception("Inconsistent input");
+
+		for (auto kernel_id = 0ull; kernel_id < kernels.size(); kernel_id++)
+			convolve(result.get_layer_handle(kernel_id), kernels[kernel_id], paddings, strides);
+	}
+
 	Tensor Tensor::convolve(const Tensor& kernel, const Index3d& paddings, const Index3d& strides) const
 	{
 		const auto result_dim = ConvolutionUtils::calc_conv_res_size(size_3d(), kernel.size_3d(), paddings, strides);
@@ -387,7 +396,8 @@ namespace DeepLearning
 		return result;
 	}
 
-	std::tuple<Tensor, Tensor> Tensor::convolution_gradient(const RealMemHandleConst& conv_res_grad, const Tensor& kernel, const Index3d& paddings,
+	template <bool CALC_INPUT_GRAD>
+	Tensor Tensor::convolution_gradient(const RealMemHandleConst& conv_res_grad, Tensor& input_grad, const Tensor& kernel, const Index3d& paddings,
 		const Index3d& strides) const
 	{
 		const auto tensor_size = size_3d();
@@ -397,8 +407,10 @@ namespace DeepLearning
 		if (conv_res_grad.size() != conv_result_size.x * conv_result_size.y * conv_result_size.z)
 			throw std::exception("Unexpected size of the convolution result gradient");
 
-		auto kern_grad = Tensor(kernel_size, true);
-		auto in_grad = Tensor(tensor_size, true);
+		if (CALC_INPUT_GRAD && input_grad.size_3d() != tensor_size)
+			throw std::exception("Unexpected size of the input gradient container");
+
+		auto kernel_grad = Tensor(kernel_size, true);
 
 		for (std::size_t res_data_id = 0; res_data_id < conv_res_grad.size(); res_data_id++)
 		{
@@ -411,12 +423,18 @@ namespace DeepLearning
 				continue;
 
 			KERNEL_LOOP(kernel_start_offsets, kernel_stop_offsets, tensor_offsets,
-				kern_grad(k_x, k_y, k_z) += _data[coords_to_data_id(t_x, t_y, t_z)] * factor;
-			in_grad(t_x, t_y, t_z) += kernel(k_x, k_y, k_z) * factor;)
+				kernel_grad(k_x, k_y, k_z) += _data[coords_to_data_id(t_x, t_y, t_z)] * factor;
+			    if (CALC_INPUT_GRAD)
+					input_grad(t_x, t_y, t_z) += kernel(k_x, k_y, k_z) * factor;)
 		}
 
-		return { kern_grad, in_grad };
+		return kernel_grad;
 	}
+
+	template Tensor Tensor::convolution_gradient<true>(const RealMemHandleConst& conv_res_grad, Tensor& input_grad, const Tensor& kernel, const Index3d& paddings,
+		const Index3d& strides) const;
+	template Tensor Tensor::convolution_gradient<false>(const RealMemHandleConst& conv_res_grad, Tensor& input_grad, const Tensor& kernel, const Index3d& paddings,
+		const Index3d& strides) const;
 
 	std::tuple<Tensor, Tensor> Tensor::convolution_gradient(const Tensor& conv_res_grad, const Tensor& kernel, const Index3d& paddings,
 		const Index3d& strides) const
@@ -424,7 +442,10 @@ namespace DeepLearning
 		if (ConvolutionUtils::calc_conv_res_size(size_3d(), kernel.size_3d(), paddings, strides) != conv_res_grad.size_3d())
 			throw std::exception("Inconsistent input data.");
 
-		return convolution_gradient(conv_res_grad.get_handle(), kernel, paddings, strides);
+		auto input_grad = Tensor(size_3d(), true);
+		const auto kernel_grad = convolution_gradient(conv_res_grad.get_handle(), input_grad, kernel, paddings, strides);
+
+		return std::make_tuple(kernel_grad, input_grad);
 	}
 
 	Tensor Tensor::pool_input_gradient(const RealMemHandleConst& pool_res_grad, const PoolOperator& pool_operator, const Index3d& paddings,
@@ -455,9 +476,9 @@ namespace DeepLearning
 			KERNEL_LOOP(kernel_start_offsets, kernel_stop_offsets, tensor_offsets,
 				pool_operator_clone->add({ k_x, k_y, k_z }, _data[coords_to_data_id(t_x, t_y, t_z)]);)
 
-				//Add derivatives calculated by the agent
-				KERNEL_LOOP(kernel_start_offsets, kernel_stop_offsets, tensor_offsets,
-					in_grad(t_x, t_y, t_z) += pool_operator_clone->pool_deriv({ k_x, k_y, k_z }) * factor;)
+			//Add derivatives calculated by the agent
+			KERNEL_LOOP(kernel_start_offsets, kernel_stop_offsets, tensor_offsets,
+				in_grad(t_x, t_y, t_z) += pool_operator_clone->pool_deriv({ k_x, k_y, k_z }) * factor;)
 		}
 
 		return in_grad;

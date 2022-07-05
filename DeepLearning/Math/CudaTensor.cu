@@ -321,10 +321,10 @@ namespace DeepLearning
 	/// <param name="strides">Convolution strides (shifts of the convolution window)</param>
 	/// <param name="result">Placeholder for the result of the convolution (tensor)</param>
 	/// <param name="result_size">Size of the convolution result (tensor)</param>
-	__global__ void convolve_kernel(const Real* tensor, const Index3d tensor_size,
-							   const Real* kernel, const Index3d kernel_size,
+	__global__ void convolve_kernel(const Real* __restrict__ tensor, const Index3d tensor_size,
+							   const Real* __restrict__ kernel, const Index3d kernel_size,
 							   const Index3d paddings, const Index3d strides,
-		                       Real* result, const Index3d result_size)
+		                       Real* __restrict__ result, const Index3d result_size)
 	{
 		const auto result_flatten_id = threadIdx.x + blockIdx.x * blockDim.x;
 		const auto result_flatten_size = result_size.coord_prod();
@@ -356,10 +356,10 @@ namespace DeepLearning
 	/// <param name="strides">Convolution strides (shifts of the convolution window)</param>
 	/// <param name="result">Placeholder for the result of the convolution (tensor)</param>
 	/// <param name="result_size">Size of the convolution result (tensor)</param>
-	__global__ void convolve_shared_kernel(const Real* tensor, const Index3d tensor_size,
-		const Real* kernel, const Index3d kernel_size,
+	__global__ void convolve_shared_kernel(const Real* __restrict__ tensor, const Index3d tensor_size,
+		const Real* __restrict__ kernel, const Index3d kernel_size,
 		const Index3d paddings, const Index3d strides,
-		Real* result, const Index3d result_size)
+		Real* __restrict__ result, const Index3d result_size)
 	{
 		const auto result_flatten_id = threadIdx.x + blockIdx.x * blockDim.x;
 		const auto result_flatten_size = result_size.coord_prod();
@@ -398,22 +398,38 @@ namespace DeepLearning
 		const auto tensor_size = size_3d();
 		const auto result_size = ConvolutionUtils::calc_conv_res_size(tensor_size, kernel_size, paddings, strides);
 
-		if (result_handle.size() != result_size.x * result_size.y * result_size.z)
+		if (result_handle.size() != result_size.coord_prod())
 			throw std::exception("Unexpected amount of memory to store the result");
 
 		const auto blocks_cnt = CudaSetup::calc_blocks(result_handle.size());
-		const auto kernel_size_bytes = sizeof(Real) * kernel.size();
 
-		if (kernel_size_bytes > CudaSetup::shared_memory_per_block())
-			convolve_kernel<<<blocks_cnt , CudaSetup::max_threads_per_block() >>>(_data, tensor_size,
-				kernel.begin(), kernel_size, paddings, strides,
-				result_handle.data(), result_size);
-		else
-			convolve_shared_kernel << <blocks_cnt, CudaSetup::max_threads_per_block(), kernel_size_bytes >> > (_data, tensor_size,
-				kernel.begin(), kernel_size, paddings, strides,
-				result_handle.data(), result_size);
+		convolve_kernel<<<blocks_cnt , CudaSetup::max_threads_per_block() >>>(_data, tensor_size,
+			kernel.begin(), kernel_size, paddings, strides,
+			result_handle.data(), result_size);
 
 		return result_size;
+	}
+
+	void CudaTensor::convolve(CudaTensor& result, const std::vector<CudaTensor>& kernels, const Index3d& paddings, const Index3d& strides) const
+	{
+		if (result.layer_dim() != kernels.size() || kernels.empty())
+			throw std::exception("Inconsistent input");
+
+		//It is assumed that all the kernels in the collection have the same size
+		const auto kernel_size = kernels[0].size_3d();
+		const auto tensor_size = size_3d();
+		const auto result_size = ConvolutionUtils::calc_conv_res_size(tensor_size, kernel_size, paddings, strides);
+
+		if (result.size_3d().yz() != result_size.yz() || result_size.x != 1)
+			throw std::exception("Unexpected amount of memory to store the result");
+
+		const auto blocks_cnt = CudaSetup::calc_blocks(result_size.coord_prod());
+		const auto kernel_size_bytes = sizeof(Real) * kernel_size.coord_prod();
+
+		for (auto kernel_id = 0ull; kernel_id < kernels.size(); kernel_id++)
+			convolve_kernel << <blocks_cnt, CudaSetup::max_threads_per_block()>> > (_data, tensor_size,
+				kernels[kernel_id].begin(), kernel_size, paddings, strides,
+				result.get_layer_handle(kernel_id).data(), result_size);
 	}
 
 	CudaTensor CudaTensor::convolve(const CudaTensor& kernel, const Index3d& paddings, const Index3d& strides) const
@@ -429,13 +445,95 @@ namespace DeepLearning
 	std::tuple<CudaTensor, CudaTensor> CudaTensor::convolution_gradient(const CudaTensor& conv_res_grad, const CudaTensor& kernel, const Index3d& paddings,
 		const Index3d& strides) const
 	{
-		throw std::exception("Not implemented");
+		if (ConvolutionUtils::calc_conv_res_size(size_3d(), kernel.size_3d(), paddings, strides) != conv_res_grad.size_3d())
+			throw std::exception("Inconsistent input data.");
+
+		auto input_grad = CudaTensor(size_3d(), true);
+		const auto kernel_grad = convolution_gradient(conv_res_grad.get_handle(), input_grad, kernel, paddings, strides);
+
+		return std::make_tuple(kernel_grad, input_grad);
 	}
 
-	std::tuple<CudaTensor, CudaTensor> CudaTensor::convolution_gradient(const RealMemHandleConst& conv_res_grad, const CudaTensor& kernel, const Index3d& paddings,
+	/// <summary>
+	/// CUDA kernel to compute gradients of the convolution operation with respect to the input tensor and the kernel
+	/// </summary>
+	/// <param name="tensor">The input tensor that took part in the convolution operation</param>
+	/// <param name="tensor_size">3d size of the input tensor</param>
+	/// <param name="res_grad">Tensor-gradient calculated with respect to the output of the convolution operation</param>
+	/// <param name="res_grad_size">Size of the output of the convolution operation</param>
+	/// <param name="kernel">Kernel that took part in the convolution operation</param>
+	/// <param name="kernel_size">3d size of the kernel-tensor</param>
+	/// <param name="paddings">Zero-paddings used in the convolution operation</param>
+	/// <param name="strides">Strides used in the convolution operation</param>
+	/// <param name="input_grad">Container to hold gradient with respect to the input tensor of the convolution (with the dimensions equal to those of the input tensor )</param>
+	/// <param name="kernel_grad">Container to hold gradient with respect to the kernel of the convolution (with the dimensions equal to those of the kernel tensor)</param>
+	template <bool CALC_INPUT_GRAD>
+	__global__ void convolution_gradient_kernel(const Real* __restrict__ tensor, const Index3d tensor_size,
+		const Real* __restrict__ res_grad, const Index3d res_grad_size,
+		const Real* __restrict__ kernel, const Index3d kernel_size,
+		const Index3d paddings, const Index3d strides, Real* __restrict__ input_grad, Real* __restrict__ kernel_grad)
+	{
+		const auto res_grad_flatten_id = threadIdx.x + blockIdx.x * blockDim.x;
+		const auto res_grad_flatten_size = res_grad_size.coord_prod();
+
+		if (res_grad_flatten_id >= res_grad_flatten_size)
+			return;
+
+		const auto factor = res_grad[res_grad_flatten_id];
+		if (factor == Real(0))
+			return;
+
+		const auto result_offsets = ConvolutionUtils::data_id_to_index_3d(res_grad_flatten_id, res_grad_size);
+		const auto [tensor_offsets, kernel_start_offsets, kernel_stop_offsets] =
+			ConvolutionUtils::calc_kernel_loop_offsets(result_offsets, tensor_size, kernel_size, paddings, strides);
+
+		KERNEL_LOOP(kernel_start_offsets, kernel_stop_offsets, tensor_offsets,
+			const auto tensor_data_id = coords_to_data_id(t_x, t_y, t_z, tensor_size.y, tensor_size.z);
+		    const auto kernel_data_id = coords_to_data_id(k_x, k_y, k_z, kernel_size.y, kernel_size.z);
+			if (CALC_INPUT_GRAD)
+				atomicAdd(input_grad + tensor_data_id, kernel[kernel_data_id] * factor);
+			else
+				atomicAdd(kernel_grad + kernel_data_id, tensor[tensor_data_id] * factor);)
+	}
+
+	template <bool CALC_INPUT_GRAD>
+	CudaTensor CudaTensor::convolution_gradient(const RealMemHandleConst& conv_res_grad, CudaTensor& input_grad, const CudaTensor& kernel, const Index3d& paddings,
 		const Index3d& strides) const
 	{
-		throw std::exception("Not implemented");
+		const auto tensor_size = size_3d();
+		const auto kernel_size = kernel.size_3d();
+		const auto conv_result_size = ConvolutionUtils::calc_conv_res_size(tensor_size, kernel_size, paddings, strides);
+
+		if (conv_res_grad.size() != conv_result_size.x * conv_result_size.y * conv_result_size.z)
+			throw std::exception("Unexpected size of the convolution result gradient");
+
+		if (CALC_INPUT_GRAD && input_grad.size_3d() != tensor_size)
+			throw std::exception("Unexpected size of the input gradient container");
+
+		auto kernel_grad = CudaTensor(kernel_size, true);
+		const auto blocks_cnt = CudaSetup::calc_blocks(conv_res_grad.size());
+
+		cudaStream_t s1, s2;
+		cudaStreamCreate(&s1);
+		cudaStreamCreate(&s2);
+
+		//TODO: for some reason I can't make to atomicAdd work simultaneously in the kernel below: they
+		//both give wrong result when called together at the same time. As a solution for now I decided to call them one by one.
+		convolution_gradient_kernel<false> << <blocks_cnt, CudaSetup::max_threads_per_block(), 0, s1>> > (_data, tensor_size,
+			conv_res_grad.data(), conv_result_size,
+			kernel.begin(), kernel_size,
+			paddings, strides, input_grad.begin(), kernel_grad.begin());
+
+		if (CALC_INPUT_GRAD)
+			convolution_gradient_kernel<true> << <blocks_cnt, CudaSetup::max_threads_per_block(), 0, s2>> > (_data, tensor_size,
+				conv_res_grad.data(), conv_result_size,
+				kernel.begin(), kernel_size,
+				paddings, strides, input_grad.begin(), kernel_grad.begin());
+
+		cudaStreamDestroy(s1);
+		cudaStreamDestroy(s2);
+
+		return kernel_grad;
 	}
 
 	CudaTensor CudaTensor::pool(const PoolOperator& pool_operator, const Index3d& paddings,	const Index3d& strides) const
