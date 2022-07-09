@@ -443,9 +443,9 @@ namespace DeepLearning
 			throw std::exception("Inconsistent input data.");
 
 		auto input_grad = Tensor(size_3d(), true);
-		const auto kernel_grad = convolution_gradient(conv_res_grad.get_handle(), input_grad, kernel, paddings, strides);
+		auto kernel_grad = convolution_gradient(conv_res_grad.get_handle(), input_grad, kernel, paddings, strides);
 
-		return std::make_tuple(kernel_grad, input_grad);
+		return std::make_tuple(std::move(kernel_grad), std::move(input_grad));
 	}
 
 	Tensor Tensor::pool_input_gradient(const RealMemHandleConst& pool_res_grad, const PoolOperator& pool_operator, const Index3d& paddings,
@@ -493,13 +493,11 @@ namespace DeepLearning
 		return pool_input_gradient(pool_res_grad.get_handle(), pool_operator, paddings, strides);
 	}
 
-	std::tuple<Tensor, std::vector<std::size_t>> Tensor::min_max_pool_2d(const Index2d& window_size, const bool max) const
+	std::tuple<Tensor, std::vector<std::size_t>> Tensor::min_max_pool(const Index3d& window_size, const bool max) const
 	{
 		const auto paddings = Index3d{ 0 };
-		const auto kernel_size = Index3d(1ll, window_size.x, window_size.y);
-		const auto strides = kernel_size;
 			const auto tensor_size = size_3d();
-		const auto result_size = ConvolutionUtils::calc_conv_res_size(tensor_size, kernel_size, paddings, strides);
+		const auto result_size = ConvolutionUtils::calc_conv_res_size(tensor_size, window_size, paddings, window_size);
 
 		auto result = Tensor(result_size, false);
 		auto out_to_in_map = std::vector<std::size_t>(result.size());
@@ -512,34 +510,27 @@ namespace DeepLearning
 		{
 			const auto result_offsets = ConvolutionUtils::data_id_to_index_3d(res_data_id, result_size);
 			const auto [tensor_offsets, kernel_start_offsets, kernel_stop_offsets] =
-				ConvolutionUtils::calc_kernel_loop_offsets(result_offsets, tensor_size, kernel_size, paddings, strides);
+				ConvolutionUtils::calc_kernel_loop_offsets(result_offsets, tensor_size, window_size, paddings, window_size);
 
-			auto pool_res = init_val;
-			const auto t_x = tensor_offsets.x + kernel_start_offsets.x;
-			for (auto k_y = kernel_start_offsets.y; k_y < kernel_stop_offsets.y; k_y++)
-			{										
-				const auto t_y = tensor_offsets.y + k_y;	
-				for (auto k_z = kernel_start_offsets.z; k_z < kernel_stop_offsets.z; k_z++)
+			auto poolled_val = init_val;
+			auto poolled_id = 0ull;
+			KERNEL_LOOP(kernel_start_offsets, kernel_stop_offsets, tensor_offsets,
+				const auto tensor_data_id = coords_to_data_id(t_x, t_y, t_z);
+				const auto & current_val = _data[tensor_data_id];
+				if (comparer(poolled_val, current_val))
 				{
-					const auto t_z = tensor_offsets.z + k_z;
+					poolled_val = current_val;
+					poolled_id = tensor_data_id;
+				});
 
-					const auto tensor_data_id = coords_to_data_id(t_x, t_y, t_z);
-					const auto& current_val = _data[tensor_data_id];
-					if (comparer(pool_res, current_val))
-					{
-						pool_res = current_val;
-						out_to_in_map[res_data_id] = tensor_data_id;
-					}
-				}
-			}
-
-			result._data[res_data_id] = pool_res;
+			out_to_in_map[res_data_id] = poolled_id;
+			result._data[res_data_id] = poolled_val;
 		}
 
-		return std::make_tuple(result, out_to_in_map);
+		return std::make_tuple(std::move(result), std::move(out_to_in_map));
 	}
 
-	Tensor Tensor::min_max_pool_2d_input_gradient(const Tensor& pool_res_gradient, const std::vector<std::size_t>& out_to_in_mapping) const
+	Tensor Tensor::min_max_pool_input_gradient(const Tensor& pool_res_gradient, const std::vector<std::size_t>& out_to_in_mapping) const
 	{
 		if (pool_res_gradient.size() != out_to_in_mapping.size())
 			throw std::exception("Inconsistent input");

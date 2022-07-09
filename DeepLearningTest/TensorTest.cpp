@@ -260,7 +260,7 @@ namespace DeepLearningTest
 						const auto rel_diff = deriv_reference != Real(0) ? abs_diff / std::abs(deriv_reference) : abs_diff;
 
 						Logger::WriteMessage((std::string("Rel. diff. =  ") + Utils::to_string(rel_diff) + "\n").c_str());
-						Assert::IsTrue(rel_diff < Real(8e-6), L"Too high deviation from reference.");
+						Assert::IsTrue(rel_diff < Real(2e-5), L"Too high deviation from reference.");
 					}
 		}
 
@@ -481,16 +481,16 @@ namespace DeepLearningTest
 			Assert::IsTrue((result1 - result2).max_abs() < 10 * std::numeric_limits<Real>::epsilon(), L"Results are supposed to be the same");
 		}
 
-		void Pool2dTestGeneral(const bool max)
+		void min_max_pool_test_general(const bool max)
 		{
 			//Arrange
 			const auto tensor_size = Index3d{ 10, 11, 9 };
 			const auto tensor = TensorFactory(tensor_size);//filled with random numbers
 			Assert::IsTrue(tensor.max_abs() > 0, L"Tensor is expected to be nonzero");
-			const auto pool_window_size = Index2d(3, 4);
+			const auto pool_window_size = Index3d(2, 3, 4);
 
 			//Calculate reference
-			const auto kernel_size = Index3d(1, pool_window_size.x, pool_window_size.y);
+			const auto kernel_size = pool_window_size;
 			const auto strides = kernel_size;
 			const auto paddings = Index3d{ 0, 0, 0 };
 			const auto pool_operator = max ? MaxPool(kernel_size).clone() : MinPool(kernel_size).clone();
@@ -504,22 +504,22 @@ namespace DeepLearningTest
 			const auto input_gradient_reference = tensor.pool_input_gradient(res_grad, *pool_operator, paddings, strides);
 
 			//Act
-			const auto [pool_2d_res, out_to_in_mapping] = tensor.min_max_pool_2d(pool_window_size, max);
-			const auto input_2d__gradient = tensor.min_max_pool_2d_input_gradient(res_grad, out_to_in_mapping);
+			const auto [pool_res, out_to_in_mapping] = tensor.min_max_pool(pool_window_size, max);
+			const auto input_gradient = tensor.min_max_pool_input_gradient(res_grad, out_to_in_mapping);
 
 			//Assert
-			Assert::IsTrue(pool_2d_res == pool_res_reference, L"Actual and expected values of the max pool result are different");
-			Assert::IsTrue(input_2d__gradient == input_gradient_reference, L"Actual and expected values of the max pool input gradient are different");
+			Assert::IsTrue(pool_res == pool_res_reference, L"Actual and expected values of the max pool result are different");
+			Assert::IsTrue(input_gradient == input_gradient_reference, L"Actual and expected values of the max pool input gradient are different");
 		}
 
-		TEST_METHOD(MaxPool2dTest)
+		TEST_METHOD(OptimizedMaxPoolTest)
 		{
-			Pool2dTestGeneral(true /*max*/);
+			min_max_pool_test_general(true /*max*/);
 		}
 
-		TEST_METHOD(MinPool2dTest)
+		TEST_METHOD(OptimizedMinPoolTest)
 		{
-			Pool2dTestGeneral(false /*min*/);
+			min_max_pool_test_general(false /*min*/);
 		}
 	};
 }

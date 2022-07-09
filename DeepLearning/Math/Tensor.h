@@ -353,20 +353,20 @@ namespace DeepLearning
 		/// Min-max specialized version of pool algorithm, which is more optimal than the "pool" method above with the corresponding pool-operator.
 		/// Simplified version, with zero paddings and strides equal to the window dimensions.
 		/// Returns a tuple containing the result of pooling and an vector of indices which is a mapping from the indices of flattened result
-		/// of the pooling to the flattened indices of input elements that have been pooled pooling.
+		/// of the pooling to the flattened indices of input elements that have been pooled.
 		/// The mapping allows to simplify a back-propagation procedure.
 		/// </summary>
 		/// <param name="window">Operation window size</param>
 		/// <param name="max">If "true" the method implements "max pulling" otherwise -- "min pulling";</param>
 		/// <returns></returns>
-		std::tuple<Tensor, std::vector<std::size_t>> min_max_pool_2d(const Index2d& window_size, const bool max) const;
+		std::tuple<Tensor, std::vector<std::size_t>> min_max_pool(const Index3d& window_size, const bool max) const;
 
 		/// <summary>
 		/// Returns gradient of some function F with respect to the min/max 2d pool input tensor I: dF/dI
 		/// </summary>
 		/// <param name="pool_res_gradient">Gradient of the function F with respect to the min/max 2d pool output tensor O: dF/dO</param>
-		/// <param name="out_to_in_mapping">Min/max 2d pool output to input flattened index mapping (the second item in the tuple returned by min_max_pool_2d)</param>
-		Tensor min_max_pool_2d_input_gradient(const Tensor& pool_res_gradient, const std::vector<std::size_t>& out_to_in_mapping) const;
+		/// <param name="out_to_in_mapping">Min/max pool output to input flattened index mapping (the second item in the tuple returned by min_max_pool_2d)</param>
+		Tensor min_max_pool_input_gradient(const Tensor& pool_res_gradient, const std::vector<std::size_t>& out_to_in_mapping) const;
 
 		/// <summary>
 		/// Returns read-only memory handle to the layer with given index

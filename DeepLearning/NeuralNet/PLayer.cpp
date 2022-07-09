@@ -85,7 +85,7 @@ namespace DeepLearning
 
 		if (_pool_operator_id == PoolTypeId::MIN || _pool_operator_id == PoolTypeId::MAX)
 		{
-			auto [pool_result, index_mapping] = input.min_max_pool_2d({ _pool_window_size.y, _pool_window_size.z }, _pool_operator_id == PoolTypeId::MAX);
+			auto [pool_result, index_mapping] = input.min_max_pool({1ll, _pool_window_size.y, _pool_window_size.z }, _pool_operator_id == PoolTypeId::MAX);
 
 			if (aux_learning_data_ptr)
 				aux_learning_data_ptr->IndexMapping = std::move(index_mapping);
@@ -111,7 +111,7 @@ namespace DeepLearning
 			if (aux_learning_data.IndexMapping.size() != out_size().coord_prod())
 				throw std::exception("Invalid index mapping");
 
-			auto input_grad = aux_learning_data.Input.min_max_pool_2d_input_gradient(deltas, aux_learning_data.IndexMapping);
+			auto input_grad = aux_learning_data.Input.min_max_pool_input_gradient(deltas, aux_learning_data.IndexMapping);
 			return std::make_tuple<Tensor, PLayer::LayerGradient>(std::move(input_grad), { Tensor(), std::vector<Tensor>() });
 		}
 

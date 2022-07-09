@@ -90,7 +90,7 @@
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
       <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
-      <AdditionalOptions>—expt-extended-lambda --std c++17 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>—expt-extended-lambda --std c++17 --expt-relaxed-constexpr %(AdditionalOptions)</AdditionalOptions>
       <GPUDebugInfo>false</GPUDebugInfo>
       <CodeGeneration>compute_60,sm_60</CodeGeneration>
     </CudaCompile>
@@ -121,7 +121,7 @@
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
       <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
-      <AdditionalOptions>—expt-extended-lambda --std c++17 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>—expt-extended-lambda --std c++17 --expt-relaxed-constexpr %(AdditionalOptions)</AdditionalOptions>
       <CodeGeneration>compute_60,sm_60</CodeGeneration>
     </CudaCompile>
     <PostBuildEvent>
@@ -151,7 +151,7 @@
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
       <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
-      <AdditionalOptions>—expt-extended-lambda --std c++17 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>—expt-extended-lambda --std c++17 --expt-relaxed-constexpr %(AdditionalOptions)</AdditionalOptions>
       <CodeGeneration>compute_60,sm_60</CodeGeneration>
     </CudaCompile>
     <PostBuildEvent>

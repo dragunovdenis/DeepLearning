@@ -23,6 +23,7 @@
 #include "device_launch_parameters.h"
 #include <thrust/execution_policy.h>
 #include <thrust/equal.h>
+#include <thrust/scatter.h>
 #include "ConvolutionUtils.h"
 #include "CudaSetup.h"
 
@@ -514,8 +515,8 @@ namespace DeepLearning
 		const auto blocks_cnt = CudaSetup::calc_blocks(conv_res_grad.size());
 
 		cudaStream_t s1, s2;
-		cudaStreamCreate(&s1);
-		cudaStreamCreate(&s2);
+		gpuErrchk(cudaStreamCreate(&s1));
+		gpuErrchk(cudaStreamCreate(&s2));
 
 		//TODO: for some reason I can't make to atomicAdd work simultaneously in the kernel below: they
 		//both give wrong result when called together at the same time. As a solution for now I decided to call them one by one.
@@ -530,8 +531,8 @@ namespace DeepLearning
 				kernel.begin(), kernel_size,
 				paddings, strides, input_grad.begin(), kernel_grad.begin());
 
-		cudaStreamDestroy(s1);
-		cudaStreamDestroy(s2);
+		gpuErrchk(cudaStreamDestroy(s1));
+		gpuErrchk(cudaStreamDestroy(s2));
 
 		return kernel_grad;
 	}
@@ -559,14 +560,70 @@ namespace DeepLearning
 		throw std::exception("Not implemented");
 	}
 
-	std::tuple<CudaTensor, std::vector<std::size_t>> CudaTensor::min_max_pool_2d(const Index2d& window_size, const bool max) const
+	template <bool MAX>
+	__global__ void min_max_pull_kernel(const Real* __restrict__ tensor, const Index3d tensor_size,
+		const Index3d window_size, Real* __restrict__ result, const Index3d result_size, std::size_t* out_to_in_map)
 	{
-		throw std::exception("Not implemented");
+		const auto res_flatten_id = threadIdx.x + blockIdx.x * blockDim.x;
+		const auto res_flatten_size = result_size.coord_prod();
+
+		if (res_flatten_size <= res_flatten_id)
+			return;
+
+		const auto result_offsets = ConvolutionUtils::data_id_to_index_3d(res_flatten_id, result_size);
+		const auto [tensor_offsets, kernel_start_offsets, kernel_stop_offsets] =
+			ConvolutionUtils::calc_kernel_loop_offsets(result_offsets, tensor_size, window_size, {0,0,0}, window_size);
+
+		auto poolled_val = MAX ?  std::numeric_limits<Real>::epsilon() : -std::numeric_limits<Real>::epsilon();
+		auto poolled_id = -1;
+		KERNEL_LOOP(kernel_start_offsets, kernel_stop_offsets, tensor_offsets,
+			const int tensor_data_id = coords_to_data_id(t_x, t_y, t_z, tensor_size.y, tensor_size.z);
+			const auto& current_val = tensor[tensor_data_id];
+			if (MAX && (poolled_val < current_val) || !MAX && (poolled_val > current_val))
+			{
+				poolled_val = current_val;
+				poolled_id = tensor_data_id;
+			})
+
+			result[res_flatten_id] = poolled_val;
+			out_to_in_map[res_flatten_id] = poolled_id;
 	}
 
-	CudaTensor CudaTensor::min_max_pool_2d_input_gradient(const CudaTensor& pool_res_gradient, const std::vector<std::size_t>& out_to_in_mapping) const
+	std::tuple<CudaTensor, CudaArray<std::size_t>> CudaTensor::min_max_pool(const Index3d& window_size, const bool max) const
 	{
-		throw std::exception("Not implemented");
+		const auto paddings = Index3d{ 0 };
+		const auto tensor_size = size_3d();
+		const auto result_size = ConvolutionUtils::calc_conv_res_size(tensor_size, window_size, paddings, window_size);
+
+		auto result = CudaTensor(result_size, false);
+		auto out_to_in_map = CudaArray<std::size_t>(result.size());
+
+		const auto blocks_cnt = CudaSetup::calc_blocks(result.size());
+
+		if (max)
+			min_max_pull_kernel<true> << <blocks_cnt, CudaSetup::max_threads_per_block() >> > (_data, tensor_size,
+				window_size, result.begin(), result_size, out_to_in_map.begin());
+		else
+			min_max_pull_kernel<false> << <blocks_cnt, CudaSetup::max_threads_per_block() >> > (_data, tensor_size,
+				window_size, result.begin(), result_size, out_to_in_map.begin());
+
+		gpuErrchk(cudaDeviceSynchronize());
+
+		const auto diag_result = result.to_stdvector();
+		const auto diag_mapping = out_to_in_map.to_stdvector();
+
+		return std::make_tuple(std::move(result), std::move(out_to_in_map));
+	}
+
+	CudaTensor CudaTensor::min_max_pool_input_gradient(const CudaTensor& pool_res_gradient, const CudaArray<std::size_t>& out_to_in_mapping) const
+	{
+		if (pool_res_gradient.size() != out_to_in_mapping.size())
+			throw std::exception("Inconsistent input");
+
+		auto result = CudaTensor(size_3d(), true/*zeros initialization*/);
+		thrust::scatter(thrust::device, pool_res_gradient.begin(), pool_res_gradient.end(), out_to_in_mapping.begin(), result.begin());
+
+		return result;
 	}
 
 	std::size_t CudaTensor::coords_to_data_id(const std::size_t layer_id, const std::size_t row_id, const std::size_t col_id) const

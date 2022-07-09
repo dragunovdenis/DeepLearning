@@ -19,6 +19,7 @@
 #include "../defs.h"
 #include <msgpack.hpp>
 #include "BasicCudaCollection.cuh"
+#include "CudaArray.cuh"
 #include <filesystem>
 #include "LinAlg3d.h"
 #include "LinAlg2d.h"
@@ -366,14 +367,14 @@ namespace DeepLearning
 		/// <param name="window">Operation window size</param>
 		/// <param name="max">If "true" the method implements "max pulling" otherwise -- "min pulling";</param>
 		/// <returns></returns>
-		std::tuple<CudaTensor, std::vector<std::size_t>> min_max_pool_2d(const Index2d& window_size, const bool max) const;
+		std::tuple<CudaTensor, CudaArray<std::size_t>> min_max_pool(const Index3d& window_size, const bool max) const;
 
 		/// <summary>
 		/// Returns gradient of some function F with respect to the min/max 2d pool input tensor I: dF/dI
 		/// </summary>
 		/// <param name="pool_res_gradient">Gradient of the function F with respect to the min/max 2d pool output tensor O: dF/dO</param>
-		/// <param name="out_to_in_mapping">Min/max 2d pool output to input flattened index mapping (the second item in the tuple returned by min_max_pool_2d)</param>
-		CudaTensor min_max_pool_2d_input_gradient(const CudaTensor& pool_res_gradient, const std::vector<std::size_t>& out_to_in_mapping) const;
+		/// <param name="out_to_in_mapping">Min/max pool output to input flattened index mapping (the second item in the tuple returned by min_max_pool_2d)</param>
+		CudaTensor min_max_pool_input_gradient(const CudaTensor& pool_res_gradient, const CudaArray<std::size_t>& out_to_in_mapping) const;
 
 		/// <summary>
 		/// Returns read-only memory handle to the layer with given index

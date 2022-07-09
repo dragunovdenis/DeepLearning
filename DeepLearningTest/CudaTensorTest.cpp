@@ -17,6 +17,7 @@
 
 #include "CppUnitTest.h"
 #include <Math/CudaTensor.cuh>
+#include <Math/CudaArray.cuh>
 #include <Math/ConvolutionUtils.h>
 #include "Math/PoolOperator.h"
 #include <Utilities.h>
@@ -38,6 +39,14 @@ namespace DeepLearningTest
 			const std::size_t row_dim = 10, const std::size_t col_dim = 13)
 		{
 			return CudaTensor(layer_dim, row_dim, col_dim, -1, 1);
+		}
+
+		/// <summary>
+		/// Returns random instance of CudaTensor
+		/// </summary>
+		static CudaTensor CudaTensorFactory(const Index3d& size)
+		{
+			return CudaTensor(size, -1, 1);
 		}
 
 		TEST_METHOD(CopyConstructorTest)
@@ -226,6 +235,39 @@ namespace DeepLearningTest
 
 			Assert::IsTrue(kernel_grad_diff < 50 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference for the kernel gradient");
 			Assert::IsTrue(input_grad_diff < 50 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference for the input gradient");
+		}
+
+		void min_max_pool_optimixed_test(const bool max)
+		{
+			//Arrange
+			const auto tensor_size = Index3d{ 10, 11, 9 };
+			const auto tensor = CudaTensorFactory(tensor_size);//filled with random numbers
+			Assert::IsTrue(tensor.max_abs() > 0, L"Tensor is expected to be nonzero");
+			const auto pool_window_size = Index3d(2, 3, 4);
+			const CudaTensor res_grad(ConvolutionUtils::calc_conv_res_size(tensor.size_3d(), pool_window_size, { 0 }, pool_window_size), -1, 1);
+			Assert::IsTrue(res_grad.max_abs() > 0, L"Gradient is expected to be nonzero");
+
+			//Act
+			const auto [result, mapping] = tensor.min_max_pool(pool_window_size, max);
+			const auto gradient = tensor.min_max_pool_input_gradient(res_grad, mapping);
+
+			//Assert
+			const auto [result_host, mapping_host] = tensor.to_host().min_max_pool(pool_window_size, max);
+			const auto gradient_host = tensor.to_host().min_max_pool_input_gradient(res_grad.to_host(), mapping.to_stdvector());
+
+			Assert::IsTrue(result.to_host() == result_host, L"Unexpected result of pooling operation");
+			Assert::IsTrue(mapping.to_stdvector() == mapping_host, L"Unexpected mapping of pooling operation");
+			Assert::IsTrue(gradient.to_host() == gradient_host, L"Unexpected gradient of pooling operation");
+		}
+
+		TEST_METHOD(MinPoolOptimizedTest)
+		{
+			min_max_pool_optimixed_test(/*max*/ false);
+		}
+
+		TEST_METHOD(MaxPoolOptimizedTest)
+		{
+			min_max_pool_optimixed_test(/*max*/ true);
 		}
 	};
 }
