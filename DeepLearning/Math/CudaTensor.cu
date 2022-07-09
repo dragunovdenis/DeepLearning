@@ -489,12 +489,12 @@ namespace DeepLearning
 			ConvolutionUtils::calc_kernel_loop_offsets(result_offsets, tensor_size, kernel_size, paddings, strides);
 
 		KERNEL_LOOP(kernel_start_offsets, kernel_stop_offsets, tensor_offsets,
-			const auto tensor_data_id = coords_to_data_id(t_x, t_y, t_z, tensor_size.y, tensor_size.z);
-		    const auto kernel_data_id = coords_to_data_id(k_x, k_y, k_z, kernel_size.y, kernel_size.z);
+			const int tensor_data_id = coords_to_data_id(t_x, t_y, t_z, tensor_size.y, tensor_size.z);
+		    const int kernel_data_id = coords_to_data_id(k_x, k_y, k_z, kernel_size.y, kernel_size.z);
 			if (CALC_INPUT_GRAD)
 				atomicAdd(input_grad + tensor_data_id, kernel[kernel_data_id] * factor);
-			else
-				atomicAdd(kernel_grad + kernel_data_id, tensor[tensor_data_id] * factor);)
+
+			atomicAdd(kernel_grad + kernel_data_id, tensor[tensor_data_id] * factor);)
 	}
 
 	template <bool CALC_INPUT_GRAD>
@@ -514,25 +514,10 @@ namespace DeepLearning
 		auto kernel_grad = CudaTensor(kernel_size, true);
 		const auto blocks_cnt = CudaSetup::calc_blocks(conv_res_grad.size());
 
-		cudaStream_t s1, s2;
-		gpuErrchk(cudaStreamCreate(&s1));
-		gpuErrchk(cudaStreamCreate(&s2));
-
-		//TODO: for some reason I can't make to atomicAdd work simultaneously in the kernel below: they
-		//both give wrong result when called together at the same time. As a solution for now I decided to call them one by one.
-		convolution_gradient_kernel<false> << <blocks_cnt, CudaSetup::max_threads_per_block(), 0, s1>> > (_data, tensor_size,
+		convolution_gradient_kernel<CALC_INPUT_GRAD> << <blocks_cnt, CudaSetup::max_threads_per_block()>> > (_data, tensor_size,
 			conv_res_grad.data(), conv_result_size,
 			kernel.begin(), kernel_size,
 			paddings, strides, input_grad.begin(), kernel_grad.begin());
-
-		if (CALC_INPUT_GRAD)
-			convolution_gradient_kernel<true> << <blocks_cnt, CudaSetup::max_threads_per_block(), 0, s2>> > (_data, tensor_size,
-				conv_res_grad.data(), conv_result_size,
-				kernel.begin(), kernel_size,
-				paddings, strides, input_grad.begin(), kernel_grad.begin());
-
-		gpuErrchk(cudaStreamDestroy(s1));
-		gpuErrchk(cudaStreamDestroy(s2));
 
 		return kernel_grad;
 	}
