@@ -377,6 +377,36 @@ namespace DeepLearning
 		CudaTensor min_max_pool_input_gradient(const CudaTensor& pool_res_gradient, const CudaArray<std::size_t>& out_to_in_mapping) const;
 
 		/// <summary>
+		/// Specialized version of the pool algorithms that pools a scaled sum of the tensor elements in the given window;
+		/// If the "scale factor" if chosen to be a reciprocal of the number of elements in the window then the pool is
+		/// equivalent to the "average pool"
+		/// </summary>
+		/// <param name="window_size">Size of the "pool window"</param>
+		/// <param name="scale_factor">Scale factor to be applied to the sum of the elements in the window to get the pool result</param>
+		CudaTensor scale_pool(const Index3d& window_size, const Real& scale_factor) const;
+
+		/// <summary>
+		/// Specific implementation of the "average pool" operator
+		/// </summary>
+		/// <param name="window_size">Size of the window for the average pool operator</param>
+		CudaTensor average_pool(const Index3d& window_size) const;
+
+		/// <summary>
+		/// Returns gradient with respect to the input of the "scale pool" with the given "scale factor"
+		/// </summary>
+		/// <param name="pool_res_gradient">Gradient with respect to the output of the "scale pool"</param>
+		/// <param name="window_size">"Window" size of the fool operation</param>
+		/// <param name="scale_factor">Scale factor of the pool</param>
+		CudaTensor scale_pool_input_gradient(const CudaTensor& pool_res_gradient, const Index3d& window_size, const Real& scale_factor) const;
+
+		/// <summary>
+		/// Returns gradient with respect to the input of the "average pool" operator
+		/// </summary>
+		/// <param name="pool_res_gradient">Gradient with respect to the output of the "scale pool"</param>
+		/// <param name="window_size">"Window" size of the fool operation</param>
+		CudaTensor average_pool_input_gradient(const CudaTensor& pool_res_gradient, const Index3d& window_size) const;
+
+		/// <summary>
 		/// Returns read-only memory handle to the layer with given index
 		/// </summary>
 		/// <param name="layer_id">Index of a layer</param>

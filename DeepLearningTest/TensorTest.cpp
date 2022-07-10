@@ -521,5 +521,37 @@ namespace DeepLearningTest
 		{
 			min_max_pool_test_general(false /*min*/);
 		}
+
+		TEST_METHOD(AveragePoolTest)
+		{
+			//Arrange
+			const auto tensor_size = Index3d{ 11, 13, 22 };
+			const auto tensor = TensorFactory(tensor_size);//filled with random numbers
+			Assert::IsTrue(tensor.max_abs() > 0, L"Tensor is expected to be nonzero");
+			const auto pool_window_size = Index3d(2, 3, 4);
+
+			//Calculate reference
+			const auto pool_operator = AveragePool(pool_window_size);
+			const auto result_reference = tensor.pool(pool_operator, Index3d{ 0 }, pool_window_size);
+
+			auto res_grad = Tensor(result_reference.size_3d(), Real(-1), Real(1));
+			Assert::IsTrue(res_grad.max_abs() > Real(0), L"Result gradient is expected to be nonzero");
+
+			//pool input gradient reference
+			const auto input_gradient_reference = tensor.pool_input_gradient(res_grad, pool_operator, Index3d{ 0 }, pool_window_size);
+
+			//Act
+			const auto result = tensor.average_pool(pool_window_size);
+			const auto input_gradient = tensor.average_pool_input_gradient(res_grad, pool_window_size);
+
+			//Assert
+			const auto res_diff = (result_reference - result).max_abs();
+			const auto grad_diff = (input_gradient - input_gradient_reference).max_abs();
+
+			Logger::WriteMessage((std::string("Result difference = ") + Utils::to_string(res_diff) + "\n").c_str());
+			Logger::WriteMessage((std::string("Gradient difference = ") + Utils::to_string(grad_diff) + "\n").c_str());
+			Assert::IsTrue(res_diff <= std::numeric_limits<Real>::epsilon(), L"Too high deviation from the pool reference result");
+			Assert::IsTrue(grad_diff <= std::numeric_limits<Real>::epsilon(), L"Too high deviation from the pool reference gradient");
+		}
 	};
 }

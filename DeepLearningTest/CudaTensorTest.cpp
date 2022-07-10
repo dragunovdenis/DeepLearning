@@ -269,5 +269,33 @@ namespace DeepLearningTest
 		{
 			min_max_pool_optimixed_test(/*max*/ true);
 		}
+
+		TEST_METHOD(AveragePoolTest)
+		{
+			//Arrange
+			const auto tensor_size = Index3d{ 10, 11, 9 };
+			const auto tensor = CudaTensorFactory(tensor_size);//filled with random numbers
+			Assert::IsTrue(tensor.max_abs() > 0, L"Tensor is expected to be nonzero");
+			const auto pool_window_size = Index3d(2, 3, 4);
+			const CudaTensor res_grad(ConvolutionUtils::calc_conv_res_size(tensor.size_3d(), pool_window_size, { 0 }, pool_window_size), -1, 1);
+			Assert::IsTrue(res_grad.max_abs() > 0, L"Gradient is expected to be nonzero");
+
+			//Act
+			const auto result = tensor.average_pool(pool_window_size);
+			const auto gradient = tensor.average_pool_input_gradient(res_grad, pool_window_size);
+
+			//Assert
+			const auto result_host = tensor.to_host().average_pool(pool_window_size);
+			const auto gradient_host = tensor.to_host().average_pool_input_gradient(res_grad.to_host(), pool_window_size);
+
+			const auto result_diff = (result.to_host() - result_host).max_abs();
+			const auto gradient_diff = (gradient.to_host() - gradient_host).max_abs();
+
+			Logger::WriteMessage((std::string("Difference for result = ") + Utils::to_string(result_diff) + "\n").c_str());
+			Logger::WriteMessage((std::string("Difference for gradient = ") + Utils::to_string(gradient_diff) + "\n").c_str());
+
+			Assert::IsTrue(result.to_host() == result_host, L"Unexpected result of pooling operation");
+			Assert::IsTrue(gradient.to_host() == gradient_host, L"Unexpected gradient of pooling operation");
+		}
 	};
 }

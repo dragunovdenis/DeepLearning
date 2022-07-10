@@ -496,7 +496,7 @@ namespace DeepLearning
 	std::tuple<Tensor, std::vector<std::size_t>> Tensor::min_max_pool(const Index3d& window_size, const bool max) const
 	{
 		const auto paddings = Index3d{ 0 };
-			const auto tensor_size = size_3d();
+		const auto tensor_size = size_3d();
 		const auto result_size = ConvolutionUtils::calc_conv_res_size(tensor_size, window_size, paddings, window_size);
 
 		auto result = Tensor(result_size, false);
@@ -542,6 +542,67 @@ namespace DeepLearning
 			result._data[*map_ptr] = *grad_ptr;
 
 		return result;
+	}
+
+	Tensor Tensor::scale_pool(const Index3d& window_size, const Real& scale_factor) const
+	{
+		const auto paddings = Index3d{ 0 };
+		const auto tensor_size = size_3d();
+		const auto result_size = ConvolutionUtils::calc_conv_res_size(tensor_size, window_size, paddings, window_size);
+
+		auto result = Tensor(result_size, false);
+
+		for (std::size_t res_data_id = 0; res_data_id < result.size(); res_data_id++)
+		{
+			const auto result_offsets = ConvolutionUtils::data_id_to_index_3d(res_data_id, result_size);
+			const auto [tensor_offsets, kernel_start_offsets, kernel_stop_offsets] =
+				ConvolutionUtils::calc_kernel_loop_offsets(result_offsets, tensor_size, window_size, paddings, window_size);
+
+			auto poolled_val = Real(0);
+			KERNEL_LOOP(kernel_start_offsets, kernel_stop_offsets, tensor_offsets,
+				poolled_val += _data[coords_to_data_id(t_x, t_y, t_z)];);
+
+			result._data[res_data_id] = poolled_val * scale_factor;
+		}
+
+		return result;
+	}
+
+	Tensor Tensor::scale_pool_input_gradient(const Tensor& pool_res_gradient, const Index3d& window_size, const Real& scale_factor) const
+	{
+		const auto paddings = Index3d{ 0 };
+		const auto tensor_size = size_3d();
+		const auto result_size = ConvolutionUtils::calc_conv_res_size(tensor_size, window_size, paddings, window_size);
+
+		if (result_size != pool_res_gradient.size_3d())
+			throw std::exception("Unexpected size of the gradient tensor");
+
+		auto result = Tensor(tensor_size, true);
+
+		for (std::size_t res_data_id = 0; res_data_id < pool_res_gradient.size(); res_data_id++)
+		{
+			const auto result_offsets = ConvolutionUtils::data_id_to_index_3d(res_data_id, result_size);
+			const auto [tensor_offsets, kernel_start_offsets, kernel_stop_offsets] =
+				ConvolutionUtils::calc_kernel_loop_offsets(result_offsets, tensor_size, window_size, paddings, window_size);
+
+			auto value = pool_res_gradient._data[res_data_id] * scale_factor;
+			KERNEL_LOOP(kernel_start_offsets, kernel_stop_offsets, tensor_offsets,
+				//We assume that "pool windows" do not intersect (strides == wingow_size) and thus
+				//use direct assignment ("=") instead of accumulation ("+=") in the line below
+				result._data[coords_to_data_id(t_x, t_y, t_z)] = value;);
+		}
+
+		return result;
+	}
+
+	Tensor Tensor::average_pool(const Index3d& window_size) const
+	{
+		return scale_pool(window_size, Real(1) / window_size.coord_prod());
+	}
+
+	Tensor Tensor::average_pool_input_gradient(const Tensor& pool_res_gradient, const Index3d& window_size) const
+	{
+		return scale_pool_input_gradient(pool_res_gradient, window_size, Real(1) / window_size.coord_prod());
 	}
 
 	void Tensor::msgpack_unpack(msgpack::object const& msgpack_o)

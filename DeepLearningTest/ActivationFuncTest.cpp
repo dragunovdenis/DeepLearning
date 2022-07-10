@@ -161,7 +161,7 @@ namespace DeepLearningTest
 				const auto deriv_diff = std::abs(deriv_numeric - activation_input_gradient[element_id]);
 
 				Logger::WriteMessage((std::string("Derivative difference = ") + Utils::to_string(deriv_diff) + "\n").c_str());
-				Assert::IsTrue(deriv_diff < 6e-11, L"Too high deviation between the actual and expected values");
+				Assert::IsTrue(deriv_diff < 7e-11, L"Too high deviation between the actual and expected values");
 			}
 		}
 	};

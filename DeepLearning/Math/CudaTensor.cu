@@ -327,13 +327,13 @@ namespace DeepLearning
 							   const Index3d paddings, const Index3d strides,
 		                       Real* __restrict__ result, const Index3d result_size)
 	{
-		const auto result_flatten_id = threadIdx.x + blockIdx.x * blockDim.x;
-		const auto result_flatten_size = result_size.coord_prod();
+		const auto result_flattened_id = threadIdx.x + blockIdx.x * blockDim.x;
+		const auto result_flattened_size = result_size.coord_prod();
 
-		if (result_flatten_id >= result_flatten_size)
+		if (result_flattened_id >= result_flattened_size)
 			return;
 
-		const auto result_offsets = ConvolutionUtils::data_id_to_index_3d(result_flatten_id, result_size);
+		const auto result_offsets = ConvolutionUtils::data_id_to_index_3d(result_flattened_id, result_size);
 		const auto [tensor_offsets, kernel_start_offsets, kernel_stop_offsets] =
 			ConvolutionUtils::calc_kernel_loop_offsets(result_offsets, tensor_size, kernel_size, paddings, strides);
 
@@ -343,7 +343,7 @@ namespace DeepLearning
 			part_res += tensor[coords_to_data_id(t_x, t_y, t_z, tensor_size.y, tensor_size.z)] *
 			kernel[coords_to_data_id(k_x, k_y, k_z, kernel_size.y, kernel_size.z)];)
 
-		result[result_flatten_id] = part_res;
+		result[result_flattened_id] = part_res;
 	}
 
 	/// <summary>
@@ -362,25 +362,25 @@ namespace DeepLearning
 		const Index3d paddings, const Index3d strides,
 		Real* __restrict__ result, const Index3d result_size)
 	{
-		const auto result_flatten_id = threadIdx.x + blockIdx.x * blockDim.x;
-		const auto result_flatten_size = result_size.coord_prod();
-		const auto kernel_flatten_size = kernel_size.coord_prod();
+		const auto result_flattened_id = threadIdx.x + blockIdx.x * blockDim.x;
+		const auto result_flattened_size = result_size.coord_prod();
+		const auto kernel_flattened_size = kernel_size.coord_prod();
 
 		extern __shared__ Real kernel_shared[];
 
-		const auto items_per_thread = Utils::cuda_max(10ll, (kernel_flatten_size + blockDim.x - 1) / blockDim.x);
+		const auto items_per_thread = Utils::cuda_max(10ll, (kernel_flattened_size + blockDim.x - 1) / blockDim.x);
 		const auto element_start_id = items_per_thread * threadIdx.x;
-		const auto element_stop_id = Utils::cuda_min(kernel_flatten_size, element_start_id + items_per_thread);
+		const auto element_stop_id = Utils::cuda_min(kernel_flattened_size, element_start_id + items_per_thread);
 
 		for (auto element_id = element_start_id; element_id < element_stop_id; element_id++)
 			kernel_shared[element_id] = kernel[element_id];
 
 		__syncthreads();
 
-		if (result_flatten_id >= result_flatten_size)
+		if (result_flattened_id >= result_flattened_size)
 			return;
 
-		const auto result_offsets = ConvolutionUtils::data_id_to_index_3d(result_flatten_id, result_size);
+		const auto result_offsets = ConvolutionUtils::data_id_to_index_3d(result_flattened_id, result_size);
 		const auto [tensor_offsets, kernel_start_offsets, kernel_stop_offsets] =
 			ConvolutionUtils::calc_kernel_loop_offsets(result_offsets, tensor_size, kernel_size, paddings, strides);
 
@@ -390,7 +390,7 @@ namespace DeepLearning
 			part_res += tensor[coords_to_data_id(t_x, t_y, t_z, tensor_size.y, tensor_size.z)] *
 			kernel_shared[coords_to_data_id(k_x, k_y, k_z, kernel_size.y, kernel_size.z)];)
 
-			result[result_flatten_id] = part_res;
+			result[result_flattened_id] = part_res;
 	}
 
 	Index3d CudaTensor::convolve(RealMemHandle result_handle, const CudaTensor& kernel, const Index3d& paddings, const Index3d& strides) const
@@ -474,17 +474,17 @@ namespace DeepLearning
 		const Real* __restrict__ kernel, const Index3d kernel_size,
 		const Index3d paddings, const Index3d strides, Real* __restrict__ input_grad, Real* __restrict__ kernel_grad)
 	{
-		const auto res_grad_flatten_id = threadIdx.x + blockIdx.x * blockDim.x;
-		const auto res_grad_flatten_size = res_grad_size.coord_prod();
+		const auto res_grad_flattened_id = threadIdx.x + blockIdx.x * blockDim.x;
+		const auto res_grad_flattened_size = res_grad_size.coord_prod();
 
-		if (res_grad_flatten_id >= res_grad_flatten_size)
+		if (res_grad_flattened_id >= res_grad_flattened_size)
 			return;
 
-		const auto factor = res_grad[res_grad_flatten_id];
+		const auto factor = res_grad[res_grad_flattened_id];
 		if (factor == Real(0))
 			return;
 
-		const auto result_offsets = ConvolutionUtils::data_id_to_index_3d(res_grad_flatten_id, res_grad_size);
+		const auto result_offsets = ConvolutionUtils::data_id_to_index_3d(res_grad_flattened_id, res_grad_size);
 		const auto [tensor_offsets, kernel_start_offsets, kernel_stop_offsets] =
 			ConvolutionUtils::calc_kernel_loop_offsets(result_offsets, tensor_size, kernel_size, paddings, strides);
 
@@ -543,6 +543,113 @@ namespace DeepLearning
 		const Index3d& strides) const
 	{
 		throw std::exception("Not implemented");
+	}
+
+	/// <summary>
+	/// CUDA kernel to perform "scale-pool" operation
+	/// </summary>
+	/// <param name="tensor">Pointer to the input tensor (to pool from)</param>
+	/// <param name="tensor_size">3d size of the input tensor</param>
+	/// <param name="window_size">Pool window 3d size</param>
+	/// <param name="scale_factor">Scale factor to apply to the pooled sum</param>
+	/// <param name="paddings">3d size of zero paddings to be applied to the input tensor</param>
+	/// <param name="result">Pointer to the array to store the result of the operation</param>
+	/// <param name="result_size">3d size of the result tensor</param>
+	/// <returns></returns>
+	__global__ void scale_pool_kernel(const Real* __restrict__ tensor, const Index3d tensor_size,
+		const Index3d window_size, const Real scale_factor, const Index3d paddings, Real* __restrict__ result, const Index3d result_size)
+	{
+		const auto res_flattened_id = threadIdx.x + blockIdx.x * blockDim.x;
+		const auto res_flattened_size = result_size.coord_prod();
+
+		if (res_flattened_id >= res_flattened_size)
+			return;
+
+		const auto result_offsets = ConvolutionUtils::data_id_to_index_3d(res_flattened_id, result_size);
+		const auto [tensor_offsets, kernel_start_offsets, kernel_stop_offsets] =
+			ConvolutionUtils::calc_kernel_loop_offsets(result_offsets, tensor_size, window_size, paddings, window_size);
+
+		auto poolled_val = Real(0);
+		KERNEL_LOOP(kernel_start_offsets, kernel_stop_offsets, tensor_offsets,
+			poolled_val += tensor[coords_to_data_id(t_x, t_y, t_z, tensor_size.y, tensor_size.z)];);
+
+		result[res_flattened_id] = poolled_val * scale_factor;
+	}
+
+	CudaTensor CudaTensor::scale_pool(const Index3d& window_size, const Real& scale_factor) const
+	{
+		const auto paddings = Index3d{ 0 };
+		const auto tensor_size = size_3d();
+		const auto result_size = ConvolutionUtils::calc_conv_res_size(tensor_size, window_size, paddings, window_size);
+
+		auto result = CudaTensor(result_size, false);
+
+		const auto blocks_cnt = CudaSetup::calc_blocks(result.size());
+		
+		scale_pool_kernel<<<blocks_cnt, CudaSetup::max_threads_per_block() >>>(_data, tensor_size,
+			window_size, scale_factor, paddings, result.begin(), result_size);
+
+		return result;
+	}
+
+	CudaTensor CudaTensor::average_pool(const Index3d& window_size) const
+	{
+		return scale_pool(window_size, Real(1) / window_size.coord_prod());
+	}
+
+	/// <summary>
+	/// CUDA kernel to calculate gradient of the "scale-pool" operation with respect to its input tensor
+	/// </summary>
+	/// <param name="pool_res_gradient">Gradient with respect to the "scale-pool" output tensor</param>
+	/// <param name="pool_res_gradient_size">3d size of the "scale-pool" output tensor (and thus, its gradient)</param>
+	/// <param name="window_size">3d size of the window of the "scale-pool" operation</param>
+	/// <param name="scale_factor">Scale factor of the "scale-pool' operation</param>
+	/// <param name="paddings">Zero paddings that where applied to the input tensor when doing the "scale-pool" operation</param>
+	/// <param name="result">Pointer to the array to store the gradient with respect to the "scale-pool" input tensor</param>
+	/// <param name="result_size">3d size of the result tensor (coincide with the result of input tensor)</param>
+	__global__ void scale_pool_input_gradient_kernel(const Real* __restrict__ pool_res_gradient, const Index3d pool_res_gradient_size,
+		const Index3d window_size, const Real scale_factor, const Index3d paddings, Real* __restrict__ result, const Index3d result_size)
+	{
+		const auto res_gradient_flattened_id = threadIdx.x + blockIdx.x * blockDim.x;
+		const auto res_gradient_flattened_size = pool_res_gradient_size.coord_prod();
+
+		if (res_gradient_flattened_id >= res_gradient_flattened_size)
+			return;
+
+		const auto result_offsets = ConvolutionUtils::data_id_to_index_3d(res_gradient_flattened_id, pool_res_gradient_size);
+		const auto [tensor_offsets, kernel_start_offsets, kernel_stop_offsets] =
+			ConvolutionUtils::calc_kernel_loop_offsets(result_offsets, result_size, window_size, paddings, window_size);
+
+		auto value = pool_res_gradient[res_gradient_flattened_id] * scale_factor;
+		KERNEL_LOOP(kernel_start_offsets, kernel_stop_offsets, tensor_offsets,
+			//We assume that "pool windows" do not intersect (strides == wingow_size) and thus
+			//use direct assignment ("=") instead of accumulation ("+=") in the line below
+			//We also do not use atomic operations here because of the same reason
+			result[coords_to_data_id(t_x, t_y, t_z, result_size.y, result_size.z)] = value;);
+	}
+
+	CudaTensor CudaTensor::scale_pool_input_gradient(const CudaTensor& pool_res_gradient, const Index3d& window_size, const Real& scale_factor) const
+	{
+		const auto paddings = Index3d{ 0 };
+		const auto tensor_size = size_3d();
+		const auto result_size = ConvolutionUtils::calc_conv_res_size(tensor_size, window_size, paddings, window_size);
+
+		if (result_size != pool_res_gradient.size_3d())
+			throw std::exception("Unexpected size of the gradient tensor");
+
+		auto result = CudaTensor(tensor_size, true);
+
+		const auto blocks_cnt = CudaSetup::calc_blocks(pool_res_gradient.size());
+
+		scale_pool_input_gradient_kernel << <blocks_cnt, CudaSetup::max_threads_per_block() >> > (pool_res_gradient.begin(), result_size,
+			window_size, scale_factor, paddings, result.begin(), tensor_size);
+
+		return result;
+	}
+
+	CudaTensor CudaTensor::average_pool_input_gradient(const CudaTensor& pool_res_gradient, const Index3d& window_size) const
+	{
+		return scale_pool_input_gradient(pool_res_gradient, window_size, Real(1) / window_size.coord_prod());
 	}
 
 	template <bool MAX>

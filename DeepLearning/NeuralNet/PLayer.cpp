@@ -85,7 +85,7 @@ namespace DeepLearning
 
 		if (_pool_operator_id == PoolTypeId::MIN || _pool_operator_id == PoolTypeId::MAX)
 		{
-			auto [pool_result, index_mapping] = input.min_max_pool({1ll, _pool_window_size.y, _pool_window_size.z }, _pool_operator_id == PoolTypeId::MAX);
+			auto [pool_result, index_mapping] = input.min_max_pool(_pool_window_size, _pool_operator_id == PoolTypeId::MAX);
 
 			if (aux_learning_data_ptr)
 				aux_learning_data_ptr->IndexMapping = std::move(index_mapping);
@@ -93,8 +93,10 @@ namespace DeepLearning
 			return std::move(pool_result);
 		}
 
-		const auto pool_operator_ptr = PoolOperator::make(weight_tensor_size(), _pool_operator_id);
-		return std::move(input.pool(*pool_operator_ptr, _paddings, _strides));
+		if (_pool_operator_id != PoolTypeId::AVERAGE)
+			throw std::exception("Unsupported pool type");
+
+		return std::move(input.average_pool(_pool_window_size));
 	}
 
 	std::tuple<Tensor, PLayer::LayerGradient> PLayer::backpropagate(const Tensor& deltas, const AuxLearningData& aux_learning_data,
@@ -115,9 +117,10 @@ namespace DeepLearning
 			return std::make_tuple<Tensor, PLayer::LayerGradient>(std::move(input_grad), { Tensor(), std::vector<Tensor>() });
 		}
 
-		const auto pool_operator_ptr = PoolOperator::make(weight_tensor_size(), _pool_operator_id);
-		auto input_grad = aux_learning_data.Input.pool_input_gradient(deltas, *pool_operator_ptr, _paddings, _strides);
+		if (_pool_operator_id != PoolTypeId::AVERAGE)
+			throw std::exception("Unsupported pool type");
 
+		auto input_grad = aux_learning_data.Input.average_pool_input_gradient(deltas, _pool_window_size);
 		return std::make_tuple<Tensor, PLayer::LayerGradient>(std::move(input_grad), { Tensor(), std::vector<Tensor>() });
 	}
 
