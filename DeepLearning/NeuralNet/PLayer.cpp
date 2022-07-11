@@ -20,7 +20,8 @@
 
 namespace DeepLearning
 {
-	void PLayer::initialize(const Index3d& in_size, const Index2d& pool_window_size, const PoolTypeId pool_operator_id)
+	template <class D>
+	void PLayer<D>::initialize(const Index3d& in_size, const Index2d& pool_window_size, const PoolTypeId pool_operator_id)
 	{
 		_in_size = in_size;
 		_pool_window_size = { 1, pool_window_size.x, pool_window_size.y };
@@ -28,12 +29,14 @@ namespace DeepLearning
 		_strides = _pool_window_size;
 	}
 
-	PLayer::PLayer(const Index3d& in_size, const Index2d& pool_window_size, const PoolTypeId pool_operator_id)
+	template <class D>
+	PLayer<D>::PLayer(const Index3d& in_size, const Index2d& pool_window_size, const PoolTypeId pool_operator_id)
 	{
 		initialize(in_size, pool_window_size, pool_operator_id);
 	}
 
-	PLayer::PLayer(const std::string& str)
+	template <class D>
+	PLayer<D>::PLayer(const std::string& str)
 	{
 		auto str_norm = Utils::normalize_string(str);
 
@@ -57,22 +60,26 @@ namespace DeepLearning
 		initialize(in_size, pool_window_size, pool_operator_id);
 	}
 
-	Index3d PLayer::in_size() const
+	template <class D>
+	Index3d PLayer<D>::in_size() const
 	{
 		return _in_size;
 	}
 
-	Index3d PLayer::out_size() const
+	template <class D>
+	Index3d PLayer<D>::out_size() const
 	{
 		return ConvolutionUtils::calc_conv_res_size(_in_size, _pool_window_size, _paddings, _strides);
 	}
 
-	Index3d PLayer::weight_tensor_size() const
+	template <class D>
+	Index3d PLayer<D>::weight_tensor_size() const
 	{
 		return _pool_window_size;
 	}
 
-	Tensor PLayer::act(const Tensor& input, AuxLearningData* const aux_learning_data_ptr) const
+	template <class D>
+	Tensor PLayer<D>::act(const Tensor& input, typename ALayer<D>::AuxLearningData* const aux_learning_data_ptr) const
 	{
 		if (input.size_3d() != in_size())
 			throw std::exception("Unexpected size of the input tensor");
@@ -99,7 +106,8 @@ namespace DeepLearning
 		return std::move(input.average_pool(_pool_window_size));
 	}
 
-	std::tuple<Tensor, PLayer::LayerGradient> PLayer::backpropagate(const Tensor& deltas, const AuxLearningData& aux_learning_data,
+	template <class D>
+	std::tuple<Tensor, typename ALayer<D>::LayerGradient> PLayer<D>::backpropagate(const Tensor& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
 		const bool evaluate_input_gradient) const
 	{
 		if (deltas.size_3d() != out_size())
@@ -124,44 +132,54 @@ namespace DeepLearning
 		return std::make_tuple<Tensor, PLayer::LayerGradient>(std::move(input_grad), { Tensor(), std::vector<Tensor>() });
 	}
 
-	void PLayer::update(const std::tuple<std::vector<Tensor>, Tensor>& weights_and_biases_increment, const Real& reg_factor)
+	template <class D>
+	void PLayer<D>::update(const std::tuple<std::vector<Tensor>, Tensor>& weights_and_biases_increment, const Real& reg_factor)
 	{
 		//Sanity check 
 		if (std::get<0>(weights_and_biases_increment).size() != 0 || std::get<1>(weights_and_biases_increment).size() != 0)
 			throw std::exception("There should be no increments for weights and/or biases");
 	}
 
-	CummulativeGradient PLayer::init_cumulative_gradient() const
+	template <class D>
+	CummulativeGradient PLayer<D>::init_cumulative_gradient() const
 	{
 		return CummulativeGradient(0, 0);
 	}
 
-	std::string PLayer::to_string() const
+	template <class D>
+	std::string PLayer<D>::to_string() const
 	{
 		return DeepLearning::to_string(PLayer::ID()) + "; Input size: " + in_size().to_string() +
 			"; Out size: " + out_size().to_string() + "; Filter size: " + weight_tensor_size().to_string() +
 			"; Pool type: " + DeepLearning::to_string(_pool_operator_id);
 	}
 
-	bool PLayer::equal_hyperparams(const ALayer& layer) const
+	template <class D>
+	bool PLayer<D>::equal_hyperparams(const ALayer<D>& layer) const
 	{
 		const auto other_player_ptr = dynamic_cast<const PLayer*>(&layer);
 		return _in_size == layer.in_size() && _pool_window_size == layer.weight_tensor_size() &&
 			_strides == other_player_ptr->_strides && _pool_operator_id == other_player_ptr->_pool_operator_id;
 	}
 
-	std::string PLayer::to_script() const
+	template <class D>
+	std::string PLayer<D>::to_script() const
 	{
 		return _in_size.to_string() + _pool_window_size.yz().to_string()+ ";" + DeepLearning::to_string(_pool_operator_id);
 	}
 
-	LayerTypeId PLayer::get_type_id() const
+	template <class D>
+	LayerTypeId PLayer<D>::get_type_id() const
 	{
 		return ID();
 	}
 
-	Real PLayer::squared_weights_sum() const
+	template <class D>
+	Real PLayer<D>::squared_weights_sum() const
 	{
 		return Real(0);
 	}
+
+	template class PLayer<CpuDC>;
+	template class PLayer<GpuDC>;
 }

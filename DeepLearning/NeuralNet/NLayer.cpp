@@ -21,7 +21,8 @@
 
 namespace DeepLearning
 {
-	void NLayer::initialize(const std::size_t in_dim, const std::size_t out_dim, ActivationFunctionId func_id,
+	template <class D>
+	void NLayer<D>::initialize(const std::size_t in_dim, const std::size_t out_dim, ActivationFunctionId func_id,
 		const Real rand_low, const Real rand_high, const bool standard_init_for_weights)
 	{
 		_biases = Vector(out_dim, rand_low, rand_high);
@@ -37,20 +38,23 @@ namespace DeepLearning
 		_func_id = func_id;
 	}
 
-	NLayer::NLayer(const std::size_t in_dim, const std::size_t out_dim, ActivationFunctionId func_id,
+	template<class D>
+	NLayer<D>::NLayer(const std::size_t in_dim, const std::size_t out_dim, ActivationFunctionId func_id,
 		const Real rand_low, const Real rand_high, const bool standard_init_for_weights)
 	{
 		initialize(in_dim, out_dim, func_id, rand_low, rand_high, standard_init_for_weights);
 	}
 
-	NLayer::NLayer(const NLayer& anotherLayer)
+	template <class D>
+	NLayer<D>::NLayer(const NLayer<D>& anotherLayer)
 	{
 		_biases = anotherLayer._biases;
 		_weights = anotherLayer._weights;
 		_func_id = anotherLayer._func_id;
 	}
 
-	NLayer::NLayer(const std::string& str)
+	template <class D>
+	NLayer<D>::NLayer(const std::string& str)
 	{
 		auto str_norm = Utils::normalize_string(str);
 
@@ -75,22 +79,26 @@ namespace DeepLearning
 		initialize(in_dim, out_dim, func_id, Real(-1), Real(1), true);
 	}
 
-	Index3d NLayer::in_size() const
+	template <class D>
+	Index3d NLayer<D>::in_size() const
 	{
 		return { 1ll, 1ll, static_cast<long long>(_weights.col_dim()) };
 	}
 
-	Index3d NLayer::out_size() const
+	template <class D>
+	Index3d NLayer<D>::out_size() const
 	{
 		return { 1ll, 1ll, static_cast<long long>(_weights.row_dim()) };
 	}
 
-	Index3d NLayer::weight_tensor_size() const
+	template <class D>
+	Index3d NLayer<D>::weight_tensor_size() const
 	{
 		return { 1ll, static_cast<long long>(_weights.row_dim()), static_cast<long long>(_weights.col_dim()) };
 	}
 
-	Tensor NLayer::act(const Tensor& input, AuxLearningData* const aux_learning_data_ptr) const
+	template <class D>
+	Tensor NLayer<D>::act(const Tensor& input, typename ALayer<D>::AuxLearningData* const aux_learning_data_ptr) const
 	{
 		const auto function = ActivationWrapper<Vector>(ActivationFunctionId(_func_id));
 
@@ -107,8 +115,9 @@ namespace DeepLearning
 		return std::move(function()(z));
 	}
 
-	std::tuple<Tensor, NLayer::LayerGradient> NLayer::backpropagate(const Tensor& deltas,
-		const AuxLearningData& aux_learning_data, const bool evaluate_input_gradient) const
+	template <class D>
+	std::tuple<Tensor, typename ALayer<D>::LayerGradient> NLayer<D>::backpropagate(const Tensor& deltas,
+		const typename ALayer<D>::AuxLearningData& aux_learning_data, const bool evaluate_input_gradient) const
 	{
 		if (deltas.size_3d() != Index3d{ 1, 1, static_cast<long long>(_biases.dim()) })
 			throw std::exception("Invalid input");
@@ -122,7 +131,8 @@ namespace DeepLearning
 			{ biases_grad, {std::move(weights_grad)} });
 	}
 
-	void NLayer::update(const std::tuple<std::vector<Tensor>, Tensor>& weights_and_biases_increment, const Real& reg_factor)
+	template <class D>
+	void NLayer<D>::update(const std::tuple<std::vector<Tensor>, Tensor>& weights_and_biases_increment, const Real& reg_factor)
 	{
 		const auto& weights_increment = std::get<0>(weights_and_biases_increment);
 
@@ -137,7 +147,8 @@ namespace DeepLearning
 		_biases.add(std::get<1>(weights_and_biases_increment));
 	}
 
-	void NLayer::log(const std::filesystem::path& directory) const
+	template <class D>
+	void NLayer<D>::log(const std::filesystem::path& directory) const
 	{
 		if (!std::filesystem::is_directory(directory))
 			throw std::exception("Directory does not exist");
@@ -146,30 +157,38 @@ namespace DeepLearning
 		_biases.log(directory / "biases.txt");
 	}
 
-	std::string NLayer::to_string() const
+	template <class D>
+	std::string NLayer<D>::to_string() const
 	{
 		return DeepLearning::to_string(NLayer::ID()) + "; Input size: " + in_size().to_string() + "; Out size: " + out_size().to_string() + 
 			"; Activation: " + DeepLearning::to_string(_func_id);
 	}
 
-	bool NLayer::equal_hyperparams(const ALayer& layer) const
+	template <class D>
+	bool NLayer<D>::equal_hyperparams(const ALayer<D>& layer) const
 	{
 		const auto other_nlayer_ptr = dynamic_cast<const NLayer*>(&layer);
 		return other_nlayer_ptr != nullptr && in_size() == layer.in_size() && out_size() == layer.out_size() && _func_id == other_nlayer_ptr->_func_id;
 	}
 
-	std::string NLayer::to_script() const
+	template <class D>
+	std::string NLayer<D>::to_script() const
 	{
 		return in_size().to_string() + out_size().to_string() + ";" + DeepLearning::to_string(_func_id);
 	}
 
-	LayerTypeId NLayer::get_type_id() const
+	template <class D>
+	LayerTypeId NLayer<D>::get_type_id() const
 	{
 		return ID();
 	}
 
-	Real NLayer::squared_weights_sum() const
+	template <class D>
+	Real NLayer<D>::squared_weights_sum() const
 	{
 		return _weights.sum([](const auto& x) { return x * x; });
 	}
+
+	template class NLayer<CpuDC>;
+	template class NLayer<GpuDC>;
 }

@@ -23,7 +23,8 @@
 
 namespace DeepLearning
 {
-	void CLayer::initialize(const Index3d& in_size, const Index2d& filter_window_size,
+	template <class D>
+	void CLayer<D>::initialize(const Index3d& in_size, const Index2d& filter_window_size,
 		const std::size_t& filters_count, const ActivationFunctionId func_id, const Index3d& paddings, const Index3d& strides)
 	{
 		_in_size = in_size;
@@ -42,14 +43,15 @@ namespace DeepLearning
 		std::for_each(_filters.begin(), _filters.end(), [](auto& filter) { filter.standard_random_fill(); });
 	}
 
-
-	CLayer::CLayer(const Index3d& in_size, const Index2d& filter_window_size,
+	template <class D>
+	CLayer<D>::CLayer(const Index3d& in_size, const Index2d& filter_window_size,
 		const std::size_t& filters_count, const ActivationFunctionId func_id, const Index3d& paddings, const Index3d& strides)
 	{
 		initialize(in_size, filter_window_size,	filters_count, func_id, paddings, strides);
 	}
 
-	CLayer::CLayer(const std::string& str)
+	template <class D>
+	CLayer<D>::CLayer(const std::string& str)
 	{
 		auto str_norm = Utils::normalize_string(str);
 
@@ -83,7 +85,8 @@ namespace DeepLearning
 		initialize(in_size, filter_window_size, filters_count, func_id, paddings, strides);
 	}
 
-	Tensor CLayer::act(const Tensor& input, AuxLearningData* const aux_learning_data_ptr) const
+	template <class D>
+	Tensor CLayer<D>::act(const Tensor& input, typename ALayer<D>::AuxLearningData* const aux_learning_data_ptr) const
 	{
 		if (input.size_3d() != in_size())
 			throw std::exception("Unexpected size of the input tensor");
@@ -106,7 +109,8 @@ namespace DeepLearning
 		return std::move(function()(temp));
 	}
 
-	std::tuple<Tensor, CLayer::LayerGradient> CLayer::backpropagate(const Tensor& deltas, const AuxLearningData& aux_learning_data,
+	template <class D>
+	std::tuple<Tensor, typename ALayer<D>::LayerGradient> CLayer<D>::backpropagate(const Tensor& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
 		const bool evaluate_input_gradient) const
 	{
 		if (deltas.size_3d() != aux_learning_data.Derivatives.size_3d())
@@ -130,7 +134,8 @@ namespace DeepLearning
 		return std::make_tuple<Tensor, CLayer::LayerGradient>(std::move(input_grad), { std::move(biases_grad), std::move(filters_grad) });
 	}
 
-	void CLayer::update(const std::tuple<std::vector<Tensor>, Tensor>& weights_and_biases_increment, const Real& reg_factor)
+	template <class D>
+	void CLayer<D>::update(const std::tuple<std::vector<Tensor>, Tensor>& weights_and_biases_increment, const Real& reg_factor)
 	{
 		const auto& weights_increment = std::get<0>(weights_and_biases_increment);
 
@@ -144,22 +149,26 @@ namespace DeepLearning
 		_biases.add(std::get<1>(weights_and_biases_increment));
 	}
 
-	Index3d CLayer::in_size() const
+	template <class D>
+	Index3d CLayer<D>::in_size() const
 	{
 		return _in_size;
 	}
 
-	Index3d CLayer::out_size() const
+	template <class D>
+	Index3d CLayer<D>::out_size() const
 	{
 		return _biases.size_3d();
 	}
 
-	Index3d CLayer::weight_tensor_size() const
+	template <class D>
+	Index3d CLayer<D>::weight_tensor_size() const
 	{
 		return _weight_tensor_size;
 	}
 
-	void CLayer::log(const std::filesystem::path& directory) const
+	template <class D>
+	void CLayer<D>::log(const std::filesystem::path& directory) const
 	{
 		if (!std::filesystem::is_directory(directory))
 			throw std::exception("Directory does not exist");
@@ -178,14 +187,16 @@ namespace DeepLearning
 		}
 	}
 
-	std::string CLayer::to_string() const
+	template <class D>
+	std::string CLayer<D>::to_string() const
 	{
 		return DeepLearning::to_string(CLayer::ID()) + "; Input size: " + in_size().to_string() +
 			"; Out size: " + out_size().to_string() + "; Filter size: " + weight_tensor_size().to_string() +
 			"; Activation: " + DeepLearning::to_string(_func_id);
 	}
 
-	bool CLayer::equal_hyperparams(const ALayer& layer) const
+	template <class D>
+	bool CLayer<D>::equal_hyperparams(const ALayer<D>& layer) const
 	{
 		const auto other_clayer_ptr = dynamic_cast<const CLayer*>(&layer);
 		return other_clayer_ptr != nullptr && _in_size == layer.in_size() &&
@@ -195,20 +206,26 @@ namespace DeepLearning
 			_func_id == other_clayer_ptr->_func_id;
 	}
 
-	std::string CLayer::to_script() const
+	template <class D>
+	std::string CLayer<D>::to_script() const
 	{
 		return in_size().to_string() + weight_tensor_size().yz().to_string()
 			+ ";" + Utils::to_string(out_size().x) + ";"
 			+ DeepLearning::to_string(_func_id) + ";"+ _paddings.to_string() + _strides.to_string();
 	}
 
-	LayerTypeId CLayer::get_type_id() const
+	template <class D>
+	LayerTypeId CLayer<D>::get_type_id() const
 	{
 		return ID();
 	}
 
-	Real CLayer::squared_weights_sum() const
+	template <class D>
+	Real CLayer<D>::squared_weights_sum() const
 	{
 		return std::accumulate(_filters.begin(), _filters.end(), Real(0), [](const auto& sum, const auto& filter) { return sum + filter.sum([](const auto& x) { return x * x; }); });
 	}
+
+	template class CLayer<CpuDC>;
+	template class CLayer<GpuDC>;
 }

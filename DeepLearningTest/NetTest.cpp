@@ -59,7 +59,7 @@ namespace DeepLearningTest
 			const auto& test_data = std::get<0>(test_data_tuple);
 			const auto& test_labels = std::get<1>(test_data_tuple);
 
-			auto net = Net({ 784, (run_long_test ? 100ull : 30ull), 10 }, activ_func_ids);
+			auto net = Net<CpuDC>({ 784, (run_long_test ? 100ull : 30ull), 10 }, activ_func_ids);
 			const auto batch_size = 10;
 			const auto epochs_count = run_long_test ? 30 : 6;
 
@@ -108,16 +108,16 @@ namespace DeepLearningTest
 				"TestData\\MNIST\\t10k-labels.idx1-ubyte",
 				test_images_count, /*flatten images*/false);
 
-			auto net = Net();
+			auto net = Net<CpuDC>();
 			const auto in_data_size = training_data.begin()->size_3d();
 			const auto out_size = training_labels.begin()->size_3d().coord_prod();
 			auto size_in_next = in_data_size;
-			size_in_next = net.append_layer<CLayer>(size_in_next, Index2d{ 5 }, run_long_test ? 20 : 5, ActivationFunctionId::RELU);
-			size_in_next = net.append_layer<PLayer>(size_in_next, Index2d{ 2 }, PoolTypeId::MAX);
-			size_in_next = net.append_layer<CLayer>(size_in_next, Index2d{ 5 }, run_long_test ? 40 : 10, ActivationFunctionId::RELU);
-			size_in_next = net.append_layer<PLayer>(size_in_next, Index2d{ 2 }, PoolTypeId::MAX);
-			size_in_next = net.append_layer<NLayer>(size_in_next.coord_prod(), 100, ActivationFunctionId::RELU, Real(-1), Real(1), true);
-			size_in_next = net.append_layer<NLayer>(size_in_next.coord_prod(), out_size, ActivationFunctionId::SOFTMAX, Real(-1), Real(1), true);
+			size_in_next = net.append_layer<CLayer<CpuDC>>(size_in_next, Index2d{ 5 }, run_long_test ? 20 : 5, ActivationFunctionId::RELU);
+			size_in_next = net.append_layer<PLayer<CpuDC>>(size_in_next, Index2d{ 2 }, PoolTypeId::MAX);
+			size_in_next = net.append_layer<CLayer<CpuDC>>(size_in_next, Index2d{ 5 }, run_long_test ? 40 : 10, ActivationFunctionId::RELU);
+			size_in_next = net.append_layer<PLayer<CpuDC>>(size_in_next, Index2d{ 2 }, PoolTypeId::MAX);
+			size_in_next = net.append_layer<NLayer<CpuDC>>(size_in_next.coord_prod(), 100, ActivationFunctionId::RELU, Real(-1), Real(1), true);
+			size_in_next = net.append_layer<NLayer<CpuDC>>(size_in_next.coord_prod(), out_size, ActivationFunctionId::SOFTMAX, Real(-1), Real(1), true);
 
 			Assert::IsTrue(out_size == size_in_next.coord_prod(), L"Unexpected size of the net output");
 
@@ -223,11 +223,11 @@ namespace DeepLearningTest
 			//Arrange
 			const auto in_dimension = 784;
 			const auto out_dimension = 10;
-			const auto net = Net(std::vector<std::size_t>{ in_dimension, 100, out_dimension });
+			const auto net = Net<CpuDC>(std::vector<std::size_t>{ in_dimension, 100, out_dimension });
 
 			//Act
 			const auto msg = MsgPack::pack(net);
-			const auto net_unpacked = MsgPack::unpack<Net>(msg);
+			const auto net_unpacked = MsgPack::unpack<Net<CpuDC>>(msg);
 
 			//Assert
 			const auto tests_samples_count = 100;
@@ -248,19 +248,19 @@ namespace DeepLearningTest
 		TEST_METHOD(NetScriptInstantiationTest)
 		{
 			//Arrange
-			Net net;
+			Net<CpuDC> net;
 			auto size_in_next = Index3d{1, 222, 333};
 			const auto out_size = 10;
-			size_in_next = net.append_layer<CLayer>(size_in_next, Index2d{ 5 }, 20, ActivationFunctionId::RELU);
-			size_in_next = net.append_layer<PLayer>(size_in_next, Index2d{ 2 }, PoolTypeId::MAX);
-			size_in_next = net.append_layer<CLayer>(size_in_next, Index2d{ 5 }, 10, ActivationFunctionId::RELU);
-			size_in_next = net.append_layer<PLayer>(size_in_next, Index2d{ 2 }, PoolTypeId::MAX);
-			size_in_next = net.append_layer<NLayer>(size_in_next.coord_prod(), 100, ActivationFunctionId::RELU, Real(-1), Real(1), true);
-			size_in_next = net.append_layer<NLayer>(size_in_next.coord_prod(), out_size, ActivationFunctionId::SOFTMAX, Real(-1), Real(1), true);
+			size_in_next = net.append_layer<CLayer<CpuDC>>(size_in_next, Index2d{ 5 }, 20, ActivationFunctionId::RELU);
+			size_in_next = net.append_layer<PLayer<CpuDC>>(size_in_next, Index2d{ 2 }, PoolTypeId::MAX);
+			size_in_next = net.append_layer<CLayer<CpuDC>>(size_in_next, Index2d{ 5 }, 10, ActivationFunctionId::RELU);
+			size_in_next = net.append_layer<PLayer<CpuDC>>(size_in_next, Index2d{ 2 }, PoolTypeId::MAX);
+			size_in_next = net.append_layer<NLayer<CpuDC>>(size_in_next.coord_prod(), 100, ActivationFunctionId::RELU, Real(-1), Real(1), true);
+			size_in_next = net.append_layer<NLayer<CpuDC>>(size_in_next.coord_prod(), out_size, ActivationFunctionId::SOFTMAX, Real(-1), Real(1), true);
 
 			//Act
 			const auto script_str = net.to_script();
-			const auto net_restored = Net(script_str);
+			const auto net_restored = Net<CpuDC>(script_str);
 
 			//Assert
 			Assert::IsTrue(net.equal_hyperparams(net_restored), L"Original and restored nets are different");

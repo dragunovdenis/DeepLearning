@@ -178,6 +178,7 @@
     <ClInclude Include="MsgPackUtils.h" />
     <ClInclude Include="NeuralNet\CLayer.h" />
     <ClInclude Include="NeuralNet\CummulativeGradient.h" />
+    <ClInclude Include="NeuralNet\DataContext.h" />
     <ClInclude Include="NeuralNet\LayerHandle.h" />
     <ClInclude Include="NeuralNet\Net.h" />
     <ClInclude Include="NeuralNet\NLayer.h" />

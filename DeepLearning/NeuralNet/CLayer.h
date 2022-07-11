@@ -29,7 +29,8 @@ namespace DeepLearning
 	/// <summary>
 	/// Convolutional layer
 	/// </summary>
-	class CLayer : public ALayer
+	template <class D>
+	class CLayer : public ALayer<D>
 	{
 		Index3d _in_size{};
 		Index3d _weight_tensor_size{};
@@ -107,12 +108,12 @@ namespace DeepLearning
 		/// <summary>
 		/// See description in the base class
 		/// </summary>
-		Tensor act(const Tensor& input, AuxLearningData* const aux_learning_data_ptr = nullptr) const override;
+		Tensor act(const Tensor& input, typename ALayer<D>::AuxLearningData* const aux_learning_data_ptr = nullptr) const override;
 
 		/// <summary>
 		/// See description in the base class
 		/// </summary>
-		virtual std::tuple<Tensor, LayerGradient> backpropagate(const Tensor& deltas, const AuxLearningData& aux_learning_data,
+		virtual std::tuple<Tensor, typename ALayer<D>::LayerGradient> backpropagate(const Tensor& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
 			const bool evaluate_input_gradient = true) const override;
 
 		/// <summary>
@@ -133,7 +134,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Returns "true" if the current instance of the layer has the same set of hyper-parameters as the given one
 		/// </summary>
-		bool equal_hyperparams(const ALayer& layer) const override;
+		bool equal_hyperparams(const ALayer<D>& layer) const override;
 
 		/// <summary>
 		/// Encodes hyper-parameters of the layer in a string-script which then can be used to instantiate 

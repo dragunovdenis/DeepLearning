@@ -32,12 +32,13 @@ namespace DeepLearning
 	/// <summary>
 	/// Class representing a neural network consisting of neural layers
 	/// </summary>
+	template <class D>
 	class Net
 	{
 		/// <summary>
 		/// Layers of neurons
 		/// </summary>
-		std::vector<LayerHandle> _layers{};
+		std::vector<LayerHandle<D>> _layers{};
 
 		/// <summary>
 		/// Returns sum of squared weight of all the layers
@@ -75,7 +76,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Returns output of the neural network calculated for the given input
 		/// </summary>
-		Tensor act(const Tensor& input, std::vector<ALayer::AuxLearningData>* const aux_data_ptr = nullptr) const;
+		Tensor act(const Tensor& input, std::vector<typename ALayer<D>::AuxLearningData>* const aux_data_ptr = nullptr) const;
 
 		/// <summary>
 		/// A method that performs training of the neural net based on the given input data with references
@@ -124,7 +125,7 @@ namespace DeepLearning
 		template <class L, class... Types>
 		Index3d append_layer(Types&&... args)
 		{
-			_layers.push_back(LayerHandle::make<L>(std::forward<Types>(args)...));
+			_layers.push_back(LayerHandle<D>::template make<L>(std::forward<Types>(args)...));
 			return _layers.rbegin()->layer().out_size();
 		}
 

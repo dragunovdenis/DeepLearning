@@ -40,7 +40,7 @@ namespace DeepLearningTest
 		/// General method to exercise back-propagation algorithm (for a single neural layer)
 		/// in the part of calculating derivatives with respect to the input 
 		/// </summary>
-		void RunGeneralDerivativeWithRespectToInputValuesTest(const ALayer& nl, const CostFunctionId cost_function_id, const Real& tolerance,
+		void RunGeneralDerivativeWithRespectToInputValuesTest(const ALayer<CpuDC>& nl, const CostFunctionId cost_function_id, const Real& tolerance,
 			const Real& delta = std::is_same_v<Real, double> ? Real(1e-5) : Real(1e-3),
 			const std::optional<Tensor>& input_op = std::nullopt)
 		{
@@ -48,7 +48,7 @@ namespace DeepLearningTest
 			const auto reference = Tensor(nl.out_size(), -1, 1);;
 
 			const auto cost_func = CostFunction(cost_function_id);
-			auto aux_data = ALayer::AuxLearningData();
+			auto aux_data = ALayer<CpuDC>::AuxLearningData();
 			const auto [value, cost_gradient] = cost_func.func_and_deriv(nl.act(input, &aux_data), reference);
 			const auto [input_grad_result, layer_grad_result] = nl.backpropagate(cost_gradient, aux_data);
 
@@ -94,7 +94,7 @@ namespace DeepLearningTest
 			const auto cost_func = CostFunction(cost_function_id);
 
 			//Act
-			auto aux_data = ALayer::AuxLearningData();
+			auto aux_data = ALayer<CpuDC>::AuxLearningData();
 			const auto [value, cost_gradient] = cost_func.func_and_deriv(nl.act(input, &aux_data), reference);
 			const auto [input_grad_result, layer_grad_result] = nl.backpropagate(cost_gradient, aux_data);
 			const auto wight_grad = layer_grad_result.Weights_grad;
@@ -187,7 +187,7 @@ namespace DeepLearningTest
 		{
 			const auto input_dim = 10;
 			const auto output_dim = 23;
-			const auto nl = NLayer(input_dim, output_dim, activation_func_id);
+			const auto nl = NLayer<CpuDC>(input_dim, output_dim, activation_func_id);
 
 			RunGeneralDerivativeWithRespectToInputValuesTest(nl, cost_function_id, (std::is_same_v<Real, double> ? Real(2e-9) : Real(5e-3)));
 		}
@@ -200,7 +200,7 @@ namespace DeepLearningTest
 		{
 			const auto input_dim = 10;
 			const auto output_dim = 23;
-			const auto nl = NLayer(input_dim, output_dim, activation_func_id);
+			const auto nl = NLayer<CpuDC>(input_dim, output_dim, activation_func_id);
 
 			RunGeneralDerivativeWithRespectToWeightsAndBiasesTest(nl, cost_function_id,
 				(std::is_same_v<Real, double> ? Real(8e-10) : Real(3e-3)),
@@ -230,24 +230,24 @@ namespace DeepLearningTest
 		/// <summary>
 		/// Returns a "standard" CLayer instance to be used in testing
 		/// </summary>
-		static CLayer ConstructStandardCLayer()
+		static CLayer<CpuDC> ConstructStandardCLayer()
 		{
 			const auto input_dim = Index3d(5, 13, 17);
 			const auto filter_window = Index2d(3);
 			const auto filters_count = 7;
 			const auto paddings = Index3d(0, 3, 6);
 			const auto strides = Index3d(2);
-			return CLayer(input_dim, filter_window, filters_count, ActivationFunctionId::SIGMOID, paddings, strides);
+			return CLayer<CpuDC>(input_dim, filter_window, filters_count, ActivationFunctionId::SIGMOID, paddings, strides);
 		}
 
 		/// <summary>
 		/// Returns a "standard" PLayer instance to be used in testing
 		/// </summary>
-		static PLayer ConstructStandardPLayer()
+		static PLayer<CpuDC> ConstructStandardPLayer()
 		{
 			const auto input_dim = Index3d(5, 10, 7);
 			const auto filter_window = Index2d(3);
-			return PLayer(input_dim, filter_window, PoolTypeId::MAX);
+			return PLayer<CpuDC>(input_dim, filter_window, PoolTypeId::MAX);
 		}
 
 		TEST_METHOD(CLayerDerivativeWithRespectToInputValuesCalculationSquaredErrorTest)
@@ -297,7 +297,7 @@ namespace DeepLearningTest
 
 			//Act
 			const auto cost_func = CostFunction(CostFunctionId::SQUARED_ERROR);
-			auto aux_data = NLayer::AuxLearningData();
+			auto aux_data = NLayer<CpuDC>::AuxLearningData();
 			const auto [value, cost_gradient] = cost_func.func_and_deriv(nl.act(input, &aux_data), reference);
 			const auto [input_grad_result, layer_grad_result] = nl.backpropagate(cost_gradient, aux_data);
 
@@ -314,9 +314,9 @@ namespace DeepLearningTest
 		static void RunSerializationTest(const L& layer)
 		{
 			//Act
-			const auto layer_handle = LayerHandle::make<L>(layer);
+			const auto layer_handle = LayerHandle<CpuDC>::template make<L>(layer);
 			const auto msg = MsgPack::pack(layer_handle);
-			const auto layer_handle_unpacked = MsgPack::unpack<LayerHandle>(msg);
+			const auto layer_handle_unpacked = MsgPack::unpack<LayerHandle<CpuDC>>(msg);
 
 			//Assert
 			const auto tests_samples_count = 100;
@@ -346,7 +346,7 @@ namespace DeepLearningTest
 
 		TEST_METHOD(NLayerSerializationTest)
 		{
-			RunSerializationTest(NLayer(10, 23, ActivationFunctionId::SIGMOID));
+			RunSerializationTest(NLayer<CpuDC>(10, 23, ActivationFunctionId::SIGMOID));
 		}
 	};
 }

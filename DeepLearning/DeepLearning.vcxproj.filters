@@ -171,6 +171,9 @@
     <ClInclude Include="Math\CudaArray.cuh">
       <Filter>Header Files\Math\CUDA</Filter>
     </ClInclude>
+    <ClInclude Include="NeuralNet\DataContext.h">
+      <Filter>Header Files\NeuralNet</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Matrix.cpp">

@@ -28,7 +28,8 @@
 
 namespace DeepLearning
 {
-	Net::Net(const std::vector<std::size_t>& layer_dimensions, const std::vector<ActivationFunctionId>& activ_func_ids)
+	template <class D>
+	Net<D>::Net(const std::vector<std::size_t>& layer_dimensions, const std::vector<ActivationFunctionId>& activ_func_ids)
 	{
 		const auto layers_count = layer_dimensions.size() - 1;
 		if (layers_count <= 0)
@@ -44,11 +45,12 @@ namespace DeepLearning
 		{
 			const auto in_dim = layer_dimensions[id - 1];
 			const auto out_dim = layer_dimensions[id];
-			_layers.push_back(LayerHandle::make<NLayer>(in_dim, out_dim, af_ids_local[id - 1], Real(-1), Real(1), true));
+			_layers.push_back(LayerHandle<D>::template make<NLayer<D>>(in_dim, out_dim, af_ids_local[id - 1], Real(-1), Real(1), true));
 		}
 	}
 
-	Net::Net(const std::string& script_str)
+	template <class D>
+	Net<D>::Net(const std::string& script_str)
 	{
 		const auto layer_scripts = Utils::split_by_char(script_str, '\n');
 
@@ -78,9 +80,9 @@ namespace DeepLearning
 
 			switch (layer_type_id)
 			{
-			case LayerTypeId::CONVOLUTION: append_layer<CLayer>(script_normalized); break;
-			case LayerTypeId::FULL: append_layer<NLayer>(script_normalized); break;
-			case LayerTypeId::PULL: append_layer<PLayer>(script_normalized); break;
+			case LayerTypeId::CONVOLUTION: append_layer<CLayer<D>>(script_normalized); break;
+			case LayerTypeId::FULL: append_layer<NLayer<D>>(script_normalized); break;
+			case LayerTypeId::PULL: append_layer<PLayer<D>>(script_normalized); break;
 			default:
 				throw std::exception("Unexpected identifier of the layer type");
 			}
@@ -89,7 +91,8 @@ namespace DeepLearning
 		}
 	}
 
-	Tensor Net::act(const Tensor& input, std::vector<ALayer::AuxLearningData>* const aux_data_ptr) const
+	template <class D>
+	Tensor Net<D>::act(const Tensor& input, std::vector<typename ALayer<D>::AuxLearningData>* const aux_data_ptr) const
 	{
 		if (aux_data_ptr != nullptr && aux_data_ptr->size() != _layers.size())
 			throw std::exception("Invalid auxiliary data.");
@@ -127,7 +130,8 @@ namespace DeepLearning
 	/// <summary>
 	/// Returns collection of the gradient collectors that is "compatible" with the given collection of neural layers
 	/// </summary>
-	std::vector<CummulativeGradient> init_gradient_collectors(const std::vector<LayerHandle>& layers)
+	template <class D>
+	std::vector<CummulativeGradient> init_gradient_collectors(const std::vector<LayerHandle<D>>& layers)
 	{
 		std::vector<CummulativeGradient> result;
 
@@ -149,7 +153,8 @@ namespace DeepLearning
 			collectors[collector_id].reset();
 	}
 
-	void Net::learn(const std::vector<Tensor>& training_items, const std::vector<Tensor>& reference_items,
+	template <class D>
+	void Net<D>::learn(const std::vector<Tensor>& training_items, const std::vector<Tensor>& reference_items,
 		const std::size_t batch_size, const std::size_t epochs_count, const Real learning_rate, const CostFunctionId& cost_func_id,
 		const Real& lambda, const std::function<void(const std::size_t, const Real)>& epoch_callback)
 	{
@@ -199,11 +204,11 @@ namespace DeepLearning
 						const auto input_item_id = data_index_mapping[elem_id];
 						const auto& input = training_items[input_item_id];
 						const auto& reference = reference_items[input_item_id];
-						auto aux_data_ptr = std::vector<ALayer::AuxLearningData>(_layers.size());
+						auto aux_data_ptr = std::vector<typename ALayer<D>::AuxLearningData>(_layers.size());
 						const auto output = act(input, &aux_data_ptr);
 						auto [cost, gradient] = cost_function.func_and_deriv(output, reference);
 
-						auto back_prop_out = std::vector<ALayer::LayerGradient>(_layers.size());
+						auto back_prop_out = std::vector<typename ALayer<D>::LayerGradient>(_layers.size());
 						//Back-propagate through all the layers
 						for (long long layer_id = _layers.size() - 1; layer_id >= 0; layer_id--)
 							std::tie(gradient, back_prop_out[layer_id]) = _layers[layer_id].layer().backpropagate(
@@ -224,13 +229,15 @@ namespace DeepLearning
 		}
 	}
 
-	Real Net::squared_weights_sum() const
+	template <class D>
+	Real Net<D>::squared_weights_sum() const
 	{
 		return std::accumulate(_layers.begin(), _layers.end(), Real(0),
 			[](const auto& sum, const auto& layer_handle) { return sum + layer_handle.layer().squared_weights_sum(); });
 	}
 
-	Real Net::evaluate_cost_function(const std::vector<Tensor>& test_input,
+	template <class D>
+	Real Net<D>::evaluate_cost_function(const std::vector<Tensor>& test_input,
 		const std::vector<Tensor>& reference_output, const CostFunctionId& cost_func_id, const Real l2_reg_factor) const
 	{
 		if (test_input.size() != reference_output.size())
@@ -253,7 +260,8 @@ namespace DeepLearning
 		return cost_sum / test_input.size() + l2_reg_factor * squared_weights_sum();
 	}
 
-	std::size_t Net::count_correct_answers(const std::vector<Tensor>& test_input,
+	template <class D>
+	std::size_t Net<D>::count_correct_answers(const std::vector<Tensor>& test_input,
 		const std::vector<Tensor>& labels, const Real& min_answer_probability) const
 	{
 		if (test_input.size() != labels.size())
@@ -285,7 +293,8 @@ namespace DeepLearning
 		return  correct_answers;
 	}
 
-	void Net::log(const std::filesystem::path& directory) const
+	template <class D>
+	void Net<D>::log(const std::filesystem::path& directory) const
 	{
 		for (auto layer_id = 0ull; layer_id < _layers.size(); layer_id++)
 		{
@@ -296,7 +305,8 @@ namespace DeepLearning
 		}
 	}
 
-	std::string Net::to_script() const
+	template <class D>
+	std::string Net<D>::to_script() const
 	{
 		std::string result;
 
@@ -306,7 +316,8 @@ namespace DeepLearning
 		return result;
 	}
 
-	void Net::save_script(const std::filesystem::path& scrypt_path) const
+	template <class D>
+	void Net<D>::save_script(const std::filesystem::path& scrypt_path) const
 	{
 		std::ofstream file(scrypt_path);
 
@@ -316,12 +327,14 @@ namespace DeepLearning
 		file << to_script();
 	}
 
-	Net Net::load_script(const std::filesystem::path& scrypt_path)
+	template <class D>
+	Net<D> Net<D>::load_script(const std::filesystem::path& scrypt_path)
 	{
-		return Net(Utils::read_all_text(scrypt_path));
+		return Net<D>(Utils::read_all_text(scrypt_path));
 	}
 
-	bool Net::equal_hyperparams(const Net& net) const
+	template <class D>
+	bool Net<D>::equal_hyperparams(const Net<D>& net) const
 	{
 		if (_layers.size() != net._layers.size())
 			return false;
@@ -333,7 +346,8 @@ namespace DeepLearning
 		return true;
 	}
 
-	std::string Net::to_string() const
+	template <class D>
+	std::string Net<D>::to_string() const
 	{
 		std::string result{};
 
@@ -342,4 +356,7 @@ namespace DeepLearning
 
 		return result;
 	}
+
+	template class Net<CpuDC>;
+	template class Net<GpuDC>;
 }

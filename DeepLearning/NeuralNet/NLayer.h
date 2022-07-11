@@ -32,7 +32,8 @@ namespace DeepLearning
 	/// <summary>
 	/// Representation of a single neural layer
 	/// </summary>
-	class NLayer : public ALayer
+	template <class D>
+	class NLayer : public ALayer<D>
 	{
 	private:
 		/// <summary>
@@ -99,7 +100,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Copy constructor
 		/// </summary>
-		NLayer(const NLayer& anotherLayer);
+		NLayer(const NLayer<D>& anotherLayer);
 
 		/// <summary>
 		/// Constructor to instantiate layer from the given string of certain format
@@ -109,12 +110,12 @@ namespace DeepLearning
 		/// <summary>
 		/// See the summary to the corresponding method in the base class
 		/// </summary>
-		Tensor act(const Tensor& input, AuxLearningData* const aux_learning_data_ptr = nullptr) const override;
+		Tensor act(const Tensor& input, typename ALayer<D>::AuxLearningData* const aux_learning_data_ptr = nullptr) const override;
 
 		/// <summary>
 		/// See the summary to the corresponding method in the base class
 		/// </summary>
-		std::tuple<Tensor, LayerGradient> backpropagate(const Tensor& deltas, const AuxLearningData& aux_learning_data,
+		std::tuple<Tensor, typename ALayer<D>::LayerGradient> backpropagate(const Tensor& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
 			const bool evaluate_input_gradient = true) const override;
 
 		/// <summary>
@@ -135,7 +136,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Returns "true" if the current instance of the layer has the same set of hyper-parameters as the given one
 		/// </summary>
-		bool equal_hyperparams(const ALayer& layer) const;
+		bool equal_hyperparams(const ALayer<D>& layer) const;
 
 		/// <summary>
 		/// Encodes hyper-parameters of the layer in a string-script which then can be used to instantiate 

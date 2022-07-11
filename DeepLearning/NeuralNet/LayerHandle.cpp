@@ -19,35 +19,37 @@
 
 namespace DeepLearning
 {
-	LayerHandle::LayerHandle(const LayerTypeId id, std::unique_ptr<ALayer> layer_ptr) : _layer_id(id), _layer_ptr(std::move(layer_ptr))
+	template <class D>
+	LayerHandle<D>::LayerHandle(const LayerTypeId id, std::unique_ptr<ALayer<D>> layer_ptr) : _layer_id(id), _layer_ptr(std::move(layer_ptr))
 	{}
 
-	void LayerHandle::msgpack_unpack(msgpack::object const& msgpack_o)
+	template <class D>
+	void LayerHandle<D>::msgpack_unpack(msgpack::object const& msgpack_o)
 	{
 		//Read identifier only
 		msgpack::type::make_define_array(_layer_id).msgpack_unpack(msgpack_o);
 
-		if (_layer_id == NLayer::ID())
+		if (_layer_id == NLayer<D>::ID())
 		{
-			auto proxy = NLayer();
+			auto proxy = NLayer<D>();
 			//Read once again, but this time we read the instance of the layer as well
 			msgpack::type::make_define_array(_layer_id, proxy).msgpack_unpack(msgpack_o);
 			_layer_ptr = std::make_unique<decltype(proxy)>(std::move(proxy));
 			return;
 		}
 
-		if (_layer_id == CLayer::ID())
+		if (_layer_id == CLayer<D>::ID())
 		{
-			auto proxy = CLayer();
+			auto proxy = CLayer<D>();
 			//Read once again, but this time we read the instance of the layer as well
 			msgpack::type::make_define_array(_layer_id, proxy).msgpack_unpack(msgpack_o);
 			_layer_ptr = std::make_unique<decltype(proxy)>(std::move(proxy));
 			return;
 		}
 
-		if (_layer_id == PLayer::ID())
+		if (_layer_id == PLayer<D>::ID())
 		{
-			auto proxy = PLayer();
+			auto proxy = PLayer<D>();
 			//Read once again, but this time we read the instance of the layer as well
 			msgpack::type::make_define_array(_layer_id, proxy).msgpack_unpack(msgpack_o);
 			_layer_ptr = std::make_unique<decltype(proxy)>(std::move(proxy));
@@ -57,7 +59,8 @@ namespace DeepLearning
 		throw std::exception("Not implemented");
 	}
 
-	ALayer& LayerHandle::layer()
+	template <class D>
+	ALayer<D>& LayerHandle<D>::layer()
 	{
 		if (_layer_ptr == nullptr)
 			throw std::exception("Layer is not initialized");
@@ -65,11 +68,15 @@ namespace DeepLearning
 		return *_layer_ptr;
 	}
 
-	const ALayer& LayerHandle::layer() const
+	template <class D>
+	const ALayer<D>& LayerHandle<D>::layer() const
 	{
 		if (_layer_ptr == nullptr)
 			throw std::exception("Layer is not initialized");
 
 		return *_layer_ptr;
 	}
+
+	template class LayerHandle<CpuDC>;
+	template class LayerHandle<GpuDC>;
 }

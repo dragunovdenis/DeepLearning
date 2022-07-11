@@ -30,6 +30,7 @@ namespace DeepLearning
 	/// <summary>
 	/// A proxy type to handle serialization of layers of different types
 	/// </summary>
+	template <class D>
 	class LayerHandle
 	{
 		/// <summary>
@@ -40,14 +41,14 @@ namespace DeepLearning
 		/// <summary>
 		/// Layer pointer
 		/// </summary>
-		std::unique_ptr<ALayer> _layer_ptr = nullptr;
+		std::unique_ptr<ALayer<D>> _layer_ptr = nullptr;
 
 		/// <summary>
 		/// Constructor
 		/// </summary>
 		/// <param name="id">Layer identifier</param>
 		/// <param name="layer_ptr">Layer smart pointer</param>
-		LayerHandle(const LayerTypeId id, std::unique_ptr<ALayer> layer_ptr);
+		LayerHandle(const LayerTypeId id, std::unique_ptr<ALayer<D>> layer_ptr);
 
 	public:
 
@@ -62,23 +63,23 @@ namespace DeepLearning
 		template <typename Packer>
 		void msgpack_pack(Packer& msgpack_pk) const
 		{
-			if (_layer_id == NLayer::ID())
+			if (_layer_id == NLayer<D>::ID())
 			{
-				const auto& layer_ref_casted = dynamic_cast<const NLayer&>(layer());
+				const auto& layer_ref_casted = dynamic_cast<const NLayer<D>&>(layer());
 				msgpack::type::make_define_array(_layer_id, layer_ref_casted).msgpack_pack(msgpack_pk);
 				return;
 			}
 
-			if (_layer_id == CLayer::ID())
+			if (_layer_id == CLayer<D>::ID())
 			{
-				const auto& layer_ref_casted = dynamic_cast<const CLayer&>(layer());
+				const auto& layer_ref_casted = dynamic_cast<const CLayer<D>&>(layer());
 				msgpack::type::make_define_array(_layer_id, layer_ref_casted).msgpack_pack(msgpack_pk);
 				return;
 			}
 
-			if (_layer_id == PLayer::ID())
+			if (_layer_id == PLayer<D>::ID())
 			{
-				const auto& layer_ref_casted = dynamic_cast<const PLayer&>(layer());
+				const auto& layer_ref_casted = dynamic_cast<const PLayer<D>&>(layer());
 				msgpack::type::make_define_array(_layer_id, layer_ref_casted).msgpack_pack(msgpack_pk);
 				return;
 			}
@@ -103,12 +104,12 @@ namespace DeepLearning
 		/// <summary>
 		/// Reference to the layer
 		/// </summary>
-		ALayer& layer();
+		ALayer<D>& layer();
 
 		/// <summary>
 		/// Reference to the layer (constant version)
 		/// </summary>
-		const ALayer& layer() const;
+		const ALayer<D>& layer() const;
 	};
 }
 

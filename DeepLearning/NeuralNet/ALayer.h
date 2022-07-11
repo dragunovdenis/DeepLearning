@@ -22,12 +22,14 @@
 #include <filesystem>
 #include <string>
 #include "LayerTypeId.h"
+#include "DataContext.h"
 
 namespace DeepLearning
 {
 	/// <summary>
 	/// An abstract neural net layer
 	/// </summary>
+	template <class D>
 	class ALayer
 	{
 	public:
@@ -154,7 +156,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Returns "true" if the current instance of the layer has the same set of hyper-parameters as the given one
 		/// </summary>
-		virtual bool equal_hyperparams(const ALayer& layer) const = 0;
+		virtual bool equal_hyperparams(const ALayer<D>& layer) const = 0;
 
 		/// <summary>
 		/// Returns sum of squared weight of the layer (needed, for example, to evaluate cost function when L2 regularization is involved)

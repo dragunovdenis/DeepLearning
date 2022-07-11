@@ -44,6 +44,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
+      <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 11.7.props" />
   </ImportGroup>
   <ImportGroup Label="Shared">
   </ImportGroup>
@@ -82,6 +83,13 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <CudaCompile>
+      <TargetMachinePlatform>64</TargetMachinePlatform>
+      <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
+      <AdditionalOptions>—expt-extended-lambda --std c++17 --expt-relaxed-constexpr %(AdditionalOptions)</AdditionalOptions>
+      <GPUDebugInfo>false</GPUDebugInfo>
+      <CodeGeneration>compute_60,sm_60</CodeGeneration>
+    </CudaCompile>
     <PostBuildEvent>
       <Command>xcopy "..\Shared\TestData" "bin\$(Platform)\$(Configuration)\TestData" /e /y /i /r</Command>
     </PostBuildEvent>
@@ -103,6 +111,12 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <CudaCompile>
+      <TargetMachinePlatform>64</TargetMachinePlatform>
+      <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
+      <AdditionalOptions>—expt-extended-lambda --std c++17 --expt-relaxed-constexpr %(AdditionalOptions)</AdditionalOptions>
+      <CodeGeneration>compute_60,sm_60</CodeGeneration>
+    </CudaCompile>
     <PostBuildEvent>
       <Command>xcopy "..\Shared\TestData" "bin\$(Platform)\$(Configuration)\TestData" /e /y /i /r</Command>
     </PostBuildEvent>
@@ -124,6 +138,12 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <CudaCompile>
+      <TargetMachinePlatform>64</TargetMachinePlatform>
+      <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
+      <AdditionalOptions>—expt-extended-lambda --std c++17 --expt-relaxed-constexpr %(AdditionalOptions)</AdditionalOptions>
+      <CodeGeneration>compute_60,sm_60</CodeGeneration>
+    </CudaCompile>
     <PostBuildEvent>
       <Command>xcopy "..\Shared\TestData" "bin\$(Platform)\$(Configuration)\TestData" /e /y /i /r</Command>
     </PostBuildEvent>
@@ -153,6 +173,7 @@
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\packages\tclap.1.2.1\build\native\tclap.targets" Condition="Exists('..\packages\tclap.1.2.1\build\native\tclap.targets')" />
     <Import Project="..\packages\msgpack-c-cpp-3.1.1-winsoft666.1.0.0.2\build\native\msgpack-c-cpp-3.1.1-winsoft666.targets" Condition="Exists('..\packages\msgpack-c-cpp-3.1.1-winsoft666.1.0.0.2\build\native\msgpack-c-cpp-3.1.1-winsoft666.targets')" />
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 11.7.targets" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

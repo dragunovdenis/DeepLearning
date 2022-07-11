@@ -105,10 +105,10 @@ int main(int argc, char** argv)
 	const auto reg_factor = reg_factor_arg.getValue();
 
 	const std::filesystem::path script_path = script_arg.getValue();
-	Net net_original;
+	Net<CpuDC> net_original;
 	try
 	{
-		net_original = Net::load_script(script_path);
+		net_original = Net<CpuDC>::load_script(script_path);
 	}
 	catch (const std::exception& e)
 	{
@@ -152,7 +152,7 @@ int main(int argc, char** argv)
 	std::cout << "Started at: " << format_time(start) << std::endl;
 	for (auto iter_id = 1; iter_id <= iteration_arg.getValue(); iter_id++)
 	{
-		auto net_to_train = Net(net_original.to_script());
+		auto net_to_train = Net<CpuDC>(net_original.to_script());
 
 		reporter.new_training();
 
