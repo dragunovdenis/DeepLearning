@@ -23,6 +23,7 @@
 #include "Vector.h"
 #include <filesystem>
 #include "BasicCudaCollection.cuh"
+#include "LinAlg3d.h"
 
 namespace DeepLearning
 {
@@ -59,10 +60,17 @@ namespace DeepLearning
 
 	public:
 
+		using Base = BasicCudaCollection;
+
 		/// <summary>
 		/// Size of the vector
 		/// </summary>
 		std::size_t size() const;
+
+		/// <summary>
+		/// Returns size of the collection in a "unified" form
+		/// </summary>
+		Index3d size_3d() const;
 
 		/// <summary>
 		/// Converts the current instance of CUDA vector into its "host" counterpart
@@ -108,6 +116,11 @@ namespace DeepLearning
 		/// Constructs dense vector of the given dimension
 		/// </summary>
 		CudaVector(const std::size_t dim, const bool assign_zero = true);
+
+		/// <summary>
+		/// Constructs dense vector of the given dimension ("unified" version)
+		/// </summary>
+		CudaVector(const Index3d& size, const bool assign_zero = true);
 
 		/// <summary>
 		/// Constructs dense vector of the given dimension filled with

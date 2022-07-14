@@ -46,6 +46,11 @@ namespace DeepLearning
 		return _row_dim * _col_dim;
 	}
 
+	Index3d CudaMatrix::size_3d() const
+	{
+		return { 1ull, _row_dim, _col_dim };
+	}
+
 	Matrix CudaMatrix::to_host() const
 	{
 		Matrix result(_row_dim, _col_dim, false /*assign zero*/);
@@ -105,6 +110,13 @@ namespace DeepLearning
 
 		if (assign_zero)
 			CudaUtils::fill_zero(_data, size());
+	}
+
+	CudaMatrix::CudaMatrix(const Index3d& size, const bool assign_zero) : 
+		CudaMatrix(size.y, size.z, assign_zero)
+	{
+		if (size.x != 1ll)
+			throw std::exception("Invalid input size");
 	}
 
 	CudaMatrix::CudaMatrix(const std::size_t row_dim, const std::size_t col_dim,

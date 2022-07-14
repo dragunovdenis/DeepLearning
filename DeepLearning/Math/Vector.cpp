@@ -59,6 +59,13 @@ namespace DeepLearning
 			std::fill(begin(), end(), Real(0));
 	}
 
+	Vector::Vector(const Index3d& size, const bool assign_zero) :
+		Vector(size.z, assign_zero)
+	{
+		if (size.x != 1ll || size.y != 1ll)
+			throw std::exception("Invalid input size");
+	}
+
 	template <class T>
 	Vector::Vector(const std::vector<T>& source)
 		: Vector(source.size(), false)
@@ -118,6 +125,11 @@ namespace DeepLearning
 	std::size_t Vector::size() const
 	{
 		return _dim;
+	}
+
+	Index3d Vector::size_3d() const
+	{
+		return { 1ull, 1ull, _dim };
 	}
 
 	Real& Vector::operator ()(const std::size_t id)

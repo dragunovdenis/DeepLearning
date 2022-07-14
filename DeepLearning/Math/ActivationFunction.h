@@ -19,10 +19,13 @@
 #include "DiffFunc.h"
 #include<msgpack.hpp>
 #include <memory>
+#include "../Utilities.h"
+#include "../CudaBridge.h"
 
 namespace DeepLearning
 {
 	class BasicCollection;
+	class BasicCudaCollection;
 
 	/// <summary>
 	/// Identifiers of different activation functions
@@ -68,7 +71,7 @@ namespace DeepLearning
 		/// </summary>
 		/// <param name="out_grad">Gradient with respect to the function's output</param>
 		/// <param name="aux_data">Auxiliary data calculated by function "func_and_aux"</param>
-		virtual T calc_input_gradient(const BasicCollection& out_grad, const T& aux_data) const = 0;
+		virtual T calc_input_gradient(const typename T::Base& out_grad, const T& aux_data) const = 0;
 
 		/// <summary>
 		/// Virtual destructor to ensure proper releasing of the resources of descending classes
@@ -96,19 +99,61 @@ namespace DeepLearning
 	};
 
 	/// <summary>
+	/// Helper methods used for activation function evaluation
+	/// </summary>
+	namespace ActivationFunctionHelper
+	{
+		/// <summary>
+		/// A factory method: the only "legal" way to instantiate an activation function via its identifier
+		/// </summary>
+		template <class F>
+		CUDA_CALLABLE static F make(const ActivationFunctionId id)
+		{
+			switch (id)
+			{
+			case ActivationFunctionId::SIGMOID: return [](const auto& x) { return Utils::sigmoid(x); };
+			case ActivationFunctionId::TANH: return [](const auto& x) { return tanh(x); };
+			case ActivationFunctionId::RELU: return [](const auto& x) { return  x < Real(0) ? Real(0) : x; };
+			default: return [](const auto& x) { return decltype(x)(std::numeric_limits<Real>::signaling_NaN()); };
+			}
+		}
+
+		/// <summary>
+		/// Evaluates given function at each element of the given collection and stores the result "in place"
+		/// </summary>
+		void evaluate_in_place(BasicCudaCollection& collection, const ActivationFunctionId id);
+
+		/// <summary>
+		/// Evaluates given function at each element of the given collection and stores the result "in place"
+		/// </summary>
+		void evaluate_in_place(BasicCollection& collection, const ActivationFunctionId id);
+
+		/// <summary>
+		/// Evaluates given function and its derivative at each element of the given "collection_func"
+		/// Stores the function value to the "collection_func" whereas the derivative value is stored to the "collection_deriv"
+		/// </summary>
+		void evaluate_in_place(BasicCollection& collection_func, BasicCollection& collection_deriv, const ActivationFunctionId id);
+
+		/// <summary>
+		/// Evaluates given function and its derivative at each element of the given "collection_func"
+		/// Stores the function value to the "collection_func" whereas the derivative value is stored to the "collection_deriv"
+		/// </summary>
+		void evaluate_in_place(BasicCudaCollection& collection_func, BasicCudaCollection& collection_deriv, const ActivationFunctionId id);
+	}
+
+	/// <summary>
 	/// Activation function
 	/// </summary>
 	template <class T>
-	class ActivationFuncion : public AFunction<T>
+	class ActivationFunction : public AFunction<T>
 	{
-		std::unique_ptr<DiffFunc> _func{};
-
+		const ActivationFunctionId _id;
 	public:
 
 		/// <summary>
 		/// Constructor
 		/// </summary>
-		ActivationFuncion(const ActivationFunctionId id);
+		ActivationFunction(const ActivationFunctionId id);
 
 		/// <summary>
 		/// The function
@@ -125,14 +170,14 @@ namespace DeepLearning
 		/// </summary>
 		/// <param name="out_grad">Gradient with respect to the function's output</param>
 		/// <param name="aux_data">Auxiliary data calculated by function "func_and_aux"</param>
-		virtual T calc_input_gradient(const BasicCollection& out_grad, const T& aux_data) const override;
+		virtual T calc_input_gradient(const typename T::Base& out_grad, const T& aux_data) const override;
 	};
 
 	/// <summary>
 	/// Sort-max activation function
 	/// </summary>
 	template <class T>
-	class SoftMaxActivationFuncion : public AFunction<T>
+	class SoftMaxActivationFunction : public AFunction<T>
 	{
 		/// <summary>
 		/// Calculates a collection containing exponents of the normalized input elements
@@ -144,7 +189,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Default constructor
 		/// </summary>
-		SoftMaxActivationFuncion() = default;
+		SoftMaxActivationFunction() = default;
 
 		/// <summary>
 		/// The function
@@ -161,7 +206,7 @@ namespace DeepLearning
 		/// </summary>
 		/// <param name="out_grad">Gradient with respect to the function's output</param>
 		/// <param name="aux_data">Auxiliary data calculated by function "func_and_aux"</param>
-		virtual T calc_input_gradient(const BasicCollection& out_grad, const T& aux_data) const override;
+		virtual T calc_input_gradient(const typename T::Base& out_grad, const T& aux_data) const override;
 	};
 }
 

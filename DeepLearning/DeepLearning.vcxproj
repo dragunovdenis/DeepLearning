@@ -149,6 +149,7 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="CudaBridge.h" />
     <ClInclude Include="defs.h" />
     <ClInclude Include="Diagnostics\Logging.h" />
     <ClInclude Include="Image8Bit.h" />
@@ -219,6 +220,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <CudaCompile Include="Math\ActivationFunction.cu" />
     <CudaCompile Include="Math\BasicCudaCollection.cu" />
     <CudaCompile Include="Math\CudaMatrix.cu" />
     <CudaCompile Include="Math\CudaTensor.cu" />

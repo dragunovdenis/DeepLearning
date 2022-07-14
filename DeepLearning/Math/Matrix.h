@@ -23,6 +23,7 @@
 #include "../defs.h"
 #include "BasicCollection.h"
 #include <filesystem>
+#include "LinAlg3d.h"
 
 namespace DeepLearning
 {
@@ -59,10 +60,17 @@ namespace DeepLearning
 
 	public:
 
+		using Base = BasicCollection;
+
 		/// <summary>
 		/// Total number of elements in the matrix
 		/// </summary>
 		std::size_t size() const;
+
+		/// <summary>
+		/// Returns size of the collection in a "unified" form
+		/// </summary>
+		Index3d size_3d() const;
 
 		/// <summary>
 		/// Custom "packing" method
@@ -98,6 +106,11 @@ namespace DeepLearning
 		/// Constructs a dense matrix of the given dimensions
 		/// </summary>
 		Matrix(const std::size_t row_dim, const std::size_t col_dim, const bool assign_zero = true);
+
+		/// <summary>
+		/// Constructs a dense matrix of the given dimensions ("unified" form)
+		/// </summary>
+		Matrix(const Index3d& size, const bool assign_zero = true);
 
 		/// <summary>
 		/// Constructs a dense matrix of the given dimensions filled

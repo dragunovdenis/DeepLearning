@@ -89,6 +89,8 @@ namespace DeepLearning
 
 	public:
 
+		using Base = BasicCudaCollection;
+
 		/// <summary>
 		/// Return total number of elements in the tensor
 		/// </summary>

@@ -23,69 +23,60 @@
 #include <vector>
 #include <algorithm>
 #include <exception>
+#include "CudaVector.cuh"
 
 namespace DeepLearning
 {
-	/// <summary>
-	/// Sigmoid function
-	/// </summary>
-	template <class T>
-	T sigmoid(const T& arg)
+	namespace ActivationFunctionHelper
 	{
-		return T(1) / (T(1) + exp(-arg));
-	}
-
-	template <class T>
-	ActivationFuncion<T>::ActivationFuncion(const ActivationFunctionId id)
-	{
-		switch (id)
+		void evaluate_in_place(BasicCollection& collection, const ActivationFunctionId id)
 		{
-		case ActivationFunctionId::UNKNOWN: throw std::exception("Invalid activation function ID.");
-			break;
-		case ActivationFunctionId::SIGMOID: _func = DiffFunc::create([](const auto& x, const auto& param) { return sigmoid(x); });
-			break;
-		case ActivationFunctionId::TANH: _func = DiffFunc::create([](const auto& x, const auto& param) { return tanh(x); });
-			break;
-		case ActivationFunctionId::RELU: _func = DiffFunc::create([](const auto& x, const auto& param) { return  x < Real(0) ? Real(0) : x; });
-			break;
-		default: throw std::exception("Unexpected activation function ID.");
-			break;
+			const auto func = make<std::function<Real(Real)>>(id);
+
+			std::transform(collection.begin(), collection.end(), collection.begin(),
+				[&](const auto& x) { return  func(x); });
+		}
+
+		void evaluate_in_place(BasicCollection& collection_func, BasicCollection& collection_deriv, const ActivationFunctionId id)
+		{
+			const auto func_ = make<std::function<dual<Real>(dual<Real>)>>(id);
+			for (std::size_t item_id = 0; item_id < collection_func.size(); item_id++)
+			{
+				const auto res = func_({ collection_func.begin()[item_id], Real(1) });
+				collection_func.begin()[item_id] = res.Real();
+				collection_deriv.begin()[item_id] = res.Dual()[0];
+			}
 		}
 	}
 
 	template <class T>
-	T ActivationFuncion<T>::operator ()(const T& input) const
+	ActivationFunction<T>::ActivationFunction(const ActivationFunctionId id) : _id{id} {}
+
+	template <class T>
+	T ActivationFunction<T>::operator ()(const T& input) const
 	{
 		auto result = input;
-		std::transform(result.begin(), result.end(), result.begin(),
-			[&](const auto& x) { return  _func->operator()(x); });
+		ActivationFunctionHelper::evaluate_in_place(result, _id);
 		return result;
 	}
 
 	template <class T>
-	std::tuple<T, T> ActivationFuncion<T>::func_and_aux(const T& input) const
+	std::tuple<T, T> ActivationFunction<T>::func_and_aux(const T& input) const
 	{
 		auto func = input;
-		auto deriv = input;
-
-		for (std::size_t item_id = 0; item_id < input.size(); item_id++)
-		{
-			const auto [value, derivative] = _func->calc_funcion_and_derivative(func.begin()[item_id]);
-			func.begin()[item_id] = value;
-			deriv.begin()[item_id] = derivative;
-		}
-
-		return std::make_tuple(func, deriv);
+		T deriv(input.size_3d(), false /*assign zero*/);
+		ActivationFunctionHelper::evaluate_in_place(func, deriv, _id);
+		return std::make_tuple(std::move(func), std::move(deriv));
 	}
 
 	template <class T>
-	T ActivationFuncion<T>::calc_input_gradient(const BasicCollection& out_grad, const T& aux_data) const
+	T ActivationFunction<T>::calc_input_gradient(const typename T::Base& out_grad, const T& aux_data) const
 	{
 		return out_grad.hadamard_prod(aux_data);
 	}
 
 	template <class T>
-	T SoftMaxActivationFuncion<T>::calc_aux_data(const T& input) const
+	T SoftMaxActivationFunction<T>::calc_aux_data(const T& input) const
 	{
 		auto result = input;
 		const auto max_element = result.max_element();
@@ -96,7 +87,7 @@ namespace DeepLearning
 	}
 
 	template <class T>
-	T SoftMaxActivationFuncion<T>::operator ()(const T& input) const
+	T SoftMaxActivationFunction<T>::operator ()(const T& input) const
 	{
 		auto result = calc_aux_data(input);
 		const auto factor = Real(1) / result.sum();
@@ -106,7 +97,7 @@ namespace DeepLearning
 	}
 
 	template <class T>
-	std::tuple<T, T> SoftMaxActivationFuncion<T>::func_and_aux(const T& input) const
+	std::tuple<T, T> SoftMaxActivationFunction<T>::func_and_aux(const T& input) const
 	{
 		const auto aux_data = calc_aux_data(input);
 		const auto factor = Real(1) / aux_data.sum();
@@ -117,7 +108,7 @@ namespace DeepLearning
 	}
 
 	template <class T>
-	T SoftMaxActivationFuncion<T>::calc_input_gradient(const BasicCollection& out_grad, const T& aux_data) const
+	T SoftMaxActivationFunction<T>::calc_input_gradient(const typename T::Base& out_grad, const T& aux_data) const
 	{
 		if (out_grad.size() != aux_data.size())
 			throw std::exception("Inconsistent input data");
@@ -138,9 +129,9 @@ namespace DeepLearning
 	{
 		if (id == ActivationFunctionId::SOFTMAX)
 		{
-			_func = std::make_unique<SoftMaxActivationFuncion<T>>();
+			_func = std::make_unique<SoftMaxActivationFunction<T>>();
 		} else
-			_func =  std::make_unique<ActivationFuncion<T>>(id);
+			_func =  std::make_unique<ActivationFunction<T>>(id);
 	}
 
 	template <class T>
@@ -175,13 +166,14 @@ namespace DeepLearning
 		return ActivationFunctionId::UNKNOWN;
 	}
 
-	template class ActivationFuncion<Vector>;
-	template class ActivationFuncion<Matrix>;
-	template class ActivationFuncion<Tensor>;
+	template class ActivationFunction<Vector>;
+	template class ActivationFunction<CudaVector>;
+	template class ActivationFunction<Matrix>;
+	template class ActivationFunction<Tensor>;
 
-	template class SoftMaxActivationFuncion<Vector>;
-	template class SoftMaxActivationFuncion<Matrix>;
-	template class SoftMaxActivationFuncion<Tensor>;
+	template class SoftMaxActivationFunction<Vector>;
+	template class SoftMaxActivationFunction<Matrix>;
+	template class SoftMaxActivationFunction<Tensor>;
 
 	template class ActivationWrapper<Vector>;
 	template class ActivationWrapper<Matrix>;

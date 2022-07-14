@@ -23,6 +23,7 @@
 #include <filesystem>
 #include "BasicCudaCollection.cuh"
 #include "Matrix.h"
+#include "LinAlg3d.h"
 
 namespace DeepLearning
 {
@@ -62,10 +63,17 @@ namespace DeepLearning
 
 	public:
 
+		using Base = BasicCudaCollection;
+
 		/// <summary>
 		/// Total number of elements in the matrix
 		/// </summary>
 		std::size_t size() const;
+
+		/// <summary>
+		/// Returns size of the collection in a "unified" form
+		/// </summary>
+		Index3d size_3d() const;
 
 		/// <summary>
 		/// Converts the current instance of CUDA vector into its "host" counterpart
@@ -106,6 +114,11 @@ namespace DeepLearning
 		/// Constructs a dense matrix of the given dimensions
 		/// </summary>
 		CudaMatrix(const std::size_t row_dim, const std::size_t col_dim, const bool assign_zero = true);
+
+		/// <summary>
+		/// Constructs a dense matrix of the given dimensions ("unified" form)
+		/// </summary>
+		CudaMatrix(const Index3d& size, const bool assign_zero = true);
 
 		/// <summary>
 		/// Constructs a dense matrix of the given dimensions filled

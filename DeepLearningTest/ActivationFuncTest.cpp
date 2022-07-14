@@ -17,10 +17,12 @@
 
 #include "CppUnitTest.h"
 #include <Math/Vector.h>
+#include <Math/CudaVector.cuh>
 #include <Math/ActivationFunction.h>
 #include <Math/CostFunction.h>
 #include <Utilities.h>
 #include <numeric>
+#include "StandardTestUtils.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;
@@ -55,7 +57,7 @@ namespace DeepLearningTest
 			const auto vector = Vector(dim, -1, 1);
 
 			//Act
-			const auto result = ActivationFuncion<Vector>(ActivationFunctionId::SIGMOID)(vector);
+			const auto result = ActivationFunction<Vector>(ActivationFunctionId::SIGMOID)(vector);
 
 			//Assert
 			Assert::AreEqual(vector.dim(), result.dim(), L"Unexpected dimension of the result vector");
@@ -69,6 +71,24 @@ namespace DeepLearningTest
 			}
 		}
 
+		TEST_METHOD(SigmoidFunctionCudaTest)
+		{
+			//Arrange
+			const auto dim = 10000;
+			const auto vector = CudaVector(dim, -1, 1);
+
+			//Act
+			const auto result = ActivationFunction<CudaVector>(ActivationFunctionId::SIGMOID)(vector);
+
+			//Assert
+			const auto result_host = ActivationFunction<Vector>(ActivationFunctionId::SIGMOID)(vector.to_host());
+			const auto diff = (result.to_host() - result_host).max_abs();
+
+			Logger::WriteMessage((std::string("Diff = ") + Utils::to_string(diff) + "\n").c_str());
+			Assert::IsTrue(diff < 10 * std::numeric_limits<Real>::epsilon(),
+				L"Unexpectedly high deviation from the reference value.");
+		}
+
 		TEST_METHOD(SigmoidFunctionAndDerivativeTest)
 		{
 			//Arrange
@@ -76,7 +96,7 @@ namespace DeepLearningTest
 			const auto vector = Vector(dim, -1, 1);
 
 			//Act
-			const auto [result, result_deriv] = ActivationFuncion<Vector>(ActivationFunctionId::SIGMOID).func_and_aux(vector);
+			const auto [result, result_deriv] = ActivationFunction<Vector>(ActivationFunctionId::SIGMOID).func_and_aux(vector);
 
 			//Assert
 			Assert::AreEqual(vector.dim(), result.dim(), L"Unexpected dimension of the result vector");
@@ -84,7 +104,7 @@ namespace DeepLearningTest
 
 			//Here we use the activation function to generate the reference values, because "()" operator of the activation function
 			//is tested separately, and we rely on that
-			const auto result_reference = ActivationFuncion<Vector>(ActivationFunctionId::SIGMOID)(vector);
+			const auto result_reference = ActivationFunction<Vector>(ActivationFunctionId::SIGMOID)(vector);
 			Assert::IsTrue((result_reference - result).max_abs() <= 0, L"Unexpectedly high deviation from the function reference value.");
 
 			for (std::size_t item_id = 0; item_id < vector.dim(); item_id++)
@@ -94,6 +114,32 @@ namespace DeepLearningTest
 				Assert::IsTrue(deriv_diff < std::numeric_limits<Real>::epsilon(),
 					L"Unexpectedly high deviation from the derivative reference value.");
 			}
+		}
+
+		TEST_METHOD(SigmoidFunctionAndDerivativeCudaTest)
+		{
+			//Arrange
+			const auto dim = 10;
+			const auto vector = CudaVector(dim, -1, 1);
+			const auto out_grad = CudaVector(dim, -1, 1);
+			Assert::IsTrue(vector.max_abs() > 0 && out_grad.max_abs() > 0, L"Vectors are supposed to be nonzero");
+
+			//Act
+			const auto function = ActivationFunction<CudaVector>(ActivationFunctionId::SIGMOID);
+			const auto [result, result_aux] = function.func_and_aux(vector);
+			const auto result_gradient = function.calc_input_gradient(out_grad, result_aux);
+
+			//Assert
+			const auto function_host = ActivationFunction<Vector>(ActivationFunctionId::SIGMOID);
+			const auto [result_host, result_aux_host] = function_host.func_and_aux(vector.to_host());
+			const auto result_gradient_host = function_host.calc_input_gradient(out_grad.to_host(), result_aux.to_host());
+
+			Assert::IsTrue((result_host - result.to_host()).max_abs() < 10 * std::numeric_limits<Real>::epsilon(), 
+				L"Result: too high deviation from reference");
+			Assert::IsTrue((result_aux_host - result_aux.to_host()).max_abs() < 10 * std::numeric_limits<Real>::epsilon(),
+				L"Auxiliary data: Too high deviation from reference");
+			Assert::IsTrue((result_gradient_host - result_gradient.to_host()).max_abs() < 10 * std::numeric_limits<Real>::epsilon(),
+				L"Gradient: Too high deviation from reference");
 		}
 
 		/// <summary>
@@ -112,7 +158,7 @@ namespace DeepLearningTest
 		{
 			//Arrange
 			const auto dim = 10;
-			const SoftMaxActivationFuncion<Vector> soft_max_activation_func;
+			const SoftMaxActivationFunction<Vector> soft_max_activation_func;
 			const auto vec = Vector(dim, -1, 1);
 			Assert::IsTrue(vec.max_abs() > 0, L"Vector is supposed to be nonzero");
 
@@ -129,7 +175,7 @@ namespace DeepLearningTest
 		{
 			//Arrange
 			const auto dim = 10;
-			const SoftMaxActivationFuncion<Vector> soft_max_activation_func;
+			const SoftMaxActivationFunction<Vector> soft_max_activation_func;
 			const auto quadratic_cost_func = CostFunction(CostFunctionId::SQUARED_ERROR);
 			const auto input = Vector(dim, -1, 1);
 			const auto reference = Vector(dim, -1, 1);

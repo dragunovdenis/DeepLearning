@@ -64,6 +64,11 @@ namespace DeepLearning
 		return _dim;
 	}
 
+	Index3d CudaVector::size_3d() const
+	{
+		return { 1ull, 1ull, _dim };
+	}
+
 	Vector CudaVector::to_host() const
 	{
 		Vector result(size(), false/*assign zero*/);
@@ -85,6 +90,13 @@ namespace DeepLearning
 
 		if (assign_zero)
 			CudaUtils::fill_zero(_data, _dim);
+	}
+
+	CudaVector::CudaVector(const Index3d& size, const bool assign_zero) : 
+		CudaVector(size.z, assign_zero)
+	{
+		if (size.x != 1ll || size.y != 1ll)
+			throw std::exception("Invalid input size");
 	}
 
 	CudaVector::CudaVector(const CudaVector& vec) :

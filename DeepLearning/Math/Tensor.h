@@ -76,6 +76,8 @@ namespace DeepLearning
 
 	public:
 
+		using Base = BasicCollection;
+
 		/// <summary>
 		/// Return total number of elements in the tensor
 		/// </summary>

@@ -26,15 +26,10 @@
 #include <sstream>
 #include <vector>
 #include <filesystem>
+#include "CudaBridge.h"
 
 namespace DeepLearning::Utils
 {
-#ifdef __CUDACC__
-#define CUDA_CALLABLE __host__ __device__
-#else
-#define CUDA_CALLABLE
-#endif
-
     /// <summary>
     /// A "cuda-callable" max function
     /// </summary>
@@ -51,6 +46,15 @@ namespace DeepLearning::Utils
     CUDA_CALLABLE T cuda_min(const T& a, const T& b)
     {
         return a < b ? a : b;
+    }
+
+    /// <summary>
+    /// Sigmoid function
+    /// </summary>
+    template <class T>
+    CUDA_CALLABLE T sigmoid(const T& arg)
+    {
+        return T(1) / (T(1) + exp(-arg));
     }
 
     /// <summary>

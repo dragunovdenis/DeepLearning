@@ -83,6 +83,11 @@ namespace DeepLearning
 		return _row_dim * _col_dim;
 	}
 
+	Index3d Matrix::size_3d() const
+	{
+		return { 1ull, _row_dim, _col_dim };
+	}
+
 	bool Matrix::check_bounds(const std::size_t row_id, const std::size_t col_id) const
 	{
 		return row_id < _row_dim && col_id < _col_dim;
@@ -95,6 +100,13 @@ namespace DeepLearning
 
 		if (assign_zero)
 			std::fill(begin(), end(), Real(0));
+	}
+
+	Matrix::Matrix(const Index3d& size, const bool assign_zero) :
+		Matrix(size.y, size.z, assign_zero)
+	{
+		if (size.x != 1ll)
+			throw std::exception("Invalid input size");
 	}
 
 	Matrix::Matrix(const std::size_t row_dim, const std::size_t col_dim,
