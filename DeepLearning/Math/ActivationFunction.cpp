@@ -24,6 +24,8 @@
 #include <algorithm>
 #include <exception>
 #include "CudaVector.cuh"
+#include "CudaMatrix.cuh"
+#include "CudaTensor.cuh"
 
 namespace DeepLearning
 {
@@ -46,6 +48,24 @@ namespace DeepLearning
 				collection_func.begin()[item_id] = res.Real();
 				collection_deriv.begin()[item_id] = res.Dual()[0];
 			}
+		}
+
+		void normalize_and_evaluate_exponent_in_place(BasicCollection& collection)
+		{
+			const auto max_element = collection.max_element();
+			std::transform(collection.begin(), collection.end(), collection.begin(), [max_element](const auto& x) { return std::exp(x - max_element); });
+		}
+
+		void evaluate_softmax_input_grad(const BasicCollection& input_exp, const BasicCollection& out_grad, BasicCollection& result)
+		{
+			const auto one_over_denominator = Real(1) / input_exp.sum();
+			const auto one_over_denominator_squared = one_over_denominator * one_over_denominator;
+
+			std::transform(result.begin(), result.end(), out_grad.begin(), result.begin(),
+				[one_over_denominator](const auto& x, const auto& y) { return x * y * one_over_denominator; });
+			const auto temp_sum = result.sum() * one_over_denominator;
+			std::transform(result.begin(), result.end(), input_exp.begin(), result.begin(),
+				[temp_sum](const auto& x, const auto& a) { return x - a * temp_sum; });
 		}
 	}
 
@@ -76,20 +96,10 @@ namespace DeepLearning
 	}
 
 	template <class T>
-	T SoftMaxActivationFunction<T>::calc_aux_data(const T& input) const
-	{
-		auto result = input;
-		const auto max_element = result.max_element();
-
-		std::transform(result.begin(), result.end(), result.begin(), [max_element](const auto& x) { return std::exp(x - max_element); });
-
-		return result;
-	}
-
-	template <class T>
 	T SoftMaxActivationFunction<T>::operator ()(const T& input) const
 	{
-		auto result = calc_aux_data(input);
+		auto result = input;
+		ActivationFunctionHelper::normalize_and_evaluate_exponent_in_place(result);
 		const auto factor = Real(1) / result.sum();
 		result.mul(factor);
 
@@ -99,12 +109,13 @@ namespace DeepLearning
 	template <class T>
 	std::tuple<T, T> SoftMaxActivationFunction<T>::func_and_aux(const T& input) const
 	{
-		const auto aux_data = calc_aux_data(input);
+		auto aux_data = input;
+		ActivationFunctionHelper::normalize_and_evaluate_exponent_in_place(aux_data);
 		const auto factor = Real(1) / aux_data.sum();
 		auto result = aux_data; 
 		result.mul(factor);
 
-		return std::make_tuple(result, aux_data);
+		return std::make_tuple(std::move(result), std::move(aux_data));
 	}
 
 	template <class T>
@@ -113,13 +124,8 @@ namespace DeepLearning
 		if (out_grad.size() != aux_data.size())
 			throw std::exception("Inconsistent input data");
 
-		const auto one_over_denominator = Real(1) / aux_data.sum();
-		const auto one_over_denominator_squared = one_over_denominator * one_over_denominator;
-
 		auto result = aux_data;
-		std::transform(result.begin(), result.end(), out_grad.begin(), result.begin(), [one_over_denominator](const auto& x, const auto& y) { return x * y * one_over_denominator; });
-		const auto temp_sum = result.sum() * one_over_denominator;
-		std::transform(result.begin(), result.end(), aux_data.begin(), result.begin(), [temp_sum](const auto& x, const auto& a) { return x - a * temp_sum; });
+		ActivationFunctionHelper::evaluate_softmax_input_grad(aux_data, out_grad, result);
 
 		return result;
 	}
@@ -169,13 +175,21 @@ namespace DeepLearning
 	template class ActivationFunction<Vector>;
 	template class ActivationFunction<CudaVector>;
 	template class ActivationFunction<Matrix>;
+	template class ActivationFunction<CudaMatrix>;
 	template class ActivationFunction<Tensor>;
+	template class ActivationFunction<CudaTensor>;
 
 	template class SoftMaxActivationFunction<Vector>;
+	template class SoftMaxActivationFunction<CudaVector>;
 	template class SoftMaxActivationFunction<Matrix>;
+	template class SoftMaxActivationFunction<CudaMatrix>;
 	template class SoftMaxActivationFunction<Tensor>;
+	template class SoftMaxActivationFunction<CudaTensor>;
 
 	template class ActivationWrapper<Vector>;
+	template class ActivationWrapper<CudaVector>;
 	template class ActivationWrapper<Matrix>;
+	template class ActivationWrapper<CudaMatrix>;
 	template class ActivationWrapper<Tensor>;
+	template class ActivationWrapper<CudaTensor>;
 }

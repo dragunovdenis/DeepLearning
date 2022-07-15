@@ -171,6 +171,22 @@ namespace DeepLearningTest
 			Assert::IsTrue(diff < std::numeric_limits<Real>::epsilon(), L"Too high deviation between the actual and expected values");
 		}
 
+		TEST_METHOD(SoftMaxFunctionCudaTest)
+		{
+			//Arrange
+			const auto dim = 10;
+			const auto vec = CudaVector(dim, -1, 1);
+			Assert::IsTrue(vec.max_abs() > 0, L"Vector is supposed to be nonzero");
+
+			//Act
+			const auto soft_max_result = SoftMaxActivationFunction<CudaVector>()(vec);
+
+			//Assert
+			const auto soft_max_result_host = SoftMaxActivationFunction<Vector>()(vec.to_host());
+			const auto diff = (soft_max_result.to_host() - soft_max_result_host).max_abs();
+			Assert::IsTrue(diff < std::numeric_limits<Real>::epsilon(), L"Too high deviation between the actual and expected values");
+		}
+
 		TEST_METHOD(SoftMaxFunctionAndDerivativeTest)
 		{
 			//Arrange
@@ -209,6 +225,27 @@ namespace DeepLearningTest
 				Logger::WriteMessage((std::string("Derivative difference = ") + Utils::to_string(deriv_diff) + "\n").c_str());
 				Assert::IsTrue(deriv_diff < 7e-11, L"Too high deviation between the actual and expected values");
 			}
+		}
+
+		TEST_METHOD(SoftMaxFunctionAndDerivativeCudaTest)
+		{
+			//Arrange
+			const auto dim = 10;
+			const auto input = CudaVector(dim, -1, 1);
+			const auto out_grad = CudaVector(dim, -1, 1);
+			Assert::IsTrue(input.max_abs() > 0 && out_grad.max_abs() > 0, L"Vectors are supposed to be nonzero");
+
+			//Act
+			const auto [soft_max_result, aux_data] = SoftMaxActivationFunction<CudaVector>().func_and_aux(input);
+			const auto activation_input_gradient = SoftMaxActivationFunction<CudaVector>().calc_input_gradient(out_grad, aux_data);
+
+			//Assert
+			const auto [soft_max_result_host, aux_data_host] = SoftMaxActivationFunction<Vector>().func_and_aux(input.to_host());
+			const auto activation_input_gradient_host = SoftMaxActivationFunction<Vector>().calc_input_gradient(out_grad.to_host(), aux_data.to_host());
+			const auto diff_func = (soft_max_result.to_host() - soft_max_result_host).max_abs();
+			const auto diff_grad = (activation_input_gradient.to_host() - activation_input_gradient_host).max_abs();
+			Assert::IsTrue(diff_func < std::numeric_limits<Real>::epsilon(), L"Too high deviation between the actual and expected values (function)");
+			Assert::IsTrue(diff_grad < std::numeric_limits<Real>::epsilon(), L"Too high deviation between the actual and expected values (gradient)");
 		}
 	};
 }

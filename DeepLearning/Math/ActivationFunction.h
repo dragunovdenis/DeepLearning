@@ -139,6 +139,35 @@ namespace DeepLearning
 		/// Stores the function value to the "collection_func" whereas the derivative value is stored to the "collection_deriv"
 		/// </summary>
 		void evaluate_in_place(BasicCudaCollection& collection_func, BasicCudaCollection& collection_deriv, const ActivationFunctionId id);
+
+		/// <summary>
+		/// Subtracts maximal element in the given collection from each element of the collection,
+		/// evaluated exponent of each element and sore the result to the given collection
+		/// </summary>
+		void normalize_and_evaluate_exponent_in_place(BasicCollection& collection);
+
+		/// <summary>
+		/// Subtracts maximal element in the given collection from each element of the collection,
+		/// evaluated exponent of each element and sore the result to the given collection
+		/// </summary>
+		void normalize_and_evaluate_exponent_in_place(BasicCudaCollection& collection);
+
+		/// <summary>
+		/// Evaluates gradient of the soft-max function with respect to its input
+		/// </summary>
+		/// <param name="input_exp">Collection containing exponents of the soft-max input</param>
+		/// <param name="out_grad">Gradient with respect to the output of soft-max</param>
+		/// <param name="result">Placeholder for the calculated gradient. Should be allocated by the caller;
+		/// Must be initialized with a copy of "input_exp" by the caller</param>
+		void evaluate_softmax_input_grad( const BasicCollection& input_exp, const BasicCollection& out_grad, BasicCollection& result);
+
+		/// <summary>
+		/// Evaluates gradient of the soft-max function with respect to its input
+		/// </summary>
+		/// <param name="input_exp">Collection containing exponents of the soft-max input</param>
+		/// <param name="result">Placeholder for the calculated gradient. Should be allocated by the caller
+		/// Must be initialized with a copy of "input_exp" by the caller</param>
+		void evaluate_softmax_input_grad(const BasicCudaCollection& input_exp, const BasicCudaCollection& out_grad, BasicCudaCollection& result);
 	}
 
 	/// <summary>
@@ -179,11 +208,6 @@ namespace DeepLearning
 	template <class T>
 	class SoftMaxActivationFunction : public AFunction<T>
 	{
-		/// <summary>
-		/// Calculates a collection containing exponents of the normalized input elements
-		/// </summary>
-		T calc_aux_data(const T& input) const;
-
 	public:
 
 		/// <summary>

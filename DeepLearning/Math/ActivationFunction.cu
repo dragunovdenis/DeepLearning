@@ -22,6 +22,7 @@
 #include <thrust/execution_policy.h>
 #include <thrust/iterator/zip_iterator.h>
 #include <thrust/tuple.h>
+#include <thrust/extrema.h>
 
 namespace DeepLearning::ActivationFunctionHelper
 {
@@ -41,5 +42,24 @@ namespace DeepLearning::ActivationFunctionHelper
 			const auto res = make<nvstd::function<dual<Real>(dual<Real>)>>(id)({ x , Real(1)});
 			return thrust::make_tuple(res.Real(), res.Dual()[0]);
 		});
+	}
+
+	void normalize_and_evaluate_exponent_in_place(BasicCudaCollection& collection)
+	{
+		const auto max_element_ptr = thrust::max_element(thrust::device, collection.begin(), collection.end());
+		thrust::transform(thrust::device, collection.begin(), collection.end(), collection.begin(),
+			[max_element_ptr] __device__ (const auto& x) { return std::exp(x - *max_element_ptr); });
+	}
+
+	void evaluate_softmax_input_grad(const BasicCudaCollection& input_exp, const BasicCudaCollection& out_grad, BasicCudaCollection& result)
+	{
+		const auto one_over_denominator = Real(1) / input_exp.sum();
+		const auto one_over_denominator_squared = one_over_denominator * one_over_denominator;
+
+		thrust::transform(thrust::device, result.begin(), result.end(), out_grad.begin(), result.begin(),
+			[one_over_denominator] __device__ (const auto& x, const auto& y) { return x * y * one_over_denominator; });
+		const auto temp_sum = result.sum() * one_over_denominator;
+		thrust::transform(thrust::device, result.begin(), result.end(), input_exp.begin(), result.begin(),
+			[temp_sum] __device__ (const auto& x, const auto& a) { return x - a * temp_sum; });
 	}
 }
