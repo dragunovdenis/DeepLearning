@@ -177,6 +177,9 @@
     <ClInclude Include="CudaBridge.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Math\Functions.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Matrix.cpp">
@@ -272,6 +275,9 @@
       <Filter>Source Files\Math\CUDA</Filter>
     </CudaCompile>
     <CudaCompile Include="Math\ActivationFunction.cu">
+      <Filter>Source Files\Math\CUDA</Filter>
+    </CudaCompile>
+    <CudaCompile Include="Math\CostFunction.cu">
       <Filter>Source Files\Math\CUDA</Filter>
     </CudaCompile>
   </ItemGroup>

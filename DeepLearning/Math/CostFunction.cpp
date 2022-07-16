@@ -19,70 +19,81 @@
 #include "Vector.h"
 #include "Matrix.h"
 #include "Tensor.h"
+#include "CudaVector.cuh"
+#include "CudaMatrix.cuh"
+#include "CudaTensor.cuh"
 #include <exception>
 #include <numeric>
 #include "../Utilities.h"
+#include <functional>
 
 namespace DeepLearning
 {
-	CostFunction::CostFunction(const CostFunctionId id)
+	namespace CostFunctionHelper
 	{
-		switch (id)
+		Real evaluate_cost(const BasicCollection& output, const BasicCollection& reference, const CostFunctionId id)
 		{
-		case CostFunctionId::UNKNOWN: throw std::exception("Invalid activation function ID.");
-			break;
-		case CostFunctionId::SQUARED_ERROR: _func = DiffFunc::create(
-			[](const auto& x, const auto& ref) 
-			{ 
-				const auto diff = x - ref;
-				return Real(0.5)* diff * diff;
-			});
-			break;
-		case CostFunctionId::CROSS_ENTROPY:_func = DiffFunc::create(
-			[](const auto& x, const auto& ref)
+			const auto func = CostFunctionHelper::make<std::function<Real(Real, Real)>>(id);
+
+			const auto result = std::transform_reduce(output.begin(), output.end(), reference.begin(), Real(0), std::plus<Real>(),
+				[&](const auto& x, const auto& ref) { return  func(x, ref); });
+			return result;
+		}
+
+		Real evaluate_cost_and_gradient(BasicCollection& output, const BasicCollection& reference, const CostFunctionId id)
+		{
+			auto func_val = Real(0);
+
+			const auto func = CostFunctionHelper::make<std::function<dual<Real>(dual<Real>, Real)>>(id);
+
+			for (auto item_id = 0ull; item_id < output.size(); item_id++)
 			{
-				if (ref <= Real(0))
-					return Utils::nan_to_num(-log(Real(1) - x));
+				const auto res = func({ output.begin()[item_id] , Real(1) }, reference.begin()[item_id]);
+				func_val += res.Real();
+				output.begin()[item_id] = res.Dual()[0];
+			}
 
-				if (ref >= Real(1))
-					return Utils::nan_to_num(-log(x));
+			return func_val;
+		}
 
-				return Utils::nan_to_num(-(ref*log(x) + (Real(1) - ref)*log(Real(1) - x)));
-			});
-			break;
-		default: throw std::exception("Unexpected cost function ID.");
-			break;
+		void evaluate_gradient(BasicCollection& output, const BasicCollection& reference, const CostFunctionId id)
+		{
+			const auto func = CostFunctionHelper::make<std::function<dual<Real>(dual<Real>, Real)>>(id);
+			std::transform(output.begin(), output.end(), reference.begin(), output.begin(), [&](const auto& x, const auto& ref) {
+				return  func({ x, Real(1) }, ref).Dual()[0]; });
 		}
 	}
 
 	template <class T>
-	Real CostFunction::operator ()(const T& output, const T& reference) const
+	CostFunction<T>::CostFunction(const CostFunctionId id) : _id(id)
+	{}
+
+	template <class T>
+	Real CostFunction<T>::operator ()(const T& output, const T& reference) const
 	{
 		if (output.size() != reference.size())
 			throw std::exception("Incompatible input");
 
-		const auto result = std::transform_reduce(output.begin(), output.end(), reference.begin(), Real(0), std::plus<Real>(),
-			[&](const auto& x, const auto& ref) { return  _func->operator()(x, ref); });
-		return result;
+		return CostFunctionHelper::evaluate_cost(output, reference, _id);
 	}
 
 	template <class T>
-	std::tuple<Real, T> CostFunction::func_and_deriv(const T& output, const T& reference) const
+	std::tuple<Real, T> CostFunction<T>::func_and_deriv(const T& output, const T& reference) const
 	{
 		if (output.size() != reference.size())
 			throw std::exception("Incompatible input");
 
 		auto deriv = output;
-		auto func_val = Real(0);
+		const auto func_val = CostFunctionHelper::evaluate_cost_and_gradient(deriv, reference, _id);
+		return std::make_tuple(func_val, std::move(deriv));
+	}
 
-		for (auto item_id = 0ull; item_id < output.size(); item_id++)
-		{
-			const auto [value, derivative] = _func->calc_funcion_and_derivative(deriv.begin()[item_id], reference.begin()[item_id]);
-			func_val += value;
-			deriv.begin()[item_id] = derivative;
-		}
-
-		return std::make_tuple(func_val, deriv);
+	template <class T>
+	T CostFunction<T>::deriv(const T& output, const T& reference) const
+	{
+		auto deriv = output;
+		CostFunctionHelper::evaluate_gradient(deriv, reference, _id);
+		return deriv;
 	}
 
 	std::string to_string(const CostFunctionId& cost_type_id)
@@ -109,12 +120,10 @@ namespace DeepLearning
 		return CostFunctionId::UNKNOWN;
 	}
 
-	template Real CostFunction::operator ()(const Vector& output, const Vector& reference) const;
-	template Real CostFunction::operator ()(const Matrix& output, const Matrix& reference) const;
-	template Real CostFunction::operator ()(const Tensor& output, const Tensor& reference) const;
-
-	template std::tuple<Real, Vector> CostFunction::func_and_deriv(const Vector& output, const Vector& reference) const;
-	template std::tuple<Real, Matrix> CostFunction::func_and_deriv(const Matrix& output, const Matrix& reference) const;
-	template std::tuple<Real, Tensor> CostFunction::func_and_deriv(const Tensor& output, const Tensor& reference) const;
-
+	template class CostFunction<Vector>;
+	template class CostFunction<CudaVector>;
+	template class CostFunction<Matrix>;
+	template class CostFunction<CudaMatrix>;
+	template class CostFunction<Tensor>;
+	template class CostFunction<CudaTensor>;
 }

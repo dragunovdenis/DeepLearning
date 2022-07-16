@@ -192,7 +192,7 @@ namespace DeepLearningTest
 			//Arrange
 			const auto dim = 10;
 			const SoftMaxActivationFunction<Vector> soft_max_activation_func;
-			const auto quadratic_cost_func = CostFunction(CostFunctionId::SQUARED_ERROR);
+			const auto quadratic_cost_func = CostFunction<Vector>(CostFunctionId::SQUARED_ERROR);
 			const auto input = Vector(dim, -1, 1);
 			const auto reference = Vector(dim, -1, 1);
 			Assert::IsTrue(input.max_abs() > 0, L"Vector is supposed to be nonzero");

@@ -167,7 +167,7 @@ namespace DeepLearning
 		const auto lambda_scaled = lambda / training_items.size();
 		const auto reg_factor = -learning_rate * lambda_scaled;
 
-		const auto cost_function = CostFunction(cost_func_id);
+		const auto cost_function = CostFunction<Tensor>(cost_func_id);
 
 		auto gradient_collectors = init_gradient_collectors(_layers);
 
@@ -206,7 +206,7 @@ namespace DeepLearning
 						const auto& reference = reference_items[input_item_id];
 						auto aux_data_ptr = std::vector<typename ALayer<D>::AuxLearningData>(_layers.size());
 						const auto output = act(input, &aux_data_ptr);
-						auto [cost, gradient] = cost_function.func_and_deriv(output, reference);
+						auto gradient = cost_function.deriv(output, reference);
 
 						auto back_prop_out = std::vector<typename ALayer<D>::LayerGradient>(_layers.size());
 						//Back-propagate through all the layers
@@ -243,7 +243,7 @@ namespace DeepLearning
 		if (test_input.size() != reference_output.size())
 			throw std::exception("Invalid input.");
 
-		const auto cost_function = CostFunction(cost_func_id);
+		const auto cost_function = CostFunction<Tensor>(cost_func_id);
 
 		const auto cost_sum = concurrency::parallel_reduce(IndexIterator<std::size_t>(0), IndexIterator<std::size_t>(test_input.size()), Real(0),
 			[&](const auto& start_iter, const auto& end_iter, const auto& init_val)

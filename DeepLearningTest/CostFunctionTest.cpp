@@ -17,7 +17,9 @@
 
 #include "CppUnitTest.h"
 #include <Math/Vector.h>
+#include <Math/CudaVector.cuh>
 #include <Math/CostFunction.h>
+#include "StandardTestUtils.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;
@@ -67,7 +69,7 @@ namespace DeepLearningTest
 		{
 			//Arrange
 			const auto dim = 10;
-			const auto cost_func = CostFunction(func_id);
+			const auto cost_func = CostFunction<Vector>(func_id);
 			const auto input = Vector(dim, Real(1e-5), Real(1-1e-5));
 			const auto reference = Vector(dim, Real(1e-5), Real(1 - 1e-5));
 			Assert::IsTrue(input != reference, L"Reference and input vectors should not be equal.");
@@ -93,16 +95,18 @@ namespace DeepLearningTest
 		{
 			//Arrange
 			const auto dim = 10;
-			const auto cost_func = CostFunction(func_id);
+			const auto cost_func = CostFunction<Vector>(func_id);
 			const auto input = Vector(dim, Real(0.1), Real(0.9));
 			const auto reference = Vector(dim, Real(0.1), Real(0.9));
 			Assert::IsTrue(input != reference, L"Reference and input vectors should not be equal.");
 
 			//Act
 			const auto [result_func, result_deriv] = cost_func.func_and_deriv(input, reference);
+			const auto result_deriv_single = cost_func.deriv(input, reference);
 
 			//Assert
-			Assert::IsTrue(result_deriv.dim() == input.dim(), L"Input and result vectors should be of the same dimension.");
+			Assert::IsTrue(result_deriv.dim() == input.dim() && result_deriv_single.dim() == input.dim(),
+				L"Input and result vectors should be of the same dimension.");
 
 			//We use the cost function here to generate the reference because "()" operator of the
 			//cost function is tested separately and here we rely on that
@@ -114,8 +118,51 @@ namespace DeepLearningTest
 			for (std::size_t item_id = 0; item_id < dim; item_id++)
 			{
 				const auto diff_deriv = std::abs(result_deriv(item_id) - reference_deriv(input(item_id), reference(item_id)));
+				const auto diff_deriv_single = std::abs(result_deriv_single(item_id) - reference_deriv(input(item_id), reference(item_id)));
+				StandardTestUtils::LogReal("diff_deriv = ", diff_deriv);
+				StandardTestUtils::LogReal("diff_deriv_single = ",diff_deriv_single);
 				Assert::IsTrue(diff_deriv <= 10 * std::numeric_limits<Real>::epsilon(), L"Unexpectedly high deviation from the reference derivative value");
+				Assert::IsTrue(diff_deriv_single <= 10 * std::numeric_limits<Real>::epsilon(),
+					L"Unexpectedly high deviation from the reference derivative value (single version)");
 			}
+		}
+
+		/// <summary>
+		/// General method to test "CUDA" implementation versus regular (CPU) implementation of the cost function 
+		/// </summary>
+		static void CheckCudaFunction(const CostFunctionId& func_id)
+		{
+			//Arrange
+			const auto dim = 10;
+			const auto input = CudaVector(dim, Real(0.1), Real(0.9));
+			const auto reference = CudaVector(dim, Real(0.1), Real(0.9));
+			Assert::IsTrue(input != reference, L"Reference and input vectors should not be equal.");
+
+			//Act
+			const auto function = CostFunction<CudaVector>(func_id)(input, reference);
+			const auto function_and_gradient = CostFunction<CudaVector>(func_id).func_and_deriv(input, reference);
+			const auto gradient = CostFunction<CudaVector>(func_id).deriv(input, reference);
+
+			//Assert
+			const auto input_host = input.to_host();
+			const auto reference_host = reference.to_host();
+
+			const auto function_host = CostFunction<Vector>(func_id)(input_host, reference_host);
+			const auto gradient_host = CostFunction<Vector>(func_id).deriv(input_host, reference_host);
+
+			const auto func_diff_1 = std::abs(function - function_host);
+			const auto func_diff_2 = std::abs(std::get<0>(function_and_gradient) - function_host);
+			const auto gradient_diff_1 = (gradient.to_host() - gradient_host).max_abs();
+			const auto gradient_diff_2 = (std::get<1>(function_and_gradient).to_host() - gradient_host).max_abs();
+			StandardTestUtils::LogReal("func_diff_1 = ", func_diff_1);
+			StandardTestUtils::LogReal("func_diff_2 = ", func_diff_2);
+			StandardTestUtils::LogReal("gradient_diff_1 = ", gradient_diff_1);
+			StandardTestUtils::LogReal("gradient_diff_2 = ", gradient_diff_2);
+
+			Assert::IsTrue(func_diff_1 < 10 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference (function 1)");
+			Assert::IsTrue(func_diff_2 < 10 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference (function 2)");
+			Assert::IsTrue(gradient_diff_1 < 10 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference (gradient 1)");
+			Assert::IsTrue(gradient_diff_2 < 10 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference (gradient 2)");
 		}
 
 		TEST_METHOD(SquaredErrorFunctionTest)
@@ -136,6 +183,16 @@ namespace DeepLearningTest
 		TEST_METHOD(CrossEntropyFunctionAndDerivativeTest)
 		{
 			CheckFunctionAndDerivative(CostFunctionId::CROSS_ENTROPY, CrossEntropyFunc, CrossEntropyDerivFunc);
+		}
+
+		TEST_METHOD(SquaredErrorFunctionCudaTest)
+		{
+			CheckCudaFunction(CostFunctionId::SQUARED_ERROR);
+		}
+
+		TEST_METHOD(CrossEntropyFunctionCudaTest)
+		{
+			CheckCudaFunction(CostFunctionId::CROSS_ENTROPY);
 		}
 	};
 }

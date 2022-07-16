@@ -324,6 +324,24 @@ namespace DeepLearning
 	};
 }
 
+/// <summary>
+/// Returns true if the given dual number has infinite components
+/// </summary>
+template<class R>
+CUDA_CALLABLE bool isinf(const DeepLearning::dual<R, 1>& val)
+{
+	return isinf(val.Real()) || isinf(val.Dual()[0]);
+}
+
+/// <summary>
+/// Returns true if the given dual number has "not a number" components
+/// </summary>
+template<class R>
+CUDA_CALLABLE bool isnan(const DeepLearning::dual<R, 1>& val)
+{
+	return isnan(val.Real()) || isnan(val.Dual()[0]);
+}
+
 namespace std
 {
 	/// <summary>
@@ -352,7 +370,7 @@ namespace std
 		/// <summary>
 		/// Return "max" value for the current "dual" type
 		/// </summary>
-		static DeepLearning::dual<R, Dim> max()
+		CUDA_CALLABLE static DeepLearning::dual<R, Dim> max()
 		{
 			return DeepLearning::dual<R, Dim>(std::numeric_limits<R>::max());
 		}

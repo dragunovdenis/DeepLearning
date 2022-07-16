@@ -26,6 +26,7 @@
 #include <thrust/scatter.h>
 #include "ConvolutionUtils.h"
 #include "CudaSetup.h"
+#include "Functions.h"
 
 namespace DeepLearning
 {
@@ -368,9 +369,9 @@ namespace DeepLearning
 
 		extern __shared__ Real kernel_shared[];
 
-		const auto items_per_thread = Utils::cuda_max(10ll, (kernel_flattened_size + blockDim.x - 1) / blockDim.x);
+		const auto items_per_thread = Func::cuda_max(10ll, (kernel_flattened_size + blockDim.x - 1) / blockDim.x);
 		const auto element_start_id = items_per_thread * threadIdx.x;
-		const auto element_stop_id = Utils::cuda_min(kernel_flattened_size, element_start_id + items_per_thread);
+		const auto element_stop_id = Func::cuda_min(kernel_flattened_size, element_start_id + items_per_thread);
 
 		for (auto element_id = element_start_id; element_id < element_stop_id; element_id++)
 			kernel_shared[element_id] = kernel[element_id];

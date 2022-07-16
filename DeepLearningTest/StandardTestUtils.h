@@ -356,4 +356,12 @@ namespace DeepLearningTest::StandardTestUtils
 
 		return std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() * 1.0e-3 /number_of_iterations;
 	}
+
+	/// <summary>
+	/// Logs given real value together with the given message in a single line
+	/// </summary>
+	inline void LogReal(const std::string& message, const Real& value)
+	{
+		Logger::WriteMessage((message + Utils::to_string(value) + "\n").c_str());
+	}
 }

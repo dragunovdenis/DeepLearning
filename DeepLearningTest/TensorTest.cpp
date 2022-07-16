@@ -227,7 +227,7 @@ namespace DeepLearningTest
 			const auto res_size = conv_res.size_3d();
 			const auto reference = Tensor(res_size, true); //zero reference
 
-			const auto cost_func = CostFunction(CostFunctionId::SQUARED_ERROR);
+			const auto cost_func = CostFunction<Tensor>(CostFunctionId::SQUARED_ERROR);
 
 			//Act
 			const auto [cost, cost_grad] = cost_func.func_and_deriv(conv_res, reference);
@@ -281,7 +281,7 @@ namespace DeepLearningTest
 			const auto res_size = conv_res.size_3d();
 			const auto reference = Tensor(res_size, true); //zero reference
 
-			const auto cost_func = CostFunction(CostFunctionId::SQUARED_ERROR);
+			const auto cost_func = CostFunction<Tensor>(CostFunctionId::SQUARED_ERROR);
 
 			//Act
 			const auto [cost, cost_grad] = cost_func.func_and_deriv(conv_res, reference);
@@ -359,7 +359,7 @@ namespace DeepLearningTest
 			const auto res_size = conv_res.size_3d();
 			const auto reference = Tensor(res_size, true); //zero reference
 
-			const auto cost_func = CostFunction(CostFunctionId::SQUARED_ERROR);
+			const auto cost_func = CostFunction<Tensor>(CostFunctionId::SQUARED_ERROR);
 			const auto [cost, cost_grad] = cost_func.func_and_deriv(conv_res, reference);
 			const auto [kern_grad, in_grad_ref] = tensor.convolution_gradient(cost_grad, kernel, paddings, strides);
 

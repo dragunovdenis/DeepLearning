@@ -47,7 +47,7 @@ namespace DeepLearningTest
 			const auto input = input_op.has_value() ? input_op.value() : Tensor(nl.in_size(), -1, 1);
 			const auto reference = Tensor(nl.out_size(), -1, 1);;
 
-			const auto cost_func = CostFunction(cost_function_id);
+			const auto cost_func = CostFunction<Tensor>(cost_function_id);
 			auto aux_data = ALayer<CpuDC>::AuxLearningData();
 			const auto [value, cost_gradient] = cost_func.func_and_deriv(nl.act(input, &aux_data), reference);
 			const auto [input_grad_result, layer_grad_result] = nl.backpropagate(cost_gradient, aux_data);
@@ -91,7 +91,7 @@ namespace DeepLearningTest
 			const auto filters_count = out_size.x;
 
 			const auto reference = Tensor(out_size, -1, 1);;
-			const auto cost_func = CostFunction(cost_function_id);
+			const auto cost_func = CostFunction<Tensor>(cost_function_id);
 
 			//Act
 			auto aux_data = ALayer<CpuDC>::AuxLearningData();
@@ -296,7 +296,7 @@ namespace DeepLearningTest
 			const auto reference = Tensor(nl.out_size(), -1, 1);;
 
 			//Act
-			const auto cost_func = CostFunction(CostFunctionId::SQUARED_ERROR);
+			const auto cost_func = CostFunction<Tensor>(CostFunctionId::SQUARED_ERROR);
 			auto aux_data = NLayer<CpuDC>::AuxLearningData();
 			const auto [value, cost_gradient] = cost_func.func_and_deriv(nl.act(input, &aux_data), reference);
 			const auto [input_grad_result, layer_grad_result] = nl.backpropagate(cost_gradient, aux_data);

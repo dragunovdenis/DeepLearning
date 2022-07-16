@@ -21,6 +21,7 @@
 #include <memory>
 #include "../Utilities.h"
 #include "../CudaBridge.h"
+#include "Functions.h"
 
 namespace DeepLearning
 {
@@ -107,11 +108,11 @@ namespace DeepLearning
 		/// A factory method: the only "legal" way to instantiate an activation function via its identifier
 		/// </summary>
 		template <class F>
-		CUDA_CALLABLE static F make(const ActivationFunctionId id)
+		CUDA_CALLABLE F make(const ActivationFunctionId id)
 		{
 			switch (id)
 			{
-			case ActivationFunctionId::SIGMOID: return [](const auto& x) { return Utils::sigmoid(x); };
+			case ActivationFunctionId::SIGMOID: return [](const auto& x) { return Func::sigmoid(x); };
 			case ActivationFunctionId::TANH: return [](const auto& x) { return tanh(x); };
 			case ActivationFunctionId::RELU: return [](const auto& x) { return  x < Real(0) ? Real(0) : x; };
 			default: return [](const auto& x) { return decltype(x)(std::numeric_limits<Real>::signaling_NaN()); };
