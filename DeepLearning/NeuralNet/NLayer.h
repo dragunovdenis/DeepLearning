@@ -36,15 +36,20 @@ namespace DeepLearning
 	class NLayer : public ALayer<D>
 	{
 	private:
+		//Declare "friends" to be able to switch between the data contexts
+		//(see 'to_host()' and 'to_device()' methods)
+		friend class NLayer<CpuDC>;
+		friend class NLayer<GpuDC>;
+
 		/// <summary>
 		/// Vector of bias coefficients of size _out_dim;
 		/// </summary>
-		Vector _biases{};
+		typename D::vector_t _biases{};
 
 		/// <summary>
 		/// Matrix of weights of size _out_dim x _in_dim  
 		/// </summary>
-		Matrix _weights{};
+		typename D::matrix_t _weights{};
 
 		/// <summary>
 		/// Activation function id
@@ -110,18 +115,18 @@ namespace DeepLearning
 		/// <summary>
 		/// See the summary to the corresponding method in the base class
 		/// </summary>
-		Tensor act(const Tensor& input, typename ALayer<D>::AuxLearningData* const aux_learning_data_ptr = nullptr) const override;
+		typename D::tensor_t act(const typename D::tensor_t& input, typename ALayer<D>::AuxLearningData* const aux_learning_data_ptr = nullptr) const override;
 
 		/// <summary>
 		/// See the summary to the corresponding method in the base class
 		/// </summary>
-		std::tuple<Tensor, typename ALayer<D>::LayerGradient> backpropagate(const Tensor& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
+		std::tuple<typename D::tensor_t, typename ALayer<D>::LayerGradient> backpropagate(const typename D::tensor_t& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
 			const bool evaluate_input_gradient = true) const override;
 
 		/// <summary>
 		/// See the summary to the corresponding method in the base class
 		/// </summary>
-		void update(const std::tuple<std::vector<Tensor>, Tensor>& weights_and_biases_increment, const Real& reg_factor) override;
+		void update(const std::tuple<std::vector<typename D::tensor_t>, typename D::tensor_t>& weights_and_biases_increment, const Real& reg_factor) override;
 
 		/// <summary>
 		/// See the summary to the corresponding method in the base class
@@ -153,5 +158,15 @@ namespace DeepLearning
 		/// See the summary to the corresponding method in the base class
 		/// </summary>
 		Real squared_weights_sum() const override;
+
+		/// <summary>
+		/// Converts the given instance to the one working within the "cpu data context"
+		/// </summary>
+		NLayer<CpuDC> to_host() const;
+
+		/// <summary>
+		/// Converts the given instance to the one working within the "gpu data context" (CUDA "device" memory)
+		/// </summary>
+		NLayer<GpuDC> to_device() const;
 	};
 }

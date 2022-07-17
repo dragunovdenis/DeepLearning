@@ -64,11 +64,6 @@ namespace DeepLearning
 		/// <summary>
 		/// Assignment from a "host" tensor
 		/// </summary>
-		void assign(const Tensor& source);
-
-		/// <summary>
-		/// Assignment from a "host" tensor
-		/// </summary>
 		void assign(const CudaTensor& source);
 
 		/// <summary>
@@ -88,6 +83,11 @@ namespace DeepLearning
 		bool check_bounds(const std::size_t layer_id, const std::size_t row_id, const std::size_t col_id) const;
 
 	public:
+
+		/// <summary>
+		/// Assignment from a "host" tensor
+		/// </summary>
+		void assign(const Tensor& source);
 
 		using Base = BasicCudaCollection;
 

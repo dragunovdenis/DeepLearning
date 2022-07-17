@@ -69,7 +69,7 @@ namespace DeepLearning
 	template <class D>
 	Index3d PLayer<D>::out_size() const
 	{
-		return ConvolutionUtils::calc_conv_res_size(_in_size, _pool_window_size, _paddings, _strides);
+		return ConvolutionUtils::calc_conv_res_size(_in_size, _pool_window_size, {0}, _strides);
 	}
 
 	template <class D>
@@ -79,7 +79,7 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	Tensor PLayer<D>::act(const Tensor& input, typename ALayer<D>::AuxLearningData* const aux_learning_data_ptr) const
+	typename D::tensor_t PLayer<D>::act(const typename D::tensor_t& input, typename ALayer<D>::AuxLearningData* const aux_learning_data_ptr) const
 	{
 		if (input.size_3d() != in_size())
 			throw std::exception("Unexpected size of the input tensor");
@@ -87,7 +87,7 @@ namespace DeepLearning
 		if (aux_learning_data_ptr) 
 		{
 			aux_learning_data_ptr->Input = input;
-			aux_learning_data_ptr->Derivatives = Tensor(Index3d(0));
+			aux_learning_data_ptr->Derivatives = typename D::tensor_t(Index3d(0));
 		}
 
 		if (_pool_operator_id == PoolTypeId::MIN || _pool_operator_id == PoolTypeId::MAX)
@@ -107,14 +107,15 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	std::tuple<Tensor, typename ALayer<D>::LayerGradient> PLayer<D>::backpropagate(const Tensor& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
+	std::tuple<typename D::tensor_t, typename ALayer<D>::LayerGradient> PLayer<D>::backpropagate(
+		const typename D::tensor_t& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
 		const bool evaluate_input_gradient) const
 	{
 		if (deltas.size_3d() != out_size())
 			throw std::exception("Unexpected size of the input tensor of derivatives");
 
 		if (!evaluate_input_gradient)
-			return std::make_tuple<Tensor, PLayer::LayerGradient>(Tensor(), { Tensor(), std::vector<Tensor>() });
+			return std::make_tuple<typename D::tensor_t, PLayer::LayerGradient>(typename D::tensor_t(), { typename D::tensor_t(), std::vector<typename D::tensor_t>() });
 
 		if (_pool_operator_id == PoolTypeId::MIN || _pool_operator_id == PoolTypeId::MAX)
 		{
@@ -122,18 +123,18 @@ namespace DeepLearning
 				throw std::exception("Invalid index mapping");
 
 			auto input_grad = aux_learning_data.Input.min_max_pool_input_gradient(deltas, aux_learning_data.IndexMapping);
-			return std::make_tuple<Tensor, PLayer::LayerGradient>(std::move(input_grad), { Tensor(), std::vector<Tensor>() });
+			return std::make_tuple<typename D::tensor_t, PLayer::LayerGradient>(std::move(input_grad), { typename D::tensor_t(), std::vector<typename D::tensor_t>() });
 		}
 
 		if (_pool_operator_id != PoolTypeId::AVERAGE)
 			throw std::exception("Unsupported pool type");
 
 		auto input_grad = aux_learning_data.Input.average_pool_input_gradient(deltas, _pool_window_size);
-		return std::make_tuple<Tensor, PLayer::LayerGradient>(std::move(input_grad), { Tensor(), std::vector<Tensor>() });
+		return std::make_tuple<typename D::tensor_t, PLayer::LayerGradient>(std::move(input_grad), { typename D::tensor_t(), std::vector<typename D::tensor_t>() });
 	}
 
 	template <class D>
-	void PLayer<D>::update(const std::tuple<std::vector<Tensor>, Tensor>& weights_and_biases_increment, const Real& reg_factor)
+	void PLayer<D>::update(const std::tuple<std::vector<typename D::tensor_t>, typename D::tensor_t>& weights_and_biases_increment, const Real& reg_factor)
 	{
 		//Sanity check 
 		if (std::get<0>(weights_and_biases_increment).size() != 0 || std::get<1>(weights_and_biases_increment).size() != 0)
@@ -141,9 +142,9 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	CummulativeGradient PLayer<D>::init_cumulative_gradient() const
+	CummulativeGradient<D> PLayer<D>::init_cumulative_gradient() const
 	{
-		return CummulativeGradient(0, 0);
+		return CummulativeGradient<D>(0, 0);
 	}
 
 	template <class D>
@@ -178,6 +179,30 @@ namespace DeepLearning
 	Real PLayer<D>::squared_weights_sum() const
 	{
 		return Real(0);
+	}
+
+	template <>
+	PLayer<CpuDC> PLayer<CpuDC>::to_host() const
+	{
+		return *this;
+	}
+
+	template <>
+	PLayer<CpuDC> PLayer<GpuDC>::to_host() const
+	{
+		return PLayer<CpuDC>(_in_size, _pool_window_size.yz(), _pool_operator_id);
+	}
+
+	template <>
+	PLayer<GpuDC> PLayer<GpuDC>::to_device() const
+	{
+		return *this;
+	}
+
+	template <>
+	PLayer<GpuDC> PLayer<CpuDC>::to_device() const
+	{
+		return PLayer<GpuDC>(_in_size, _pool_window_size.yz(), _pool_operator_id);
 	}
 
 	template class PLayer<CpuDC>;

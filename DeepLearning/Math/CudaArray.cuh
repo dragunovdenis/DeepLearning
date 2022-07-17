@@ -153,6 +153,8 @@ namespace DeepLearning
 
 			arr._data = nullptr;
 			arr._size = 0;
+
+			return *this;
 		}
 
 		/// <summary>

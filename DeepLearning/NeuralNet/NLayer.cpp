@@ -25,15 +25,15 @@ namespace DeepLearning
 	void NLayer<D>::initialize(const std::size_t in_dim, const std::size_t out_dim, ActivationFunctionId func_id,
 		const Real rand_low, const Real rand_high, const bool standard_init_for_weights)
 	{
-		_biases = Vector(out_dim, rand_low, rand_high);
+		_biases = typename D::vector_t(out_dim, rand_low, rand_high);
 
 		if (standard_init_for_weights)
 		{
-			_weights = Matrix(out_dim, in_dim, false);
+			_weights = typename D::matrix_t(out_dim, in_dim, false);
 			_weights.standard_random_fill(Real(1) / std::sqrt(in_dim));
 		}
 		else
-			_weights = Matrix(out_dim, in_dim, rand_low, rand_high);
+			_weights = typename D::matrix_t(out_dim, in_dim, rand_low, rand_high);
 
 		_func_id = func_id;
 	}
@@ -98,9 +98,9 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	Tensor NLayer<D>::act(const Tensor& input, typename ALayer<D>::AuxLearningData* const aux_learning_data_ptr) const
+	typename D::tensor_t NLayer<D>::act(const typename D::tensor_t& input, typename ALayer<D>::AuxLearningData* const aux_learning_data_ptr) const
 	{
-		const auto function = ActivationWrapper<Vector>(ActivationFunctionId(_func_id));
+		const auto function = ActivationWrapper<typename D::vector_t>(ActivationFunctionId(_func_id));
 
 		const auto z = _weights.mul_add(input, _biases);
 
@@ -116,23 +116,24 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	std::tuple<Tensor, typename ALayer<D>::LayerGradient> NLayer<D>::backpropagate(const Tensor& deltas,
+	std::tuple<typename D::tensor_t, typename ALayer<D>::LayerGradient> NLayer<D>::backpropagate(const typename D::tensor_t& deltas,
 		const typename ALayer<D>::AuxLearningData& aux_learning_data, const bool evaluate_input_gradient) const
 	{
 		if (deltas.size_3d() != Index3d{ 1, 1, static_cast<long long>(_biases.dim()) })
 			throw std::exception("Invalid input");
 
-		const auto function = ActivationWrapper<Tensor>(ActivationFunctionId(_func_id));
+		const auto function = ActivationWrapper<typename D::tensor_t>(ActivationFunctionId(_func_id));
 		const auto biases_grad = function().calc_input_gradient(deltas, aux_learning_data.Derivatives);
 		auto weights_grad = vector_col_times_vector_row(biases_grad, aux_learning_data.Input);
 
-		return std::make_tuple<Tensor, NLayer::LayerGradient>(
-			evaluate_input_gradient ? Tensor(biases_grad * _weights).reshape(aux_learning_data.Input.size_3d()) : Tensor(0, 0, 0),
+		return std::make_tuple<typename D::tensor_t, NLayer::LayerGradient>(
+			evaluate_input_gradient ? typename D::tensor_t(biases_grad * _weights).
+			reshape(aux_learning_data.Input.size_3d()) : typename D::tensor_t(0, 0, 0),
 			{ biases_grad, {std::move(weights_grad)} });
 	}
 
 	template <class D>
-	void NLayer<D>::update(const std::tuple<std::vector<Tensor>, Tensor>& weights_and_biases_increment, const Real& reg_factor)
+	void NLayer<D>::update(const std::tuple<std::vector<typename D::tensor_t>, typename D::tensor_t>& weights_and_biases_increment, const Real& reg_factor)
 	{
 		const auto& weights_increment = std::get<0>(weights_and_biases_increment);
 
@@ -186,7 +187,43 @@ namespace DeepLearning
 	template <class D>
 	Real NLayer<D>::squared_weights_sum() const
 	{
-		return _weights.sum([](const auto& x) { return x * x; });
+		return _weights.sum_of_squares();
+	}
+
+	template <>
+	NLayer<CpuDC> NLayer<CpuDC>::to_host() const
+	{
+		return *this;
+	}
+
+	template <>
+	NLayer<CpuDC> NLayer<GpuDC>::to_host() const
+	{
+		NLayer<CpuDC> result;
+
+		result._biases = _biases.to_host();
+		result._weights = _weights.to_host();
+		result._func_id = _func_id;
+
+		return result;
+	}
+
+	template<>
+	NLayer<GpuDC> NLayer<GpuDC>::to_device() const
+	{
+		return *this;
+	}
+
+	template<>
+	NLayer<GpuDC> NLayer<CpuDC>::to_device() const
+	{
+		NLayer<GpuDC> result;
+
+		result._biases.assign(_biases);
+		result._weights.assign(_weights);
+		result._func_id = _func_id;
+
+		return result;
 	}
 
 	template class NLayer<CpuDC>;

@@ -19,7 +19,6 @@
 
 #include "../CudaBridge.h"
 #include "BasicCollection.h"
-#include "Dual.h"
 #include "Functions.h"
 
 namespace DeepLearning

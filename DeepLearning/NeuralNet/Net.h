@@ -76,7 +76,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Returns output of the neural network calculated for the given input
 		/// </summary>
-		Tensor act(const Tensor& input, std::vector<typename ALayer<D>::AuxLearningData>* const aux_data_ptr = nullptr) const;
+		typename D::tensor_t act(const typename D::tensor_t& input, std::vector<typename ALayer<D>::AuxLearningData>* const aux_data_ptr = nullptr) const;
 
 		/// <summary>
 		/// A method that performs training of the neural net based on the given input data with references
@@ -91,7 +91,7 @@ namespace DeepLearning
 		/// where n is the number of training items, w_{i} --- weights.</param>
 		/// <param name="epoch_callback">Callback method that will be called after each learning epoch.
 		/// It is supposed to serve diagnostic evaluation purposes.</param>
-		void learn(const std::vector<Tensor>& training_items, const std::vector<Tensor>& reference_items,
+		void learn(const std::vector<typename D::tensor_t>& training_items, const std::vector<typename D::tensor_t>& reference_items,
 			const std::size_t batch_size, const std::size_t epochs_count, const Real learning_rate, const CostFunctionId& cost_func_id,
 			const Real& lambda = Real(0),
 			const std::function<void(const std::size_t, const Real)>& epoch_callback = [](const auto epoch_id, const auto scaled_l2_reg_factor) {});
@@ -106,14 +106,13 @@ namespace DeepLearning
 		/// <param name="labels">Labels for the given input data</param>
 		/// <param name="min_answer_probability">Minimal "probability" that the answer
 		/// from the neural net should have in order to be considered as a "valid"</param>
-		std::size_t count_correct_answers(const std::vector<Tensor>& test_input, const std::vector<Tensor>& labels,
-			const Real& min_answer_probability = Real(0)) const;
+		std::size_t count_correct_answers(const std::vector<typename D::tensor_t>& test_input, const std::vector<typename D::tensor_t>& labels) const;
 
 		/// <summary>
 		/// Evaluates the given cost function for the given pair of input and reference collections
 		/// </summary>
-		Real evaluate_cost_function(const std::vector<Tensor>& test_input,
-			const std::vector<Tensor>& reference_output, const CostFunctionId& cost_func_id, const Real l2_reg_factor) const;
+		Real evaluate_cost_function(const std::vector<typename D::tensor_t>& test_input,
+			const std::vector<typename D::tensor_t>& reference_output, const CostFunctionId& cost_func_id, const Real l2_reg_factor) const;
 
 		/// <summary>
 		/// Method to append layer to the net

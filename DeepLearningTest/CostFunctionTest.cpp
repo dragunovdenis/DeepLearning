@@ -119,8 +119,8 @@ namespace DeepLearningTest
 			{
 				const auto diff_deriv = std::abs(result_deriv(item_id) - reference_deriv(input(item_id), reference(item_id)));
 				const auto diff_deriv_single = std::abs(result_deriv_single(item_id) - reference_deriv(input(item_id), reference(item_id)));
-				StandardTestUtils::LogReal("diff_deriv = ", diff_deriv);
-				StandardTestUtils::LogReal("diff_deriv_single = ",diff_deriv_single);
+				StandardTestUtils::LogReal("diff_deriv", diff_deriv);
+				StandardTestUtils::LogReal("diff_deriv_single",diff_deriv_single);
 				Assert::IsTrue(diff_deriv <= 10 * std::numeric_limits<Real>::epsilon(), L"Unexpectedly high deviation from the reference derivative value");
 				Assert::IsTrue(diff_deriv_single <= 10 * std::numeric_limits<Real>::epsilon(),
 					L"Unexpectedly high deviation from the reference derivative value (single version)");
@@ -154,10 +154,10 @@ namespace DeepLearningTest
 			const auto func_diff_2 = std::abs(std::get<0>(function_and_gradient) - function_host);
 			const auto gradient_diff_1 = (gradient.to_host() - gradient_host).max_abs();
 			const auto gradient_diff_2 = (std::get<1>(function_and_gradient).to_host() - gradient_host).max_abs();
-			StandardTestUtils::LogReal("func_diff_1 = ", func_diff_1);
-			StandardTestUtils::LogReal("func_diff_2 = ", func_diff_2);
-			StandardTestUtils::LogReal("gradient_diff_1 = ", gradient_diff_1);
-			StandardTestUtils::LogReal("gradient_diff_2 = ", gradient_diff_2);
+			StandardTestUtils::LogReal("func_diff_1", func_diff_1);
+			StandardTestUtils::LogReal("func_diff_2", func_diff_2);
+			StandardTestUtils::LogReal("gradient_diff_1", gradient_diff_1);
+			StandardTestUtils::LogReal("gradient_diff_2", gradient_diff_2);
 
 			Assert::IsTrue(func_diff_1 < 10 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference (function 1)");
 			Assert::IsTrue(func_diff_2 < 10 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference (function 2)");

@@ -18,6 +18,7 @@
 #pragma once
 #include "../CudaBridge.h"
 #include<cmath>
+#include "Dual.h"
 
 namespace DeepLearning::Func
 {

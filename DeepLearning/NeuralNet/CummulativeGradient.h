@@ -29,17 +29,18 @@ namespace DeepLearning
 	/// the gradients of the "partial" cost function. The structure below allows to accumulate impact of each 
 	/// particular input and then calculate the average on demand
 	/// </summary>
+	template <class D>
 	class CummulativeGradient
 	{
 		/// <summary>
 		/// Sum of the derivatives with respect to layer weights
 		/// </summary>
-		std::vector<Tensor> _sum_grad_weights{};
+		std::vector<typename D::tensor_t> _sum_grad_weights{};
 
 		/// <summary>
 		/// Sum of the derivatives with respect to layer biases
 		/// </summary>
-		Tensor _sum_grad_biases{};
+		typename D::tensor_t _sum_grad_biases{};
 
 		/// <summary>
 		/// Number of the items accumulated in the corresponding sums
@@ -61,7 +62,7 @@ namespace DeepLearning
 		/// </summary>
 		/// <param name="weight_grad">"Partial" gradient with respect to weights</param>
 		/// <param name="bias_grad">"Partial" gradient with respect to biases</param>
-		void add(const std::vector<Tensor>& weight_grad, const Tensor& bias_grad);
+		void add(const std::vector<typename D::tensor_t>& weight_grad, const typename D::tensor_t& bias_grad);
 
 		/// <summary>
 		/// Adds data from another cummulative gradient
@@ -71,7 +72,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Calculates and returns the "average" gradient with respect to layer weights and biases
 		/// </summary>
-		std::tuple<std::vector<Tensor>, Tensor> calc_average_grarient(const Real scale_factor = Real(1)) const;
+		std::tuple<std::vector<typename D::tensor_t>, typename D::tensor_t> calc_average_grarient(const Real scale_factor = Real(1)) const;
 
 		/// <summary>
 		/// Resets the cumulative structure

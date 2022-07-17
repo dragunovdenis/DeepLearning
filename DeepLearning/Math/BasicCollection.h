@@ -107,6 +107,11 @@ namespace DeepLearning
 		Real sum(const std::function<Real(Real)>& transform_operator = [](const auto& x) {return x; }) const;
 
 		/// <summary>
+		/// Returns sum of squares of the elements in the collection
+		/// </summary>
+		Real sum_of_squares() const;
+
+		/// <summary>
 		/// Assigns the given value to all the elements of the collection
 		/// </summary>
 		void fill(const Real& val);

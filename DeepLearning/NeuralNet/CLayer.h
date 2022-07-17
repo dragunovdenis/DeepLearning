@@ -38,15 +38,27 @@ namespace DeepLearning
 		Index3d _strides{};
 		ActivationFunctionId _func_id = ActivationFunctionId::UNKNOWN;
 
+		//Declare "friends" to be able to switch between the data contexts
+		//(see 'to_host()' and 'to_device()' methods)
+		friend class CLayer<CpuDC>;
+		friend class CLayer<GpuDC>;
+
+		/// <summary>
+		/// Copies all the field from the source to destination instance accept those that might
+		/// require "host-to-device" or "device-to-host" copy operations
+		/// </summary>
+		template <class D1, class D2>
+		static void partial_copy(const CLayer<D1>& src, CLayer<D2>& dest);
+
 		/// <summary>
 		/// Biases
 		/// </summary>
-		Tensor _biases{};
+		typename D::tensor_t _biases{};
 
 		/// <summary>
 		/// Convolution filters
 		/// </summary>
-		std::vector<Tensor> _filters{};
+		std::vector<typename D::tensor_t> _filters{};
 
 		/// <summary>
 		/// Initializes the layer according to the given set of parameters
@@ -108,18 +120,18 @@ namespace DeepLearning
 		/// <summary>
 		/// See description in the base class
 		/// </summary>
-		Tensor act(const Tensor& input, typename ALayer<D>::AuxLearningData* const aux_learning_data_ptr = nullptr) const override;
+		typename D::tensor_t act(const typename D::tensor_t& input, typename ALayer<D>::AuxLearningData* const aux_learning_data_ptr = nullptr) const override;
 
 		/// <summary>
 		/// See description in the base class
 		/// </summary>
-		virtual std::tuple<Tensor, typename ALayer<D>::LayerGradient> backpropagate(const Tensor& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
+		virtual std::tuple<typename D::tensor_t, typename ALayer<D>::LayerGradient> backpropagate(const typename D::tensor_t& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
 			const bool evaluate_input_gradient = true) const override;
 
 		/// <summary>
 		/// See description in the base class
 		/// </summary>
-		virtual void update(const std::tuple<std::vector<Tensor>, Tensor>& weights_and_biases_increment, const Real& reg_factor) override;
+		virtual void update(const std::tuple<std::vector<typename D::tensor_t>, typename D::tensor_t>& weights_and_biases_increment, const Real& reg_factor) override;
 
 		/// <summary>
 		/// See description in the base class
@@ -151,6 +163,16 @@ namespace DeepLearning
 		/// See the summary to the corresponding method in the base class
 		/// </summary>
 		Real squared_weights_sum() const override;
+
+		/// <summary>
+		/// Converts the given instance to the one working within the "cpu data context"
+		/// </summary>
+		CLayer<CpuDC> to_host() const;
+
+		/// <summary>
+		/// Converts the given instance to the one working within the "gpu data context" (CUDA "device" memory)
+		/// </summary>
+		CLayer<GpuDC> to_device() const;
 	};
 
 }

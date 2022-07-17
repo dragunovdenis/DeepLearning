@@ -37,8 +37,8 @@ namespace DeepLearning
 		if (out_channel_size.x != 1)
 			throw std::exception("Unexpected channel size");
 
-		_biases = Tensor(filters_count, out_channel_size.y, out_channel_size.z, Real(-1), Real(1));
-		_filters = std::vector(filters_count, Tensor(_weight_tensor_size, false));
+		_biases = typename D::tensor_t(filters_count, out_channel_size.y, out_channel_size.z, Real(-1), Real(1));
+		_filters = std::vector(filters_count, typename D::tensor_t(_weight_tensor_size, false));
 
 		std::for_each(_filters.begin(), _filters.end(), [](auto& filter) { filter.standard_random_fill(); });
 	}
@@ -86,14 +86,14 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	Tensor CLayer<D>::act(const Tensor& input, typename ALayer<D>::AuxLearningData* const aux_learning_data_ptr) const
+	typename D::tensor_t CLayer<D>::act(const typename D::tensor_t& input, typename ALayer<D>::AuxLearningData* const aux_learning_data_ptr) const
 	{
 		if (input.size_3d() != in_size())
 			throw std::exception("Unexpected size of the input tensor");
 
-		const auto function = ActivationWrapper<Tensor>(ActivationFunctionId(_func_id));
+		const auto function = ActivationWrapper<typename D::tensor_t>(ActivationFunctionId(_func_id));
 
-		auto temp = Tensor(out_size(), false);
+		auto temp = typename D::tensor_t(out_size(), false);
 		input.convolve(temp, _filters, _paddings, _strides);
 
 		temp += _biases;
@@ -110,32 +110,32 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	std::tuple<Tensor, typename ALayer<D>::LayerGradient> CLayer<D>::backpropagate(const Tensor& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
+	std::tuple<typename D::tensor_t, typename ALayer<D>::LayerGradient> CLayer<D>::backpropagate(const typename D::tensor_t& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
 		const bool evaluate_input_gradient) const
 	{
 		if (deltas.size_3d() != aux_learning_data.Derivatives.size_3d())
 			throw std::exception("Unexpected size of the input tensor of derivatives");
 
-		const auto function = ActivationWrapper<Tensor>(ActivationFunctionId(_func_id));
+		const auto function = ActivationWrapper<typename D::tensor_t>(ActivationFunctionId(_func_id));
 		auto biases_grad = function().calc_input_gradient(deltas, aux_learning_data.Derivatives);
 
-		auto filters_grad = std::vector<Tensor>(_filters.size());
-		Tensor input_grad = evaluate_input_gradient ? Tensor(in_size(), true) : Tensor();
+		auto filters_grad = std::vector<typename D::tensor_t>(_filters.size());
+		typename D::tensor_t input_grad = evaluate_input_gradient ? typename D::tensor_t(in_size(), true) : typename D::tensor_t();
 		const auto& input_tensor = aux_learning_data.Input;
 
 		for (auto filter_id = 0ull; filter_id < _filters.size(); filter_id++)
 		{
 			filters_grad[filter_id] = evaluate_input_gradient ? input_tensor.convolution_gradient<true>(
-				static_cast<const Tensor&>(biases_grad).get_layer_handle(filter_id), input_grad, _filters[filter_id], _paddings, _strides) :
+				static_cast<const typename D::tensor_t&>(biases_grad).get_layer_handle(filter_id), input_grad, _filters[filter_id], _paddings, _strides) :
 				input_tensor.convolution_gradient<false>(
-					static_cast<const Tensor&>(biases_grad).get_layer_handle(filter_id), input_grad, _filters[filter_id], _paddings, _strides);
+					static_cast<const typename D::tensor_t&>(biases_grad).get_layer_handle(filter_id), input_grad, _filters[filter_id], _paddings, _strides);
 		}
 
-		return std::make_tuple<Tensor, CLayer::LayerGradient>(std::move(input_grad), { std::move(biases_grad), std::move(filters_grad) });
+		return std::make_tuple<typename D::tensor_t, CLayer::LayerGradient>(std::move(input_grad), { std::move(biases_grad), std::move(filters_grad) });
 	}
 
 	template <class D>
-	void CLayer<D>::update(const std::tuple<std::vector<Tensor>, Tensor>& weights_and_biases_increment, const Real& reg_factor)
+	void CLayer<D>::update(const std::tuple<std::vector<typename D::tensor_t>, typename D::tensor_t>& weights_and_biases_increment, const Real& reg_factor)
 	{
 		const auto& weights_increment = std::get<0>(weights_and_biases_increment);
 
@@ -223,7 +223,62 @@ namespace DeepLearning
 	template <class D>
 	Real CLayer<D>::squared_weights_sum() const
 	{
-		return std::accumulate(_filters.begin(), _filters.end(), Real(0), [](const auto& sum, const auto& filter) { return sum + filter.sum([](const auto& x) { return x * x; }); });
+		return std::accumulate(_filters.begin(), _filters.end(), Real(0), [](const auto& sum, const auto& filter) { return sum + filter.sum_of_squares(); });
+	}
+
+	/// <summary>
+	/// Copies all the field from the source to destination instance accept those that might
+	/// require "host-to-device" or "device-to-host" copy operations
+	/// </summary>
+	template <class D>
+	template <class D1, class D2>
+	void CLayer<D>::partial_copy(const CLayer<D1>& src, CLayer<D2>& dest)
+	{
+		dest._in_size = src._in_size;
+		dest._weight_tensor_size = src._weight_tensor_size;
+		dest._paddings = src._paddings;
+		dest._strides = src._strides;
+		dest._func_id = src._func_id;
+	}
+
+	template <>
+	CLayer<CpuDC> CLayer<CpuDC>::to_host() const
+	{
+		return *this;
+	}
+
+	template <>
+	CLayer<CpuDC> CLayer<GpuDC>::to_host() const
+	{
+		CLayer<CpuDC> result;
+		partial_copy(*this, result);
+		result._biases = _biases.to_host();
+		std::transform(_filters.begin(), _filters.end(), std::back_inserter(result._filters), [](const auto& x) { return x.to_host(); });
+
+		return result;
+	}
+
+	template <>
+	CLayer<GpuDC> CLayer<GpuDC>::to_device() const
+	{
+		return *this;
+	}
+
+	template <>
+	CLayer<GpuDC> CLayer<CpuDC>::to_device() const
+	{
+		CLayer<GpuDC> result;
+		partial_copy(*this, result);
+		result._biases.assign(_biases);
+		std::transform(_filters.begin(), _filters.end(), std::back_inserter(result._filters),
+			[](const auto& x) 
+			{
+				GpuDC::tensor_t result;
+				result.assign(x);
+				return result; 
+			});
+
+		return result;
 	}
 
 	template class CLayer<CpuDC>;

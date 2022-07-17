@@ -523,6 +523,11 @@ namespace DeepLearning
 		return kernel_grad;
 	}
 
+	template CudaTensor CudaTensor::convolution_gradient<true>(const RealMemHandleConst& conv_res_grad, CudaTensor& input_grad, const CudaTensor& kernel, const Index3d& paddings,
+		const Index3d& strides) const;
+	template CudaTensor CudaTensor::convolution_gradient<false>(const RealMemHandleConst& conv_res_grad, CudaTensor& input_grad, const CudaTensor& kernel, const Index3d& paddings,
+		const Index3d& strides) const;
+
 	CudaTensor CudaTensor::pool(const PoolOperator& pool_operator, const Index3d& paddings,	const Index3d& strides) const
 	{
 		throw std::exception("Not implemented");

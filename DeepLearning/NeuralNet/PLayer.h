@@ -33,7 +33,6 @@ namespace DeepLearning
 	{
 		Index3d _in_size{};
 		Index3d _pool_window_size{};
-		const Index3d _paddings{}; //always use zero paddings
 		Index3d _strides{};
 
 		PoolTypeId _pool_operator_id = PoolTypeId::UNKNOWN;
@@ -92,23 +91,24 @@ namespace DeepLearning
 		/// <summary>
 		/// See description in the base class
 		/// </summary>
-		virtual Tensor act(const Tensor& input, typename ALayer<D>::AuxLearningData* const aux_learning_data_ptr = nullptr) const override;
+		virtual typename D::tensor_t act(const typename D::tensor_t& input, typename ALayer<D>::AuxLearningData* const aux_learning_data_ptr = nullptr) const override;
 
 		/// <summary>
 		/// See description in the base class
 		/// </summary>
-		virtual std::tuple<Tensor, typename ALayer<D>::LayerGradient> backpropagate(const Tensor& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
+		virtual std::tuple<typename D::tensor_t, typename ALayer<D>::LayerGradient> backpropagate(
+			const typename D::tensor_t& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
 			const bool evaluate_input_gradient = true) const override;
 
 		/// <summary>
 		/// For the "pooling" layer this method does nothing except a sanity check that the input increments are empty
 		/// </summary>
-		virtual void update(const std::tuple<std::vector<Tensor>, Tensor>& weights_and_biases_increment, const Real& reg_factor) override;
+		virtual void update(const std::tuple<std::vector<typename D::tensor_t>, typename D::tensor_t>& weights_and_biases_increment, const Real& reg_factor) override;
 
 		/// <summary>
 		/// Returns zero initialized instance of cumulative gradient suitable for the current instance of the layer
 		/// </summary>
-		virtual CummulativeGradient init_cumulative_gradient() const override;
+		virtual CummulativeGradient<D> init_cumulative_gradient() const override;
 
 		/// <summary>
 		/// See description in the base class
@@ -140,5 +140,15 @@ namespace DeepLearning
 		/// See the summary to the corresponding method in the base class
 		/// </summary>
 		Real squared_weights_sum() const override;
+
+		/// <summary>
+		/// Converts the given instance to the one working within the "cpu data context"
+		/// </summary>
+		PLayer<CpuDC> to_host() const;
+
+		/// <summary>
+		/// Converts the given instance to the one working within the "gpu data context" (CUDA "device" memory)
+		/// </summary>
+		PLayer<GpuDC> to_device() const;
 	};
 }

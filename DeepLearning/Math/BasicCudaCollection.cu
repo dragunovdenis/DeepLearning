@@ -18,6 +18,7 @@
 #include "BasicCudaCollection.cuh"
 #include <nvfunctional>
 #include <thrust/transform.h>
+#include <thrust/transform_reduce.h>
 #include <thrust/functional.h>
 #include <thrust/execution_policy.h>
 #include <thrust/reduce.h>
@@ -86,6 +87,9 @@ namespace DeepLearning
 
 	Real BasicCudaCollection::max_abs() const
 	{
+		if (empty())
+			return std::numeric_limits<Real>::signaling_NaN();
+
 		return std::abs(thrust::reduce(thrust::device, begin(), end(), Real(0), 
 			[] __device__ (const auto& x, const auto& y) {
 				if (cuda_abs(x) > cuda_abs(y))
@@ -99,6 +103,12 @@ namespace DeepLearning
 	Real BasicCudaCollection::sum() const
 	{
 		return thrust::reduce(thrust::device, begin(), end());
+	}
+
+	Real BasicCudaCollection::sum_of_squares() const
+	{
+		return thrust::transform_reduce(thrust::device, begin(), end(), []__device__(const auto & x) { return x * x; },
+			Real(0), thrust::plus<Real>());
 	}
 
 	void BasicCudaCollection::fill(const Real& val)

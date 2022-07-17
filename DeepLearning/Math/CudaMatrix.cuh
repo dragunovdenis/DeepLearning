@@ -51,11 +51,6 @@ namespace DeepLearning
 		void assign(const CudaMatrix& source);
 
 		/// <summary>
-		/// Assignment from a "host" matrix
-		/// </summary>
-		void assign(const Matrix& source);
-
-		/// <summary>
 		/// Reallocates memory of the matrix to meet the given number of elements
 		/// (if the current size does not coincide with the given "new" size)
 		/// </summary>
@@ -64,6 +59,11 @@ namespace DeepLearning
 	public:
 
 		using Base = BasicCudaCollection;
+
+		/// <summary>
+		/// Assignment from a "host" matrix
+		/// </summary>
+		void assign(const Matrix& source);
 
 		/// <summary>
 		/// Total number of elements in the matrix

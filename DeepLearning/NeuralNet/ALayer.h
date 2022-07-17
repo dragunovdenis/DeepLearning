@@ -41,17 +41,17 @@ namespace DeepLearning
 			/// <summary>
 			/// Container to store input of a convolution layer
 			/// </summary>
-			Tensor Input{};
+			typename D::tensor_t Input{};
 
 			/// <summary>
 			/// Container to store derivatives of the activation function
 			/// </summary>
-			Tensor Derivatives{};
+			typename D::tensor_t Derivatives{};
 
 			/// <summary>
 			/// Place holder for index mappings
 			/// </summary>
-			std::vector<std::size_t> IndexMapping{};
+			typename D::index_array_t IndexMapping{};
 		};
 
 		/// <summary>
@@ -62,12 +62,12 @@ namespace DeepLearning
 			/// <summary>
 			/// Gradient with respect to the biases of the convolution layer
 			/// </summary>
-			Tensor Biases_grad{};
+			typename D::tensor_t Biases_grad{};
 
 			/// <summary>
 			/// Gradient with respect to the weights of the convolution layer
 			/// </summary>
-			std::vector<Tensor> Weights_grad{};
+			std::vector<typename D::tensor_t> Weights_grad{};
 		};
 
 	public:
@@ -93,7 +93,7 @@ namespace DeepLearning
 		/// <param name="input">Input signal</param>
 		/// <param name="aux_learning_data_ptr">Pointer to the auxiliary data structure that should be provided during the training (learning) process</param>
 		/// <returns>Output signal</returns>
-		virtual Tensor act(const Tensor& input, AuxLearningData* const aux_learning_data_ptr = nullptr) const = 0;
+		virtual typename D::tensor_t act(const typename D::tensor_t& input, AuxLearningData* const aux_learning_data_ptr = nullptr) const = 0;
 
 		/// <summary>
 		/// Performs the back-propagation
@@ -107,7 +107,7 @@ namespace DeepLearning
 		/// <returns>Derivatives of the cost function with respect to the output of the previous neural layer
 		/// (or input of the current neural layer, which is the same) as well as the derivatives of the cost function
 		/// with respect to the weight and biases of the current layer</returns>
-		virtual std::tuple<Tensor, LayerGradient> backpropagate(const Tensor& deltas, const AuxLearningData& aux_learning_data,
+		virtual std::tuple<typename D::tensor_t, LayerGradient> backpropagate(const typename D::tensor_t& deltas, const AuxLearningData& aux_learning_data,
 			const bool evaluate_input_gradient = true) const = 0;
 
 		/// <summary>
@@ -116,14 +116,14 @@ namespace DeepLearning
 		/// <param name="weights_and_biases_increment">Increment for weights and biases</param>
 		/// <param name="reg_factor">Regularization factor, that (if non-zero) 
 		/// results in term "reg_factor*w_i" being added to each weight "w_i" </param>
-		virtual void update(const std::tuple<std::vector<Tensor>, Tensor>& weights_and_biases_increment, const Real& reg_factor) = 0;
+		virtual void update(const std::tuple<std::vector<typename D::tensor_t>, typename D::tensor_t>& weights_and_biases_increment, const Real& reg_factor) = 0;
 
 		/// <summary>
 		/// Returns zero initialized instance of cumulative gradient suitable for the current instance of the layer
 		/// </summary>
-		virtual CummulativeGradient init_cumulative_gradient() const
+		virtual CummulativeGradient<D> init_cumulative_gradient() const
 		{
-			return CummulativeGradient(weight_tensor_size(), out_size());
+			return CummulativeGradient<D>(weight_tensor_size(), out_size());
 		}
 
 		/// <summary>

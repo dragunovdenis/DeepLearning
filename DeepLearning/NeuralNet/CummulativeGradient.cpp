@@ -18,17 +18,20 @@
 #include "CummulativeGradient.h"
 #include <algorithm>
 #include <exception>
+#include "DataContext.h"
 
 namespace DeepLearning
 {
-	CummulativeGradient::CummulativeGradient(const Index3d& weight_tensor_size, const Index3d& bias_tensor_size)
+	template <class D>
+	CummulativeGradient<D>::CummulativeGradient(const Index3d& weight_tensor_size, const Index3d& bias_tensor_size)
 	{
 		const auto filters_cnt = bias_tensor_size.x;//Number of layers (channels) in the tensor of biases
-		_sum_grad_weights = std::vector<Tensor>(filters_cnt, Tensor(weight_tensor_size) );
-		_sum_grad_biases = Tensor(bias_tensor_size);
+		_sum_grad_weights = std::vector<typename D::tensor_t>(filters_cnt, typename D::tensor_t(weight_tensor_size) );
+		_sum_grad_biases = typename D::tensor_t(bias_tensor_size);
 	}
 
-	void CummulativeGradient::add(const std::vector<Tensor>& weight_grad, const Tensor& bias_grad)
+	template <class D>
+	void CummulativeGradient<D>::add(const std::vector<typename D::tensor_t>& weight_grad, const typename D::tensor_t& bias_grad)
 	{
 		if (weight_grad.size() != 0)
 			_sum_grad_weights += weight_grad;
@@ -39,7 +42,8 @@ namespace DeepLearning
 		_accumulated_items_count++;
 	}
 
-	void CummulativeGradient::add(const CummulativeGradient& gradient)
+	template <class D>
+	void CummulativeGradient<D>::add(const CummulativeGradient& gradient)
 	{
 		if (gradient._sum_grad_weights.size() != 0)
 			_sum_grad_weights += gradient._sum_grad_weights;
@@ -50,7 +54,8 @@ namespace DeepLearning
 		_accumulated_items_count += gradient._accumulated_items_count;
 	}
 
-	std::tuple<std::vector<Tensor>, Tensor> CummulativeGradient::calc_average_grarient(const Real scale_factor) const
+	template <class D>
+	std::tuple<std::vector<typename D::tensor_t>, typename D::tensor_t> CummulativeGradient<D>::calc_average_grarient(const Real scale_factor) const
 	{
 		if (_accumulated_items_count == 0)
 			throw std::exception("No items have been added.");
@@ -63,7 +68,8 @@ namespace DeepLearning
 		return std::make_tuple(average_grad_weights, _sum_grad_biases * factor);
 	}
 
-	void CummulativeGradient::reset()
+	template <class D>
+	void CummulativeGradient<D>::reset()
 	{
 		_sum_grad_biases.fill(Real(0));
 		for (auto item_id = 0ull; item_id < _sum_grad_weights.size(); item_id++)
@@ -71,4 +77,7 @@ namespace DeepLearning
 
 		_accumulated_items_count = 0;
 	}
+
+	template class CummulativeGradient<CpuDC>;
+	template class CummulativeGradient<GpuDC>;
 }

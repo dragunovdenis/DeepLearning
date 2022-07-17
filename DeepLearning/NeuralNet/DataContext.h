@@ -31,6 +31,7 @@ namespace DeepLearning
 	/// </summary>
 	class CpuDC
 	{
+	public:
 		using vector_t = Vector;
 		using matrix_t = Matrix;
 		using tensor_t = Tensor;
@@ -42,6 +43,7 @@ namespace DeepLearning
 	/// </summary>
 	class GpuDC
 	{
+	public:
 		using vector_t = CudaVector;
 		using matrix_t = CudaMatrix;
 		using tensor_t = CudaTensor;

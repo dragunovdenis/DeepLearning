@@ -22,6 +22,8 @@
 #include "Utilities.h"
 #include <functional>
 #include <chrono>
+#include <atlbase.h>
+#include <atlconv.h>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;
@@ -362,6 +364,16 @@ namespace DeepLearningTest::StandardTestUtils
 	/// </summary>
 	inline void LogReal(const std::string& message, const Real& value)
 	{
-		Logger::WriteMessage((message + Utils::to_string(value) + "\n").c_str());
+		Logger::WriteMessage((message + " = " + Utils::to_string(value) + "\n").c_str());
 	}
+
+	/// <summary>
+	/// Logs given real value together with the given message in a single line
+	/// </summary>
+	inline void LogRealAndAssertLessOrEqualTo(const std::string& message, const Real& value, const Real& upper_threshold)
+	{
+		LogReal(message, value);
+		Assert::IsTrue(value <= upper_threshold, CA2W((message + ": " + std::string("Upper threshold exceeded.")).c_str()));
+	}
+
 }

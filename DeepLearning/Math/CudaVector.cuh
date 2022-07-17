@@ -48,11 +48,6 @@ namespace DeepLearning
 		void assign(const BasicCudaCollection& source);
 
 		/// <summary>
-		/// Assignment from a "host" collection
-		/// </summary>
-		void assign(const BasicCollection& source);
-
-		/// <summary>
 		/// Reallocates memory of the vector to meet the given number of elements
 		/// (if the current size does not coincide with the given "new" size)
 		/// </summary>
@@ -61,6 +56,11 @@ namespace DeepLearning
 	public:
 
 		using Base = BasicCudaCollection;
+
+		/// <summary>
+		/// Assignment from a "host" collection
+		/// </summary>
+		void assign(const BasicCollection& source);
 
 		/// <summary>
 		/// Size of the vector

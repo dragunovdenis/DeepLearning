@@ -27,6 +27,7 @@
 #include <numeric>
 #include <algorithm>
 #include <random>
+#include "StandardTestUtils.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;
@@ -205,6 +206,133 @@ namespace DeepLearningTest
 			RunGeneralDerivativeWithRespectToWeightsAndBiasesTest(nl, cost_function_id,
 				(std::is_same_v<Real, double> ? Real(8e-10) : Real(3e-3)),
 				(std::is_same_v<Real, double> ? Real(5e-10) : Real(3e-3)));
+		}
+
+		/// <summary>
+		/// Returns L-infinity norm of the difference between the given 4D tensors
+		/// </summary>
+		Real max_abs(const std::vector<Tensor>& v1, const std::vector<CudaTensor>& v2)
+		{
+			if (v1.size() != v2.size())
+				throw std::exception("The input vectors must be of the same size");
+
+			auto result = Real(0);
+
+			for (auto tensor_id = 0ull; tensor_id < v1.size(); tensor_id++)
+				result = std::max(result, (v1[tensor_id] - v2[tensor_id].to_host()).max_abs());
+
+			return result;
+		}
+
+		/// <summary>
+		/// General method to compare CUDA accelerated NLayer implementation with the "usual" one
+		/// </summary>
+		template <template<class> class L>
+		void LayerCudaSupportTest(const std::function<L<GpuDC>()> layer_factory)
+		{
+			//Arrange
+			const auto nl = layer_factory();
+			const auto input = CudaTensor(nl.in_size(), -1, 1);
+			const auto out_gradient = CudaTensor(nl.out_size(), -1, 1);
+			typename ALayer<GpuDC>::AuxLearningData aux_learning_data;
+			Assert::IsTrue(input.max_abs() > 0 && out_gradient.max_abs() > 0, L"Input tensors are supposed to be nonzero");
+
+			//Act
+			const auto output = nl.act(input, &aux_learning_data);
+			const auto [in_gradient, layer_gradient] = nl.backpropagate(out_gradient, aux_learning_data, true);
+
+			//Assert
+			Assert::IsTrue(output.max_abs() > 0 && in_gradient.max_abs() > 0, L"Output tensors are supposed to be nonzero");//A sanity check
+			const auto nl_host = nl.to_host().to_device().to_host();//involve "to_device" into the testing as well
+			const auto input_host = input.to_host();
+			const auto out_gradient_host = out_gradient.to_host();
+			typename ALayer<CpuDC>::AuxLearningData aux_learning_data_host;
+
+			const auto output_host = nl_host.act(input_host, &aux_learning_data_host);
+			const auto [in_gradient_host, layer_gradient_host] = nl_host.backpropagate(out_gradient_host, aux_learning_data_host, true);
+
+			const auto output_diff = (output_host - output.to_host()).max_abs();
+			StandardTestUtils::LogRealAndAssertLessOrEqualTo("output_diff", output_diff, 10* std::numeric_limits<Real>::epsilon());
+
+			const auto in_gradient_diff = (in_gradient_host - in_gradient.to_host()).max_abs();
+			StandardTestUtils::LogRealAndAssertLessOrEqualTo("in_gradient_diff", in_gradient_diff, 10 * std::numeric_limits<Real>::epsilon());
+
+			if (!layer_gradient_host.Biases_grad.empty() || !layer_gradient.Biases_grad.empty())
+			{
+				const auto biases_gradient_diff = (layer_gradient_host.Biases_grad - layer_gradient.Biases_grad.to_host()).max_abs();
+				StandardTestUtils::LogRealAndAssertLessOrEqualTo("biases_gradient_diff", biases_gradient_diff, 10 * std::numeric_limits<Real>::epsilon());
+			}
+
+			const auto weights_gradient_diff = max_abs(layer_gradient_host.Weights_grad, layer_gradient.Weights_grad);
+			StandardTestUtils::LogRealAndAssertLessOrEqualTo("weights_gradient_diff", weights_gradient_diff, 10 * std::numeric_limits<Real>::epsilon());
+
+			if (!aux_learning_data_host.Derivatives.empty() || !aux_learning_data.Derivatives.empty())
+			{
+				const auto deriv_diff = (aux_learning_data_host.Derivatives - aux_learning_data.Derivatives.to_host()).max_abs();
+				StandardTestUtils::LogRealAndAssertLessOrEqualTo("deriv_diff", deriv_diff, 10 * std::numeric_limits<Real>::epsilon());
+			}
+
+			const auto indices_are_equal = aux_learning_data_host.IndexMapping == aux_learning_data.IndexMapping.to_stdvector();
+			StandardTestUtils::LogReal("indices_are_equal", indices_are_equal);
+			Assert::IsTrue(indices_are_equal, L"Arrays of indices are not equal");
+
+			const auto sum_of_weight_squares_diff = std::abs(nl.squared_weights_sum() - nl_host.squared_weights_sum());
+			StandardTestUtils::LogRealAndAssertLessOrEqualTo("sum_of_weight_squares_diff", sum_of_weight_squares_diff,
+				500 * std::numeric_limits<Real>::epsilon());
+		}
+
+		static NLayer<GpuDC> CreateCudaNLayer(const ActivationFunctionId activation_func_id)
+		{
+			const auto input_dim = 10;
+			const auto output_dim = 23;
+			return NLayer<GpuDC>(input_dim, output_dim, activation_func_id);
+		}
+
+		TEST_METHOD(NLayerSigmoidCudaSupportTest)
+		{
+			LayerCudaSupportTest<NLayer>([]() { return CreateCudaNLayer(ActivationFunctionId::SIGMOID); });
+		}
+
+		TEST_METHOD(NLayerSoftMaxCudaSupportTest)
+		{
+			LayerCudaSupportTest<NLayer>([]() { return CreateCudaNLayer(ActivationFunctionId::SOFTMAX); });
+		}
+
+		static CLayer<GpuDC> CreateCudaCLayer(const ActivationFunctionId activation_func_id)
+		{
+			const auto input_dim = Index3d(5, 13, 17);
+			const auto filter_window = Index2d(3, 4);
+			const auto filters_count = 7;
+			const auto paddings = Index3d(0, 3, 6);
+			const auto strides = Index3d(1, 2, 3);
+			return CLayer<GpuDC>(input_dim, filter_window, filters_count, ActivationFunctionId::SIGMOID, paddings, strides);
+		}
+
+		TEST_METHOD(CLayerSigmoidCudaSupportTest)
+		{
+			LayerCudaSupportTest<CLayer>([]() { return CreateCudaCLayer(ActivationFunctionId::SIGMOID); });
+		}
+
+		TEST_METHOD(CLayerSoftMaxCudaSupportTest)
+		{
+			LayerCudaSupportTest<CLayer>([]() { return CreateCudaCLayer(ActivationFunctionId::SOFTMAX); });
+		}
+
+		static PLayer<GpuDC> CreateCudaPLayer(const PoolTypeId pool_oper_id)
+		{
+			const auto input_dim = Index3d(5, 10, 7);
+			const auto filter_window = Index2d(3, 4);
+			return PLayer<GpuDC>(input_dim, filter_window, pool_oper_id);
+		}
+
+		TEST_METHOD(PLayerMaxCudaSupportTest)
+		{
+			LayerCudaSupportTest<PLayer>([]() { return CreateCudaPLayer(PoolTypeId::MAX); });
+		}
+
+		TEST_METHOD(PLayerAverageCudaSupportTest)
+		{
+			LayerCudaSupportTest<PLayer>([]() { return CreateCudaPLayer(PoolTypeId::AVERAGE); });
 		}
 
 		TEST_METHOD(NLayerDerivativeWithRespectToInputValuesCalculationSquaredErrorTest)

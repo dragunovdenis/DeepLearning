@@ -92,7 +92,7 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	Tensor Net<D>::act(const Tensor& input, std::vector<typename ALayer<D>::AuxLearningData>* const aux_data_ptr) const
+	typename D::tensor_t Net<D>::act(const typename D::tensor_t& input, std::vector<typename ALayer<D>::AuxLearningData>* const aux_data_ptr) const
 	{
 		if (aux_data_ptr != nullptr && aux_data_ptr->size() != _layers.size())
 			throw std::exception("Invalid auxiliary data.");
@@ -131,9 +131,9 @@ namespace DeepLearning
 	/// Returns collection of the gradient collectors that is "compatible" with the given collection of neural layers
 	/// </summary>
 	template <class D>
-	std::vector<CummulativeGradient> init_gradient_collectors(const std::vector<LayerHandle<D>>& layers)
+	std::vector<CummulativeGradient<D>> init_gradient_collectors(const std::vector<LayerHandle<D>>& layers)
 	{
-		std::vector<CummulativeGradient> result;
+		std::vector<CummulativeGradient<D>> result;
 
 		for (std::size_t layer_id = 0; layer_id < layers.size(); layer_id++)
 		{
@@ -147,14 +147,15 @@ namespace DeepLearning
 	/// <summary>
 	/// Resets all the collectors in the given collection
 	/// </summary>
-	void reset_gradient_collectors(std::vector<CummulativeGradient>& collectors)
+	template <class D>
+	void reset_gradient_collectors(std::vector<CummulativeGradient<D>>& collectors)
 	{
 		for (std::size_t collector_id = 0; collector_id < collectors.size(); collector_id++)
 			collectors[collector_id].reset();
 	}
 
 	template <class D>
-	void Net<D>::learn(const std::vector<Tensor>& training_items, const std::vector<Tensor>& reference_items,
+	void Net<D>::learn(const std::vector<typename D::tensor_t>& training_items, const std::vector<typename D::tensor_t>& reference_items,
 		const std::size_t batch_size, const std::size_t epochs_count, const Real learning_rate, const CostFunctionId& cost_func_id,
 		const Real& lambda, const std::function<void(const std::size_t, const Real)>& epoch_callback)
 	{
@@ -167,7 +168,7 @@ namespace DeepLearning
 		const auto lambda_scaled = lambda / training_items.size();
 		const auto reg_factor = -learning_rate * lambda_scaled;
 
-		const auto cost_function = CostFunction<Tensor>(cost_func_id);
+		const auto cost_function = CostFunction<typename D::tensor_t>(cost_func_id);
 
 		auto gradient_collectors = init_gradient_collectors(_layers);
 
@@ -237,13 +238,13 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	Real Net<D>::evaluate_cost_function(const std::vector<Tensor>& test_input,
-		const std::vector<Tensor>& reference_output, const CostFunctionId& cost_func_id, const Real l2_reg_factor) const
+	Real Net<D>::evaluate_cost_function(const std::vector<typename D::tensor_t>& test_input,
+		const std::vector<typename D::tensor_t>& reference_output, const CostFunctionId& cost_func_id, const Real l2_reg_factor) const
 	{
 		if (test_input.size() != reference_output.size())
 			throw std::exception("Invalid input.");
 
-		const auto cost_function = CostFunction<Tensor>(cost_func_id);
+		const auto cost_function = CostFunction<typename D::tensor_t>(cost_func_id);
 
 		const auto cost_sum = concurrency::parallel_reduce(IndexIterator<std::size_t>(0), IndexIterator<std::size_t>(test_input.size()), Real(0),
 			[&](const auto& start_iter, const auto& end_iter, const auto& init_val)
@@ -261,8 +262,8 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	std::size_t Net<D>::count_correct_answers(const std::vector<Tensor>& test_input,
-		const std::vector<Tensor>& labels, const Real& min_answer_probability) const
+	std::size_t Net<D>::count_correct_answers(const std::vector<typename D::tensor_t>& test_input,
+		const std::vector<typename D::tensor_t>& labels) const
 	{
 		if (test_input.size() != labels.size())
 			throw std::exception("Invalid input.");
@@ -282,9 +283,8 @@ namespace DeepLearning
 					//as a probability of the corresponding class
 					const auto trial_answer_normalized = trial_label * (Real(1) / trial_label.sum());
 					const auto trial_answer = trial_answer_normalized.max_element_id();
-					const auto trial_anwer_probability = trial_answer_normalized[trial_answer];
 
-					if (trial_answer == ref_answer && trial_anwer_probability >= min_answer_probability)
+					if (trial_answer == ref_answer)
 						result++;
 				}
 				return result;
