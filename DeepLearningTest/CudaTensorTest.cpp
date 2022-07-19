@@ -233,7 +233,7 @@ namespace DeepLearningTest
 			Logger::WriteMessage((std::string("kernel_grad_diff= ") + Utils::to_string(kernel_grad_diff) + "\n").c_str());
 			Logger::WriteMessage((std::string("input_grad_diff= ") + Utils::to_string(input_grad_diff) + "\n").c_str());
 
-			Assert::IsTrue(kernel_grad_diff < 50 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference for the kernel gradient");
+			Assert::IsTrue(kernel_grad_diff < 100 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference for the kernel gradient");
 			Assert::IsTrue(input_grad_diff < 50 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference for the input gradient");
 		}
 

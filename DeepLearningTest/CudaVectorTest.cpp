@@ -19,6 +19,7 @@
 #include <Math/CudaVector.cuh>
 #include <Utilities.h>
 #include "StandardTestUtils.h"
+#include <numeric>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;
@@ -27,6 +28,29 @@ namespace DeepLearningTest
 {
 	TEST_CLASS(CudaVectorTest)
 	{
+		TEST_METHOD(StandardRandomFillTest)
+		{
+			//Arrange
+			const auto dim = 10000;
+			const auto sigma = Utils::get_random(0.1, 10);
+			auto vector = CudaVector(dim);
+
+			//Act
+			vector.standard_random_fill(sigma);
+
+			//Assert
+			const auto vector_host = vector.to_stdvector();
+			const auto mean = std::accumulate(vector_host.begin(), vector_host.end(), Real(0))/dim;
+			const auto sigma_estimated = std::sqrt(std::transform_reduce(vector_host.begin(), vector_host.end(), Real(0), std::plus<Real>(),
+				[mean](const auto& x) { return (x - mean) * (x - mean); })/dim);
+			const auto sigma_diff = std::abs(sigma - sigma_estimated)/ sigma;
+
+			StandardTestUtils::LogReal("Mean", mean);
+			StandardTestUtils::LogReal("sigma_diff", sigma_diff);
+			Assert::IsTrue(std::abs(mean) < 0.2, L"Unexpectedly high deviation of the \"mean\" value from the reference");
+			Assert::IsTrue(std::abs(sigma_diff) < 0.02, L"Unexpectedly high deviation of the \"sigma\" value from the reference");
+		}
+
 		/// <summary>
 		/// Returns random instance of CudaVector 
 		/// </summary>
