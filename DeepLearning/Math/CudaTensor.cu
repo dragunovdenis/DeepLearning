@@ -155,7 +155,10 @@ namespace DeepLearning
 
 	CudaTensor& CudaTensor::operator =(CudaVector&& vector) noexcept
 	{
-		resize(1, 1, vector.dim());
+		free();
+		_layer_dim = 1ull;
+		_row_dim = 1ull;
+		_col_dim = vector.dim();
 		_data = vector.begin();
 		vector.abandon_resources();
 
@@ -164,7 +167,10 @@ namespace DeepLearning
 
 	CudaTensor& CudaTensor::operator =(CudaMatrix&& matrix) noexcept
 	{
-		resize(1, matrix.row_dim(), matrix.col_dim());
+		free();
+		_layer_dim = 1ull;
+		_row_dim = matrix.row_dim();
+		_col_dim = matrix.col_dim();
 		_data = matrix.begin();
 		matrix.abandon_resources();
 
@@ -173,7 +179,10 @@ namespace DeepLearning
 
 	CudaTensor& CudaTensor::operator =(CudaTensor&& tensor) noexcept
 	{
-		resize(tensor.layer_dim(), tensor.row_dim(), tensor.col_dim());
+		free();
+		_layer_dim = tensor.layer_dim();
+		_row_dim = tensor.row_dim();
+		_col_dim = tensor.col_dim();
 		_data = tensor.begin();
 		tensor.abandon_resources();
 
