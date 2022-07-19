@@ -154,7 +154,21 @@ namespace DeepLearning
 		return result;
 	}
 
-	std::tuple<std::vector<Tensor>, std::vector<Tensor>> MnistDataUtils::load_labeled_data(
+	/// <summary>
+	/// Converts given "host" collection to "device" collection
+	/// </summary>
+	std::vector<CudaTensor> to_device(const std::vector<Tensor>& data)
+	{
+		std::vector<CudaTensor> result(data.size());
+
+		for (auto data_id = 0ull; data_id < data.size(); data_id++)
+			result[data_id].assign(data[data_id]);
+
+		return result;
+	}
+
+	template<>
+	std::tuple<std::vector<typename CpuDC::tensor_t>, std::vector<typename CpuDC::tensor_t>> MnistDataUtils::load_labeled_data<CpuDC>(
 		const std::filesystem::path& data_path, const std::filesystem::path& labels_path,
 		const std::size_t expected_items_count, const bool flatten_images, const Real& max_value)
 	{
@@ -163,5 +177,14 @@ namespace DeepLearning
 		const auto labels = MnistDataUtils::read_labels(labels_path, expected_items_count);
 
 		return std::make_tuple(images_scaled, labels);
+	}
+
+	template<>
+	std::tuple<std::vector<typename GpuDC::tensor_t>, std::vector<typename GpuDC::tensor_t>> MnistDataUtils::load_labeled_data<GpuDC>(
+		const std::filesystem::path& data_path, const std::filesystem::path& labels_path,
+		const std::size_t expected_items_count, const bool flatten_images, const Real& max_value)
+	{
+		const auto [images_scaled, labels] = MnistDataUtils::load_labeled_data<CpuDC>(data_path, labels_path,	expected_items_count, flatten_images, max_value);
+		return std::make_tuple(to_device(images_scaled), to_device(labels));
 	}
 }

@@ -17,7 +17,7 @@
 
 #pragma once
 #include "Image8Bit.h"
-#include "Math/Tensor.h"
+#include "NeuralNet/DataContext.h"
 #include <filesystem>
 
 namespace DeepLearning
@@ -69,7 +69,8 @@ namespace DeepLearning
 		/// <summary>
 		/// Return collections of MNIST data and labels (in this exact order)
 		/// </summary>
-		static std::tuple<std::vector<Tensor>, std::vector<Tensor>> load_labeled_data(
+		template <class D = CpuDC>
+		static std::tuple<std::vector<typename D::tensor_t>, std::vector<typename D::tensor_t>> load_labeled_data(
 			const std::filesystem::path& data_path, const std::filesystem::path& labels_path,
 			const std::size_t expected_items_count, const bool flatten_images = true, const Real& max_value = Real(1));
 	};

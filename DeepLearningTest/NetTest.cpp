@@ -39,19 +39,20 @@ namespace DeepLearningTest
 		/// <param name="learning_rate">The learning rate we want to use.</param>
 		/// <param name="expected_min_percentage_test_set">Expected minimal percentage of correct answers of the test data after the training.
 		/// Can take values from (0, 1).</param>
+		template <class D = CpuDC>
 		static Real RunMnistBasedTrainingTest(const CostFunctionId cost_func_id, const Real& learning_rate,
 			const Real& expected_min_percentage_test_set, const bool run_long_test, const Real& lambda = Real(0),
 			const std::vector<ActivationFunctionId>& activ_func_ids = std::vector<ActivationFunctionId>())
 		{
 			//Arrange
 			const auto training_images_count = 60000;
-			const auto [training_data, training_labels] = MnistDataUtils::load_labeled_data(
+			const auto [training_data, training_labels] = MnistDataUtils::load_labeled_data<D>(
 				"TestData\\MNIST\\train-images.idx3-ubyte",
 				"TestData\\MNIST\\train-labels.idx1-ubyte",
 				training_images_count);
 
 			const auto test_images_count = 10000;
-			const auto test_data_tuple = MnistDataUtils::load_labeled_data(
+			const auto test_data_tuple = MnistDataUtils::load_labeled_data<D>(
 				"TestData\\MNIST\\t10k-images.idx3-ubyte",
 				"TestData\\MNIST\\t10k-labels.idx1-ubyte",
 				test_images_count);
@@ -59,7 +60,7 @@ namespace DeepLearningTest
 			const auto& test_data = std::get<0>(test_data_tuple);
 			const auto& test_labels = std::get<1>(test_data_tuple);
 
-			auto net = Net<CpuDC>({ 784, (run_long_test ? 100ull : 30ull), 10 }, activ_func_ids);
+			auto net = Net<D>({ 784, (run_long_test ? 100ull : 30ull), 10 }, activ_func_ids);
 			const auto batch_size = 10;
 			const auto epochs_count = run_long_test ? 30 : 6;
 
@@ -92,32 +93,33 @@ namespace DeepLearningTest
 		/// <param name="learning_rate">The learning rate we want to use.</param>
 		/// <param name="expected_min_percentage_test_set">Expected minimal percentage of correct answers of the test data after the training.
 		/// Can take values from (0, 1).</param>
+		template <class D = CpuDC>
 		static Real RunMnistBasedConvolutionNetTrainingTest(const CostFunctionId cost_func_id, const Real& learning_rate,
 			const Real& expected_min_percentage_test_set, const bool run_long_test, const Real& lambda = Real(0))
 		{
 			//Arrange
 			const auto training_images_count = 60000;
-			auto [training_data, training_labels] = MnistDataUtils::load_labeled_data(
+			auto [training_data, training_labels] = MnistDataUtils::load_labeled_data<D>(
 				"TestData\\MNIST\\train-images.idx3-ubyte",
 				"TestData\\MNIST\\train-labels.idx1-ubyte",
 				training_images_count, /*flatten images*/false);
 
 			const auto test_images_count = 10000;
-			const auto test_data_tuple = MnistDataUtils::load_labeled_data(
+			const auto test_data_tuple = MnistDataUtils::load_labeled_data<D>(
 				"TestData\\MNIST\\t10k-images.idx3-ubyte",
 				"TestData\\MNIST\\t10k-labels.idx1-ubyte",
 				test_images_count, /*flatten images*/false);
 
-			auto net = Net<CpuDC>();
+			auto net = Net<D>();
 			const auto in_data_size = training_data.begin()->size_3d();
 			const auto out_size = training_labels.begin()->size_3d().coord_prod();
 			auto size_in_next = in_data_size;
-			size_in_next = net.append_layer<CLayer<CpuDC>>(size_in_next, Index2d{ 5 }, run_long_test ? 20 : 5, ActivationFunctionId::RELU);
-			size_in_next = net.append_layer<PLayer<CpuDC>>(size_in_next, Index2d{ 2 }, PoolTypeId::MAX);
-			size_in_next = net.append_layer<CLayer<CpuDC>>(size_in_next, Index2d{ 5 }, run_long_test ? 40 : 10, ActivationFunctionId::RELU);
-			size_in_next = net.append_layer<PLayer<CpuDC>>(size_in_next, Index2d{ 2 }, PoolTypeId::MAX);
-			size_in_next = net.append_layer<NLayer<CpuDC>>(size_in_next.coord_prod(), 100, ActivationFunctionId::RELU, Real(-1), Real(1), true);
-			size_in_next = net.append_layer<NLayer<CpuDC>>(size_in_next.coord_prod(), out_size, ActivationFunctionId::SOFTMAX, Real(-1), Real(1), true);
+			size_in_next = net.append_layer<CLayer<D>>(size_in_next, Index2d{ 5 }, run_long_test ? 20 : 5, ActivationFunctionId::RELU);
+			size_in_next = net.append_layer<PLayer<D>>(size_in_next, Index2d{ 2 }, PoolTypeId::MAX);
+			size_in_next = net.append_layer<CLayer<D>>(size_in_next, Index2d{ 5 }, run_long_test ? 40 : 10, ActivationFunctionId::RELU);
+			size_in_next = net.append_layer<PLayer<D>>(size_in_next, Index2d{ 2 }, PoolTypeId::MAX);
+			size_in_next = net.append_layer<NLayer<D>>(size_in_next.coord_prod(), 100, ActivationFunctionId::RELU, Real(-1), Real(1), true);
+			size_in_next = net.append_layer<NLayer<D>>(size_in_next.coord_prod(), out_size, ActivationFunctionId::SOFTMAX, Real(-1), Real(1), true);
 
 			Assert::IsTrue(out_size == size_in_next.coord_prod(), L"Unexpected size of the net output");
 
@@ -167,6 +169,14 @@ namespace DeepLearningTest
 				long_test ? Real(0.991) : Real(0.98), long_test, Real(3));
 		}
 
+		//This test works but I am not satisfied with its performance (execution time), so it is out-commented for now
+		//TEST_METHOD(CudaTrainingConvolutionNetWithCrossEntropyCostTest)
+		//{
+		//	const bool long_test = false;
+		//	RunMnistBasedConvolutionNetTrainingTest<GpuDC>(CostFunctionId::CROSS_ENTROPY, Real(0.03),
+		//		long_test ? Real(0.991) : Real(0.98), long_test, Real(3));
+		//}
+
 		TEST_METHOD(TrainingWithQuadraticCostTest)
 		{
 			const bool long_test = false;
@@ -210,6 +220,14 @@ namespace DeepLearningTest
 			RunMnistBasedTrainingTest(CostFunctionId::CROSS_ENTROPY, Real(0.1), long_test ? Real(0.978) : Real(0.95), long_test, Real(0),
 				{ ActivationFunctionId::SIGMOID, ActivationFunctionId::SOFTMAX });
 		}
+
+		//This test works but I am not satisfied with its performance (execution time), so it is out-commented for now
+		//TEST_METHOD(CudaTrainingWithCrossEntropyCostAndSoftMaxActivationTest)
+		//{
+		//	const bool long_test = false;
+		//	RunMnistBasedTrainingTest<GpuDC>(CostFunctionId::CROSS_ENTROPY, Real(0.1), long_test ? Real(0.978) : Real(0.95), long_test, Real(0),
+		//		{ ActivationFunctionId::SIGMOID, ActivationFunctionId::SOFTMAX });
+		//}
 
 		TEST_METHOD(TrainingWithCrossEntropyCostAndReluActivationTest)
 		{

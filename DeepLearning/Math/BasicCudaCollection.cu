@@ -190,18 +190,6 @@ namespace DeepLearning
 		return RealMemHandle(begin(), size());
 	}
 
-	struct test
-	{
-		thrust::minstd_rand rng{};
-		thrust::random::normal_distribution<Real> dist{};
-
-		Real operator()()
-		{
-			return dist(rng);
-		}
-
-	};
-
 	/// <summary>
 	/// Generator of normally distributed random numbers
 	/// </summary>
