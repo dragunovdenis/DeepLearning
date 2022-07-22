@@ -157,8 +157,10 @@ namespace DeepLearning
 
 	bool CudaMatrix::operator ==(const CudaMatrix& matr) const
 	{
-		return _row_dim == matr.row_dim() && _col_dim == matr.col_dim() &&
+		const auto result = _row_dim == matr.row_dim() && _col_dim == matr.col_dim() &&
 			thrust::equal(thrust::device, begin(), end(), matr.begin());
+		CUDA_SANITY_CHECK
+		return result;
 	}
 
 	bool CudaMatrix::operator !=(const CudaMatrix& matr) const
@@ -305,7 +307,7 @@ namespace DeepLearning
 		matrix_vector_multiply_kernel << <blocks_cnt, CUDA_WARP_SIZE >> > (
 			static_cast<int>(matr.row_dim()), static_cast<int>(matr.col_dim()),
 			matr.begin(), vec.begin(), result.begin());
-
+		CUDA_SANITY_CHECK
 		return result;
 	}
 
@@ -362,7 +364,7 @@ namespace DeepLearning
 		matrix_vector_multiply_add_kernel << <blocks_cnt, CUDA_WARP_SIZE >> > (
 			static_cast<int>(row_dim()), static_cast<int>(col_dim()),
 			begin(), mul_vec.begin(), add_vec.begin(), result.begin());
-
+		CUDA_SANITY_CHECK
 		return result;
 	}
 
@@ -377,7 +379,7 @@ namespace DeepLearning
 		vector_matrix_multiply_kernel << <blocks_cnt, CUDA_WARP_SIZE >> > (
 			static_cast<int>(matr.row_dim()), static_cast<int>(matr.col_dim()),
 			matr.begin(), vec.begin(), result.begin());
-
+		CUDA_SANITY_CHECK
 		return result;
 	}
 
@@ -411,7 +413,7 @@ namespace DeepLearning
 
 		vector_col_times_vector_row_kernel << <blocks_cnt, threads_per_block >> > (static_cast<int>(vec_col.size()), vec_col.begin(),
 			static_cast<int>(vec_row.size()), vec_row.begin(), result.begin());
-
+		CUDA_SANITY_CHECK
 		return result;
 	}
 }

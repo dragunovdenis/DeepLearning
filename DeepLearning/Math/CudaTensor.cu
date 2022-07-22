@@ -417,7 +417,7 @@ namespace DeepLearning
 		convolve_kernel<<<blocks_cnt , CudaSetup::max_threads_per_block() >>>(_data, tensor_size,
 			kernel.begin(), kernel_size, paddings, strides,
 			result_handle.data(), result_size);
-
+		CUDA_SANITY_CHECK
 		return result_size;
 	}
 
@@ -438,9 +438,12 @@ namespace DeepLearning
 		const auto kernel_size_bytes = sizeof(Real) * kernel_size.coord_prod();
 
 		for (auto kernel_id = 0ull; kernel_id < kernels.size(); kernel_id++)
-			convolve_kernel << <blocks_cnt, CudaSetup::max_threads_per_block()>> > (_data, tensor_size,
+		{
+			convolve_kernel << <blocks_cnt, CudaSetup::max_threads_per_block() >> > (_data, tensor_size,
 				kernels[kernel_id].begin(), kernel_size, paddings, strides,
 				result.get_layer_handle(kernel_id).data(), result_size);
+			CUDA_SANITY_CHECK
+		}
 	}
 
 	CudaTensor CudaTensor::convolve(const CudaTensor& kernel, const Index3d& paddings, const Index3d& strides) const
@@ -528,7 +531,7 @@ namespace DeepLearning
 			conv_res_grad.data(), conv_result_size,
 			kernel.begin(), kernel_size,
 			paddings, strides, input_grad.begin(), kernel_grad.begin());
-
+		CUDA_SANITY_CHECK
 		return kernel_grad;
 	}
 
@@ -603,7 +606,7 @@ namespace DeepLearning
 		
 		scale_pool_kernel<<<blocks_cnt, CudaSetup::max_threads_per_block() >>>(_data, tensor_size,
 			window_size, scale_factor, paddings, result.begin(), result_size);
-
+		CUDA_SANITY_CHECK
 		return result;
 	}
 
@@ -658,7 +661,7 @@ namespace DeepLearning
 
 		scale_pool_input_gradient_kernel << <blocks_cnt, CudaSetup::max_threads_per_block() >> > (pool_res_gradient.begin(), result_size,
 			window_size, scale_factor, paddings, result.begin(), tensor_size);
-
+		CUDA_SANITY_CHECK
 		return result;
 	}
 
@@ -714,7 +717,7 @@ namespace DeepLearning
 			min_max_pull_kernel<false> << <blocks_cnt, CudaSetup::max_threads_per_block() >> > (_data, tensor_size,
 				window_size, result.begin(), result_size, out_to_in_map.begin());
 
-		gpuErrchk(cudaDeviceSynchronize());
+		CUDA_SANITY_CHECK
 
 		const auto diag_result = result.to_stdvector();
 		const auto diag_mapping = out_to_in_map.to_stdvector();
@@ -729,7 +732,7 @@ namespace DeepLearning
 
 		auto result = CudaTensor(size_3d(), true/*zeros initialization*/);
 		thrust::scatter(thrust::device, pool_res_gradient.begin(), pool_res_gradient.end(), out_to_in_mapping.begin(), result.begin());
-
+		CUDA_SANITY_CHECK
 		return result;
 	}
 

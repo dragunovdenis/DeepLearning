@@ -26,6 +26,12 @@ namespace DeepLearning
 {
 #define gpuErrchk(ans) { CudaUtils::gpuAssert((ans), __FILE__, __LINE__); }
 
+#ifdef CUDA_DEBUG
+#define CUDA_SANITY_CHECK { CudaUtils::gpuAssert((cudaDeviceSynchronize()), __FILE__, __LINE__); }
+#else
+#define CUDA_SANITY_CHECK
+#endif
+
 	namespace CudaUtils
 	{
 		/// <summary>
