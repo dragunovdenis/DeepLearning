@@ -125,13 +125,13 @@ namespace DeepLearning
 
 		for (auto filter_id = 0ull; filter_id < _filters.size(); filter_id++)
 		{
-			filters_grad[filter_id] = evaluate_input_gradient ? input_tensor.convolution_gradient<true>(
+			filters_grad[filter_id] = evaluate_input_gradient ? input_tensor.template convolution_gradient<true>(
 				static_cast<const typename D::tensor_t&>(biases_grad).get_layer_handle(filter_id), input_grad, _filters[filter_id], _paddings, _strides) :
-				input_tensor.convolution_gradient<false>(
+				input_tensor.template convolution_gradient<false>(
 					static_cast<const typename D::tensor_t&>(biases_grad).get_layer_handle(filter_id), input_grad, _filters[filter_id], _paddings, _strides);
 		}
 
-		return std::make_tuple<typename D::tensor_t, CLayer::LayerGradient>(std::move(input_grad), { std::move(biases_grad), std::move(filters_grad) });
+		return std::make_tuple<typename D::tensor_t, typename CLayer::LayerGradient>(std::move(input_grad), { std::move(biases_grad), std::move(filters_grad) });
 	}
 
 	template <class D>

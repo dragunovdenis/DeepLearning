@@ -126,7 +126,7 @@ namespace DeepLearning
 		const auto biases_grad = function().calc_input_gradient(deltas, aux_learning_data.Derivatives);
 		auto weights_grad = vector_col_times_vector_row(biases_grad, aux_learning_data.Input);
 
-		return std::make_tuple<typename D::tensor_t, NLayer::LayerGradient>(
+		return std::make_tuple<typename D::tensor_t, typename NLayer::LayerGradient>(
 			evaluate_input_gradient ? typename D::tensor_t(biases_grad * _weights).
 			reshape(aux_learning_data.Input.size_3d()) : typename D::tensor_t(0, 0, 0),
 			{ biases_grad, {std::move(weights_grad)} });

@@ -115,7 +115,7 @@ namespace DeepLearning
 			throw std::exception("Unexpected size of the input tensor of derivatives");
 
 		if (!evaluate_input_gradient)
-			return std::make_tuple<typename D::tensor_t, PLayer::LayerGradient>(typename D::tensor_t(), { typename D::tensor_t(), std::vector<typename D::tensor_t>() });
+			return std::make_tuple<typename D::tensor_t, typename PLayer::LayerGradient>(typename D::tensor_t(), { typename D::tensor_t(), std::vector<typename D::tensor_t>() });
 
 		if (_pool_operator_id == PoolTypeId::MIN || _pool_operator_id == PoolTypeId::MAX)
 		{
@@ -123,14 +123,14 @@ namespace DeepLearning
 				throw std::exception("Invalid index mapping");
 
 			auto input_grad = aux_learning_data.Input.min_max_pool_input_gradient(deltas, aux_learning_data.IndexMapping);
-			return std::make_tuple<typename D::tensor_t, PLayer::LayerGradient>(std::move(input_grad), { typename D::tensor_t(), std::vector<typename D::tensor_t>() });
+			return std::make_tuple<typename D::tensor_t, typename PLayer::LayerGradient>(std::move(input_grad), { typename D::tensor_t(), std::vector<typename D::tensor_t>() });
 		}
 
 		if (_pool_operator_id != PoolTypeId::AVERAGE)
 			throw std::exception("Unsupported pool type");
 
 		auto input_grad = aux_learning_data.Input.average_pool_input_gradient(deltas, _pool_window_size);
-		return std::make_tuple<typename D::tensor_t, PLayer::LayerGradient>(std::move(input_grad), { typename D::tensor_t(), std::vector<typename D::tensor_t>() });
+		return std::make_tuple<typename D::tensor_t, typename PLayer::LayerGradient>(std::move(input_grad), { typename D::tensor_t(), std::vector<typename D::tensor_t>() });
 	}
 
 	template <class D>
