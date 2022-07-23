@@ -186,6 +186,7 @@
     <ClInclude Include="NeuralNet\NLayer.h" />
     <ClInclude Include="NeuralNet\PLayer.h" />
     <ClInclude Include="ThirdParty\BitmapUtils.h" />
+    <ClInclude Include="ThreadPool.h" />
     <ClInclude Include="Utilities.h" />
   </ItemGroup>
   <ItemGroup>
@@ -215,6 +216,7 @@
     <ClCompile Include="NeuralNet\NLayer.cpp" />
     <ClCompile Include="NeuralNet\PLayer.cpp" />
     <ClCompile Include="ThirdParty\BitmapUtils.cpp" />
+    <ClCompile Include="ThreadPool.cpp" />
     <ClCompile Include="Utilities.cpp" />
   </ItemGroup>
   <ItemGroup>
