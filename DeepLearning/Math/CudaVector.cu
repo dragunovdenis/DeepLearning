@@ -30,7 +30,7 @@ namespace DeepLearning
 	{
 		if (_data != nullptr)
 		{
-			gpuErrchk(cudaFree(_data));
+			CudaUtils::cuda_free(_data);
 			_data = nullptr;
 		}
 
@@ -160,7 +160,7 @@ namespace DeepLearning
 	bool CudaVector::operator == (const CudaVector & vect) const
 	{
 		return size() == vect.size() &&
-			   thrust::equal(thrust::device, begin(), end(), vect.begin());
+			   thrust::equal(thrust::cuda::par.on(cudaStreamPerThread), begin(), end(), vect.begin());
 	}
 
 	bool CudaVector::operator !=(const CudaVector& vect) const

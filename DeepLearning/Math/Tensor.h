@@ -306,6 +306,25 @@ namespace DeepLearning
 			const Index3d& strides) const;
 
 		/// <summary>
+		/// Computes gradient of some scalar function F (depending on the result of the convolution of the current tensor I with some kernel K)
+		/// with respect to the convolution kernel K: dF/dK
+		/// and to the input tensor of the convolution I : dF/dI
+		/// </summary>
+		/// <param name="conv_res_grad">Handle of the memory containing gradient of the function F
+		/// with respect to the result of the convolution R: dF/dR. </param>
+		/// <param name="input_grad">Gradient with respect to the elements of the "input" (i.e., the current tensor),
+		/// The caller is responsible for its allocation it and initialization. The gradient calculated within
+		/// the call of the method will be added to the given container</param>
+		/// <param name="kernel">The convolution kernel</param>
+		/// <param name="paddings">Paddings used for computing the convolution</param>
+		/// <param name="strides">Strides used for computing the convolution</param>
+		/// <param name="kernel_grad">Place holder to store the gradient with respect to convolution kernel dF/dK
+		/// Must be allocated and initialized with zeros by the caller</param>
+		template <bool CALC_INPUT_GRAD = true>
+		void convolution_gradient(const RealMemHandleConst& conv_res_grad, Tensor& input_grad, Tensor& kernel_grad, const Tensor& kernel, const Index3d& paddings,
+			const Index3d& strides) const;
+
+		/// <summary>
 		/// More general implementation of the convolution operation, that can perform pooling operations
 		/// </summary>
 		/// <param name="pool_operator">Instance of the pool operator to be applied (generalization of the convolution kernel)</param>

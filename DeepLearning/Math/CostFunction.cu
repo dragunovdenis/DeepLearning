@@ -31,7 +31,7 @@ namespace DeepLearning::CostFunctionHelper
 		const auto begin = thrust::make_zip_iterator(thrust::make_tuple(output.begin(), reference.begin()));
 		const auto end = thrust::make_zip_iterator(thrust::make_tuple(output.end(), reference.end()));
 
-		const auto result = thrust::transform_reduce(thrust::device,
+		const auto result = thrust::transform_reduce(thrust::cuda::par.on(cudaStreamPerThread),
 			begin, end,	[id] __device__ (const auto& x) { 
 				const auto func = CostFunctionHelper::make<nvstd::function<Real(Real, Real)>>(id);
 				return  func(thrust::get<0>(x), thrust::get<1>(x)); },
@@ -50,7 +50,8 @@ namespace DeepLearning::CostFunctionHelper
 
 	void evaluate_gradient(BasicCudaCollection& output, const BasicCudaCollection& reference, const CostFunctionId id)
 	{
-		thrust::transform(thrust::device, output.begin(), output.end(), reference.begin(), output.begin(), [id] __device__(const auto & x, const auto & ref) {
+		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread), output.begin(), output.end(), reference.begin(), output.begin(),
+			[id] __device__(const auto & x, const auto & ref) {
 			const auto func = CostFunctionHelper::make<nvstd::function<dual<Real>(dual<Real>, Real)>>(id);
 			return  func({ x, Real(1) }, ref).Dual()[0];
 		});

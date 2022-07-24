@@ -195,29 +195,29 @@ namespace DeepLearning
 				//If there remains less than 1.5 * batch_size elements in the collection we take all of them as a single batch
 				//This is aimed to ensure that an actual batch will always contain not less than half of the batch size elements
 				//(provided, of course, that the training collection itself contains not less than half of the batch size elements)
-				const long long batch_end_elem_id = (training_items.size() - batch_start_elem_id) < 1.5 * batch_size ? 
+				const auto batch_end_elem_id = (training_items.size() - batch_start_elem_id) < 1.5 * batch_size ? 
 					training_items.size() : batch_start_elem_id + batch_size;
 
 				Concurrency::simple_partitioner splitter(std::max(2ull, (batch_end_elem_id - batch_start_elem_id) / threads_to_use));
 				concurrency::parallel_for<std::size_t>(batch_start_elem_id, batch_end_elem_id,
 					[&](const std::size_t elem_id)
 					{
-						const auto input_item_id = data_index_mapping[elem_id];
-						const auto& input = training_items[input_item_id];
-						const auto& reference = reference_items[input_item_id];
-						auto aux_data_ptr = std::vector<typename ALayer<D>::AuxLearningData>(_layers.size());
-						const auto output = act(input, &aux_data_ptr);
-						auto gradient = cost_function.deriv(output, reference);
+							const auto input_item_id = data_index_mapping[elem_id];
+							const auto& input = training_items[input_item_id];
+							const auto& reference = reference_items[input_item_id];
+							auto aux_data_ptr = std::vector<typename ALayer<D>::AuxLearningData>(_layers.size());
+							const auto output = act(input, &aux_data_ptr);
+							auto gradient = cost_function.deriv(output, reference);
 
-						auto back_prop_out = std::vector<typename ALayer<D>::LayerGradient>(_layers.size());
-						//Back-propagate through all the layers
-						for (long long layer_id = _layers.size() - 1; layer_id >= 0; layer_id--)
-							std::tie(gradient, back_prop_out[layer_id]) = _layers[layer_id].layer().backpropagate(
-								gradient, aux_data_ptr[layer_id], layer_id != 0);
+							auto back_prop_out = std::vector<typename ALayer<D>::LayerGradient>(_layers.size());
+							//Back-propagate through all the layers
+							for (long long layer_id = _layers.size() - 1; layer_id >= 0; layer_id--)
+								std::tie(gradient, back_prop_out[layer_id]) = _layers[layer_id].layer().backpropagate(
+									gradient, aux_data_ptr[layer_id], layer_id != 0);
 
-						std::lock_guard guard(mutex);
-						for (std::size_t layer_id = 0; layer_id < _layers.size(); layer_id++)
-							gradient_collectors[layer_id].add(back_prop_out[layer_id].Weights_grad, back_prop_out[layer_id].Biases_grad);
+							std::lock_guard guard(mutex);
+							for (std::size_t layer_id = 0; layer_id < _layers.size(); layer_id++)
+								gradient_collectors[layer_id].add(back_prop_out[layer_id].Weights_grad, back_prop_out[layer_id].Biases_grad);
 					}, splitter);
 
 				batch_start_elem_id = batch_end_elem_id;

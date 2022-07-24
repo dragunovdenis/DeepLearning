@@ -44,7 +44,7 @@ namespace DeepLearning
 		if (size() != collection.size())
 			throw std::exception("Collections must be of the same size");
 
-		thrust::transform(thrust::device, begin(), end(), collection.begin(), begin(), thrust::plus<Real>());
+		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread), begin(), end(), collection.begin(), begin(), thrust::plus<Real>());
 		CUDA_SANITY_CHECK
 	}
 
@@ -53,7 +53,7 @@ namespace DeepLearning
 		if (size() != collection.size())
 			throw std::exception("Collections must be of the same size");
 
-		thrust::transform(thrust::device, begin(), end(), collection.begin(), begin(), [scalar] __device__ (const auto& x, const auto& y) { return x + scalar * y; });
+		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread), begin(), end(), collection.begin(), begin(), [scalar] __device__ (const auto& x, const auto& y) { return x + scalar * y; });
 		CUDA_SANITY_CHECK
 	}
 
@@ -62,7 +62,7 @@ namespace DeepLearning
 		if (size() != collection.size())
 			throw std::exception("Collections must be of the same size");
 
-		thrust::transform(thrust::device, begin(), end(), collection.begin(), begin(), [scalar] __device__ (const auto& x, const auto& y) { return x * scalar +  y; });
+		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread), begin(), end(), collection.begin(), begin(), [scalar] __device__ (const auto& x, const auto& y) { return x * scalar +  y; });
 		CUDA_SANITY_CHECK
 	}
 
@@ -71,13 +71,13 @@ namespace DeepLearning
 		if (size() != collection.size())
 			throw std::exception("Collections must be of the same size");
 
-		thrust::transform(thrust::device, begin(), end(), collection.begin(), begin(), [] __device__ (const auto& x, const auto& y) { return x - y; });
+		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread), begin(), end(), collection.begin(), begin(), [] __device__ (const auto& x, const auto& y) { return x - y; });
 		CUDA_SANITY_CHECK
 	}
 
 	void BasicCudaCollection::mul(const Real& scalar)
 	{
-		thrust::transform(thrust::device, begin(), end(), begin(), [scalar] __device__ (const auto& x ) { return x * scalar; });
+		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread), begin(), end(), begin(), [scalar] __device__ (const auto& x ) { return x * scalar; });
 		CUDA_SANITY_CHECK
 	}
 
@@ -95,7 +95,7 @@ namespace DeepLearning
 		if (empty())
 			return std::numeric_limits<Real>::signaling_NaN();
 
-		return std::abs(thrust::reduce(thrust::device, begin(), end(), Real(0), 
+		return std::abs(thrust::reduce(thrust::cuda::par.on(cudaStreamPerThread), begin(), end(), Real(0),
 			[] __device__ (const auto& x, const auto& y) {
 				if (cuda_abs(x) > cuda_abs(y))
 					return x;
@@ -108,14 +108,14 @@ namespace DeepLearning
 
 	Real BasicCudaCollection::sum() const
 	{
-		const auto result = thrust::reduce(thrust::device, begin(), end());
+		const auto result = thrust::reduce(thrust::cuda::par.on(cudaStreamPerThread), begin(), end());
 		CUDA_SANITY_CHECK
 		return result;
 	}
 
 	Real BasicCudaCollection::sum_of_squares() const
 	{
-		const auto result = thrust::transform_reduce(thrust::device, begin(), end(), []__device__(const auto & x) { return x * x; },
+		const auto result = thrust::transform_reduce(thrust::cuda::par.on(cudaStreamPerThread), begin(), end(), []__device__(const auto & x) { return x * x; },
 			Real(0), thrust::plus<Real>());
 		CUDA_SANITY_CHECK
 		return result;
@@ -123,7 +123,7 @@ namespace DeepLearning
 
 	void BasicCudaCollection::fill(const Real& val)
 	{
-		thrust::fill(thrust::device, begin(), end(), val);
+		thrust::fill(thrust::cuda::par.on(cudaStreamPerThread), begin(), end(), val);
 	}
 
 	bool BasicCudaCollection::empty() const
@@ -156,20 +156,20 @@ namespace DeepLearning
 		if (size() != collection.size())
 			throw std::exception("Inconsistent input");
 
-		thrust::transform(thrust::device, begin(), end(), collection.begin(), begin(), [] __device__ (const auto& x, const auto& y) { return x * y; });
+		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread), begin(), end(), collection.begin(), begin(), [] __device__ (const auto& x, const auto& y) { return x * y; });
 		CUDA_SANITY_CHECK
 	}
 
 	Real BasicCudaCollection::dot_product(const BasicCudaCollection& collection) const
 	{
-		const auto result = thrust::inner_product(thrust::device, begin(), end(), collection.begin(), Real(0));
+		const auto result = thrust::inner_product(thrust::cuda::par.on(cudaStreamPerThread), begin(), end(), collection.begin(), Real(0));
 		CUDA_SANITY_CHECK
 		return result;
 	}
 
 	std::size_t BasicCudaCollection::max_element_id() const
 	{
-		const auto id = thrust::max_element(thrust::device, begin(), end(),
+		const auto id = thrust::max_element(thrust::cuda::par.on(cudaStreamPerThread), begin(), end(),
 			[] __device__(const auto & x, const auto & y) { return x < y; }) - begin();
 		CUDA_SANITY_CHECK
 		return static_cast<std::size_t>(id);
@@ -180,7 +180,7 @@ namespace DeepLearning
 		if (empty())
 			return std::numeric_limits<Real>::quiet_NaN();
 
-		return thrust::reduce(thrust::device, begin(), end(), Real(0),
+		return thrust::reduce(thrust::cuda::par.on(cudaStreamPerThread), begin(), end(), Real(0),
 			[] __device__(const auto & x, const auto & y) {
 			return  (x < y) ? y : x;
 		});
@@ -190,7 +190,7 @@ namespace DeepLearning
 	std::vector<Real> BasicCudaCollection::to_stdvector() const
 	{
 		std::vector<Real> result(size());
-		gpuErrchk(cudaMemcpy(result.data(), begin(), size() * sizeof(Real), cudaMemcpyKind::cudaMemcpyDeviceToHost));
+		gpuErrchk(cudaMemcpyAsync(result.data(), begin(), size() * sizeof(Real), cudaMemcpyKind::cudaMemcpyDeviceToHost, cudaStreamPerThread));
 
 		return result;
 	}
@@ -253,7 +253,7 @@ namespace DeepLearning
 			return;
 
 		const auto stddev = sigma < Real(0) ? Real(1) / Real(std::sqrt(size())) : sigma;
-		thrust::transform(thrust::device, thrust::make_counting_iterator(0),
+		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread), thrust::make_counting_iterator(0),
 			thrust::make_counting_iterator(static_cast<int>(size())), begin(), NormalRandGen{0, stddev, Utils::get_random_int()});
 		CUDA_SANITY_CHECK
 	}
@@ -263,21 +263,21 @@ namespace DeepLearning
 		if (empty())
 			return;
 
-		thrust::transform(thrust::device, thrust::make_counting_iterator(0),
+		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread), thrust::make_counting_iterator(0),
 			thrust::make_counting_iterator(static_cast<int>(size())), begin(), UniformRandGen{ min, max, Utils::get_random_int()});
 		CUDA_SANITY_CHECK
 	}
 
 	bool BasicCudaCollection::is_nan() const
 	{
-		const auto result = thrust::any_of(thrust::device, begin(), end(), [] __device__ (const auto& x) { return isnan(x); });
+		const auto result = thrust::any_of(thrust::cuda::par.on(cudaStreamPerThread), begin(), end(), [] __device__ (const auto& x) { return isnan(x); });
 		CUDA_SANITY_CHECK
 		return result;
 	}
 
 	bool BasicCudaCollection::is_inf() const
 	{
-		const auto result = thrust::any_of(thrust::device, begin(), end(), [] __device__ (const auto& x) { return isinf(x); });
+		const auto result = thrust::any_of(thrust::cuda::par.on(cudaStreamPerThread), begin(), end(), [] __device__ (const auto& x) { return isinf(x); });
 		CUDA_SANITY_CHECK
 		return result;
 	}

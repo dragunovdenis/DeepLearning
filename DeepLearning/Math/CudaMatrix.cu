@@ -30,7 +30,7 @@ namespace DeepLearning
 	{
 		if (_data != nullptr)
 		{
-			gpuErrchk(cudaFree(_data));
+			CudaUtils::cuda_free(_data);
 			_data = nullptr;
 		}
 
@@ -158,7 +158,7 @@ namespace DeepLearning
 	bool CudaMatrix::operator ==(const CudaMatrix& matr) const
 	{
 		const auto result = _row_dim == matr.row_dim() && _col_dim == matr.col_dim() &&
-			thrust::equal(thrust::device, begin(), end(), matr.begin());
+			thrust::equal(thrust::cuda::par.on(cudaStreamPerThread), begin(), end(), matr.begin());
 		CUDA_SANITY_CHECK
 		return result;
 	}
@@ -304,9 +304,8 @@ namespace DeepLearning
 		CudaVector result(matr.row_dim(), false /*assign zero*/);
 
 		const auto blocks_cnt = CudaSetup::calc_blocks(matr.row_dim(), CUDA_WARP_SIZE);
-		matrix_vector_multiply_kernel << <blocks_cnt, CUDA_WARP_SIZE >> > (
-			static_cast<int>(matr.row_dim()), static_cast<int>(matr.col_dim()),
-			matr.begin(), vec.begin(), result.begin());
+		matrix_vector_multiply_kernel << <blocks_cnt, CUDA_WARP_SIZE, 0, cudaStreamPerThread>> >
+			(static_cast<int>(matr.row_dim()), static_cast<int>(matr.col_dim()), matr.begin(), vec.begin(), result.begin());
 		CUDA_SANITY_CHECK
 		return result;
 	}
@@ -361,9 +360,9 @@ namespace DeepLearning
 		CudaVector result(row_dim(), false /*assign zero*/);
 
 		const auto blocks_cnt = CudaSetup::calc_blocks(row_dim(), CUDA_WARP_SIZE);
-		matrix_vector_multiply_add_kernel << <blocks_cnt, CUDA_WARP_SIZE >> > (
-			static_cast<int>(row_dim()), static_cast<int>(col_dim()),
-			begin(), mul_vec.begin(), add_vec.begin(), result.begin());
+		matrix_vector_multiply_add_kernel << <blocks_cnt, CUDA_WARP_SIZE, 0, cudaStreamPerThread >> >
+			(static_cast<int>(row_dim()), static_cast<int>(col_dim()), begin(), mul_vec.begin(),
+			add_vec.begin(), result.begin());
 		CUDA_SANITY_CHECK
 		return result;
 	}
@@ -376,9 +375,8 @@ namespace DeepLearning
 		CudaVector result(matr.col_dim(), false /*assign zero*/);
 
 		const auto blocks_cnt = CudaSetup::calc_blocks(matr.col_dim(), CUDA_WARP_SIZE);
-		vector_matrix_multiply_kernel << <blocks_cnt, CUDA_WARP_SIZE >> > (
-			static_cast<int>(matr.row_dim()), static_cast<int>(matr.col_dim()),
-			matr.begin(), vec.begin(), result.begin());
+		vector_matrix_multiply_kernel << <blocks_cnt, CUDA_WARP_SIZE, 0, cudaStreamPerThread >> > 
+			(static_cast<int>(matr.row_dim()), static_cast<int>(matr.col_dim()), matr.begin(), vec.begin(), result.begin());
 		CUDA_SANITY_CHECK
 		return result;
 	}
@@ -411,7 +409,8 @@ namespace DeepLearning
 		const auto blocks_cnt = CudaSetup::calc_blocks(result.size());
 		const auto threads_per_block = CudaSetup::max_threads_per_block();
 
-		vector_col_times_vector_row_kernel << <blocks_cnt, threads_per_block >> > (static_cast<int>(vec_col.size()), vec_col.begin(),
+		vector_col_times_vector_row_kernel << <blocks_cnt, threads_per_block, 0, cudaStreamPerThread>> >
+			(static_cast<int>(vec_col.size()), vec_col.begin(),
 			static_cast<int>(vec_row.size()), vec_row.begin(), result.begin());
 		CUDA_SANITY_CHECK
 		return result;

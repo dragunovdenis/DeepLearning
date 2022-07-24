@@ -397,7 +397,7 @@ namespace DeepLearning
 	}
 
 	template <bool CALC_INPUT_GRAD>
-	Tensor Tensor::convolution_gradient(const RealMemHandleConst& conv_res_grad, Tensor& input_grad, const Tensor& kernel, const Index3d& paddings,
+	void Tensor::convolution_gradient(const RealMemHandleConst& conv_res_grad, Tensor& input_grad, Tensor& kernel_grad, const Tensor& kernel, const Index3d& paddings,
 		const Index3d& strides) const
 	{
 		const auto tensor_size = size_3d();
@@ -410,7 +410,8 @@ namespace DeepLearning
 		if (CALC_INPUT_GRAD && input_grad.size_3d() != tensor_size)
 			throw std::exception("Unexpected size of the input gradient container");
 
-		auto kernel_grad = Tensor(kernel_size, true);
+		if (kernel_grad.size_3d() != kernel_size)
+			throw std::exception("Unexpected size of the result container");
 
 		for (std::size_t res_data_id = 0; res_data_id < conv_res_grad.size(); res_data_id++)
 		{
@@ -424,9 +425,17 @@ namespace DeepLearning
 
 			KERNEL_LOOP(kernel_start_offsets, kernel_stop_offsets, tensor_offsets,
 				kernel_grad(k_x, k_y, k_z) += _data[coords_to_data_id(t_x, t_y, t_z)] * factor;
-			    if (CALC_INPUT_GRAD)
-					input_grad(t_x, t_y, t_z) += kernel(k_x, k_y, k_z) * factor;)
+			if (CALC_INPUT_GRAD)
+				input_grad(t_x, t_y, t_z) += kernel(k_x, k_y, k_z) * factor;)
 		}
+	}
+
+	template <bool CALC_INPUT_GRAD>
+	Tensor Tensor::convolution_gradient(const RealMemHandleConst& conv_res_grad, Tensor& input_grad, const Tensor& kernel, const Index3d& paddings,
+		const Index3d& strides) const
+	{
+		auto kernel_grad = Tensor(kernel.size_3d(), true);
+		convolution_gradient<CALC_INPUT_GRAD>(conv_res_grad, input_grad, kernel_grad, kernel, paddings, strides);
 
 		return kernel_grad;
 	}

@@ -39,7 +39,7 @@ namespace DeepLearning
 		void free()
 		{
 			if (_data != nullptr)
-				gpuErrchk(cudaFree(_data));
+				CudaUtils::cuda_free(_data);
 
 			_data = nullptr;
 			_size = 0;

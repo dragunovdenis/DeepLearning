@@ -71,7 +71,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>CHECK_BOUNDS;_DEBUG;_LIB;%(PreprocessorDefinitions);USE_AVX2</PreprocessorDefinitions>
+      <PreprocessorDefinitions>CHECK_BOUNDS;_DEBUG;_LIB;%(PreprocessorDefinitions);USE_AVX2;CUDA_DEBUG</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>

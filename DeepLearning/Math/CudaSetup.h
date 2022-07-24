@@ -43,7 +43,7 @@ namespace DeepLearning
 		/// </summary>
 		CudaSetup();
 
-		static CudaSetup _instance;
+		static thread_local CudaSetup _instance;
 
 	public:
 

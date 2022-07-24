@@ -26,4 +26,9 @@ namespace DeepLearning::CudaUtils
             throw std::exception((std::string(cudaGetErrorString(code)) + "; " + file + std::to_string(line)).c_str());
         }
     }
+
+    void cuda_free(void* devPtr)
+    {
+        gpuErrchk(cudaFreeAsync(devPtr, cudaStreamPerThread));
+    }
 }

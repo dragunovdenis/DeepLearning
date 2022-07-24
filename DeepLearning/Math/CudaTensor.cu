@@ -34,7 +34,7 @@ namespace DeepLearning
 	{
 		if (_data != nullptr)
 		{
-			gpuErrchk(cudaFree(_data));
+			CudaUtils::cuda_free(_data);
 			_data = nullptr;
 		}
 
@@ -287,7 +287,7 @@ namespace DeepLearning
 		return  layer_dim() == tensor.layer_dim() &&
 			    row_dim() == tensor.row_dim() &&
 			    col_dim() == tensor.col_dim() &&
-			    thrust::equal(thrust::device, begin(), end(), tensor.begin());
+			    thrust::equal(thrust::cuda::par.on(cudaStreamPerThread), begin(), end(), tensor.begin());
 	}
 
 	bool CudaTensor::operator !=(const CudaTensor& tensor) const
@@ -414,9 +414,8 @@ namespace DeepLearning
 
 		const auto blocks_cnt = CudaSetup::calc_blocks(result_handle.size());
 
-		convolve_kernel<<<blocks_cnt , CudaSetup::max_threads_per_block() >>>(_data, tensor_size,
-			kernel.begin(), kernel_size, paddings, strides,
-			result_handle.data(), result_size);
+		convolve_kernel<<<blocks_cnt , CudaSetup::max_threads_per_block(), 0, cudaStreamPerThread>>>(_data, tensor_size,
+			kernel.begin(), kernel_size, paddings, strides,	result_handle.data(), result_size);
 		CUDA_SANITY_CHECK
 		return result_size;
 	}
@@ -439,9 +438,8 @@ namespace DeepLearning
 
 		for (auto kernel_id = 0ull; kernel_id < kernels.size(); kernel_id++)
 		{
-			convolve_kernel << <blocks_cnt, CudaSetup::max_threads_per_block() >> > (_data, tensor_size,
-				kernels[kernel_id].begin(), kernel_size, paddings, strides,
-				result.get_layer_handle(kernel_id).data(), result_size);
+			convolve_kernel << <blocks_cnt, CudaSetup::max_threads_per_block(), 0, cudaStreamPerThread>> > (_data, tensor_size,
+				kernels[kernel_id].begin(), kernel_size, paddings, strides,	result.get_layer_handle(kernel_id).data(), result_size);
 			CUDA_SANITY_CHECK
 		}
 	}
@@ -514,6 +512,16 @@ namespace DeepLearning
 	CudaTensor CudaTensor::convolution_gradient(const RealMemHandleConst& conv_res_grad, CudaTensor& input_grad, const CudaTensor& kernel, const Index3d& paddings,
 		const Index3d& strides) const
 	{
+		auto kernel_grad = CudaTensor(kernel.size_3d(), true);
+		convolution_gradient<CALC_INPUT_GRAD>(conv_res_grad, input_grad, kernel_grad, kernel, paddings, strides);
+
+		return kernel_grad;
+	}
+
+	template <bool CALC_INPUT_GRAD>
+	void CudaTensor::convolution_gradient(const RealMemHandleConst& conv_res_grad, CudaTensor& input_grad, CudaTensor& kernel_grad, const CudaTensor& kernel, const Index3d& paddings,
+		const Index3d& strides) const
+	{
 		const auto tensor_size = size_3d();
 		const auto kernel_size = kernel.size_3d();
 		const auto conv_result_size = ConvolutionUtils::calc_conv_res_size(tensor_size, kernel_size, paddings, strides);
@@ -524,15 +532,15 @@ namespace DeepLearning
 		if (CALC_INPUT_GRAD && input_grad.size_3d() != tensor_size)
 			throw std::exception("Unexpected size of the input gradient container");
 
-		auto kernel_grad = CudaTensor(kernel_size, true);
+		if (kernel_grad.size_3d() != kernel_size)
+			throw std::exception("Unexpected size of the result container");
+
 		const auto blocks_cnt = CudaSetup::calc_blocks(conv_res_grad.size());
 
-		convolution_gradient_kernel<CALC_INPUT_GRAD> << <blocks_cnt, CudaSetup::max_threads_per_block()>> > (_data, tensor_size,
-			conv_res_grad.data(), conv_result_size,
-			kernel.begin(), kernel_size,
-			paddings, strides, input_grad.begin(), kernel_grad.begin());
+		convolution_gradient_kernel<CALC_INPUT_GRAD> << <blocks_cnt, CudaSetup::max_threads_per_block(), 0, cudaStreamPerThread >> >
+			(_data, tensor_size, conv_res_grad.data(), conv_result_size, kernel.begin(), kernel_size,
+				paddings, strides, input_grad.begin(), kernel_grad.begin());
 		CUDA_SANITY_CHECK
-		return kernel_grad;
 	}
 
 	template CudaTensor CudaTensor::convolution_gradient<true>(const RealMemHandleConst& conv_res_grad, CudaTensor& input_grad, const CudaTensor& kernel, const Index3d& paddings,
@@ -604,8 +612,8 @@ namespace DeepLearning
 
 		const auto blocks_cnt = CudaSetup::calc_blocks(result.size());
 		
-		scale_pool_kernel<<<blocks_cnt, CudaSetup::max_threads_per_block() >>>(_data, tensor_size,
-			window_size, scale_factor, paddings, result.begin(), result_size);
+		scale_pool_kernel<<<blocks_cnt, CudaSetup::max_threads_per_block(), 0, cudaStreamPerThread>>>
+			(_data, tensor_size, window_size, scale_factor, paddings, result.begin(), result_size);
 		CUDA_SANITY_CHECK
 		return result;
 	}
@@ -659,8 +667,8 @@ namespace DeepLearning
 
 		const auto blocks_cnt = CudaSetup::calc_blocks(pool_res_gradient.size());
 
-		scale_pool_input_gradient_kernel << <blocks_cnt, CudaSetup::max_threads_per_block() >> > (pool_res_gradient.begin(), result_size,
-			window_size, scale_factor, paddings, result.begin(), tensor_size);
+		scale_pool_input_gradient_kernel << <blocks_cnt, CudaSetup::max_threads_per_block(), 0, cudaStreamPerThread>> >
+			(pool_res_gradient.begin(), result_size, window_size, scale_factor, paddings, result.begin(), tensor_size);
 		CUDA_SANITY_CHECK
 		return result;
 	}
@@ -711,17 +719,13 @@ namespace DeepLearning
 		const auto blocks_cnt = CudaSetup::calc_blocks(result.size());
 
 		if (max)
-			min_max_pull_kernel<true> << <blocks_cnt, CudaSetup::max_threads_per_block() >> > (_data, tensor_size,
-				window_size, result.begin(), result_size, out_to_in_map.begin());
+			min_max_pull_kernel<true> << <blocks_cnt, CudaSetup::max_threads_per_block(), 0, cudaStreamPerThread>> >
+			(_data, tensor_size, window_size, result.begin(), result_size, out_to_in_map.begin());
 		else
-			min_max_pull_kernel<false> << <blocks_cnt, CudaSetup::max_threads_per_block() >> > (_data, tensor_size,
-				window_size, result.begin(), result_size, out_to_in_map.begin());
+			min_max_pull_kernel<false> << <blocks_cnt, CudaSetup::max_threads_per_block(), 0, cudaStreamPerThread>>>
+			(_data, tensor_size, window_size, result.begin(), result_size, out_to_in_map.begin());
 
 		CUDA_SANITY_CHECK
-
-		const auto diag_result = result.to_stdvector();
-		const auto diag_mapping = out_to_in_map.to_stdvector();
-
 		return std::make_tuple(std::move(result), std::move(out_to_in_map));
 	}
 
@@ -731,7 +735,8 @@ namespace DeepLearning
 			throw std::exception("Inconsistent input");
 
 		auto result = CudaTensor(size_3d(), true/*zeros initialization*/);
-		thrust::scatter(thrust::device, pool_res_gradient.begin(), pool_res_gradient.end(), out_to_in_mapping.begin(), result.begin());
+
+		thrust::scatter(thrust::cuda::par.on(cudaStreamPerThread), pool_res_gradient.begin(), pool_res_gradient.end(), out_to_in_mapping.begin(), result.begin());
 		CUDA_SANITY_CHECK
 		return result;
 	}

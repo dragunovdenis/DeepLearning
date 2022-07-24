@@ -46,10 +46,15 @@ namespace DeepLearning
 		T* cuda_allocate(const std::size_t& size)
 		{
 			void* temp;
-			gpuErrchk(cudaMalloc(&temp, size * sizeof(T)));
+			gpuErrchk(cudaMallocAsync(&temp, size * sizeof(T), cudaStreamPerThread));
 
 			return static_cast<T*>(temp);
 		}
+
+		/// <summary>
+		/// Frees the pointed device memory
+		/// </summary>
+		void cuda_free(void* devPtr);
 
 		/// <summary>
 		/// Utility method to do memory copying
@@ -62,7 +67,7 @@ namespace DeepLearning
 		template <class T>
 		void cuda_copy(T* dest, const T* src, const std::size_t& size, const cudaMemcpyKind& copy_kind)
 		{
-			gpuErrchk(cudaMemcpy(dest, src, size * sizeof(Real), copy_kind));
+			gpuErrchk(cudaMemcpyAsync(dest, src, size * sizeof(Real), copy_kind, cudaStreamPerThread));
 		}
 
 		/// <summary>
@@ -101,7 +106,7 @@ namespace DeepLearning
 		template <class T>
 		void fill_zero(T* arr, const std::size_t& size)
 		{
-			gpuErrchk(cudaMemset(arr, 0, size * sizeof(T)));
+			gpuErrchk(cudaMemsetAsync(arr, 0, size * sizeof(T), cudaStreamPerThread));
 		}
 	}
 }

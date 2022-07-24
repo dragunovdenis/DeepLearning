@@ -206,7 +206,7 @@ namespace DeepLearningTest
 			const auto diff = (result.to_host() - result_host).max_abs();
 
 			Logger::WriteMessage((std::string("Diff = ") + Utils::to_string(diff)).c_str());
-			Assert::IsTrue(diff < 100 * std::numeric_limits<Real>::epsilon(), L"Unexpectedly high deviation from reference");
+			Assert::IsTrue(diff < 200 * std::numeric_limits<Real>::epsilon(), L"Unexpectedly high deviation from reference");
 		}
 
 		TEST_METHOD(ConvolutionGradientTest)

@@ -19,7 +19,13 @@
 
 namespace DeepLearning
 {
-	CudaSetup CudaSetup::_instance = CudaSetup();
+	/// <summary>
+	/// Specify thread local storage for the instance of "CudaSetup" in order for its constructor
+	/// is called in each host thread so that cudaSetDevice(...) is called in each thread too;
+	/// this does not matter as long as we decide to compute on "0" device, but otherwise can result
+	/// in a hard-to-diagnose bugs
+	/// </summary>
+	thread_local CudaSetup CudaSetup::_instance = CudaSetup();
 
 	CudaSetup::CudaSetup()
 	{
