@@ -684,7 +684,7 @@ namespace DeepLearning
 		const auto [tensor_offsets, kernel_start_offsets, kernel_stop_offsets] =
 			ConvolutionUtils::calc_kernel_loop_offsets(result_offsets, tensor_size, window_size, {0,0,0}, window_size);
 
-		auto poolled_val = MAX ?  std::numeric_limits<Real>::epsilon() : -std::numeric_limits<Real>::epsilon();
+		auto poolled_val = MAX ? -std::numeric_limits<Real>::max() : std::numeric_limits<Real>::max();
 		auto poolled_id = -1;
 		KERNEL_LOOP(kernel_start_offsets, kernel_stop_offsets, tensor_offsets,
 			const int tensor_data_id = coords_to_data_id(t_x, t_y, t_z, tensor_size.y, tensor_size.z);
