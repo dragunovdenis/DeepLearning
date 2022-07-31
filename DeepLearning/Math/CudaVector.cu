@@ -35,17 +35,29 @@ namespace DeepLearning
 		}
 
 		_dim = 0;
+		_capacity = 0;
 	}
 
 	void CudaVector::resize(const std::size_t& new_size)
 	{
-		if (size() != new_size)
+		if (_capacity < new_size)
 		{
 			free();
-			_dim = new_size;
-			_data = CudaUtils::cuda_allocate<Real>(_dim);
+			_data = CudaUtils::cuda_allocate<Real>(new_size);
+			_capacity = new_size;
 		}
+
+		_dim = new_size;
 	}
+
+	void CudaVector::resize(const Index3d& size_3d)
+	{
+		if (size_3d.x != 1ll || size_3d.y != 1ll)
+			throw std::exception("Invalid input data");
+
+		resize(size_3d.z);
+	}
+
 
 	void CudaVector::assign(const BasicCudaCollection& source)
 	{
@@ -62,6 +74,11 @@ namespace DeepLearning
 	std::size_t CudaVector::size() const
 	{
 		return _dim;
+	}
+
+	std::size_t CudaVector::capacity() const
+	{
+		return _capacity;
 	}
 
 	Index3d CudaVector::size_3d() const
@@ -84,9 +101,9 @@ namespace DeepLearning
 		assign(proxy);
 	}
 
-	CudaVector::CudaVector(const std::size_t dim, const bool assign_zero) : _dim(dim)
+	CudaVector::CudaVector(const std::size_t dim, const bool assign_zero)
 	{
-		_data = CudaUtils::cuda_allocate<Real>(_dim);
+		resize(dim);
 
 		if (assign_zero)
 			CudaUtils::fill_zero(_data, _dim);

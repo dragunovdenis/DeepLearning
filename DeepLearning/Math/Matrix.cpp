@@ -78,9 +78,36 @@ namespace DeepLearning
 
 	};
 
+	void Matrix::resize(const std::size_t& new_row_dim, const std::size_t& new_col_dim)
+	{
+		const auto new_size = new_row_dim * new_col_dim;
+		if (_capacity < new_size)
+		{
+			free();
+			_data = reinterpret_cast<Real*>(std::malloc(new_size * sizeof(Real)));
+			_capacity = new_size;
+		}
+
+		_row_dim = new_row_dim;
+		_col_dim = new_col_dim;
+	}
+
+	void Matrix::resize(const Index3d& size_3d)
+	{
+		if (size_3d.x != 1ll)
+			throw std::exception("Invalid input data");
+
+		resize(size_3d.y, size_3d.z);
+	}
+
 	std::size_t Matrix::size() const
 	{
 		return _row_dim * _col_dim;
+	}
+
+	std::size_t Matrix::capacity() const
+	{
+		return _capacity;
 	}
 
 	Index3d Matrix::size_3d() const
@@ -94,9 +121,8 @@ namespace DeepLearning
 	}
 
 	Matrix::Matrix(const std::size_t row_dim, const std::size_t col_dim, const bool assign_zero)
-		:_row_dim(row_dim), _col_dim(col_dim)
 	{
-		_data = reinterpret_cast<Real*>(std::malloc(size() * sizeof(Real)));
+		resize(row_dim, col_dim);
 
 		if (assign_zero)
 			std::fill(begin(), end(), Real(0));
@@ -122,15 +148,7 @@ namespace DeepLearning
 
 	Matrix& Matrix::operator =(const Matrix& matr)
 	{
-		if (size() != matr.size())
-		{
-			free();
-			_data = reinterpret_cast<Real*>(std::malloc(matr.size() * sizeof(Real)));
-		}
-
-		_col_dim = matr.col_dim();
-		_row_dim = matr.row_dim();
-
+		resize(matr.row_dim(), matr.col_dim());
 		std::copy(matr.begin(), matr.end(), begin());
 
 		return *this;
@@ -159,6 +177,7 @@ namespace DeepLearning
 
 		_col_dim = 0;
 		_row_dim = 0;
+		_capacity = 0;
 	}
 
 	Matrix::~Matrix()
@@ -353,8 +372,9 @@ namespace DeepLearning
 	void Matrix::msgpack_unpack(msgpack::object const& msgpack_o)
 	{
 		std::vector<Real> proxy;
-		msgpack::type::make_define_array(_row_dim, _col_dim, proxy).msgpack_unpack(msgpack_o);
-		_data = reinterpret_cast<Real*>(std::malloc(size() * sizeof(Real)));
+		std::size_t row_dim, col_dim;
+		msgpack::type::make_define_array(row_dim, col_dim, proxy).msgpack_unpack(msgpack_o);
+		resize(row_dim, col_dim);
 		std::copy(proxy.begin(), proxy.end(), begin());
 	}
 

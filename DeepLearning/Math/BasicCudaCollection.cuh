@@ -65,9 +65,14 @@ namespace DeepLearning
 		void mul(const Real& scalar);
 
 		/// <summary>
-		/// Size of the collection
+		/// Size of the collection (number of available elements)
 		/// </summary>
 		virtual std::size_t size() const = 0;
+
+		/// <summary>
+		/// Returns number of preallocated elements ("capacity" can be greater than the size of collection)
+		/// </summary>
+		virtual std::size_t capacity() const = 0;
 
 		/// <summary>
 		/// Pointer to the first element of the vector

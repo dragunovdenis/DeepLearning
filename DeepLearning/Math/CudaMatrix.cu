@@ -36,14 +36,17 @@ namespace DeepLearning
 
 		_row_dim = 0;
 		_col_dim = 0;
+		_capacity = 0;
 	}
 
-	/// <summary>
-	/// Total number of elements in the matrix
-	/// </summary>
 	std::size_t CudaMatrix::size() const
 	{
 		return _row_dim * _col_dim;
+	}
+
+	std::size_t CudaMatrix::capacity() const
+	{
+		return _capacity;
 	}
 
 	Index3d CudaMatrix::size_3d() const
@@ -62,15 +65,23 @@ namespace DeepLearning
 	void CudaMatrix::resize(const std::size_t& new_row_dim, const std::size_t& new_col_dim)
 	{
 		const auto new_size = new_row_dim * new_col_dim;
-		if (size() != new_size)
+		if (_capacity < new_size)
 		{
 			free();
 			_data = CudaUtils::cuda_allocate<Real>(new_size);
+			_capacity = new_size;
 		}
 
 		_row_dim = new_row_dim;
 		_col_dim = new_col_dim;
+	}
 
+	void CudaMatrix::resize(const Index3d& size_3d)
+	{
+		if (size_3d.x != 1ll)
+			throw std::exception("Invalid input data");
+
+		resize(size_3d.y, size_3d.z);
 	}
 
 	void CudaMatrix::assign(const CudaMatrix& source)
@@ -103,10 +114,9 @@ namespace DeepLearning
 		return _row_dim;
 	}
 
-	CudaMatrix::CudaMatrix(const std::size_t row_dim, const std::size_t col_dim, const bool assign_zero) :
-		_row_dim(row_dim), _col_dim(col_dim)
+	CudaMatrix::CudaMatrix(const std::size_t row_dim, const std::size_t col_dim, const bool assign_zero)
 	{
-		_data = CudaUtils::cuda_allocate<Real>(size());
+		resize(row_dim, col_dim);
 
 		if (assign_zero)
 			CudaUtils::fill_zero(_data, size());

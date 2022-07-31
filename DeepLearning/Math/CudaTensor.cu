@@ -41,6 +41,7 @@ namespace DeepLearning
 		_row_dim = 0;
 		_col_dim = 0;
 		_layer_dim = 0;
+		_capacity = 0;
 	}
 
 	void CudaTensor::abandon_resources()
@@ -61,13 +62,19 @@ namespace DeepLearning
 		CudaUtils::cuda_copy_device2device(begin(), source.begin(), size());
 	}
 
+	void CudaTensor::resize(const Index3d& size_3d)
+	{
+		resize(size_3d.x, size_3d.y, size_3d.z);
+	}
+
 	void CudaTensor::resize(const std::size_t& new_layer_dim, const std::size_t& new_row_dim, const std::size_t& new_col_dim)
 	{
 		const auto new_size = new_layer_dim * new_row_dim * new_col_dim;
-		if (size() != new_size)
+		if (_capacity < new_size)
 		{
 			free();
 			_data = CudaUtils::cuda_allocate<Real>(new_size);
+			_capacity = new_size;
 		}
 
 		_layer_dim = new_layer_dim;
@@ -78,6 +85,11 @@ namespace DeepLearning
 	std::size_t CudaTensor::size() const
 	{
 		return _layer_dim * _row_dim * _col_dim;
+	}
+
+	std::size_t CudaTensor::capacity() const
+	{
+		return _capacity;
 	}
 
 	Tensor CudaTensor::to_host() const
@@ -96,10 +108,9 @@ namespace DeepLearning
 	}
 
 	CudaTensor::CudaTensor(const std::size_t layer_dim, const std::size_t row_dim,
-		const std::size_t col_dim, const bool assign_zero) :
-		_layer_dim(layer_dim), _row_dim(row_dim), _col_dim(col_dim)
+		const std::size_t col_dim, const bool assign_zero)
 	{
-		_data = CudaUtils::cuda_allocate<Real>(size());
+		resize(layer_dim, row_dim, col_dim);
 
 		if (assign_zero)
 			CudaUtils::fill_zero(_data, size());
@@ -116,21 +127,21 @@ namespace DeepLearning
 	}
 
 	CudaTensor::CudaTensor(CudaVector&& vector) noexcept :
-		_layer_dim(1), _row_dim(1), _col_dim(vector.dim())
+		_layer_dim(1), _row_dim(1), _col_dim(vector.dim()), _capacity(vector.capacity())
 	{
 		_data = vector.begin();
 		vector.abandon_resources();
 	}
 
 	CudaTensor::CudaTensor(CudaMatrix&& matrix) noexcept :
-		_layer_dim(1), _row_dim(matrix.row_dim()), _col_dim(matrix.col_dim())
+		_layer_dim(1), _row_dim(matrix.row_dim()), _col_dim(matrix.col_dim()), _capacity(matrix.capacity())
 	{
 		_data = matrix.begin();
 		matrix.abandon_resources();
 	}
 
 	CudaTensor::CudaTensor(CudaTensor&& tensor) noexcept :
-		_layer_dim(tensor.layer_dim()), _row_dim(tensor.row_dim()), _col_dim(tensor.col_dim())
+		_layer_dim(tensor.layer_dim()), _row_dim(tensor.row_dim()), _col_dim(tensor.col_dim()), _capacity(tensor.capacity())
 	{
 		_data = tensor.begin();
 		tensor.abandon_resources();
@@ -160,6 +171,7 @@ namespace DeepLearning
 		_row_dim = 1ull;
 		_col_dim = vector.dim();
 		_data = vector.begin();
+		_capacity = vector.capacity();
 		vector.abandon_resources();
 
 		return *this;
@@ -172,6 +184,7 @@ namespace DeepLearning
 		_row_dim = matrix.row_dim();
 		_col_dim = matrix.col_dim();
 		_data = matrix.begin();
+		_capacity = matrix.capacity();
 		matrix.abandon_resources();
 
 		return *this;
@@ -184,6 +197,7 @@ namespace DeepLearning
 		_row_dim = tensor.row_dim();
 		_col_dim = tensor.col_dim();
 		_data = tensor.begin();
+		_capacity = tensor.capacity();
 		tensor.abandon_resources();
 
 		return *this;

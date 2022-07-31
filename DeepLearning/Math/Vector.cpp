@@ -51,9 +51,9 @@ namespace DeepLearning
 		vec.abandon_resources();
 	}
 
-	Vector::Vector(const std::size_t dim, const bool assign_zero) : _dim(dim)
+	Vector::Vector(const std::size_t dim, const bool assign_zero)
 	{
-		_data = reinterpret_cast<Real*>(std::malloc(dim * sizeof(Real)));
+		resize(dim);
 
 		if (assign_zero)
 			std::fill(begin(), end(), Real(0));
@@ -100,17 +100,32 @@ namespace DeepLearning
 	template <class S>
 	void Vector::assign(const S& source)
 	{
-		if (size() != source.size())
-		{
-			free();
-			_dim = source.size();
-			_data = reinterpret_cast<Real*>(std::malloc(_dim * sizeof(Real)));
-		}
+		resize(source.size());
 		std::copy(source.begin(), source.end(), begin());
 	}
 
 	template void Vector::assign(const std::vector<Real>& source);
 	template void Vector::assign(const Vector& source);
+
+	void Vector::resize(const std::size_t& new_size)
+	{
+		if (_capacity < new_size)
+		{
+			free();
+			_data = reinterpret_cast<Real*>(std::malloc(new_size * sizeof(Real)));
+			_capacity = new_size;
+		}
+
+		_dim = new_size;
+	}
+
+	void Vector::resize(const Index3d& size_3d)
+	{
+		if (size_3d.x != 1ll || size_3d.y != 1ll)
+			throw std::exception("Invalid input data");
+
+		resize(size_3d.z);
+	}
 
 	bool Vector::check_bounds(const ::std::size_t id) const
 	{
@@ -125,6 +140,11 @@ namespace DeepLearning
 	std::size_t Vector::size() const
 	{
 		return _dim;
+	}
+
+	std::size_t Vector::capacity() const
+	{
+		return _capacity;
 	}
 
 	Index3d Vector::size_3d() const

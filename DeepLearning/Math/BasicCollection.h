@@ -67,6 +67,11 @@ namespace DeepLearning
 		virtual std::size_t size() const = 0;
 
 		/// <summary>
+		/// Returns number of preallocated elements ("capacity" can be greater than the size of collection)
+		/// </summary>
+		virtual std::size_t capacity() const = 0;
+
+		/// <summary>
 		/// Pointer to the first element of the vector
 		/// </summary>
 		Real* begin();

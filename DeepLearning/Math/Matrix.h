@@ -41,6 +41,11 @@ namespace DeepLearning
 		std::size_t _col_dim{};
 
 		/// <summary>
+		/// Number of "reserved" items
+		/// </summary>
+		std::size_t _capacity{};
+
+		/// <summary>
 		/// Returns true if the given row and column indices are valid
 		/// </summary>
 		bool check_bounds(const std::size_t row_id, const std::size_t col_id) const;
@@ -63,9 +68,26 @@ namespace DeepLearning
 		using Base = BasicCollection;
 
 		/// <summary>
+		/// Reallocates memory of the tensor to meet the given number of elements
+		/// (if the current "capacity" is lower than the given "new" size)
+		/// </summary>
+		void resize(const std::size_t& new_row_dim, const std::size_t& new_col_dim);
+
+		/// <summary>
+		/// Reallocates memory of the tensor to meet the given number of elements
+		/// (if the current "capacity" is lower than the given "new" size)
+		/// </summary>
+		void resize(const Index3d& size_3d);
+
+		/// <summary>
 		/// Total number of elements in the matrix
 		/// </summary>
 		std::size_t size() const;
+
+		/// <summary>
+		/// Returns number of allocated (reserved) elements (can be greater or equal to size)
+		/// </summary>
+		std::size_t capacity() const override;
 
 		/// <summary>
 		/// Returns size of the collection in a "unified" form

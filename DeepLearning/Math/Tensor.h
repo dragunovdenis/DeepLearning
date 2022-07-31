@@ -50,6 +50,11 @@ namespace DeepLearning
 		std::size_t _col_dim{};
 
 		/// <summary>
+		/// Size of available preallocated memory 
+		/// </summary>
+		std::size_t _capacity{};
+
+		/// <summary>
 		/// Releases allocated resources
 		/// </summary>
 		void free();
@@ -79,9 +84,26 @@ namespace DeepLearning
 		using Base = BasicCollection;
 
 		/// <summary>
+		/// Reallocates memory of the tensor to meet the given number of elements
+		/// (if the current "capacity" is lower than the given "new" size)
+		/// </summary>
+		void resize(const std::size_t& new_layer_dim, const std::size_t& new_row_dim, const std::size_t& new_col_dim);
+
+		/// <summary>
+		/// Reallocates memory of the tensor to meet the given number of elements
+		/// (if the current "capacity" is lower than the given "new" size)
+		/// </summary>
+		void resize(const Index3d& size_3d);
+
+		/// <summary>
 		/// Return total number of elements in the tensor
 		/// </summary>
 		std::size_t size() const;
+
+		/// <summary>
+		/// Returns number of preallocated elements ("capacity" can be greater than the size of collection)
+		/// </summary>
+		std::size_t capacity() const override;
 
 		/// <summary>
 		/// Custom "packing" method

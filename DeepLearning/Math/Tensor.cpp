@@ -29,9 +29,8 @@ namespace DeepLearning
 {
 	Tensor::Tensor(const std::size_t layer_dim, const std::size_t row_dim,
 		const std::size_t col_dim, const bool assign_zero)
-		: _layer_dim(layer_dim), _row_dim(row_dim), _col_dim(col_dim)
 	{
-		_data = reinterpret_cast<Real*>(std::malloc(size() * sizeof(Real)));
+		resize(layer_dim, row_dim, col_dim);
 
 		if (assign_zero)
 			std::fill(begin(), end(), Real(0));
@@ -59,7 +58,7 @@ namespace DeepLearning
 
 	Tensor::Tensor(Tensor&& tensor) noexcept
 		: _layer_dim(tensor._layer_dim),
-		_row_dim(tensor._row_dim), _col_dim(tensor._col_dim)
+		_row_dim(tensor._row_dim), _col_dim(tensor._col_dim), _capacity(tensor.capacity())
 	{
 		_data = tensor._data;
 		tensor.abandon_resources();
@@ -74,16 +73,7 @@ namespace DeepLearning
 
 	Tensor& Tensor::operator =(const Tensor& tensor)
 	{
-		if (size() != tensor.size())
-		{
-			free();
-			_data = reinterpret_cast<Real*>(std::malloc(tensor.size() * sizeof(Real)));
-		}
-
-		_layer_dim = tensor._layer_dim;
-		_row_dim = tensor._row_dim;
-		_col_dim = tensor._col_dim;
-
+		resize(tensor.size_3d());
 		std::copy(tensor.begin(), tensor.end(), begin());
 
 		return *this;
@@ -93,7 +83,7 @@ namespace DeepLearning
 	/// Move constructor
 	/// </summary>
 	Tensor::Tensor(Vector&& vector) noexcept : _layer_dim(1ull),
-		_row_dim(1ull), _col_dim(vector.dim())
+		_row_dim(1ull), _col_dim(vector.dim()), _capacity(vector.capacity())
 	{
 		_data = vector.begin();
 		vector.abandon_resources();
@@ -103,7 +93,7 @@ namespace DeepLearning
 	/// Move constructor
 	/// </summary>
 	Tensor::Tensor(Matrix&& matrix) noexcept : _layer_dim(1ull),
-		_row_dim(matrix.row_dim()), _col_dim(matrix.col_dim())
+		_row_dim(matrix.row_dim()), _col_dim(matrix.col_dim()), _capacity(matrix.capacity())
 	{
 		_data = matrix.begin();
 		matrix.abandon_resources();
@@ -116,7 +106,7 @@ namespace DeepLearning
 		_layer_dim = 1ull;
 		_row_dim = 1ull;
 		_col_dim = vector.dim();
-
+		_capacity = vector.capacity();
 		_data = vector.begin();
 		vector.abandon_resources();
 
@@ -130,7 +120,7 @@ namespace DeepLearning
 		_layer_dim = 1ull;
 		_row_dim = matrix.row_dim();
 		_col_dim = matrix.col_dim();
-
+		_capacity = matrix.capacity();
 		_data = matrix.begin();
 		matrix.abandon_resources();
 
@@ -144,7 +134,7 @@ namespace DeepLearning
 		_layer_dim = tensor.layer_dim();
 		_row_dim = tensor.row_dim();
 		_col_dim = tensor.col_dim();
-
+		_capacity = tensor.capacity();
 		_data = tensor.begin();
 		tensor.abandon_resources();
 
@@ -167,11 +157,37 @@ namespace DeepLearning
 		_layer_dim = 0;
 		_row_dim = 0;
 		_col_dim = 0;
+		_capacity = 0;
+	}
+
+	void Tensor::resize(const std::size_t& new_layer_dim, const std::size_t& new_row_dim, const std::size_t& new_col_dim)
+	{
+		const auto new_size = new_layer_dim * new_row_dim * new_col_dim;
+		if (_capacity < new_size)
+		{
+			free();
+			_data = reinterpret_cast<Real*>(std::malloc(new_size * sizeof(Real)));
+			_capacity = new_size;
+		}
+
+		_layer_dim = new_layer_dim;
+		_row_dim = new_row_dim;
+		_col_dim = new_col_dim;
+	}
+
+	void Tensor::resize(const Index3d& size_3d)
+	{
+		resize(size_3d.x, size_3d.y, size_3d.z);
 	}
 
 	std::size_t Tensor::size() const
 	{
 		return _layer_dim * _row_dim * _col_dim;
+	}
+
+	std::size_t Tensor::capacity() const
+	{
+		return _capacity;
 	}
 
 	std::size_t Tensor::layer_dim() const
@@ -617,8 +633,9 @@ namespace DeepLearning
 	void Tensor::msgpack_unpack(msgpack::object const& msgpack_o)
 	{
 		std::vector<Real> proxy;
-		msgpack::type::make_define_array(_layer_dim, _row_dim, _col_dim, proxy).msgpack_unpack(msgpack_o);
-		_data = reinterpret_cast<Real*>(std::malloc(size() * sizeof(Real)));
+		std::size_t layer_dim, row_dim, col_dim;
+		msgpack::type::make_define_array(layer_dim, row_dim, col_dim, proxy).msgpack_unpack(msgpack_o);
+		resize(layer_dim, row_dim, col_dim);
 		std::copy(proxy.begin(), proxy.end(), begin());
 	}
 

@@ -52,6 +52,11 @@ namespace DeepLearning
 		std::size_t _col_dim{};
 
 		/// <summary>
+		/// Size of available preallocated memory 
+		/// </summary>
+		std::size_t _capacity{};
+
+		/// <summary>
 		/// Releases allocated resources
 		/// </summary>
 		void free();
@@ -67,12 +72,6 @@ namespace DeepLearning
 		void assign(const CudaTensor& source);
 
 		/// <summary>
-		/// Reallocates memory of the tensor to meet the given number of elements
-		/// (if the current size does not coincide with the given "new" size)
-		/// </summary>
-		void resize(const std::size_t& new_layer_dim, const std::size_t& new_row_dim, const std::size_t& new_col_dim);
-
-		/// <summary>
 		/// Converts given triplet of integer coordinates to a single index that can be used to access "data" array
 		/// </summary>
 		std::size_t coords_to_data_id(const std::size_t layer_id, const std::size_t row_id, const std::size_t col_id) const;
@@ -85,6 +84,18 @@ namespace DeepLearning
 	public:
 
 		/// <summary>
+		/// Reallocates memory of the tensor to meet the given number of elements
+		/// (if the current "capacity" is lower than the given "new" size)
+		/// </summary>
+		void resize(const std::size_t& new_layer_dim, const std::size_t& new_row_dim, const std::size_t& new_col_dim);
+
+		/// <summary>
+		/// Reallocates memory of the tensor to meet the given number of elements
+		/// (if the current "capacity" is lower than the given "new" size)
+		/// </summary>
+		void resize(const Index3d& size_3d);
+
+		/// <summary>
 		/// Assignment from a "host" tensor
 		/// </summary>
 		void assign(const Tensor& source);
@@ -95,6 +106,11 @@ namespace DeepLearning
 		/// Return total number of elements in the tensor
 		/// </summary>
 		std::size_t size() const;
+
+		/// <summary>
+		/// Returns amount of preallocated elements
+		/// </summary>
+		std::size_t capacity() const override;
 
 		/// <summary>
 		/// Converts the current instance of CUDA tensor to the "host" counterpart

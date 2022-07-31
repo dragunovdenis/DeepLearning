@@ -32,6 +32,7 @@ namespace DeepLearning
 	{
 		T* _data{};
 		std::size_t _size{};
+		std::size_t _capacity{};
 
 		/// <summary>
 		/// Frees memory allocated by the array
@@ -43,6 +44,7 @@ namespace DeepLearning
 
 			_data = nullptr;
 			_size = 0;
+			_capacity = 0;
 		}
 
 		/// <summary>
@@ -50,12 +52,14 @@ namespace DeepLearning
 		/// </summary>
 		void resize(const std::size_t& new_size)
 		{
-			if (_size != new_size)
+			if (_capacity < new_size)
 			{
 				free();
 				_data = CudaUtils::cuda_allocate<T>(new_size);
-				_size = new_size;
+				_capacity = new_size;
 			}
+
+			_size = new_size;
 		}
 
 	public:
@@ -107,8 +111,7 @@ namespace DeepLearning
 		/// </summary>
 		CudaArray(const std::size_t& size)
 		{
-			_size = size;
-			_data = CudaUtils::cuda_allocate<T>(_size);
+			resize(size);
 		}
 
 		/// <summary>

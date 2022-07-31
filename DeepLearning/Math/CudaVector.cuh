@@ -38,6 +38,11 @@ namespace DeepLearning
 		std::size_t _dim{};
 
 		/// <summary>
+		/// Number of reserved elements
+		/// </summary>
+		std::size_t _capacity{};
+
+		/// <summary>
 		/// Frees the allocated memory
 		/// </summary>
 		void free();
@@ -46,16 +51,21 @@ namespace DeepLearning
 		/// Assignment from another CUDA collection
 		/// </summary>
 		void assign(const BasicCudaCollection& source);
-
-		/// <summary>
-		/// Reallocates memory of the vector to meet the given number of elements
-		/// (if the current size does not coincide with the given "new" size)
-		/// </summary>
-		void resize(const std::size_t& new_size);
-
 	public:
 
 		using Base = BasicCudaCollection;
+
+		/// <summary>
+		/// Reallocates memory of the tensor to meet the given number of elements
+		/// (if the current "capacity" is lower than the given "new" size)
+		/// </summary>
+		void resize(const std::size_t& new_size);
+
+		/// <summary>
+		/// Reallocates memory of the tensor to meet the given number of elements
+		/// (if the current "capacity" is lower than the given "new" size)
+		/// </summary>
+		void resize(const Index3d& size_3d);
 
 		/// <summary>
 		/// Assignment from a "host" collection
@@ -66,6 +76,11 @@ namespace DeepLearning
 		/// Size of the vector
 		/// </summary>
 		std::size_t size() const;
+
+		/// <summary>
+		/// Returns number of allocated (reserved) elements (can be greater or equal to size)
+		/// </summary>
+		std::size_t capacity() const override;
 
 		/// <summary>
 		/// Returns size of the collection in a "unified" form
