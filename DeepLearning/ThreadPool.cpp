@@ -19,40 +19,48 @@
 
 namespace DeepLearning
 {
-    void ThreadPool::start() {
-        const uint32_t num_threads = std::thread::hardware_concurrency(); // Max # of threads the system supports
-        threads.resize(num_threads);
-        for (uint32_t i = 0; i < num_threads; i++) {
-            threads.at(i) = std::thread([&]() { this->ThreadLoop(); });
+    void ThreadPool::start(const std::size_t& threads_cnt) {
+        _threads.resize(threads_cnt);
+        for (auto local_thread_id = 0ull; local_thread_id < threads_cnt; local_thread_id++) {
+            const auto& thread = _threads[local_thread_id] = std::thread([&]() { this->ThreadLoop(); });
+            _global_to_local_thread_id[thread.get_id()] = local_thread_id;
         }
     }
 
-    ThreadPool::ThreadPool()
+    std::size_t ThreadPool::retrieve_local_thread_id(const std::thread::id& global_id)
     {
-        start();
+        if (_global_to_local_thread_id.contains(global_id))
+            return _global_to_local_thread_id[global_id];
+
+        throw std::exception("Unknown thread ID");
+    }
+
+    ThreadPool::ThreadPool(const std::size_t& threads_cnt)
+    {
+        start(threads_cnt);
     }
 
     void ThreadPool::ThreadLoop() {
         while (true) {
-            std::function<void()> job;
+            job_func_t job;
             {
-                std::unique_lock<std::mutex> lock(queue_mutex);
-                mutex_condition.wait(lock, [this] {
-                    return !jobs.empty() || should_terminate;
+                std::unique_lock<std::mutex> lock(_queue_mutex);
+                _mutex_condition.wait(lock, [this] {
+                    return !_jobs.empty() || _should_terminate;
                     });
-                if (should_terminate) {
+                if (_should_terminate) {
                     return;
                 }
-                job = jobs.front();
-                jobs.pop();
+                job = _jobs.front();
+                _jobs.pop();
             }
-            job();
+            job(retrieve_local_thread_id(std::this_thread::get_id()));
 
             {
-                std::unique_lock<std::mutex> lock(queue_mutex);
-                done_jobs_count++;
+                std::unique_lock<std::mutex> lock(_queue_mutex);
+                _done_jobs_count++;
             }
-            done_condition.notify_all();
+            _done_condition.notify_all();
         }
     }
 
@@ -61,35 +69,38 @@ namespace DeepLearning
         stop();
     }
 
-    void ThreadPool::queue_job(const std::function<void()>& job) {
+    void ThreadPool::queue_job(const job_func_t& job) {
         {
-            std::unique_lock<std::mutex> lock(queue_mutex);
-            jobs.push(job);
+            std::unique_lock<std::mutex> lock(_queue_mutex);
+            _jobs.push(job);
         }
-        mutex_condition.notify_one();
+        _mutex_condition.notify_one();
     }
 
-    void ThreadPool::wait_until_jobs_done(const int expected_number_of_done_jobs)
+    void ThreadPool::wait_until_jobs_done(const int expected_number_of_done_jobs, const bool reset_job_counter)
     {
-        std::unique_lock<std::mutex> lock(queue_mutex);
-        done_condition.wait(lock, [&]() { return done_jobs_count == expected_number_of_done_jobs; });
+        std::unique_lock<std::mutex> lock(_queue_mutex);
+        _done_condition.wait(lock, [&]() { return _done_jobs_count == expected_number_of_done_jobs; });
+
+        if (reset_job_counter)
+           reset_done_jobs_counter();
     }
 
     void ThreadPool::reset_done_jobs_counter()
     {
-        done_jobs_count = 0;
+        _done_jobs_count = 0;
     }
 
     void ThreadPool::stop()
     {
         {
-            std::unique_lock<std::mutex> lock(queue_mutex);
-            should_terminate = true;
+            std::unique_lock<std::mutex> lock(_queue_mutex);
+            _should_terminate = true;
         }
-        mutex_condition.notify_all();
-        for (std::thread& active_thread : threads) {
+        _mutex_condition.notify_all();
+        for (std::thread& active_thread : _threads) {
             active_thread.join();
         }
-        threads.clear();
+        _threads.clear();
     }
 }
