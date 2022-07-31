@@ -101,8 +101,8 @@ namespace DeepLearning
 		if (aux_learning_data_ptr)
 		{
 			aux_learning_data_ptr->Input = input;
-			auto [result, deriv] = function().func_and_aux(temp);
-			aux_learning_data_ptr->Derivatives = std::move(deriv);
+			typename D::tensor_t result;
+			function().func_and_aux(temp, result, aux_learning_data_ptr->Derivatives);
 			return std::move(result);
 		}
 

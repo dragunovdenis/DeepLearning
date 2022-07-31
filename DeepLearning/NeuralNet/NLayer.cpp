@@ -100,15 +100,15 @@ namespace DeepLearning
 	template <class D>
 	typename D::tensor_t NLayer<D>::act(const typename D::tensor_t& input, typename ALayer<D>::AuxLearningData* const aux_learning_data_ptr) const
 	{
-		const auto function = ActivationWrapper<typename D::vector_t>(ActivationFunctionId(_func_id));
+		const auto function = ActivationWrapper<typename D::tensor_t>(ActivationFunctionId(_func_id));
 
-		const auto z = _weights.mul_add(input, _biases);
+		const auto z = typename D::tensor_t(std::move(_weights.mul_add(input, _biases)));
 
 		if (aux_learning_data_ptr)
 		{
 			aux_learning_data_ptr->Input = input;
-			auto [result, deriv] = function().func_and_aux(z);
-			aux_learning_data_ptr->Derivatives = std::move(deriv);
+			typename D::tensor_t result;
+			function().func_and_aux(z, result, aux_learning_data_ptr->Derivatives);
 			return std::move(result);
 		}
 
