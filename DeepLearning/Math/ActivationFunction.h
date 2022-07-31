@@ -63,9 +63,22 @@ namespace DeepLearning
 		virtual T operator ()(const T& input) const = 0;
 
 		/// <summary>
+		/// Calculates functional value for all the elements of the input collection
+		/// </summary>
+		/// <param name="input">Input collection</param>
+		/// <param name="func">Placeholder for the output (is supposed to have same size as the input collection)</param>
+		virtual void func(const T& input, T& func) const = 0;
+
+		/// <summary>
 		/// Calculates function and auxiliary data needed to calculate gradient with respect to the input
 		/// </summary>
 		virtual std::tuple<T, T> func_and_aux(const T& input) const = 0;
+
+		/// <summary>
+		/// Calculates function and auxiliary data needed to calculate gradient with respect to the input
+		/// Potentially more optimal implementation than the function above since it allows the caller to do the memory allocation for the output
+		/// </summary>
+		virtual void func_and_aux(const T& input, T& func, T& aux) const = 0;
 
 		/// <summary>
 		/// Calculates gradient with respect to the function's input 
@@ -191,9 +204,19 @@ namespace DeepLearning
 		virtual T operator ()(const T& input) const override;
 
 		/// <summary>
+		/// See the summary of the corresponding method in the base class
+		/// </summary>
+		virtual void func(const T& input, T& func) const override;
+
+		/// <summary>
 		/// Calculates function and auxiliary data needed to calculate gradient with respect to the input
 		/// </summary>
 		virtual std::tuple<T, T> func_and_aux(const T& input) const override;
+		
+		/// <summary>
+		/// See the summary of the corresponding method in the base class
+		/// </summary>
+		virtual void func_and_aux(const T& input, T& func, T& aux) const override;
 
 		/// <summary>
 		/// Calculates gradient with respect to the function's input 
@@ -222,9 +245,19 @@ namespace DeepLearning
 		virtual T operator ()(const T& input) const override;
 
 		/// <summary>
+		/// See the summary of the corresponding method in the base class
+		/// </summary>
+		virtual void func(const T& input, T& func) const override;
+
+		/// <summary>
 		/// Calculates function and auxiliary data needed to calculate gradient with respect to the input
 		/// </summary>
 		virtual std::tuple<T, T> func_and_aux(const T& input) const override;
+
+		/// <summary>
+		/// See the summary of the corresponding method in the base class
+		/// </summary>
+		virtual void func_and_aux(const T& input, T& func, T& aux) const override;
 
 		/// <summary>
 		/// Calculates gradient with respect to the function's input 
