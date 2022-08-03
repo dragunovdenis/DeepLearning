@@ -159,8 +159,8 @@ namespace DeepLearningTest
 			StandardTestUtils::LogReal("gradient_diff_1", gradient_diff_1);
 			StandardTestUtils::LogReal("gradient_diff_2", gradient_diff_2);
 
-			Assert::IsTrue(func_diff_1 < 10 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference (function 1)");
-			Assert::IsTrue(func_diff_2 < 10 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference (function 2)");
+			Assert::IsTrue(func_diff_1 < 25 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference (function 1)");
+			Assert::IsTrue(func_diff_2 < 25 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference (function 2)");
 			Assert::IsTrue(gradient_diff_1 < 10 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference (gradient 1)");
 			Assert::IsTrue(gradient_diff_2 < 10 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference (gradient 2)");
 		}

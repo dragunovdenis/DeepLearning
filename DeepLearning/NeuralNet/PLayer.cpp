@@ -79,31 +79,37 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	typename D::tensor_t PLayer<D>::act(const typename D::tensor_t& input, typename ALayer<D>::AuxLearningData* const aux_learning_data_ptr) const
+	void PLayer<D>::act(const typename D::tensor_t& input, typename D::tensor_t& output, typename ALayer<D>::AuxLearningData* const aux_learning_data_ptr) const
 	{
 		if (input.size_3d() != in_size())
 			throw std::exception("Unexpected size of the input tensor");
 
-		if (aux_learning_data_ptr) 
+		if (aux_learning_data_ptr)
 		{
 			aux_learning_data_ptr->Input = input;
-			aux_learning_data_ptr->Derivatives = typename D::tensor_t(Index3d(0));
+			aux_learning_data_ptr->Derivatives.resize(Index3d(0));
 		}
 
 		if (_pool_operator_id == PoolTypeId::MIN || _pool_operator_id == PoolTypeId::MAX)
 		{
-			auto [pool_result, index_mapping] = input.min_max_pool(_pool_window_size, _pool_operator_id == PoolTypeId::MAX);
-
 			if (aux_learning_data_ptr)
-				aux_learning_data_ptr->IndexMapping = std::move(index_mapping);
-
-			return std::move(pool_result);
+				input.template min_max_pool<true>(_pool_window_size, _pool_operator_id == PoolTypeId::MAX, output, aux_learning_data_ptr->IndexMapping);
+			else
+				input.min_max_pool(_pool_window_size, _pool_operator_id == PoolTypeId::MAX, output);
 		}
-
-		if (_pool_operator_id != PoolTypeId::AVERAGE)
+		else if (_pool_operator_id == PoolTypeId::AVERAGE)
+			input.average_pool(_pool_window_size, output);
+		else 
 			throw std::exception("Unsupported pool type");
+	}
 
-		return std::move(input.average_pool(_pool_window_size));
+	template <class D>
+	typename D::tensor_t PLayer<D>::act(const typename D::tensor_t& input, typename ALayer<D>::AuxLearningData* const aux_learning_data_ptr) const
+	{
+		typename D::tensor_t result;
+		act(input, result, aux_learning_data_ptr);
+
+		return std::move(result);
 	}
 
 	template <class D>

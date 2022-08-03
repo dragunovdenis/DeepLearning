@@ -557,6 +557,11 @@ namespace DeepLearning
 		CUDA_SANITY_CHECK
 	}
 
+	template void CudaTensor::convolution_gradient<true>(const RealMemHandleConst& conv_res_grad, CudaTensor& input_grad, CudaTensor& kernel_grad, const CudaTensor& kernel, const Index3d& paddings,
+		const Index3d& strides) const;
+	template void CudaTensor::convolution_gradient<false>(const RealMemHandleConst& conv_res_grad, CudaTensor& input_grad, CudaTensor& kernel_grad, const CudaTensor& kernel, const Index3d& paddings,
+		const Index3d& strides) const;
+
 	template CudaTensor CudaTensor::convolution_gradient<true>(const RealMemHandleConst& conv_res_grad, CudaTensor& input_grad, const CudaTensor& kernel, const Index3d& paddings,
 		const Index3d& strides) const;
 	template CudaTensor CudaTensor::convolution_gradient<false>(const RealMemHandleConst& conv_res_grad, CudaTensor& input_grad, const CudaTensor& kernel, const Index3d& paddings,
@@ -618,23 +623,33 @@ namespace DeepLearning
 
 	CudaTensor CudaTensor::scale_pool(const Index3d& window_size, const Real& scale_factor) const
 	{
+		CudaTensor result;
+		scale_pool(window_size, scale_factor, result);
+		return result;
+	}
+
+	void CudaTensor::scale_pool(const Index3d& window_size, const Real& scale_factor, CudaTensor& result) const
+	{
 		const auto paddings = Index3d{ 0 };
 		const auto tensor_size = size_3d();
 		const auto result_size = ConvolutionUtils::calc_conv_res_size(tensor_size, window_size, paddings, window_size);
 
-		auto result = CudaTensor(result_size, false);
-
+		result.resize(result_size);
 		const auto blocks_cnt = CudaSetup::calc_blocks(result.size());
 		
 		scale_pool_kernel<<<blocks_cnt, CudaSetup::max_threads_per_block(), 0, cudaStreamPerThread>>>
 			(_data, tensor_size, window_size, scale_factor, paddings, result.begin(), result_size);
 		CUDA_SANITY_CHECK
-		return result;
 	}
 
 	CudaTensor CudaTensor::average_pool(const Index3d& window_size) const
 	{
 		return scale_pool(window_size, Real(1) / window_size.coord_prod());
+	}
+
+	void CudaTensor::average_pool(const Index3d& window_size, CudaTensor& result) const
+	{
+		scale_pool(window_size, Real(1) / window_size.coord_prod(), result);
 	}
 
 	/// <summary>
@@ -692,7 +707,7 @@ namespace DeepLearning
 		return scale_pool_input_gradient(pool_res_gradient, window_size, Real(1) / window_size.coord_prod());
 	}
 
-	template <bool MAX>
+	template <bool MAX, bool EVAL_MAP>
 	__global__ void min_max_pull_kernel(const Real* __restrict__ tensor, const Index3d tensor_size,
 		const Index3d window_size, Real* __restrict__ result, const Index3d result_size, std::size_t* out_to_in_map)
 	{
@@ -717,31 +732,52 @@ namespace DeepLearning
 				poolled_id = tensor_data_id;
 			})
 
+			if (EVAL_MAP)
+				out_to_in_map[res_flatten_id] = poolled_id;
+
 			result[res_flatten_id] = poolled_val;
-			out_to_in_map[res_flatten_id] = poolled_id;
 	}
 
 	std::tuple<CudaTensor, CudaArray<std::size_t>> CudaTensor::min_max_pool(const Index3d& window_size, const bool max) const
+	{
+		CudaTensor result;
+		CudaArray<std::size_t> index_map;
+		min_max_pool<true>(window_size, max, result, index_map);
+		return std::make_tuple(std::move(result), std::move(index_map));
+	}
+
+	void CudaTensor::min_max_pool(const Index3d& window_size, const bool max, CudaTensor& result) const
+	{
+		CudaArray<std::size_t> index_map;
+		min_max_pool<false>(window_size, max, result, index_map);
+	}
+
+	template <bool EVAL_MAP>
+	void CudaTensor::min_max_pool(const Index3d& window_size, const bool max, CudaTensor& result, CudaArray<std::size_t>& index_map) const
 	{
 		const auto paddings = Index3d{ 0 };
 		const auto tensor_size = size_3d();
 		const auto result_size = ConvolutionUtils::calc_conv_res_size(tensor_size, window_size, paddings, window_size);
 
-		auto result = CudaTensor(result_size, false);
-		auto out_to_in_map = CudaArray<std::size_t>(result.size());
+		result.resize(result_size);
+
+		if (EVAL_MAP)
+			index_map.resize(result.size());
 
 		const auto blocks_cnt = CudaSetup::calc_blocks(result.size());
 
 		if (max)
-			min_max_pull_kernel<true> << <blocks_cnt, CudaSetup::max_threads_per_block(), 0, cudaStreamPerThread>> >
-			(_data, tensor_size, window_size, result.begin(), result_size, out_to_in_map.begin());
+			min_max_pull_kernel<true, EVAL_MAP> << <blocks_cnt, CudaSetup::max_threads_per_block(), 0, cudaStreamPerThread>> >
+			(_data, tensor_size, window_size, result.begin(), result_size, index_map.begin());
 		else
-			min_max_pull_kernel<false> << <blocks_cnt, CudaSetup::max_threads_per_block(), 0, cudaStreamPerThread>>>
-			(_data, tensor_size, window_size, result.begin(), result_size, out_to_in_map.begin());
+			min_max_pull_kernel<false, EVAL_MAP> << <blocks_cnt, CudaSetup::max_threads_per_block(), 0, cudaStreamPerThread>>>
+			(_data, tensor_size, window_size, result.begin(), result_size, index_map.begin());
 
 		CUDA_SANITY_CHECK
-		return std::make_tuple(std::move(result), std::move(out_to_in_map));
 	}
+
+	template void CudaTensor::min_max_pool<true>(const Index3d& window_size, const bool max, CudaTensor& result, CudaArray<std::size_t>& index_map) const;
+	template void CudaTensor::min_max_pool<false>(const Index3d& window_size, const bool max, CudaTensor& result, CudaArray<std::size_t>& index_map) const;
 
 	CudaTensor CudaTensor::min_max_pool_input_gradient(const CudaTensor& pool_res_gradient, const CudaArray<std::size_t>& out_to_in_mapping) const
 	{

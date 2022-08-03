@@ -363,18 +363,21 @@ namespace DeepLearning
 
 	CudaVector CudaMatrix::mul_add(const BasicCudaCollection& mul_vec, const BasicCudaCollection& add_vec) const
 	{
-		if (col_dim() != mul_vec.size() || row_dim() != add_vec.size())
-			throw std::exception("Incompatible input data");
-
-
 		CudaVector result(row_dim(), false /*assign zero*/);
+		mul_add(mul_vec, add_vec, result);
+		return result;
+	}
+
+	void CudaMatrix::mul_add(const BasicCudaCollection& mul_vec, const BasicCudaCollection& add_vec, BasicCudaCollection& result) const
+	{
+		if (col_dim() != mul_vec.size() || row_dim() != add_vec.size() || result.size() != row_dim())
+			throw std::exception("Incompatible input data");
 
 		const auto blocks_cnt = CudaSetup::calc_blocks(row_dim(), CUDA_WARP_SIZE);
 		matrix_vector_multiply_add_kernel << <blocks_cnt, CUDA_WARP_SIZE, 0, cudaStreamPerThread >> >
 			(static_cast<int>(row_dim()), static_cast<int>(col_dim()), begin(), mul_vec.begin(),
 			add_vec.begin(), result.begin());
 		CUDA_SANITY_CHECK
-		return result;
 	}
 
 	CudaVector operator *(const BasicCudaCollection& vec, const CudaMatrix& matr)

@@ -63,11 +63,11 @@ namespace DeepLearning
 		virtual T operator ()(const T& input) const = 0;
 
 		/// <summary>
-		/// Calculates functional value for all the elements of the input collection
+		/// Calculates functional value for all the elements of the given input collection in place
 		/// </summary>
-		/// <param name="input">Input collection</param>
-		/// <param name="func">Placeholder for the output (is supposed to have same size as the input collection)</param>
-		virtual void func(const T& input, T& func) const = 0;
+		/// <param name="in_out">Collection of input elements that, after method returns,
+		/// will contain the result of function evaluation</param>
+		virtual void func_in_place(T& in_out) const = 0;
 
 		/// <summary>
 		/// Calculates function and auxiliary data needed to calculate gradient with respect to the input
@@ -76,9 +76,12 @@ namespace DeepLearning
 
 		/// <summary>
 		/// Calculates function and auxiliary data needed to calculate gradient with respect to the input
-		/// Potentially more optimal implementation than the function above since it allows the caller to do the memory allocation for the output
+		/// Function value is calculated "in-place"
 		/// </summary>
-		virtual void func_and_aux(const T& input, T& func, T& aux) const = 0;
+		/// <param name="in_out">Collection of input elements that, after method returns,
+		/// will contain the result of function evaluation</param>
+		/// <param name="aux">Place-holder for the auxiliary data</param>
+		virtual void func_and_aux_in_place(T& in_out, T& aux) const = 0;
 
 		/// <summary>
 		/// Calculates gradient with respect to the function's input 
@@ -206,17 +209,17 @@ namespace DeepLearning
 		/// <summary>
 		/// See the summary of the corresponding method in the base class
 		/// </summary>
-		virtual void func(const T& input, T& func) const override;
+		virtual void func_in_place(T& in_out) const override;
 
 		/// <summary>
 		/// Calculates function and auxiliary data needed to calculate gradient with respect to the input
 		/// </summary>
 		virtual std::tuple<T, T> func_and_aux(const T& input) const override;
-		
+
 		/// <summary>
 		/// See the summary of the corresponding method in the base class
 		/// </summary>
-		virtual void func_and_aux(const T& input, T& func, T& aux) const override;
+		virtual void func_and_aux_in_place(T& in_out, T& aux) const override;
 
 		/// <summary>
 		/// Calculates gradient with respect to the function's input 
@@ -247,7 +250,7 @@ namespace DeepLearning
 		/// <summary>
 		/// See the summary of the corresponding method in the base class
 		/// </summary>
-		virtual void func(const T& input, T& func) const override;
+		virtual void func_in_place(T& in_out) const override;
 
 		/// <summary>
 		/// Calculates function and auxiliary data needed to calculate gradient with respect to the input
@@ -257,7 +260,7 @@ namespace DeepLearning
 		/// <summary>
 		/// See the summary of the corresponding method in the base class
 		/// </summary>
-		virtual void func_and_aux(const T& input, T& func, T& aux) const override;
+		virtual void func_and_aux_in_place(T& in_out, T& aux) const override;
 
 		/// <summary>
 		/// Calculates gradient with respect to the function's input 

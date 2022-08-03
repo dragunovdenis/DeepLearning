@@ -173,7 +173,16 @@ namespace DeepLearning
 		/// </summary>
 		/// <param name="mul_vec">The vector that is involved in the multiplication operation</param>
 		/// <param name="add_vec">The vector that is involved in the addition operation</param>
-		CudaVector mul_add(const BasicCudaCollection & mul_vec, const BasicCudaCollection & add_vec) const;
+		CudaVector mul_add(const BasicCudaCollection& mul_vec, const BasicCudaCollection& add_vec) const;
+
+		/// <summary>
+		/// Performs multiplication by the given vector (from the right)
+		/// and simultaneously adds another vector to the result of multiplication
+		/// </summary>
+		/// <param name="mul_vec">The vector that is involved in the multiplication operation</param>
+		/// <param name="add_vec">The vector that is involved in the addition operation</param>
+		/// <param name="result">The result-vector, must be allocated by caller</param>
+		void mul_add(const BasicCudaCollection& mul_vec, const BasicCudaCollection& add_vec, BasicCudaCollection& result) const;
 
 		/// <summary>
 		/// Multiplication by a vector from the left

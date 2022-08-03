@@ -342,7 +342,7 @@ namespace DeepLearning
 		/// <param name="strides">Strides used for computing the convolution</param>
 		/// <param name="kernel_grad">Place holder to store the gradient with respect to convolution kernel dF/dK
 		/// Must be allocated and initialized with zeros by the caller</param>
-		template <bool CALC_INPUT_GRAD = true>
+		template <bool CALC_INPUT_GRAD>
 		void convolution_gradient(const RealMemHandleConst& conv_res_grad, Tensor& input_grad, Tensor& kernel_grad, const Tensor& kernel, const Index3d& paddings,
 			const Index3d& strides) const;
 
@@ -401,8 +401,33 @@ namespace DeepLearning
 		/// </summary>
 		/// <param name="window">Operation window size</param>
 		/// <param name="max">If "true" the method implements "max pulling" otherwise -- "min pulling";</param>
-		/// <returns></returns>
 		std::tuple<Tensor, std::vector<std::size_t>> min_max_pool(const Index3d& window_size, const bool max) const;
+
+		/// <summary>
+		/// Min-max specialized version of pool algorithm, which is more optimal than the "pool" method above with the corresponding pool-operator.
+		/// Simplified version, with zero paddings and strides equal to the window dimensions.
+		/// Returns a tuple containing the result of pooling and an vector of indices which is a mapping from the indices of flattened result
+		/// of the pooling to the flattened indices of input elements that have been pooled.
+		/// The mapping allows to simplify a back-propagation procedure.
+		/// </summary>
+		/// <param name="window">Operation window size</param>
+		/// <param name="max">If "true" the method implements "max pulling" otherwise -- "min pulling";</param>
+		/// <param name="result">Place-holder for the pool result</param>
+		/// <param name="index_map">Place-holder for the output-to-input index mapping (used to calculate gradient)</param>
+		template <bool EVAL_MAP>
+		void min_max_pool(const Index3d& window_size, const bool max, Tensor& result, std::vector<std::size_t>& index_map) const;
+
+		/// <summary>
+		/// Min-max specialized version of pool algorithm, which is more optimal than the "pool" method above with the corresponding pool-operator.
+		/// Simplified version, with zero paddings and strides equal to the window dimensions.
+		/// Returns a tuple containing the result of pooling and an vector of indices which is a mapping from the indices of flattened result
+		/// of the pooling to the flattened indices of input elements that have been pooled.
+		/// The mapping allows to simplify a back-propagation procedure.
+		/// </summary>
+		/// <param name="window">Operation window size</param>
+		/// <param name="max">If "true" the method implements "max pulling" otherwise -- "min pulling";</param>
+		/// <param name="result">Place-holder for the pool result</param>
+		void min_max_pool(const Index3d& window_size, const bool max, Tensor& result) const;
 
 		/// <summary>
 		/// Returns gradient of some function F with respect to the min/max 2d pool input tensor I: dF/dI
@@ -421,10 +446,27 @@ namespace DeepLearning
 		Tensor scale_pool(const Index3d& window_size, const Real& scale_factor) const;
 
 		/// <summary>
+		/// Specialized version of the pool algorithms that pools a scaled sum of the tensor elements in the given window;
+		/// If the "scale factor" if chosen to be a reciprocal of the number of elements in the window then the pool is
+		/// equivalent to the "average pool"
+		/// </summary>
+		/// <param name="window_size">Size of the "pool window"</param>
+		/// <param name="scale_factor">Scale factor to be applied to the sum of the elements in the window to get the pool result</param>
+		/// <param name="result">Place-holder for the result</param>
+		void scale_pool(const Index3d& window_size, const Real& scale_factor, Tensor& result) const;
+
+		/// <summary>
 		/// Specific implementation of the "average pool" operator
 		/// </summary>
 		/// <param name="window_size">Size of the window for the average pool operator</param>
 		Tensor average_pool(const Index3d& window_size) const;
+
+		/// <summary>
+		/// Specific implementation of the "average pool" operator
+		/// </summary>
+		/// <param name="window_size">Size of the window for the average pool operator</param>
+		/// <param name="result">Place-holder for the result</param>
+		void average_pool(const Index3d& window_size, Tensor& result) const;
 
 		/// <summary>
 		/// Returns gradient with respect to the input of the "scale pool" with the given "scale factor"

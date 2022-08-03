@@ -446,6 +446,11 @@ namespace DeepLearning
 		}
 	}
 
+	template void Tensor::convolution_gradient<true>(const RealMemHandleConst& conv_res_grad, Tensor& input_grad, Tensor& kernel_grad, const Tensor& kernel, const Index3d& paddings,
+		const Index3d& strides) const;
+	template void Tensor::convolution_gradient<false>(const RealMemHandleConst& conv_res_grad, Tensor& input_grad, Tensor& kernel_grad, const Tensor& kernel, const Index3d& paddings,
+		const Index3d& strides) const;
+
 	template <bool CALC_INPUT_GRAD>
 	Tensor Tensor::convolution_gradient(const RealMemHandleConst& conv_res_grad, Tensor& input_grad, const Tensor& kernel, const Index3d& paddings,
 		const Index3d& strides) const
@@ -520,12 +525,29 @@ namespace DeepLearning
 
 	std::tuple<Tensor, std::vector<std::size_t>> Tensor::min_max_pool(const Index3d& window_size, const bool max) const
 	{
+		Tensor result;
+		std::vector<std::size_t> index_map;
+		min_max_pool<true>(window_size, max, result, index_map);
+		return std::make_tuple(std::move(result), std::move(index_map));
+	}
+
+	void Tensor::min_max_pool(const Index3d& window_size, const bool max, Tensor& result) const
+	{
+		std::vector<std::size_t> index_map;
+		min_max_pool<false>(window_size, max, result, index_map);
+	}
+
+	template <bool EVAL_MAP>
+	void Tensor::min_max_pool(const Index3d& window_size, const bool max, Tensor& result, std::vector<std::size_t>& index_map) const
+	{
 		const auto paddings = Index3d{ 0 };
 		const auto tensor_size = size_3d();
 		const auto result_size = ConvolutionUtils::calc_conv_res_size(tensor_size, window_size, paddings, window_size);
 
-		auto result = Tensor(result_size, false);
-		auto out_to_in_map = std::vector<std::size_t>(result.size());
+		result.resize(result_size);
+
+		if (EVAL_MAP)
+			index_map.resize(result.size());
 
 		const auto init_val = max ? -std::numeric_limits<Real>::max() : std::numeric_limits<Real>::max();
 
@@ -548,12 +570,15 @@ namespace DeepLearning
 					poolled_id = tensor_data_id;
 				});
 
-			out_to_in_map[res_data_id] = poolled_id;
+			if (EVAL_MAP)
+				index_map[res_data_id] = poolled_id;
+
 			result._data[res_data_id] = poolled_val;
 		}
-
-		return std::make_tuple(std::move(result), std::move(out_to_in_map));
 	}
+
+	template void Tensor::min_max_pool<true>(const Index3d& window_size, const bool max, Tensor& result, std::vector<std::size_t>& index_map) const;
+	template void Tensor::min_max_pool<false>(const Index3d& window_size, const bool max, Tensor& result, std::vector<std::size_t>& index_map) const;
 
 	Tensor Tensor::min_max_pool_input_gradient(const Tensor& pool_res_gradient, const std::vector<std::size_t>& out_to_in_mapping) const
 	{
@@ -571,11 +596,18 @@ namespace DeepLearning
 
 	Tensor Tensor::scale_pool(const Index3d& window_size, const Real& scale_factor) const
 	{
+		Tensor result;
+		scale_pool(window_size, scale_factor, result);
+		return result;
+	}
+
+	void Tensor::scale_pool(const Index3d& window_size, const Real& scale_factor, Tensor& result) const
+	{
 		const auto paddings = Index3d{ 0 };
 		const auto tensor_size = size_3d();
 		const auto result_size = ConvolutionUtils::calc_conv_res_size(tensor_size, window_size, paddings, window_size);
 
-		auto result = Tensor(result_size, false);
+		result.resize(result_size);
 
 		for (std::size_t res_data_id = 0; res_data_id < result.size(); res_data_id++)
 		{
@@ -589,8 +621,6 @@ namespace DeepLearning
 
 			result._data[res_data_id] = poolled_val * scale_factor;
 		}
-
-		return result;
 	}
 
 	Tensor Tensor::scale_pool_input_gradient(const Tensor& pool_res_gradient, const Index3d& window_size, const Real& scale_factor) const
@@ -623,6 +653,11 @@ namespace DeepLearning
 	Tensor Tensor::average_pool(const Index3d& window_size) const
 	{
 		return scale_pool(window_size, Real(1) / window_size.coord_prod());
+	}
+
+	void Tensor::average_pool(const Index3d& window_size, Tensor& result) const
+	{
+		scale_pool(window_size, Real(1) / window_size.coord_prod(), result);
 	}
 
 	Tensor Tensor::average_pool_input_gradient(const Tensor& pool_res_gradient, const Index3d& window_size) const

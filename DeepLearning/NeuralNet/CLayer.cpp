@@ -86,27 +86,32 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	typename D::tensor_t CLayer<D>::act(const typename D::tensor_t& input, typename ALayer<D>::AuxLearningData* const aux_learning_data_ptr) const
+	void CLayer<D>::act(const typename D::tensor_t& input, typename D::tensor_t& output, typename ALayer<D>::AuxLearningData* const aux_learning_data_ptr) const
 	{
 		if (input.size_3d() != in_size())
 			throw std::exception("Unexpected size of the input tensor");
 
 		const auto function = ActivationWrapper<typename D::tensor_t>(ActivationFunctionId(_func_id));
 
-		auto temp = typename D::tensor_t(out_size(), false);
-		input.convolve(temp, _filters, _paddings, _strides);
+		output.resize(out_size());
+		input.convolve(output, _filters, _paddings, _strides);
 
-		temp += _biases;
+		output += _biases;
 
 		if (aux_learning_data_ptr)
 		{
 			aux_learning_data_ptr->Input = input;
-			typename D::tensor_t result;
-			function().func_and_aux(temp, result, aux_learning_data_ptr->Derivatives);
-			return std::move(result);
-		}
+			function().func_and_aux_in_place(output, aux_learning_data_ptr->Derivatives);
+		} else
+			function().func_in_place(output);
+	}
 
-		return std::move(function()(temp));
+	template <class D>
+	typename D::tensor_t CLayer<D>::act(const typename D::tensor_t& input, typename ALayer<D>::AuxLearningData* const aux_learning_data_ptr) const
+	{
+		typename D::tensor_t result;
+		act(input, result, aux_learning_data_ptr);
+		return std::move(result);
 	}
 
 	template <class D>

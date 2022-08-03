@@ -73,33 +73,32 @@ namespace DeepLearning
 	ActivationFunction<T>::ActivationFunction(const ActivationFunctionId id) : _id{id} {}
 
 	template <class T>
-	void ActivationFunction<T>::func(const T& input, T& func) const
+	void ActivationFunction<T>::func_in_place(T& in_out) const
 	{
-		func = input;
-		ActivationFunctionHelper::evaluate_in_place(func, _id);
+		ActivationFunctionHelper::evaluate_in_place(in_out, _id);
 	}
 
 	template <class T>
 	T ActivationFunction<T>::operator ()(const T& input) const
 	{
-		T result;
-		func(input, result);
+		auto result = input;
+		func_in_place(result);
 		return result;
 	}
 
 	template <class T>
-	void ActivationFunction<T>::func_and_aux(const T& input, T& func, T& aux) const
+	void ActivationFunction<T>::func_and_aux_in_place(T& in_out, T& aux) const
 	{
-		func = input;
-		aux.resize(input.size_3d());
-		ActivationFunctionHelper::evaluate_in_place(func, aux, _id);
+		aux.resize(in_out.size_3d());
+		ActivationFunctionHelper::evaluate_in_place(in_out, aux, _id);
 	}
 
 	template <class T>
 	std::tuple<T, T> ActivationFunction<T>::func_and_aux(const T& input) const
 	{
-		T func, deriv;
-		func_and_aux(input, func, deriv);
+		auto func = input;
+		T deriv;
+		func_and_aux_in_place(func, deriv);
 		return std::make_tuple(std::move(func), std::move(deriv));
 	}
 
@@ -110,37 +109,36 @@ namespace DeepLearning
 	}
 
 	template <class T>
-	void SoftMaxActivationFunction<T>::func(const T& input, T& func) const
+	void SoftMaxActivationFunction<T>::func_in_place(T& in_out) const
 	{
-		func = input;
-		ActivationFunctionHelper::normalize_and_evaluate_exponent_in_place(func);
-		const auto factor = Real(1) / func.sum();
-		func.mul(factor);
+		ActivationFunctionHelper::normalize_and_evaluate_exponent_in_place(in_out);
+		const auto factor = Real(1) / in_out.sum();
+		in_out.mul(factor);
 	}
 
 	template <class T>
 	T SoftMaxActivationFunction<T>::operator ()(const T& input) const
 	{
-		T result;
-		func(input, result);
+		auto result = input;
+		func_in_place(result);
 		return result;
 	}
 
 	template <class T>
-	void SoftMaxActivationFunction<T>::func_and_aux(const T& input, T& func, T& aux) const
+	void SoftMaxActivationFunction<T>::func_and_aux_in_place(T& in_out, T& aux) const
 	{
-		aux = input;
-		ActivationFunctionHelper::normalize_and_evaluate_exponent_in_place(aux);
-		const auto factor = Real(1) / aux.sum();
-		func = aux;
-		func.mul(factor);
+		ActivationFunctionHelper::normalize_and_evaluate_exponent_in_place(in_out);
+		const auto factor = Real(1) / in_out.sum();
+		aux = in_out;
+		in_out.mul(factor);
 	}
 
 	template <class T>
 	std::tuple<T, T> SoftMaxActivationFunction<T>::func_and_aux(const T& input) const
 	{
-		T aux_data, result;
-		func_and_aux(input, result, aux_data);
+		T aux_data;
+		auto result = input;
+		func_and_aux_in_place(result, aux_data);
 		return std::make_tuple(std::move(result), std::move(aux_data));
 	}
 

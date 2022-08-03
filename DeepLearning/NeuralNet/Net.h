@@ -45,6 +45,40 @@ namespace DeepLearning
 		/// </summary>
 		Real squared_weights_sum() const;
 
+		/// <summary>
+		/// Auxiliary data structure used for more efficient memory usage when evaluating networs
+		/// </summary>
+		struct InOutData
+		{
+			/// <summary>
+			/// Input for a layer
+			/// </summary>
+			typename D::tensor_t In{};
+
+			/// <summary>
+			/// Output of a layer
+			/// </summary>
+			typename D::tensor_t Out{};
+
+			/// <summary>
+			/// Swaps input ans output fields
+			/// </summary>
+			void swap()
+			{
+				std::swap(In, Out);
+			}
+		};
+
+		/// <summary>
+		/// Evaluates network at the given input
+		/// </summary>
+		/// <param name="input">Input tensor</param>
+		/// <param name="eval_data">Evaluation data. When the method returns,
+		/// "Out" field of the object contains result of evaluation. One should
+		/// make no assumptions about the content of"In" field of the object.</param>
+		/// <param name="aux_data_ptr">Pointer to an auxiliary data structure that is used in the training process</param>
+		void act(const typename D::tensor_t& input, InOutData& eval_data, std::vector<typename ALayer<D>::AuxLearningData>* const aux_data_ptr) const;
+
 	public:
 
 		MSGPACK_DEFINE(_layers);

@@ -90,10 +90,18 @@ namespace DeepLearning
 		/// <summary>
 		/// Makes a forward pass for the given input and outputs the result of the layer
 		/// </summary>
-		/// <param name="input">Input signal</param>
+		/// <param name="input">Input "signal"</param>
 		/// <param name="aux_learning_data_ptr">Pointer to the auxiliary data structure that should be provided during the training (learning) process</param>
 		/// <returns>Output signal</returns>
 		virtual typename D::tensor_t act(const typename D::tensor_t& input, AuxLearningData* const aux_learning_data_ptr = nullptr) const = 0;
+
+		/// <summary>
+		/// Makes a forward pass for the given input and places the result to the given ("output") container
+		/// </summary>
+		/// <param name="input">Input "signal"</param>
+		/// <param name="output">Place-holder for the result</param>
+		/// <param name="aux_learning_data_ptr">Pointer to the auxiliary data structure that should be provided during the training (learning) process</param>
+		virtual void act(const typename D::tensor_t& input, typename D::tensor_t& output, AuxLearningData* const aux_learning_data_ptr = nullptr) const = 0;
 
 		/// <summary>
 		/// Performs the back-propagation

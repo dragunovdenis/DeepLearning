@@ -120,6 +120,11 @@ namespace DeepLearning
 		/// <summary>
 		/// See the summary to the corresponding method in the base class
 		/// </summary>
+		void act(const typename D::tensor_t& input, typename D::tensor_t& output, typename ALayer<D>::AuxLearningData* const aux_learning_data_ptr = nullptr) const override;
+
+		/// <summary>
+		/// See the summary to the corresponding method in the base class
+		/// </summary>
 		std::tuple<typename D::tensor_t, typename ALayer<D>::LayerGradient> backpropagate(const typename D::tensor_t& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
 			const bool evaluate_input_gradient = true) const override;
 

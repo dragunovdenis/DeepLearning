@@ -234,24 +234,27 @@ namespace DeepLearning
 
 	Vector Matrix::mul_add(const BasicCollection& mul_vec, const BasicCollection& add_vec) const
 	{
-		if (mul_vec.size() != _col_dim || add_vec.size() != _row_dim)
-			throw std::exception("Incompatible matrix-vector dimensionality");
+		auto result = Vector(_row_dim, false /*assign zero*/);
+		mul_add(mul_vec, add_vec, result);
+		return result;
+	}
 
-		auto result = Vector(_row_dim);
+	void Matrix::mul_add(const BasicCollection& mul_vec, const BasicCollection& add_vec, BasicCollection& result) const
+	{
+		if (mul_vec.size() != _col_dim || add_vec.size() != _row_dim || result.size() != _row_dim)
+			throw std::exception("Incompatible matrix-vector dimensionality");
 
 		for (std::size_t row_id = 0; row_id < row_dim(); row_id++)
 		{
 #ifdef USE_AVX2
 			const auto begin_row_ptr = _data + row_id * _col_dim;
-			result(row_id) = Avx::mm256_dot_product(begin_row_ptr, &*mul_vec.begin(), _col_dim) + add_vec[row_id];
+			result.begin()[row_id] = Avx::mm256_dot_product(begin_row_ptr, &*mul_vec.begin(), _col_dim) + add_vec[row_id];
 #else
 			const auto row_begin = _data.begin() + row_id * col_dim();
 			const auto row_end = _data.begin() + (row_id + 1) * _col_dim;
-			result(row_id) = std::inner_product(row_begin, row_end, mul_vec.begin(), Real(0)) + add_vec[row_id];
+			result.begin()[row_id] = std::inner_product(row_begin, row_end, mul_vec.begin(), Real(0)) + add_vec[row_id];
 #endif // USE_AVX2
 		}
-
-		return result;
 	}
 
 	Vector operator *(const BasicCollection& vec, const Matrix& matr)

@@ -46,6 +46,7 @@ namespace DeepLearning
 			_size = 0;
 			_capacity = 0;
 		}
+	public:
 
 		/// <summary>
 		/// Ensures that the array contains the given number of elements
@@ -61,8 +62,6 @@ namespace DeepLearning
 
 			_size = new_size;
 		}
-
-	public:
 
 		/// <summary>
 		/// Returns number of elements in the array

@@ -93,16 +93,26 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	typename D::tensor_t Net<D>::act(const typename D::tensor_t& input, std::vector<typename ALayer<D>::AuxLearningData>* const aux_data_ptr) const
+	void Net<D>::act(const typename D::tensor_t& input, InOutData& eval_data, std::vector<typename ALayer<D>::AuxLearningData>* const aux_data_ptr) const
 	{
 		if (aux_data_ptr != nullptr && aux_data_ptr->size() != _layers.size())
 			throw std::exception("Invalid auxiliary data.");
 
-		auto result = input;
-		for (std::size_t layer_id = 0; layer_id < _layers.size(); layer_id++)
-			result = _layers[layer_id].layer().act(result, aux_data_ptr != nullptr ? &(*aux_data_ptr)[layer_id] : nullptr);
+		_layers[0].layer().act(input, eval_data.Out, aux_data_ptr != nullptr ? &(*aux_data_ptr)[0] : nullptr);
+		for (auto layer_id = 1ull; layer_id < _layers.size(); layer_id++)
+		{
+			eval_data.swap();
+			_layers[layer_id].layer().act(eval_data.In, eval_data.Out, aux_data_ptr != nullptr ? &(*aux_data_ptr)[layer_id] : nullptr);
+		}
+	}
 
-		return result;
+	template <class D>
+	typename D::tensor_t Net<D>::act(const typename D::tensor_t& input, std::vector<typename ALayer<D>::AuxLearningData>* const aux_data_ptr) const
+	{
+		InOutData evalData;
+		act(input, evalData, aux_data_ptr);
+
+		return evalData.Out;
 	}
 
 	/// <summary>
@@ -182,6 +192,7 @@ namespace DeepLearning
 		ThreadPool thread_pool(threads_to_use);
 
 		auto aux_learning_data = std::vector<std::vector<typename ALayer<D>::AuxLearningData>>(threads_to_use, std::vector<typename ALayer<D>::AuxLearningData>(_layers.size()));
+		auto eval_data = std::vector<InOutData>(threads_to_use);
 		std::mutex mutex;
 
 		auto  data_index_mapping = get_indices(training_items.size());
@@ -212,14 +223,15 @@ namespace DeepLearning
 
 					thread_pool.queue_job([&, currnt_thread_start_id, current_thread_end_id](const std::size_t local_thread_id)
 						{
+							auto& aux_data_ptr = aux_learning_data[local_thread_id];
+							auto& e_data = eval_data[local_thread_id];
 							for (auto elem_id = currnt_thread_start_id; elem_id < current_thread_end_id; elem_id++)
 							{
 								const auto input_item_id = data_index_mapping[elem_id];
 								const auto& input = training_items[input_item_id];
 								const auto& reference = reference_items[input_item_id];
-								auto& aux_data_ptr = aux_learning_data[local_thread_id];
-								const auto output = act(input, &aux_data_ptr);
-								auto gradient = cost_function.deriv(output, reference);
+								act(input, e_data, &aux_data_ptr);
+								auto gradient = cost_function.deriv(e_data.Out, reference);
 
 								auto back_prop_out = std::vector<typename ALayer<D>::LayerGradient>(_layers.size());
 								//Back-propagate through all the layers
