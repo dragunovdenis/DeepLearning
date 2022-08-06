@@ -16,6 +16,7 @@
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "Matrix.h"
+#include "Tensor.h"
 #include "Vector.h"
 #include "../Utilities.h"
 #include <exception>
@@ -210,9 +211,9 @@ namespace DeepLearning
 		return _data[row_col_to_data_id(row_id, col_id)];
 	}
 
-	Vector operator *(const Matrix& matr, const Vector& vec)
+	Vector operator *(const Matrix& matr, const BasicCollection& vec)
 	{
-		if (vec.dim() != matr._col_dim)
+		if (vec.size() != matr._col_dim)
 			throw std::exception("Incompatible matrix-vector dimensionality");
 
 		auto result = Vector(matr._row_dim);
@@ -221,7 +222,7 @@ namespace DeepLearning
 		{
 #ifdef USE_AVX2
 			const auto begin_row_ptr = matr._data + row_id * matr._col_dim;
-			result(row_id) = Avx::mm256_dot_product(begin_row_ptr, &*vec.begin(), vec.dim());
+			result(row_id) = Avx::mm256_dot_product(begin_row_ptr, vec.begin(), vec.size());
 #else
 			const auto row_begin = matr._data.begin() + row_id * matr._col_dim;
 			const auto row_end = matr._data.begin() + row_id * matr._col_dim + matr._col_dim;
@@ -248,7 +249,7 @@ namespace DeepLearning
 		{
 #ifdef USE_AVX2
 			const auto begin_row_ptr = _data + row_id * _col_dim;
-			result.begin()[row_id] = Avx::mm256_dot_product(begin_row_ptr, &*mul_vec.begin(), _col_dim) + add_vec[row_id];
+			result.begin()[row_id] = Avx::mm256_dot_product(begin_row_ptr, mul_vec.begin(), _col_dim) + add_vec[row_id];
 #else
 			const auto row_begin = _data.begin() + row_id * col_dim();
 			const auto row_end = _data.begin() + (row_id + 1) * _col_dim;
@@ -257,23 +258,46 @@ namespace DeepLearning
 		}
 	}
 
-	Vector operator *(const BasicCollection& vec, const Matrix& matr)
+	void Matrix::transpose_mul(const BasicCollection& vec, BasicCollection& result) const
 	{
-		if (vec.size() != matr._row_dim)
+		if (vec.size() != _row_dim)
 			throw std::exception("Incompatible matrix-vector dimension");
 
-		auto result = Vector(matr._col_dim);
+		result.resize({ 1ull, 1ull, _col_dim });
 
-		const auto last_row_offset = matr._col_dim * (matr._row_dim - 1);
+		const auto last_row_offset = _col_dim * (_row_dim - 1);
 
-		for (std::size_t col_id = 0; col_id < matr._col_dim; col_id++)
+		auto r_data = result.begin();
+
+		for (std::size_t col_id = 0; col_id < _col_dim; col_id++)
 		{
-			const auto col_begin = ColumnIterator(&*(matr.begin() + col_id), matr._col_dim);
-			const auto col_end = ++ColumnIterator(&*(matr.begin() + last_row_offset + col_id), matr._col_dim);
-			result(col_id) = std::inner_product(col_begin, col_end, vec.begin(), Real(0));
+			const auto col_begin = ColumnIterator((_data + col_id), _col_dim);
+			const auto col_end = ++ColumnIterator((_data + last_row_offset + col_id), _col_dim);
+			r_data[col_id] = std::inner_product(col_begin, col_end, vec.begin(), Real(0));
 		}
+	}
 
+	Vector operator *(const BasicCollection& vec, const Matrix& matr)
+	{
+		Vector result;
+		matr.transpose_mul(vec, result);
 		return result;
+	}
+
+	Matrix Matrix::transpose() const
+	{
+		Matrix result;
+		transpose(result);
+		return result;
+	}
+
+	void Matrix::transpose(Matrix& out) const
+	{
+		out.resize({ 1ull, _col_dim, _row_dim });
+
+		for (auto row_id = 0ull; row_id < _row_dim; ++row_id)
+			for (auto col_id = 0ull; col_id < _col_dim; ++col_id)
+				out._data[col_id * _row_dim + row_id] = _data[row_id * _col_dim + col_id];
 	}
 
 	bool Matrix::operator ==(const Matrix& matr) const
@@ -355,12 +379,11 @@ namespace DeepLearning
 		return _row_dim;
 	}
 
-	Matrix vector_col_times_vector_row(const BasicCollection& vec_col, const BasicCollection& vec_row)
+	template <class T>
+	void vector_col_times_vector_row(const BasicCollection& vec_col, const BasicCollection& vec_row, T& result)
 	{
-		Matrix result(vec_col.size(), vec_row.size());
-
+		result.resize({ 1ull, vec_col.size(), vec_row.size() });
 		const auto col_dim = result.col_dim();
-		const auto last_row_offset = col_dim * (result.row_dim() - 1);
 
 		for (std::size_t col_id = 0; col_id < vec_row.size(); col_id++)
 		{
@@ -368,7 +391,15 @@ namespace DeepLearning
 			const auto factor = vec_row[col_id];
 			std::transform(vec_col.begin(), vec_col.end(), col_begin, [factor](const auto& x) {return factor * x; });
 		}
+	}
 
+	template void vector_col_times_vector_row<Matrix>(const BasicCollection& vec_col, const BasicCollection& vec_row, Matrix& result);
+	template void vector_col_times_vector_row<Tensor>(const BasicCollection& vec_col, const BasicCollection& vec_row, Tensor& result);
+
+	Matrix vector_col_times_vector_row(const BasicCollection& vec_col, const BasicCollection& vec_row)
+	{
+		Matrix result;
+		vector_col_times_vector_row(vec_col, vec_row, result);
 		return result;
 	}
 

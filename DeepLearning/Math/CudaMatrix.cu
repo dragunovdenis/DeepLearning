@@ -16,6 +16,7 @@
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "CudaMatrix.cuh"
+#include "CudaTensor.cuh"
 #include "CudaVector.cuh"
 #include "CudaUtils.cuh"
 #include "Vector.h"
@@ -306,9 +307,9 @@ namespace DeepLearning
 		if (row_id < col_dim) result[row_id] = accumulator;
 	}
 
-	CudaVector operator *(const CudaMatrix& matr, const CudaVector& vec)
+	CudaVector operator *(const CudaMatrix& matr, const BasicCudaCollection& vec)
 	{
-		if (matr.col_dim() != vec.dim())
+		if (matr.col_dim() != vec.size())
 			throw std::exception("Incompatible input data");
 
 		CudaVector result(matr.row_dim(), false /*assign zero*/);
@@ -380,18 +381,60 @@ namespace DeepLearning
 		CUDA_SANITY_CHECK
 	}
 
-	CudaVector operator *(const BasicCudaCollection& vec, const CudaMatrix& matr)
+	void CudaMatrix::transpose_mul(const BasicCudaCollection& vec, BasicCudaCollection& result) const
 	{
-		if (matr.row_dim() != vec.size())
+		if (_row_dim != vec.size())
 			throw std::exception("Incompatible input data");
 
-		CudaVector result(matr.col_dim(), false /*assign zero*/);
+		result.resize({ 1ull, 1ull, _col_dim });
 
-		const auto blocks_cnt = CudaSetup::calc_blocks(matr.col_dim(), CUDA_WARP_SIZE);
-		vector_matrix_multiply_kernel << <blocks_cnt, CUDA_WARP_SIZE, 0, cudaStreamPerThread >> > 
-			(static_cast<int>(matr.row_dim()), static_cast<int>(matr.col_dim()), matr.begin(), vec.begin(), result.begin());
+		const auto blocks_cnt = CudaSetup::calc_blocks(_col_dim, CUDA_WARP_SIZE);
+		vector_matrix_multiply_kernel << <blocks_cnt, CUDA_WARP_SIZE, 0, cudaStreamPerThread >> >
+			(static_cast<int>(_row_dim), static_cast<int>(_col_dim), _data, vec.begin(), result.begin());
 		CUDA_SANITY_CHECK
+	}
+
+	CudaVector operator *(const BasicCudaCollection& vec, const CudaMatrix& matr)
+	{
+		CudaVector result;
+		matr.transpose_mul(vec, result);
 		return result;
+	}
+
+	CudaMatrix CudaMatrix::transpose() const
+	{
+		CudaMatrix result;
+		transpose(result);
+		return result;
+	}
+
+	/// <summary>
+	/// CUDA kernel to perform a matrix transpose operation
+	/// </summary>
+	/// <param name="row_dim">Number of rows in the input matrix</param>
+	/// <param name="col_dim">Number of columns in the input matrix</param>
+	/// <param name="matrix">Pointer to the array of elements of the input matrix 
+	/// (the elements are supposed to be stored in a row major order)</param>
+	/// <param name="result">Pointer to the array to receive the result</param>
+	__global__ void transpose_kernel(const int row_dim, const int col_dim, const Real* matrix, Real* result)
+	{
+		const auto id = blockIdx.x * blockDim.x + threadIdx.x;
+
+		if (id >= row_dim * col_dim) return;
+
+		const auto row_id = id / col_dim;
+		const auto col_id = id % col_dim;
+
+		result[col_id * row_dim + row_id] = matrix[id];
+	}
+
+	void CudaMatrix::transpose(CudaMatrix& out) const
+	{
+		out.resize({ 1ull, _col_dim, _row_dim });
+		const auto blocks_cnt = CudaSetup::calc_blocks(size());
+		const auto threads_per_block = CudaSetup::max_threads_per_block();
+		transpose_kernel << <blocks_cnt, threads_per_block, 0, cudaStreamPerThread >> > (static_cast<int>(_row_dim), static_cast<int>(_col_dim), _data, out._data);
+		CUDA_SANITY_CHECK
 	}
 
 	/// <summary>
@@ -417,15 +460,24 @@ namespace DeepLearning
 
 	CudaMatrix vector_col_times_vector_row(const BasicCudaCollection& vec_col, const BasicCudaCollection& vec_row)
 	{
-		CudaMatrix result(vec_col.size(), vec_row.size(), false /*assign zero*/);
+		CudaMatrix result;
+		vector_col_times_vector_row(vec_col, vec_row, result);		
+		return result;
+	}
 
+	template <class T>
+	void vector_col_times_vector_row(const BasicCudaCollection& vec_col, const BasicCudaCollection& vec_row, T& result)
+	{
+		result.resize({ 1ull, vec_col.size(), vec_row.size() });
 		const auto blocks_cnt = CudaSetup::calc_blocks(result.size());
 		const auto threads_per_block = CudaSetup::max_threads_per_block();
 
-		vector_col_times_vector_row_kernel << <blocks_cnt, threads_per_block, 0, cudaStreamPerThread>> >
+		vector_col_times_vector_row_kernel << <blocks_cnt, threads_per_block, 0, cudaStreamPerThread >> >
 			(static_cast<int>(vec_col.size()), vec_col.begin(),
-			static_cast<int>(vec_row.size()), vec_row.begin(), result.begin());
+				static_cast<int>(vec_row.size()), vec_row.begin(), result.begin());
 		CUDA_SANITY_CHECK
-		return result;
 	}
+
+	template void vector_col_times_vector_row<CudaMatrix>(const BasicCudaCollection& vec_col, const BasicCudaCollection& vec_row, CudaMatrix& result);
+	template void vector_col_times_vector_row<CudaTensor>(const BasicCudaCollection& vec_col, const BasicCudaCollection& vec_row, CudaTensor& result);
 }

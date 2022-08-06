@@ -64,7 +64,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Method to abandon resources (should be called when the resources are "moved")
 		/// </summary>
-		void abandon_resources();
+		void abandon_resources() override;
 
 		/// <summary>
 		/// Assignment from a "host" tensor
@@ -93,7 +93,7 @@ namespace DeepLearning
 		/// Reallocates memory of the tensor to meet the given number of elements
 		/// (if the current "capacity" is lower than the given "new" size)
 		/// </summary>
-		void resize(const Index3d& size_3d);
+		void resize(const Index3d& size_3d) override;
 
 		/// <summary>
 		/// Assignment from a "host" tensor
@@ -105,7 +105,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Return total number of elements in the tensor
 		/// </summary>
-		std::size_t size() const;
+		std::size_t size() const override;
 
 		/// <summary>
 		/// Returns amount of preallocated elements
@@ -343,7 +343,7 @@ namespace DeepLearning
 		/// <param name="paddings">Paddings used for computing the convolution</param>
 		/// <param name="strides">Strides used for computing the convolution</param>
 		/// <param name="kernel_grad">Place holder to store the gradient with respect to convolution kernel dF/dK
-		/// Must be allocated and initialized with zeros by the caller</param>
+		/// Will be allocated and initialized during the method call</param>
 		template <bool CALC_INPUT_GRAD = true>
 		void convolution_gradient(const RealMemHandleConst& conv_res_grad, CudaTensor& input_grad, CudaTensor& kernel_grad, const CudaTensor& kernel, const Index3d& paddings,
 			const Index3d& strides) const;
@@ -435,8 +435,16 @@ namespace DeepLearning
 		/// Returns gradient of some function F with respect to the min/max 2d pool input tensor I: dF/dI
 		/// </summary>
 		/// <param name="pool_res_gradient">Gradient of the function F with respect to the min/max 2d pool output tensor O: dF/dO</param>
-		/// <param name="out_to_in_mapping">Min/max pool output to input flattened index mapping (the second item in the tuple returned by min_max_pool_2d)</param>
+		/// <param name="out_to_in_mapping">Min/max pool output-to-input flattened index mapping (see the output of min_max_pool_2d)</param>
 		CudaTensor min_max_pool_input_gradient(const CudaTensor& pool_res_gradient, const CudaArray<std::size_t>& out_to_in_mapping) const;
+
+		/// <summary>
+		/// Calculates gradient of some function F with respect to the min/max 2d pool input tensor I: dF/dI
+		/// </summary>
+		/// <param name="pool_res_gradient">Gradient of the function F with respect to the min/max 2d pool output tensor O: dF/dO</param>
+		/// <param name="out_to_in_mapping">Min/max pool output-to-input flattened index mapping (see the output of min_max_pool_2d)</param>
+		/// <param name="result">Place-holder for the result</param>
+		void min_max_pool_input_gradient(const CudaTensor& pool_res_gradient, const CudaArray<std::size_t>& out_to_in_mapping, CudaTensor& result) const;
 
 		/// <summary>
 		/// Specialized version of the pool algorithms that pools a scaled sum of the tensor elements in the given window;
@@ -471,12 +479,13 @@ namespace DeepLearning
 		void average_pool(const Index3d& window_size, CudaTensor& result) const;
 
 		/// <summary>
-		/// Returns gradient with respect to the input of the "scale pool" with the given "scale factor"
+		/// Calculates gradient with respect to the input of the "scale pool" with the given "scale factor"
 		/// </summary>
 		/// <param name="pool_res_gradient">Gradient with respect to the output of the "scale pool"</param>
 		/// <param name="window_size">"Window" size of the fool operation</param>
 		/// <param name="scale_factor">Scale factor of the pool</param>
-		CudaTensor scale_pool_input_gradient(const CudaTensor& pool_res_gradient, const Index3d& window_size, const Real& scale_factor) const;
+		/// <param name="result">Place-holder for the result</param>
+		void scale_pool_input_gradient(const CudaTensor& pool_res_gradient, const Index3d& window_size, const Real& scale_factor, CudaTensor& result) const;
 
 		/// <summary>
 		/// Returns gradient with respect to the input of the "average pool" operator
@@ -484,6 +493,14 @@ namespace DeepLearning
 		/// <param name="pool_res_gradient">Gradient with respect to the output of the "scale pool"</param>
 		/// <param name="window_size">"Window" size of the fool operation</param>
 		CudaTensor average_pool_input_gradient(const CudaTensor& pool_res_gradient, const Index3d& window_size) const;
+
+		/// <summary>
+		/// Calculates gradient with respect to the input of the "average pool" operator
+		/// </summary>
+		/// <param name="pool_res_gradient">Gradient with respect to the output of the "scale pool"</param>
+		/// <param name="window_size">"Window" size of the fool operation</param>
+		/// <param name="result">Place-holder for the result</param>
+		void average_pool_input_gradient(const CudaTensor& pool_res_gradient, const Index3d& window_size, CudaTensor& result) const;
 
 		/// <summary>
 		/// Returns read-only memory handle to the layer with given index

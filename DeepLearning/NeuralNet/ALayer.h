@@ -119,6 +119,20 @@ namespace DeepLearning
 			const bool evaluate_input_gradient = true) const = 0;
 
 		/// <summary>
+		/// Performs the back-propagation
+		/// </summary>
+		/// <param name="deltas">Derivatives of the cost function with respect to the output of the current layer</param>
+		/// <param name="aux_learning_data">Auxiliary learning data that should be obtained from the corresponding
+		/// "forward" pass (see method "act") </param>
+		/// <param name="input_grad">Place-holder for the gradient with respect to the input data</param>
+		/// <param name="layer_grad">Place-holder for the gradient with respect to the parameters of the layer itself</param>
+		/// <param name="evaluate_input_gradient">Determines whether the gradient with respect to the
+		/// input data will be actually evaluated.
+		/// The evaluation is redundant for the very first layer of the net</param>
+		virtual void backpropagate(const typename D::tensor_t& deltas, const AuxLearningData& aux_learning_data,
+			typename D::tensor_t& input_grad, LayerGradient& layer_grad, const bool evaluate_input_gradient = true) const = 0;
+
+		/// <summary>
 		/// Adds given increments to the weights and biases respectively
 		/// </summary>
 		/// <param name="weights_and_biases_increment">Increment for weights and biases</param>

@@ -68,7 +68,7 @@ namespace DeepLearning
 		/// Reallocates memory of the tensor to meet the given number of elements
 		/// (if the current "capacity" is lower than the given "new" size)
 		/// </summary>
-		void resize(const Index3d& size_3d);
+		void resize(const Index3d& size_3d) override;
 
 		/// <summary>
 		/// Assignment from a "host" matrix
@@ -78,7 +78,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Total number of elements in the matrix
 		/// </summary>
-		std::size_t size() const;
+		std::size_t size() const override;
 
 		/// <summary>
 		/// Returns number of allocated (reserved) elements (can be greater or equal to size)
@@ -165,7 +165,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Multiplication by a vector from the right
 		/// </summary>
-		CudaVector friend operator *(const CudaMatrix& matr, const CudaVector & vec);
+		CudaVector friend operator *(const CudaMatrix& matr, const BasicCudaCollection& vec);
 
 		/// <summary>
 		/// Performs multiplication by the given vector (from the right)
@@ -185,9 +185,23 @@ namespace DeepLearning
 		void mul_add(const BasicCudaCollection& mul_vec, const BasicCudaCollection& add_vec, BasicCudaCollection& result) const;
 
 		/// <summary>
-		/// Multiplication by a vector from the left
+		/// Returns matrix that is transposed to the current one
 		/// </summary>
-		CudaVector friend operator *(const BasicCudaCollection & vec, const CudaMatrix& matr);
+		CudaMatrix transpose() const;
+
+		/// <summary>
+		/// Calculates matrix that is transposed to the current one
+		/// </summary>
+		/// <param name="out">Place-holder for the result</param>
+		void transpose(CudaMatrix& out) const;
+
+		/// <summary>
+		/// Calculates result of the multiplication of the current
+		/// matrix being transposed by the given vector from the right
+		/// </summary>
+		/// <param name="vec">Vector to multiply</param>
+		/// <param name="result">Place-holder for the result</param>
+		void transpose_mul(const BasicCudaCollection& vec, BasicCudaCollection& result) const;
 
 		/// <summary>
 		/// Equality operator
@@ -255,4 +269,18 @@ namespace DeepLearning
 	/// Returns result of multiplication of the given vector-column by the given vector-row
 	/// </summary>
 	CudaMatrix vector_col_times_vector_row(const BasicCudaCollection& vec_col, const BasicCudaCollection& vec_row);
+
+	/// <summary>
+	/// Calculates result of multiplication of the given vector-column by the given vector-row
+	/// </summary>
+	/// <param name="vec_col">Vector-column</param>
+	/// <param name="vec_row">Vector-row</param>
+	/// <param name="out">Place-holder for the result</param>
+	template <class T>
+	void vector_col_times_vector_row(const BasicCudaCollection& vec_col, const BasicCudaCollection& vec_row, T& result);
+
+	/// <summary>
+	/// Multiplication by a vector from the left
+	/// </summary>
+	CudaVector operator *(const BasicCudaCollection& vec, const CudaMatrix& matr);
 }

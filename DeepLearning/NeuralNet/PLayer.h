@@ -106,6 +106,12 @@ namespace DeepLearning
 			const bool evaluate_input_gradient = true) const override;
 
 		/// <summary>
+		/// See the summary to the corresponding method in the base class
+		/// </summary>
+		virtual void backpropagate(const typename D::tensor_t& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
+			typename D::tensor_t& input_grad, typename ALayer<D>::LayerGradient& layer_grad, const bool evaluate_input_gradient = true) const override;
+
+		/// <summary>
 		/// For the "pooling" layer this method does nothing except a sanity check that the input increments are empty
 		/// </summary>
 		virtual void update(const std::tuple<std::vector<typename D::tensor_t>, typename D::tensor_t>& weights_and_biases_increment, const Real& reg_factor) override;
@@ -118,7 +124,7 @@ namespace DeepLearning
 		/// <summary>
 		/// See description in the base class
 		/// </summary>
-		virtual void log(const std::filesystem::path& directory) const {/*do nothing since this layer does not have a "state" to log anything*/ }
+		virtual void log(const std::filesystem::path& directory) const override {/*do nothing since this layer does not have a "state" to log anything*/ }
 
 		/// <summary>
 		/// See the summary to the corresponding method in the base class

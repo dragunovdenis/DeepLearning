@@ -122,20 +122,32 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	std::tuple<typename D::tensor_t, typename ALayer<D>::LayerGradient> NLayer<D>::backpropagate(const typename D::tensor_t& deltas,
-		const typename ALayer<D>::AuxLearningData& aux_learning_data, const bool evaluate_input_gradient) const
+	void NLayer<D>::backpropagate(const typename D::tensor_t& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
+		typename D::tensor_t& input_grad, typename ALayer<D>::LayerGradient& layer_grad, const bool evaluate_input_gradient) const
 	{
 		if (deltas.size_3d() != Index3d{ 1, 1, static_cast<long long>(_biases.dim()) })
 			throw std::exception("Invalid input");
 
 		const auto function = ActivationWrapper<typename D::tensor_t>(ActivationFunctionId(_func_id));
-		const auto biases_grad = function().calc_input_gradient(deltas, aux_learning_data.Derivatives);
-		auto weights_grad = vector_col_times_vector_row(biases_grad, aux_learning_data.Input);
+		function().calc_input_gradient(deltas, aux_learning_data.Derivatives, layer_grad.Biases_grad);
+		layer_grad.Weights_grad.resize(1);
+		vector_col_times_vector_row(layer_grad.Biases_grad, aux_learning_data.Input, layer_grad.Weights_grad[0]);
 
-		return std::make_tuple<typename D::tensor_t, typename NLayer::LayerGradient>(
-			evaluate_input_gradient ? typename D::tensor_t(biases_grad * _weights).
-			reshape(aux_learning_data.Input.size_3d()) : typename D::tensor_t(0, 0, 0),
-			{ biases_grad, {std::move(weights_grad)} });
+		if (!evaluate_input_gradient) return;
+
+		_weights.transpose_mul(layer_grad.Biases_grad, input_grad);
+		input_grad.reshape(aux_learning_data.Input.size_3d()); //Reshape, because inside this layer, we work with a "flattened" data,
+															   //whereas previous layer might expect data of certain shape
+	}
+
+	template <class D>
+	std::tuple<typename D::tensor_t, typename ALayer<D>::LayerGradient> NLayer<D>::backpropagate(const typename D::tensor_t& deltas,
+		const typename ALayer<D>::AuxLearningData& aux_learning_data, const bool evaluate_input_gradient) const
+	{
+		typename D::tensor_t input_grad;
+		typename ALayer<D>::LayerGradient layer_grad;
+		backpropagate(deltas, aux_learning_data, input_grad, layer_grad, evaluate_input_gradient);
+		return std::make_tuple(std::move(input_grad), std::move(layer_grad));
 	}
 
 	template <class D>

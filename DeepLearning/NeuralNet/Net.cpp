@@ -69,8 +69,8 @@ namespace DeepLearning
 				Index3d in_size;
 				if (Utils::try_extract_vector(script_normalized, in_size))
 				{
-					if (layer_type_id != LayerTypeId::FULL && prev_layer_out_size != in_size || 
-						layer_type_id == LayerTypeId::FULL && prev_layer_out_size.coord_prod() != in_size.coord_prod())
+					if ((layer_type_id != LayerTypeId::FULL && prev_layer_out_size != in_size) || 
+						(layer_type_id == LayerTypeId::FULL && prev_layer_out_size.coord_prod() != in_size.coord_prod()))
 						throw std::exception((std::string("Inconsistent input/output dimensions : ") + script_normalized).c_str());
 				}
 
@@ -192,6 +192,7 @@ namespace DeepLearning
 		ThreadPool thread_pool(threads_to_use);
 
 		auto aux_learning_data = std::vector<std::vector<typename ALayer<D>::AuxLearningData>>(threads_to_use, std::vector<typename ALayer<D>::AuxLearningData>(_layers.size()));
+		auto layer_gradient_data = std::vector<std::vector<typename ALayer<D>::LayerGradient>>(threads_to_use, std::vector<typename ALayer<D>::LayerGradient>(_layers.size()));
 		auto eval_data = std::vector<InOutData>(threads_to_use);
 		std::mutex mutex;
 
@@ -225,19 +226,22 @@ namespace DeepLearning
 						{
 							auto& aux_data_ptr = aux_learning_data[local_thread_id];
 							auto& e_data = eval_data[local_thread_id];
+							auto& back_prop_out = layer_gradient_data[local_thread_id];
 							for (auto elem_id = currnt_thread_start_id; elem_id < current_thread_end_id; elem_id++)
 							{
 								const auto input_item_id = data_index_mapping[elem_id];
 								const auto& input = training_items[input_item_id];
 								const auto& reference = reference_items[input_item_id];
 								act(input, e_data, &aux_data_ptr);
-								auto gradient = cost_function.deriv(e_data.Out, reference);
+								cost_function.deriv_in_place(e_data.Out, reference);
 
-								auto back_prop_out = std::vector<typename ALayer<D>::LayerGradient>(_layers.size());
 								//Back-propagate through all the layers
 								for (long long layer_id = _layers.size() - 1; layer_id >= 0; layer_id--)
-									std::tie(gradient, back_prop_out[layer_id]) = _layers[layer_id].layer().backpropagate(
-										gradient, aux_data_ptr[layer_id], layer_id != 0);
+								{
+									e_data.swap();
+									_layers[layer_id].layer().backpropagate(e_data.In, aux_data_ptr[layer_id],
+										e_data.Out, back_prop_out[layer_id], layer_id != 0);
+								}
 
 								std::lock_guard guard(mutex);
 								for (std::size_t layer_id = 0; layer_id < _layers.size(); layer_id++)

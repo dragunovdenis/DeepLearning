@@ -177,5 +177,18 @@ namespace DeepLearningTest
 			Logger::WriteMessage((std::string("Diff = ") + Utils::to_string(diff) + "\n").c_str());
 			Assert::IsTrue(diff < 10 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference");
 		}
+
+		TEST_METHOD(TransposeTest)
+		{
+			//Arrange
+			const auto matrix = CudaMatrixFactory(3, 5);
+			Assert::IsTrue(matrix.max_abs() > 0, L"Matrix is supposed to be nonzero");
+
+			//Act
+			const auto matrix_transposed = matrix.transpose();
+
+			//Assert
+			Assert::IsTrue(matrix_transposed.to_host() == matrix.to_host().transpose(), L"Transposed matrix deviates from reference");
+		}
 	};
 }

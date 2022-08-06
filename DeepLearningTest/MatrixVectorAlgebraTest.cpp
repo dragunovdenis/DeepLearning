@@ -131,6 +131,22 @@ namespace DeepLearningTest
 			}
 		}
 
+		TEST_METHOD(MatrixTransposeTest)
+		{
+			//Arrange
+			const auto matrix = MatrixFactory();
+			Assert::IsTrue(matrix.max_abs() > 0, L"Matrix is supposed to be nonzero");
+			const auto vector = Vector(matrix.row_dim(), -1, 1);
+			Assert::IsTrue(vector.max_abs() > 0, L"Vector is supposed to be nonzero");
+
+			//Act
+			const auto matrix_transposed = matrix.transpose();
+
+			//Assert
+			const auto diff = (vector * matrix - matrix_transposed * vector).max_abs();
+			StandardTestUtils::LogRealAndAssertLessOrEqualTo("Difference", diff, 10 * std::numeric_limits<Real>::epsilon());
+		}
+
 		TEST_METHOD(VectorPackingTest)
 		{
 			StandardTestUtils::PackingTest<Vector>([]() { return VectorFactory(); });

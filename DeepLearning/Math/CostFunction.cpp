@@ -89,10 +89,16 @@ namespace DeepLearning
 	}
 
 	template <class T>
+	void CostFunction<T>::deriv_in_place(T& output_deriv, const T& reference) const
+	{
+		CostFunctionHelper::evaluate_gradient(output_deriv, reference, _id);
+	}
+
+	template <class T>
 	T CostFunction<T>::deriv(const T& output, const T& reference) const
 	{
 		auto deriv = output;
-		CostFunctionHelper::evaluate_gradient(deriv, reference, _id);
+		deriv_in_place(deriv, reference);
 		return deriv;
 	}
 

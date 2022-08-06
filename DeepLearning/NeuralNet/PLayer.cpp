@@ -113,30 +113,45 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	std::tuple<typename D::tensor_t, typename ALayer<D>::LayerGradient> PLayer<D>::backpropagate(
-		const typename D::tensor_t& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
-		const bool evaluate_input_gradient) const
+	void PLayer<D>::backpropagate(const typename D::tensor_t& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
+		typename D::tensor_t& input_grad, typename ALayer<D>::LayerGradient& layer_grad, const bool evaluate_input_gradient) const
 	{
 		if (deltas.size_3d() != out_size())
 			throw std::exception("Unexpected size of the input tensor of derivatives");
 
+		layer_grad.Biases_grad.resize({ 0, 0, 0 });
+		layer_grad.Weights_grad.resize(0);
+
 		if (!evaluate_input_gradient)
-			return std::make_tuple<typename D::tensor_t, typename PLayer::LayerGradient>(typename D::tensor_t(), { typename D::tensor_t(), std::vector<typename D::tensor_t>() });
+		{
+			input_grad.resize({ 0, 0, 0 });
+			return;
+		}
 
 		if (_pool_operator_id == PoolTypeId::MIN || _pool_operator_id == PoolTypeId::MAX)
 		{
 			if (aux_learning_data.IndexMapping.size() != out_size().coord_prod())
 				throw std::exception("Invalid index mapping");
 
-			auto input_grad = aux_learning_data.Input.min_max_pool_input_gradient(deltas, aux_learning_data.IndexMapping);
-			return std::make_tuple<typename D::tensor_t, typename PLayer::LayerGradient>(std::move(input_grad), { typename D::tensor_t(), std::vector<typename D::tensor_t>() });
+			aux_learning_data.Input.min_max_pool_input_gradient(deltas, aux_learning_data.IndexMapping, input_grad);
+			return;
 		}
 
 		if (_pool_operator_id != PoolTypeId::AVERAGE)
 			throw std::exception("Unsupported pool type");
 
-		auto input_grad = aux_learning_data.Input.average_pool_input_gradient(deltas, _pool_window_size);
-		return std::make_tuple<typename D::tensor_t, typename PLayer::LayerGradient>(std::move(input_grad), { typename D::tensor_t(), std::vector<typename D::tensor_t>() });
+		aux_learning_data.Input.average_pool_input_gradient(deltas, _pool_window_size, input_grad);
+	}
+
+	template <class D>
+	std::tuple<typename D::tensor_t, typename ALayer<D>::LayerGradient> PLayer<D>::backpropagate(
+		const typename D::tensor_t& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
+		const bool evaluate_input_gradient) const
+	{
+		typename D::tensor_t input_grad;
+		typename ALayer<D>::LayerGradient layer_grad;
+		backpropagate(deltas, aux_learning_data, input_grad, layer_grad, evaluate_input_gradient);
+		return std::make_tuple(std::move(input_grad), std::move(layer_grad));
 	}
 
 	template <class D>

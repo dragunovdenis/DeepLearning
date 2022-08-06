@@ -158,5 +158,13 @@ namespace DeepLearning
 		/// <param name="output">Actual output of the neural network</param>
 		/// <param name="reference">Expected output of the neural network</param>
 		T deriv(const T& output, const T& reference) const;
+
+		/// <summary>
+		/// Calculates derivative of the cost function with respect to the given "output" vector
+		/// </summary>
+		/// <param name="output_deriv">Actual output of the neural network.
+		/// Contains the derivatives when method is returned</param>
+		/// <param name="reference">Expected output of the neural network</param>
+		void deriv_in_place(T& output_deriv, const T& reference) const;
 	};
 }

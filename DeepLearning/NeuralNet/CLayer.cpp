@@ -115,18 +115,27 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	std::tuple<typename D::tensor_t, typename ALayer<D>::LayerGradient> CLayer<D>::backpropagate(const typename D::tensor_t& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
-		const bool evaluate_input_gradient) const
+	void CLayer<D>::backpropagate(const typename D::tensor_t& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
+		typename D::tensor_t& input_grad, typename ALayer<D>::LayerGradient& layer_grad, const bool evaluate_input_gradient) const
 	{
 		if (deltas.size_3d() != aux_learning_data.Derivatives.size_3d())
 			throw std::exception("Unexpected size of the input tensor of derivatives");
 
 		const auto function = ActivationWrapper<typename D::tensor_t>(ActivationFunctionId(_func_id));
-		auto biases_grad = function().calc_input_gradient(deltas, aux_learning_data.Derivatives);
+		function().calc_input_gradient(deltas, aux_learning_data.Derivatives, layer_grad.Biases_grad);
 
-		auto filters_grad = std::vector<typename D::tensor_t>(_filters.size(), typename D::tensor_t(_weight_tensor_size, true));
-		typename D::tensor_t input_grad = evaluate_input_gradient ? typename D::tensor_t(in_size(), true) : typename D::tensor_t();
+		if (layer_grad.Weights_grad.size() != _filters.size())
+			layer_grad.Weights_grad.resize(_filters.size());
+
+		auto& filters_grad = layer_grad.Weights_grad;
+
+		if (evaluate_input_gradient)
+		{
+			input_grad.resize(in_size());
+			input_grad.fill(Real(0));
+		}
 		const auto& input_tensor = aux_learning_data.Input;
+		const auto& biases_grad = layer_grad.Biases_grad;
 
 		if (evaluate_input_gradient)
 			for (auto filter_id = 0ull; filter_id < _filters.size(); filter_id++)
@@ -134,7 +143,7 @@ namespace DeepLearning
 				input_tensor.template convolution_gradient<true>(
 					static_cast<const typename D::tensor_t&>(biases_grad).get_layer_handle(filter_id), input_grad, filters_grad[filter_id],
 					_filters[filter_id], _paddings, _strides);
-			} 
+			}
 		else
 			for (auto filter_id = 0ull; filter_id < _filters.size(); filter_id++)
 			{
@@ -142,8 +151,16 @@ namespace DeepLearning
 					static_cast<const typename D::tensor_t&>(biases_grad).get_layer_handle(filter_id), input_grad, filters_grad[filter_id],
 					_filters[filter_id], _paddings, _strides);
 			}
+	}
 
-		return std::make_tuple<typename D::tensor_t, typename CLayer::LayerGradient>(std::move(input_grad), { std::move(biases_grad), std::move(filters_grad) });
+	template <class D>
+	std::tuple<typename D::tensor_t, typename ALayer<D>::LayerGradient> CLayer<D>::backpropagate(const typename D::tensor_t& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
+		const bool evaluate_input_gradient) const
+	{
+		typename D::tensor_t input_grad;
+		typename ALayer<D>::LayerGradient layer_grad;
+		backpropagate(deltas, aux_learning_data, input_grad, layer_grad, evaluate_input_gradient);
+		return std::make_tuple(std::move(input_grad), std::move(layer_grad));
 	}
 
 	template <class D>

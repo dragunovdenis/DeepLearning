@@ -19,6 +19,7 @@
 #include "../defs.h"
 #include <functional>
 #include "../Memory/MemHandle.h"
+#include "LinAlg3d.h"
 
 namespace DeepLearning
 {
@@ -34,6 +35,12 @@ namespace DeepLearning
 		Real* _data{};
 
 	public:
+		/// <summary>
+		/// Reallocates memory of the collection to meet the given number of elements
+		/// (if the current "capacity" is lower than the given "new" size)
+		/// </summary>
+		virtual void resize(const Index3d& size_3d) = 0;
+
 		/// <summary>
 		/// Element-wise sum with another collection of the same size
 		/// It is a responsibility of the caller to make sure that the collections are of the same size

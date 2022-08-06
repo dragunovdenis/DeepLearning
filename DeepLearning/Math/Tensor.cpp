@@ -426,8 +426,8 @@ namespace DeepLearning
 		if (CALC_INPUT_GRAD && input_grad.size_3d() != tensor_size)
 			throw std::exception("Unexpected size of the input gradient container");
 
-		if (kernel_grad.size_3d() != kernel_size)
-			throw std::exception("Unexpected size of the result container");
+		kernel_grad.resize(kernel_size);
+		kernel_grad.fill(Real(0));
 
 		for (std::size_t res_data_id = 0; res_data_id < conv_res_grad.size(); res_data_id++)
 		{
@@ -580,17 +580,23 @@ namespace DeepLearning
 	template void Tensor::min_max_pool<true>(const Index3d& window_size, const bool max, Tensor& result, std::vector<std::size_t>& index_map) const;
 	template void Tensor::min_max_pool<false>(const Index3d& window_size, const bool max, Tensor& result, std::vector<std::size_t>& index_map) const;
 
-	Tensor Tensor::min_max_pool_input_gradient(const Tensor& pool_res_gradient, const std::vector<std::size_t>& out_to_in_mapping) const
+	void Tensor::min_max_pool_input_gradient(const Tensor& pool_res_gradient, const std::vector<std::size_t>& out_to_in_mapping, Tensor& result) const
 	{
 		if (pool_res_gradient.size() != out_to_in_mapping.size())
 			throw std::exception("Inconsistent input");
 
-		auto result = Tensor(size_3d(), true/*zeros initialization*/);
+		result.resize(size_3d());
+		result.fill(Real(0));
 
 		auto map_ptr = out_to_in_mapping.begin();
 		for (auto grad_ptr = pool_res_gradient.begin(); grad_ptr != pool_res_gradient.end(); grad_ptr++, map_ptr++)
 			result._data[*map_ptr] = *grad_ptr;
+	}
 
+	Tensor Tensor::min_max_pool_input_gradient(const Tensor& pool_res_gradient, const std::vector<std::size_t>& out_to_in_mapping) const
+	{
+	    Tensor result;
+		min_max_pool_input_gradient(pool_res_gradient, out_to_in_mapping, result);
 		return result;
 	}
 
@@ -623,7 +629,7 @@ namespace DeepLearning
 		}
 	}
 
-	Tensor Tensor::scale_pool_input_gradient(const Tensor& pool_res_gradient, const Index3d& window_size, const Real& scale_factor) const
+	void Tensor::scale_pool_input_gradient(const Tensor& pool_res_gradient, const Index3d& window_size, const Real& scale_factor, Tensor& result) const
 	{
 		const auto paddings = Index3d{ 0 };
 		const auto tensor_size = size_3d();
@@ -632,7 +638,8 @@ namespace DeepLearning
 		if (result_size != pool_res_gradient.size_3d())
 			throw std::exception("Unexpected size of the gradient tensor");
 
-		auto result = Tensor(tensor_size, true);
+		result.resize(tensor_size);
+		result.fill(Real(0));
 
 		for (std::size_t res_data_id = 0; res_data_id < pool_res_gradient.size(); res_data_id++)
 		{
@@ -646,8 +653,6 @@ namespace DeepLearning
 				//use direct assignment ("=") instead of accumulation ("+=") in the line below
 				result._data[coords_to_data_id(t_x, t_y, t_z)] = value;);
 		}
-
-		return result;
 	}
 
 	Tensor Tensor::average_pool(const Index3d& window_size) const
@@ -660,9 +665,16 @@ namespace DeepLearning
 		scale_pool(window_size, Real(1) / window_size.coord_prod(), result);
 	}
 
+	void Tensor::average_pool_input_gradient(const Tensor& pool_res_gradient, const Index3d& window_size, Tensor& result) const
+	{
+		scale_pool_input_gradient(pool_res_gradient, window_size, Real(1) / window_size.coord_prod(), result);
+	}
+
 	Tensor Tensor::average_pool_input_gradient(const Tensor& pool_res_gradient, const Index3d& window_size) const
 	{
-		return scale_pool_input_gradient(pool_res_gradient, window_size, Real(1) / window_size.coord_prod());
+		Tensor result;
+		scale_pool_input_gradient(pool_res_gradient, window_size, Real(1) / window_size.coord_prod(), result);
+		return result;
 	}
 
 	void Tensor::msgpack_unpack(msgpack::object const& msgpack_o)

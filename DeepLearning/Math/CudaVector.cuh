@@ -65,7 +65,7 @@ namespace DeepLearning
 		/// Reallocates memory of the tensor to meet the given number of elements
 		/// (if the current "capacity" is lower than the given "new" size)
 		/// </summary>
-		void resize(const Index3d& size_3d);
+		void resize(const Index3d& size_3d) override;
 
 		/// <summary>
 		/// Assignment from a "host" collection
@@ -75,7 +75,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Size of the vector
 		/// </summary>
-		std::size_t size() const;
+		std::size_t size() const override;
 
 		/// <summary>
 		/// Returns number of allocated (reserved) elements (can be greater or equal to size)

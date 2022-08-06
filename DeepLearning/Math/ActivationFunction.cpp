@@ -59,7 +59,6 @@ namespace DeepLearning
 		void evaluate_softmax_input_grad(const BasicCollection& input_exp, const BasicCollection& out_grad, BasicCollection& result)
 		{
 			const auto one_over_denominator = Real(1) / input_exp.sum();
-			const auto one_over_denominator_squared = one_over_denominator * one_over_denominator;
 
 			std::transform(result.begin(), result.end(), out_grad.begin(), result.begin(),
 				[one_over_denominator](const auto& x, const auto& y) { return x * y * one_over_denominator; });
@@ -105,7 +104,16 @@ namespace DeepLearning
 	template <class T>
 	T ActivationFunction<T>::calc_input_gradient(const typename T::Base& out_grad, const T& aux_data) const
 	{
-		return out_grad.hadamard_prod(aux_data);
+		T result;
+		calc_input_gradient(out_grad, aux_data, result);
+		return result;
+	}
+
+	template <class T>
+	void ActivationFunction<T>::calc_input_gradient(const typename T::Base& out_grad, const T& aux_data, T& result) const
+	{
+		result = aux_data;
+		result.hadamard_prod_in_place(out_grad);
 	}
 
 	template <class T>
@@ -145,13 +153,19 @@ namespace DeepLearning
 	template <class T>
 	T SoftMaxActivationFunction<T>::calc_input_gradient(const typename T::Base& out_grad, const T& aux_data) const
 	{
+		T result;
+		calc_input_gradient(out_grad, aux_data, result);
+		return result;
+	}
+
+	template <class T>
+	void SoftMaxActivationFunction<T>::calc_input_gradient(const typename T::Base& out_grad, const T& aux_data, T& result) const
+	{
 		if (out_grad.size() != aux_data.size())
 			throw std::exception("Inconsistent input data");
 
-		auto result = aux_data;
+		result = aux_data;
 		ActivationFunctionHelper::evaluate_softmax_input_grad(aux_data, out_grad, result);
-
-		return result;
 	}
 
 	template <class T>

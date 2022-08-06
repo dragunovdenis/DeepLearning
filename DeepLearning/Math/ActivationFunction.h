@@ -91,6 +91,14 @@ namespace DeepLearning
 		virtual T calc_input_gradient(const typename T::Base& out_grad, const T& aux_data) const = 0;
 
 		/// <summary>
+		/// Calculates gradient with respect to the function's input 
+		/// </summary>
+		/// <param name="out_grad">Gradient with respect to the function's output</param>
+		/// <param name="aux_data">Auxiliary data calculated by function "func_and_aux"</param>
+		/// <param name="out">Place-holder for the result of calculation</param>
+		virtual void calc_input_gradient(const typename T::Base& out_grad, const T& aux_data, T& out) const = 0;
+
+		/// <summary>
 		/// Virtual destructor to ensure proper releasing of the resources of descending classes
 		/// </summary>
 		virtual ~AFunction() {}
@@ -227,6 +235,11 @@ namespace DeepLearning
 		/// <param name="out_grad">Gradient with respect to the function's output</param>
 		/// <param name="aux_data">Auxiliary data calculated by function "func_and_aux"</param>
 		virtual T calc_input_gradient(const typename T::Base& out_grad, const T& aux_data) const override;
+
+		/// <summary>
+		/// See the summary of the corresponding method in the base class
+		/// </summary>
+		virtual void calc_input_gradient(const typename T::Base& out_grad, const T& aux_data, T& result) const override;
 	};
 
 	/// <summary>
@@ -268,6 +281,11 @@ namespace DeepLearning
 		/// <param name="out_grad">Gradient with respect to the function's output</param>
 		/// <param name="aux_data">Auxiliary data calculated by function "func_and_aux"</param>
 		virtual T calc_input_gradient(const typename T::Base& out_grad, const T& aux_data) const override;
+
+		/// <summary>
+		/// See the summary of the corresponding method in the base class
+		/// </summary>
+		virtual void calc_input_gradient(const typename T::Base& out_grad, const T& aux_data, T& result) const override;
 	};
 }
 

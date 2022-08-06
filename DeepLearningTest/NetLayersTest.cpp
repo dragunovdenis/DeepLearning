@@ -385,7 +385,7 @@ namespace DeepLearningTest
 			RunGeneralDerivativeWithRespectToInputValuesTest(nl, CostFunctionId::SQUARED_ERROR, (std::is_same_v<Real, double> ? Real(2e-8) : Real(8e-2)));
 		}
 
-		TEST_METHOD(CLayerDerivativeWithRespectToWeightsAndbiasesCalculationSquaredErrorTest)
+		TEST_METHOD(CLayerDerivativeWithRespectToWeightsAndBiasesCalculationSquaredErrorTest)
 		{
 			const auto nl = ConstructStandardCLayer();
 
