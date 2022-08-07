@@ -105,10 +105,10 @@ int main(int argc, char** argv)
 	const auto reg_factor = reg_factor_arg.getValue();
 
 	const std::filesystem::path script_path = script_arg.getValue();
-	Net<CpuDC> net_original;
+	Net net_to_train;
 	try
 	{
-		net_original = Net<CpuDC>::load_script(script_path);
+		net_to_train.try_load_from_file(script_path);
 	}
 	catch (const std::exception& e)
 	{
@@ -119,7 +119,7 @@ int main(int argc, char** argv)
 	const auto summary = std::string("Mini-batch size : ") + std::to_string(batch_size) + "\n" +
 		"Epochs count : " + std::to_string(epochs_count) + "\n" +
 		"Learning rate : " + Utils::to_string(learning_rate) + "\n" +
-		"Regularization factor : " + Utils::to_string(reg_factor) + "\n" + net_original.to_string() + "\n";
+		"Regularization factor : " + Utils::to_string(reg_factor) + "\n" + net_to_train.to_string() + "\n";
 
 	std::cout << summary;
 
@@ -152,8 +152,6 @@ int main(int argc, char** argv)
 	std::cout << "Started at: " << format_time(start) << std::endl;
 	for (auto iter_id = 1; iter_id <= iteration_arg.getValue(); iter_id++)
 	{
-		auto net_to_train = Net<CpuDC>(net_original.to_script());
-
 		reporter.new_training();
 
 		const auto evaluation_action = [&](const auto epoch_id, const auto scaled_l2_reg_factor)

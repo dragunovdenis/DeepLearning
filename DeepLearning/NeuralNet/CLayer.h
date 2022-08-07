@@ -29,7 +29,7 @@ namespace DeepLearning
 	/// <summary>
 	/// Convolutional layer
 	/// </summary>
-	template <class D>
+	template <class D = CpuDC>
 	class CLayer : public ALayer<D>
 	{
 		Index3d _in_size{};

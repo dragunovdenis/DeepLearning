@@ -51,9 +51,11 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	Net<D>::Net(const std::string& script_str)
+	void Net<D>::try_load_from_script(const std::string& script)
 	{
-		const auto layer_scripts = Utils::split_by_char(script_str, '\n');
+		_layers.clear();
+
+		const auto layer_scripts = Utils::split_by_char(script, '\n');
 
 		Index3d prev_layer_out_size = { -1, -1, -1 };
 		for (const auto& script : layer_scripts)
@@ -69,7 +71,7 @@ namespace DeepLearning
 				Index3d in_size;
 				if (Utils::try_extract_vector(script_normalized, in_size))
 				{
-					if ((layer_type_id != LayerTypeId::FULL && prev_layer_out_size != in_size) || 
+					if ((layer_type_id != LayerTypeId::FULL && prev_layer_out_size != in_size) ||
 						(layer_type_id == LayerTypeId::FULL && prev_layer_out_size.coord_prod() != in_size.coord_prod()))
 						throw std::exception((std::string("Inconsistent input/output dimensions : ") + script_normalized).c_str());
 				}
@@ -90,6 +92,18 @@ namespace DeepLearning
 
 			prev_layer_out_size = _layers.rbegin()->layer().out_size();
 		}
+	}
+
+	template <class D>
+	void Net<D>::try_load_from_file(const std::filesystem::path& file_path)
+	{
+		try_load_from_script(Utils::read_all_text(file_path));
+	}
+
+	template <class D>
+	Net<D>::Net(const std::string& script_str)
+	{
+		try_load_from_script(script_str);
 	}
 
 	template <class D>
@@ -360,12 +374,6 @@ namespace DeepLearning
 			throw std::exception("Can't create file");
 
 		file << to_script();
-	}
-
-	template <class D>
-	Net<D> Net<D>::load_script(const std::filesystem::path& scrypt_path)
-	{
-		return Net<D>(Utils::read_all_text(scrypt_path));
 	}
 
 	template <class D>

@@ -32,7 +32,7 @@ namespace DeepLearning
 	/// <summary>
 	/// Representation of a single neural layer
 	/// </summary>
-	template <class D>
+	template <class D = CpuDC>
 	class NLayer : public ALayer<D>
 	{
 	private:

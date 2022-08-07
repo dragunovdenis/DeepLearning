@@ -32,7 +32,7 @@ namespace DeepLearning
 	/// <summary>
 	/// Class representing a neural network consisting of neural layers
 	/// </summary>
-	template <class D>
+	template <class D = CpuDC>
 	class Net
 	{
 		/// <summary>
@@ -108,6 +108,20 @@ namespace DeepLearning
 		Net(const std::string& script_str);
 
 		/// <summary>
+		/// Tries load a net from the given script-string (for example, an output of `to_script()` method)
+		/// Throws exception with the corresponding message if fails
+		/// </summary>
+		/// <param name="script">Script-string</param>
+		void try_load_from_script(const std::string& script);
+
+		/// <summary>
+		/// Tries to load a net from a string-script in the given file
+		/// Throws exception with the corresponding message if fails
+		/// </summary>
+		/// <param name="file_path">Path to file with a string-script (generated, for example by `to_script()` method)</param>
+		void try_load_from_file(const std::filesystem::path& file_path);
+
+		/// <summary>
 		/// Returns output of the neural network calculated for the given input
 		/// </summary>
 		typename D::tensor_t act(const typename D::tensor_t& input, std::vector<typename ALayer<D>::AuxLearningData>* const aux_data_ptr = nullptr) const;
@@ -181,11 +195,6 @@ namespace DeepLearning
 		/// </summary>
 		/// <param name="scrypt_path">Path to the file to save script to</param>
 		void save_script(const std::filesystem::path& scrypt_path) const;
-
-		/// <summary>
-		/// Instantiates net from the script in the given file on disk
-		/// </summary>
-		static Net load_script(const std::filesystem::path& scrypt_path);
 
 		/// <summary>
 		/// Returns "true" if the current and the given networks coincide in terms of hyper-parameters,

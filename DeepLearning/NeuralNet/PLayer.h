@@ -28,7 +28,7 @@ namespace DeepLearning
 	/// <summary>
 	/// "Pooling" layer
 	/// </summary>
-	template <class D>
+	template <class D = CpuDC>
 	class PLayer : public ALayer<D>
 	{
 		Index3d _in_size{};
