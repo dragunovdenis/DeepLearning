@@ -83,9 +83,9 @@ namespace DeepLearning
 
 			switch (layer_type_id)
 			{
-			case LayerTypeId::CONVOLUTION: append_layer<CLayer<D>>(script_normalized); break;
-			case LayerTypeId::FULL: append_layer<NLayer<D>>(script_normalized); break;
-			case LayerTypeId::PULL: append_layer<PLayer<D>>(script_normalized); break;
+			case LayerTypeId::CONVOLUTION: append_layer<CLayer>(script_normalized); break;
+			case LayerTypeId::FULL: append_layer<NLayer>(script_normalized); break;
+			case LayerTypeId::PULL: append_layer<PLayer>(script_normalized); break;
 			default:
 				throw std::exception("Unexpected identifier of the layer type");
 			}
@@ -95,7 +95,7 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	void Net<D>::try_load_from_file(const std::filesystem::path& file_path)
+	void Net<D>::try_load_from_script_file(const std::filesystem::path& file_path)
 	{
 		try_load_from_script(Utils::read_all_text(file_path));
 	}

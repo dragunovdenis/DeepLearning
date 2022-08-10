@@ -108,7 +108,7 @@ int main(int argc, char** argv)
 	Net net_to_train;
 	try
 	{
-		net_to_train.try_load_from_file(script_path);
+		net_to_train.try_load_from_script_file(script_path);
 	}
 	catch (const std::exception& e)
 	{

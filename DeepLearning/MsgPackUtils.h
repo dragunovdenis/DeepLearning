@@ -18,6 +18,8 @@
 #pragma once
 #include <msgpack.hpp>
 #include <sstream>
+#include <fstream>
+#include <filesystem>
 
 namespace DeepLearning
 {
@@ -34,12 +36,49 @@ namespace DeepLearning
 			return result;
 		}
 
+		/// <summary>
+		/// Serializes the given object in message-pack format and saves it to the given file on disk
+		/// </summary>
+		template <class T>
+		void save_to_file(const T& obj, const std::filesystem::path& file_name)
+		{
+			std::ofstream file(file_name, std::ios::out | std::ios::binary);
+
+			if (!file.is_open())
+				throw std::exception("Can't create file");
+
+			const auto message = pack(obj);
+			file << message.rdbuf();
+			file.close();
+		}
+
+		/// <summary>
+		/// Deserializes an instance of class T from the given message
+		/// </summary>
 		template <class T> 
 		T unpack(const std::stringstream& msg)
 		{
 			msgpack::unpacked result;
 			msgpack::unpack(result, msg.str().data(), msg.str().size());
 			return result.get().as<T>();
+		}
+
+		/// <summary>
+		/// Tries to deserialize an instance of the given class T from the message-pack data loaded from the given file
+		/// </summary>
+		template <class T>
+		T load_from_file(const std::filesystem::path& file_name)
+		{
+			std::ifstream file(file_name, std::ios::in | std::ios::binary);
+
+			if (!file.is_open())
+				throw std::exception("Can't open file");
+
+			std::stringstream message;
+			message << file.rdbuf();
+			file.close();
+
+			return unpack<T>(message);
 		}
 	}
 }

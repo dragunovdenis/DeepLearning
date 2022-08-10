@@ -119,7 +119,7 @@ namespace DeepLearning
 		/// Throws exception with the corresponding message if fails
 		/// </summary>
 		/// <param name="file_path">Path to file with a string-script (generated, for example by `to_script()` method)</param>
-		void try_load_from_file(const std::filesystem::path& file_path);
+		void try_load_from_script_file(const std::filesystem::path& file_path);
 
 		/// <summary>
 		/// Returns output of the neural network calculated for the given input
@@ -169,10 +169,10 @@ namespace DeepLearning
 		/// <typeparam name="...Types">Types of arguments required by a constructor of type "L"</typeparam>
 		/// <param name="...args">Actual arguments required by a constructor of type "L"</param>
 		/// <returns>Output size of the appended layer</returns>
-		template <class L, class... Types>
+		template <template<class> class L, class... Types>
 		Index3d append_layer(Types&&... args)
 		{
-			_layers.push_back(LayerHandle<D>::template make<L>(std::forward<Types>(args)...));
+			_layers.push_back(LayerHandle<D>::template make<L<D>>(std::forward<Types>(args)...));
 			return _layers.rbegin()->layer().out_size();
 		}
 
