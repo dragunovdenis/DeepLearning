@@ -97,12 +97,22 @@ int main(int argc, char** argv)
 	auto reg_factor_arg = TCLAP::ValueArg<Real>("l", "lambda", "L2 regularization factor", false, 0.0, "double");
 	cmd.add(reg_factor_arg);
 
+	auto cost_func_arg = TCLAP::ValueArg<std::string>("c", "cost", "Cost function used in the training process", false, "CROSS_ENTROPY", "string");
+	cmd.add(cost_func_arg);
+
 	cmd.parse(argc, argv);
 
 	const auto batch_size = minibatch_arg.getValue();
 	const auto epochs_count = epoch_arg.getValue();
 	const auto learning_rate = rate_arg.getValue();
 	const auto reg_factor = reg_factor_arg.getValue();
+	const auto cost_func_id = parse_cost_type(cost_func_arg.getValue());
+
+	if (cost_func_id == CostFunctionId::UNKNOWN)
+	{
+		std::cout << "Invalid type of the cost function!!! Please check spelling." << std::endl;
+		return;
+	}
 
 	const std::filesystem::path script_path = script_arg.getValue();
 	Net net_to_train;
@@ -119,7 +129,8 @@ int main(int argc, char** argv)
 	const auto summary = std::string("Mini-batch size : ") + std::to_string(batch_size) + "\n" +
 		"Epochs count : " + std::to_string(epochs_count) + "\n" +
 		"Learning rate : " + Utils::to_string(learning_rate) + "\n" +
-		"Regularization factor : " + Utils::to_string(reg_factor) + "\n" + net_to_train.to_string() + "\n";
+		"Regularization factor : " + Utils::to_string(reg_factor) + "\n" +
+		"Cost function : " + to_string(cost_func_id) + "\n" "Net architecture: " + "\n" + net_to_train.to_string() + "\n";
 
 	std::cout << summary;
 
@@ -143,15 +154,14 @@ int main(int argc, char** argv)
 
 	const auto directory = script_path.parent_path();
 
-	const auto cost_func_id = CostFunctionId::CROSS_ENTROPY;
-
-	LRReporter reporter(summary, " ");
+	LRReporter reporter(summary, "; ");
 
 	const auto start = std::chrono::system_clock::now();
 	auto epoch_start = start;
 	std::cout << "Started at: " << format_time(start) << std::endl;
 	for (auto iter_id = 1; iter_id <= iteration_arg.getValue(); iter_id++)
 	{
+		net_to_train.try_load_from_script_file(script_path); //re-instantiate the net (to start from scratch, so to speak)
 		reporter.new_training();
 
 		const auto evaluation_action = [&](const auto epoch_id, const auto scaled_l2_reg_factor)
