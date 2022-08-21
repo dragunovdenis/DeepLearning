@@ -111,7 +111,7 @@ int main(int argc, char** argv)
 	if (cost_func_id == CostFunctionId::UNKNOWN)
 	{
 		std::cout << "Invalid type of the cost function!!! Please check spelling." << std::endl;
-		return;
+		return 0;
 	}
 
 	const std::filesystem::path script_path = script_arg.getValue();
@@ -189,4 +189,6 @@ int main(int argc, char** argv)
 	const auto report_base_name = script_path.stem().string() + "_" + start_time_str + "_" + end_time_str + "_report.txt";
 	const auto report_full_path = directory / report_base_name;
 	reporter.save_report(report_full_path);
+
+	return 0;
 }

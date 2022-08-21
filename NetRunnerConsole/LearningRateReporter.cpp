@@ -19,6 +19,8 @@
 #include <fstream>
 #include <exception>
 #include <Utilities.h>
+#include <numeric>
+#include "../ManagedToUnmanagedBridge/ManagedToUnmanagedBridge.h"
 
 namespace NetRunnerConsole
 {
@@ -27,15 +29,45 @@ namespace NetRunnerConsole
 		_data.push_back(TrainingReport());
 	}
 
+	ScottPlotBridge::SeriesData data;
+
+	void LRReporter::plot_single_training_parameter(const std::filesystem::path& folder, const std::string& parameter_tag, const TrainingReport& average_report, const std::size_t& param_id) const
+	{
+		ScottPlotBridge::SeriesData data;
+		const auto max_series_size = calc_max_epoch_size();
+		data.x.resize(max_series_size);
+		std::iota(data.x.begin(), data.x.end(), 0);
+		data.series.resize(_data.size() + 1);
+
+		for (auto training_iter_id = 0; training_iter_id < _data.size(); training_iter_id++)
+		{
+			const auto& epoh_data = _data[training_iter_id];
+			auto& current_series = data.series[training_iter_id];
+			current_series.label = "Training " + std::to_string(training_iter_id);
+			current_series.y.resize(max_series_size, 0);
+
+			for (auto epoch_id = 0ull; epoch_id < epoh_data.size(); epoch_id++)
+				current_series.y[epoch_id] = epoh_data[epoch_id][param_id];
+		}
+
+		auto& averaged_series = data.series[_data.size()];
+		averaged_series.label = "Averaged";
+		averaged_series.y.resize(max_series_size, 0);
+		for (auto epoch_id = 0ull; epoch_id < average_report.size(); epoch_id++)
+			averaged_series.y[epoch_id] = average_report[epoch_id][param_id];
+
+		ScottPlotBridge::PlotFunction(data, folder / (parameter_tag + ".png"), 2000, 800, "Epoch", parameter_tag, parameter_tag);
+	}
+
 	void LRReporter::write_single_training_parameter(std::ofstream& file,
 		const TrainingReport& average_report, const std::size_t& param_id) const
 	{
 		for (auto training_iter_id = 0; training_iter_id < _data.size(); training_iter_id++)
 		{
-			const auto& epoh_data = _data[training_iter_id];
-			for (auto epoch_id = 0ull; epoch_id < epoh_data.size(); epoch_id++)
+			const auto& epoch_data = _data[training_iter_id];
+			for (auto epoch_id = 0ull; epoch_id < epoch_data.size(); epoch_id++)
 			{
-				file << epoh_data[epoch_id][param_id] << _delimiter;
+				file << epoch_data[epoch_id][param_id] << _delimiter;
 			}
 			file << std::endl;
 		}
@@ -62,9 +94,12 @@ namespace NetRunnerConsole
 
 		for (auto param_id = 0ull; param_id < ReportItem::params_count(); param_id++)
 		{
-			file << ReportItem::get_param_description(param_id) << ":" << std::endl;
+			const auto parameter_description = ReportItem::get_param_description(param_id);
+			file << parameter_description << ":" << std::endl;
 			write_single_training_parameter(file, average_report, param_id);
 			file << std::endl;
+
+			plot_single_training_parameter(report_name.parent_path(), parameter_description, average_report, param_id);
 		}
 	}
 
@@ -95,6 +130,12 @@ namespace NetRunnerConsole
 		cost_function = cost_function_;
 	}
 
+	std::size_t LRReporter::calc_max_epoch_size() const
+	{
+		return std::max_element(_data.begin(), _data.end(),
+			[](const auto& x, const auto& y) { return x.size() < y.size(); })->size();
+	}
+
 	LRReporter::TrainingReport LRReporter::report_average() const
 	{
 		TrainingReport result{};
@@ -102,8 +143,7 @@ namespace NetRunnerConsole
 		if (_data.empty())
 			return result;
 
-		const auto elements_cnt = std::max_element(_data.begin(), _data.end(),
-			[](const auto& x, const auto& y ) { return x.size() < y.size(); })->size();
+		const auto elements_cnt = calc_max_epoch_size();
 
 		for (auto elem_id = 0ull; elem_id < elements_cnt; elem_id++)
 		{
