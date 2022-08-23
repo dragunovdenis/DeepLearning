@@ -114,7 +114,7 @@ namespace NetRunnerConsole
 		/// Plots data for the given parameter (represented with the given parameter identifier)
 		/// and saves it to the given folder in "png" format
 		/// </summary>
-		void plot_single_training_parameter(const std::filesystem::path& folder, const std::string& parameter_tag, const TrainingReport& average_report, const std::size_t& param_id) const;
+		void plot_single_training_parameter(const std::filesystem::path& base_file_path, const std::string& parameter_tag, const TrainingReport& average_report, const std::size_t& param_id) const;
 
 		/// <summary>
 		/// Returns number of epochs in the longest training series

@@ -31,12 +31,12 @@ namespace NetRunnerConsole
 
 	ScottPlotBridge::SeriesData data;
 
-	void LRReporter::plot_single_training_parameter(const std::filesystem::path& folder, const std::string& parameter_tag, const TrainingReport& average_report, const std::size_t& param_id) const
+	void LRReporter::plot_single_training_parameter(const std::filesystem::path& base_file_path, const std::string& parameter_tag, const TrainingReport& average_report, const std::size_t& param_id) const
 	{
 		ScottPlotBridge::SeriesData data;
 		const auto max_series_size = calc_max_epoch_size();
 		data.x.resize(max_series_size);
-		std::iota(data.x.begin(), data.x.end(), 0);
+		std::iota(data.x.begin(), data.x.end(), 1);
 		data.series.resize(_data.size() + 1);
 
 		for (auto training_iter_id = 0; training_iter_id < _data.size(); training_iter_id++)
@@ -53,32 +53,57 @@ namespace NetRunnerConsole
 		auto& averaged_series = data.series[_data.size()];
 		averaged_series.label = "Averaged";
 		averaged_series.y.resize(max_series_size, 0);
+		averaged_series.line_width = 3;
 		for (auto epoch_id = 0ull; epoch_id < average_report.size(); epoch_id++)
 			averaged_series.y[epoch_id] = average_report[epoch_id][param_id];
 
-		ScottPlotBridge::PlotFunction(data, folder / (parameter_tag + ".png"), 2000, 800, "Epoch", parameter_tag, parameter_tag);
+		auto base_path_writable = base_file_path;
+		ScottPlotBridge::PlotFunction(data, base_path_writable.replace_extension(parameter_tag + ".png"), 2000, 800, "Epoch", parameter_tag, parameter_tag);
 	}
+
+	/// <summary>
+	/// Functionality to calculate min and max values while iterating series of numeric point values
+	/// </summary>
+	struct MinMax
+	{
+		Real min = std::numeric_limits<Real>::max();
+		Real max = -std::numeric_limits<Real>::max();
+
+		/// <summary>
+		/// Adds value to the structure
+		/// </summary>
+		void Add(const Real val)
+		{
+			max = std::max(max, val);
+			min = std::min(min, val);
+		}
+	};
 
 	void LRReporter::write_single_training_parameter(std::ofstream& file,
 		const TrainingReport& average_report, const std::size_t& param_id) const
 	{
+		MinMax min_max_total;
 		for (auto training_iter_id = 0; training_iter_id < _data.size(); training_iter_id++)
 		{
 			const auto& epoch_data = _data[training_iter_id];
 			for (auto epoch_id = 0ull; epoch_id < epoch_data.size(); epoch_id++)
 			{
+				min_max_total.Add(epoch_data[epoch_id][param_id]);
 				file << epoch_data[epoch_id][param_id] << _delimiter;
 			}
 			file << std::endl;
 		}
+		file << "Min: " << min_max_total.min << _delimiter << " Max: " << min_max_total.max << _delimiter << std::endl;
 
 		file << "Average:" << std::endl;
 
+		MinMax min_max;
 		for (auto epoch_id = 0ull; epoch_id < average_report.size(); epoch_id++)
 		{
+			min_max.Add(average_report[epoch_id][param_id]);
 			file << average_report[epoch_id][param_id] << _delimiter;
 		}
-		file << std::endl;
+		file << " Min: " << min_max.min << _delimiter << " Max: " << min_max.max << _delimiter << std::endl;
 	}
 
 	void LRReporter::save_report(const std::filesystem::path& report_name) const
@@ -99,7 +124,7 @@ namespace NetRunnerConsole
 			write_single_training_parameter(file, average_report, param_id);
 			file << std::endl;
 
-			plot_single_training_parameter(report_name.parent_path(), parameter_description, average_report, param_id);
+			plot_single_training_parameter(report_name, parameter_description, average_report, param_id);
 		}
 	}
 
