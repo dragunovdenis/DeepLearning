@@ -17,6 +17,7 @@
 
 #include "MnistDataUtils.h"
 #include "Math/Vector.h"
+#include "ImageProcessing/ImageUtils.h"
 #include <fstream>
 
 namespace DeepLearning
@@ -170,21 +171,51 @@ namespace DeepLearning
 	template<>
 	std::tuple<std::vector<typename CpuDC::tensor_t>, std::vector<typename CpuDC::tensor_t>> MnistDataUtils::load_labeled_data<CpuDC>(
 		const std::filesystem::path& data_path, const std::filesystem::path& labels_path,
-		const std::size_t expected_items_count, const bool flatten_images, const Real& max_value)
+		const std::size_t expected_items_count, const bool flatten_images, const Real& max_value, const std::vector<Vector3d<Real>>& transformations)
 	{
 		const auto images = MnistDataUtils::read_images(data_path, expected_items_count);
-		const auto images_scaled = scale_images(images, flatten_images, max_value);
 		const auto labels = MnistDataUtils::read_labels(labels_path, expected_items_count);
 
-		return std::make_tuple(images_scaled, labels);
+		if (transformations.empty())
+		{
+			const auto images_scaled = scale_images(images, flatten_images, max_value);
+			return std::make_tuple(images_scaled, labels);
+		}
+
+		const auto transformations_count = transformations.size();
+		auto images_total = std::vector<Image8Bit>((transformations_count + 1) * images.size());
+		auto labels_total = std::vector<Tensor>((transformations_count + 1) * labels.size());
+
+		//copy the original images and labels
+		std::copy(images.begin(), images.end(), images_total.begin());
+		std::copy(labels.begin(), labels.end(), labels_total.begin());
+
+		const auto original_images_count = images.size();
+		auto offset = original_images_count;
+		for (auto transform_id = 0ull; transform_id < transformations_count; ++transform_id)
+		{
+			const auto& transform = transformations[transform_id];
+			std::transform(images.begin(), images.end(), images_total.begin() + offset, [&transform](const auto& image)
+				{
+					return ImageUtils::transform(image, transform.x, transform.yz());
+				});
+
+			std::copy(labels.begin(), labels.end(), labels_total.begin() + offset);
+
+			offset += original_images_count;
+		}
+		const auto images_total_scaled = scale_images(images_total, flatten_images, max_value);
+
+		return std::make_tuple(images_total_scaled, labels_total);
 	}
 
 	template<>
 	std::tuple<std::vector<typename GpuDC::tensor_t>, std::vector<typename GpuDC::tensor_t>> MnistDataUtils::load_labeled_data<GpuDC>(
 		const std::filesystem::path& data_path, const std::filesystem::path& labels_path,
-		const std::size_t expected_items_count, const bool flatten_images, const Real& max_value)
+		const std::size_t expected_items_count, const bool flatten_images, const Real& max_value, const std::vector<Vector3d<Real>>& transformations)
 	{
-		const auto [images_scaled, labels] = MnistDataUtils::load_labeled_data<CpuDC>(data_path, labels_path,	expected_items_count, flatten_images, max_value);
+		const auto [images_scaled, labels] = MnistDataUtils::load_labeled_data<CpuDC>(data_path, labels_path,
+			expected_items_count, flatten_images, max_value, transformations);
 		return std::make_tuple(to_device(images_scaled), to_device(labels));
 	}
 }

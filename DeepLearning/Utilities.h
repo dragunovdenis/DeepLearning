@@ -162,6 +162,20 @@ namespace DeepLearning::Utils
     bool try_extract_vector(std::string& str, V& out);
 
     /// <summary>
+    /// Parses as many vectors of type "V" from the given string as possible and returns them as a collection
+    /// </summary>
+    template <class V>
+    std::vector<V> extract_vectors(const std::string& str);
+
+    /// <summary>
+    /// Transforms given collection to string
+    /// </summary>
+    /// <param name="collection">The collection</param>
+    /// <param name="delim">Delimiter used to separate string representation of the collection items</param>
+    template <class V>
+    std::string to_string(const std::vector<V>& collection, const char delim = '\n');
+
+    /// <summary>
     /// Splits given string with respect to the given delimiter
     /// </summary>
     /// <param name="str">String to split</param>

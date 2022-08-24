@@ -136,6 +136,28 @@ namespace DeepLearning::Utils
         return false;
     }
 
+    template <class V>
+    std::vector<V> extract_vectors(const std::string& str)
+    {
+        std::vector<V> result;
+        auto str_copy = str;
+        V out;
+        while (try_extract_vector(str_copy, out))
+            result.push_back(out);
+
+        return result;
+    }
+
+    template <class V>
+    std::string to_string(const std::vector<V>& collection, const char delim)
+    {
+        std::string result = "";
+        for (const auto& item : collection)
+            result += item.to_string() + delim;
+
+        return result;
+    }
+
     std::vector<std::string> split_by_char(const std::string& str, const char delim)
     {
         std::stringstream ss(str);
@@ -164,4 +186,14 @@ namespace DeepLearning::Utils
     template bool try_extract_vector(std::string& str, Vector3d<Real>& out);
     template bool try_extract_vector(std::string& str, Index2d& out);
     template bool try_extract_vector(std::string& str, Index3d& out);
+
+    template std::vector<Vector3d<Real>> extract_vectors(const std::string& str);
+    template std::vector<Vector2d<Real>> extract_vectors(const std::string& str);
+    template std::vector<Index3d> extract_vectors(const std::string& str);
+    template std::vector<Index2d> extract_vectors(const std::string& str);
+
+    template std::string to_string(const std::vector<Vector3d<Real>>& collection, const char delim);
+    template std::string to_string(const std::vector<Vector2d<Real>>& collection, const char delim);
+    template std::string to_string(const std::vector<Index3d>& collection, const char delim);
+    template std::string to_string(const std::vector<Index2d>& collection, const char delim);
 }

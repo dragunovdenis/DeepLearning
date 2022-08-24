@@ -610,10 +610,18 @@ namespace DeepLearning
 		/// </summary>
 		/// <param name="angle">Rotation angle in radians</param>
 		/// <param name="center">Center of the rotation</param>
-		static MatrixAffine2d<R> rotation(const R& angle, const Vector2d<Real>& center)
+		static MatrixAffine2d<R> build_rotation(const R& angle, const Vector2d<Real>& center)
 		{
 			const auto rotation = Matrix2x2<Real>::rotation(angle);
 			return MatrixAffine2d<R>{rotation, center - rotation * center};
+		}
+
+		/// <summary>
+		/// Returns rigid motion matrix representing translation on the given vector
+		/// </summary>
+		static MatrixAffine2d<R> build_translation(const Vector2d<Real>& translation_vect)
+		{
+			return MatrixAffine2d<R>{Matrix2x2<Real>::identity(), translation_vect};
 		}
 	};
 

@@ -69,9 +69,22 @@ namespace DeepLearning
 		/// <summary>
 		/// Return collections of MNIST data and labels (in this exact order)
 		/// </summary>
+		/// <param name="data_path">Path to the data (images) file</param>
+		/// <param name="labels_path">Path to the labels file</param>
+		/// <param name="expected_items_count">Expected number of items to be loaded (used for sanity check)</param>
+		/// <param name="flatten_images">If "True" the output tensors will be reshaped to be equivalent to 1d vectors</param>
+		/// <param name="max_value">Maximal value the pixel intensities will be scaled to</param>
+		/// <param name="transformations">Transformations to be applied to the original images to generate extra training data.
+		/// Each new transformation will add another "expected_items_count" items to the output collections.
+		/// Each new item is a transformed version of the corresponding original one. Transformation as such is
+		/// represented by a 3d vector whose "x" coordinate defines angle of rotation (in radians) with respect to the image center
+		/// and coordinates "y" and "z" represent translations of the image in the horizontal and vertical directions respective (in pixels).
+		/// Rotation is applied prior to the translation</param>
+		/// <returns></returns>
 		template <class D = CpuDC>
 		static std::tuple<std::vector<typename D::tensor_t>, std::vector<typename D::tensor_t>> load_labeled_data(
 			const std::filesystem::path& data_path, const std::filesystem::path& labels_path,
-			const std::size_t expected_items_count, const bool flatten_images = true, const Real& max_value = Real(1));
+			const std::size_t expected_items_count, const bool flatten_images = true, const Real& max_value = Real(1),
+			const std::vector<Vector3d<Real>>& transformations = std::vector<Vector3d<Real>>());
 	};
 }

@@ -645,7 +645,7 @@ namespace DeepLearningTest
 			const auto vector = Vector2d<Real>::random();
 			const auto center = Vector2d<Real>::random() + Vector2d<Real>{ 3.0, 3.0 };
 			const auto angle = Utils::get_random(0, Real(std::numbers::pi));
-			const auto rotation = MatrixAffine2d<Real>::rotation(angle, center);
+			const auto rotation = MatrixAffine2d<Real>::build_rotation(angle, center);
 
 			//Act
 			const auto vector_rotated = rotation * vector;

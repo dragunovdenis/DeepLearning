@@ -100,6 +100,10 @@ int main(int argc, char** argv)
 	auto cost_func_arg = TCLAP::ValueArg<std::string>("c", "cost", "Cost function used in the training process", false, "CROSS_ENTROPY", "string");
 	cmd.add(cost_func_arg);
 
+	auto transform_arg = TCLAP::ValueArg<std::string>("t", "transform", 
+		"Transformations to construct extra training data {`rotation angle around image center`, `translation X`, `translation Y`}", false, "", "string");
+	cmd.add(transform_arg);
+
 	cmd.parse(argc, argv);
 
 	const auto batch_size = minibatch_arg.getValue();
@@ -107,6 +111,7 @@ int main(int argc, char** argv)
 	const auto learning_rate = rate_arg.getValue();
 	const auto reg_factor = reg_factor_arg.getValue();
 	const auto cost_func_id = parse_cost_type(cost_func_arg.getValue());
+	const auto transformations = Utils::extract_vectors<Vector3d<Real>>(transform_arg.getValue());
 
 	if (cost_func_id == CostFunctionId::UNKNOWN)
 	{
@@ -130,7 +135,9 @@ int main(int argc, char** argv)
 		"Epochs count : " + std::to_string(epochs_count) + "\n" +
 		"Learning rate : " + Utils::to_string(learning_rate) + "\n" +
 		"Regularization factor : " + Utils::to_string(reg_factor) + "\n" +
-		"Cost function : " + to_string(cost_func_id) + "\n" "Net architecture: " + "\n" + net_to_train.to_string() + "\n";
+		"Cost function : " + to_string(cost_func_id) + "\n" +
+		"Transformations :\n" + Utils::to_string(transformations) + "\n" +
+		"Net architecture: " + "\n" + net_to_train.to_string() + "\n";
 
 	std::cout << summary;
 
@@ -138,7 +145,7 @@ int main(int argc, char** argv)
 	const auto training_data_tuple = MnistDataUtils::load_labeled_data(
 		"TestData\\MNIST\\train-images.idx3-ubyte",
 		"TestData\\MNIST\\train-labels.idx1-ubyte",
-		training_images_count, /*flatten images*/false);
+		training_images_count, /*flatten images*/false, /*max value*/ Real(1), transformations);
 
 	const auto& training_data = std::get<0>(training_data_tuple);
 	const auto& training_labels = std::get<1>(training_data_tuple);

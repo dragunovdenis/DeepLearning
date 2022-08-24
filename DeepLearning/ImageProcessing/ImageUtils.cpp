@@ -39,6 +39,15 @@ namespace DeepLearning::ImageUtils
 	}
 
 	template <class Image>
+	Image transform(const Image& image, const Real rot_angle, const Vector2d<Real>& translation)
+	{
+		const auto center = Vector2d<Real>{ Real(image.width()), Real(image.height()) } * Real(0.5);;
+		const auto transformation = MatrixAffine2d<Real>::build_translation(translation) *
+			MatrixAffine2d<Real>::build_rotation(rot_angle, center);
+		return transform(image, transformation);
+	}
+
+	template <class Image>
 	Image transform(const Image& image, const MatrixAffine2d<Real>& transformation)
 	{
 		const auto inv_trans = transformation.inverse();
@@ -73,4 +82,5 @@ namespace DeepLearning::ImageUtils
 	}
 
 	template Image8Bit transform(const Image8Bit& image, const MatrixAffine2d<Real>& transformation);
+	template Image8Bit transform(const Image8Bit& image, const Real rot_angle, const Vector2d<Real>& translation);
 }

@@ -28,4 +28,14 @@ namespace DeepLearning::ImageUtils
 	template <class Image>
 	Image transform(const Image& image, const MatrixAffine2d<Real>& transformation);
 
+	/// <summary>
+	/// Applies rigid motion transformation to the pixels of the given image and returns the result.
+	/// Uses "RAM" (Rotation by Area Mapping) algorithm (see http://www.leptonica.org/rotation.html).
+	/// The transformation consists of the rotation (around the image center) by the given angle and
+	/// the subsequent translation on the given vector.
+	/// </summary>
+	template <class Image>
+	Image transform(const Image& image, const Real rot_angle, const Vector2d<Real>& translation);
+
+
 }
