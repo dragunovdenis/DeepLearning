@@ -145,7 +145,7 @@ int main(int argc, char** argv)
 	const auto training_data_tuple = MnistDataUtils::load_labeled_data(
 		"TestData\\MNIST\\train-images.idx3-ubyte",
 		"TestData\\MNIST\\train-labels.idx1-ubyte",
-		training_images_count, /*flatten images*/false, /*max value*/ Real(1), transformations);
+		training_images_count, /*max value*/ Real(1), transformations);
 
 	const auto& training_data = std::get<0>(training_data_tuple);
 	const auto& training_labels = std::get<1>(training_data_tuple);
@@ -154,7 +154,7 @@ int main(int argc, char** argv)
 	const auto test_data_tuple = MnistDataUtils::load_labeled_data(
 		"TestData\\MNIST\\t10k-images.idx3-ubyte",
 		"TestData\\MNIST\\t10k-labels.idx1-ubyte",
-		test_images_count, /*flatten images*/false);
+		test_images_count);
 
 	const auto& test_data = std::get<0>(test_data_tuple);
 	const auto& test_labels = std::get<1>(test_data_tuple);

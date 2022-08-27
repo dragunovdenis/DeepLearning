@@ -64,7 +64,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Scales intensities of the given images so that they are all between 0 and 1.0;
 		/// </summary>
-		static std::vector<Tensor> scale_images(const std::vector<Image8Bit>& images, const bool flatten_images = true, const Real& max_value = Real(1));
+		static std::vector<Tensor> scale_images(const std::vector<Image8Bit>& images, const Real& max_value = Real(1));
 
 		/// <summary>
 		/// Return collections of MNIST data and labels (in this exact order)
@@ -72,7 +72,6 @@ namespace DeepLearning
 		/// <param name="data_path">Path to the data (images) file</param>
 		/// <param name="labels_path">Path to the labels file</param>
 		/// <param name="expected_items_count">Expected number of items to be loaded (used for sanity check)</param>
-		/// <param name="flatten_images">If "True" the output tensors will be reshaped to be equivalent to 1d vectors</param>
 		/// <param name="max_value">Maximal value the pixel intensities will be scaled to</param>
 		/// <param name="transformations">Transformations to be applied to the original images to generate extra training data.
 		/// Each new transformation will add another "expected_items_count" items to the output collections.
@@ -84,7 +83,7 @@ namespace DeepLearning
 		template <class D = CpuDC>
 		static std::tuple<std::vector<typename D::tensor_t>, std::vector<typename D::tensor_t>> load_labeled_data(
 			const std::filesystem::path& data_path, const std::filesystem::path& labels_path,
-			const std::size_t expected_items_count, const bool flatten_images = true, const Real& max_value = Real(1),
+			const std::size_t expected_items_count, const Real& max_value = Real(1),
 			const std::vector<Vector3d<Real>>& transformations = std::vector<Vector3d<Real>>());
 	};
 }

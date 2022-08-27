@@ -102,13 +102,13 @@ namespace DeepLearningTest
 			auto [training_data, training_labels] = MnistDataUtils::load_labeled_data<D>(
 				"TestData\\MNIST\\train-images.idx3-ubyte",
 				"TestData\\MNIST\\train-labels.idx1-ubyte",
-				training_images_count, /*flatten images*/false);
+				training_images_count);
 
 			const auto test_images_count = 10000;
 			const auto test_data_tuple = MnistDataUtils::load_labeled_data<D>(
 				"TestData\\MNIST\\t10k-images.idx3-ubyte",
 				"TestData\\MNIST\\t10k-labels.idx1-ubyte",
-				test_images_count, /*flatten images*/false);
+				test_images_count);
 
 			auto net = Net<D>();
 			const auto in_data_size = training_data.begin()->size_3d();
