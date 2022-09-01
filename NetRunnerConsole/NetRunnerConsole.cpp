@@ -174,9 +174,8 @@ int main(int argc, char** argv)
 		const auto evaluation_action = [&](const auto epoch_id, const auto scaled_l2_reg_factor)
 		{
 			const auto correct_answers_test_data = net_to_train.count_correct_answers(test_data, test_labels) * Real(1) / test_data.size();
-			const auto correct_answers_training_data = net_to_train.count_correct_answers(training_data, training_labels) * Real(1) / training_data.size();
-			const auto cost_function = net_to_train.evaluate_cost_function(training_data, training_labels, cost_func_id, scaled_l2_reg_factor);
-			reporter.add_data(correct_answers_test_data, correct_answers_training_data, cost_function);
+			const auto cost_and_answers = net_to_train.evaluate_cost_function_and_correct_answers(training_data, training_labels, cost_func_id, scaled_l2_reg_factor);
+			reporter.add_data(correct_answers_test_data, cost_and_answers.CorrectAnswers, cost_and_answers.Cost);
 			const auto elapsed_time_str = get_elapsed_time_formatted(epoch_start);
 			std::cout << "Iteration : " << iter_id << "; Epoch : " << epoch_id << "; success rate : "
 				<< correct_answers_test_data << " %; time: " << elapsed_time_str << std::endl;

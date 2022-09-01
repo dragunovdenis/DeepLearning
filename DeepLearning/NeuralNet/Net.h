@@ -30,6 +30,32 @@
 namespace DeepLearning
 {
 	/// <summary>
+	/// Data structure to hold results of cost function evaluation as well as the number of correct answers on some set of labeled data
+	/// </summary>
+	struct CostAndCorrectAnswers
+	{
+		/// <summary>
+		/// Cost function value
+		/// </summary>
+		double Cost{};
+
+		/// <summary>
+		/// Ratio of the correct answers to all the answers
+		/// </summary>
+		double CorrectAnswers{};
+
+		/// <summary>
+		/// Compound addition operator
+		/// </summary>
+		CostAndCorrectAnswers& operator += (const CostAndCorrectAnswers& item);
+	};
+
+	/// <summary>
+	/// Addition operator
+	/// </summary>
+	CostAndCorrectAnswers operator +(const CostAndCorrectAnswers& item1, const CostAndCorrectAnswers& item2);
+
+	/// <summary>
 	/// Class representing a neural network consisting of neural layers
 	/// </summary>
 	template <class D = CpuDC>
@@ -157,9 +183,10 @@ namespace DeepLearning
 		std::size_t count_correct_answers(const std::vector<typename D::tensor_t>& test_input, const std::vector<typename D::tensor_t>& labels) const;
 
 		/// <summary>
-		/// Evaluates the given cost function for the given pair of input and reference collections
+		/// Evaluates the given cost function for the given pair of input and reference collections as well as the percentage of correct answers 
+		/// (ratio of correct answers to all the answers)
 		/// </summary>
-		Real evaluate_cost_function(const std::vector<typename D::tensor_t>& test_input,
+		CostAndCorrectAnswers evaluate_cost_function_and_correct_answers(const std::vector<typename D::tensor_t>& test_input,
 			const std::vector<typename D::tensor_t>& reference_output, const CostFunctionId& cost_func_id, const Real l2_reg_factor) const;
 
 		/// <summary>

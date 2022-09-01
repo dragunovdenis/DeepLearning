@@ -287,7 +287,7 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	Real Net<D>::evaluate_cost_function(const std::vector<typename D::tensor_t>& test_input,
+	CostAndCorrectAnswers Net<D>::evaluate_cost_function_and_correct_answers(const std::vector<typename D::tensor_t>& test_input,
 		const std::vector<typename D::tensor_t>& reference_output, const CostFunctionId& cost_func_id, const Real l2_reg_factor) const
 	{
 		if (test_input.size() != reference_output.size())
@@ -295,19 +295,29 @@ namespace DeepLearning
 
 		const auto cost_function = CostFunction<typename D::tensor_t>(cost_func_id);
 
-		const auto cost_sum = concurrency::parallel_reduce(IndexIterator<std::size_t>(0), IndexIterator<std::size_t>(test_input.size()), Real(0),
+		auto cost_and_answers_accumulated = concurrency::parallel_reduce(IndexIterator<std::size_t>(0), IndexIterator<std::size_t>(test_input.size()), CostAndCorrectAnswers{},
 			[&](const auto& start_iter, const auto& end_iter, const auto& init_val)
 			{
 				auto result = init_val;
 				const auto start_id = *start_iter;
 				const auto end_id = *end_iter;
 				for (auto i = start_id; i < end_id; i++)
-					result += cost_function(act(test_input[i]), reference_output[i]);
+				{
+					const auto trial_label = act(test_input[i]);
+					result.Cost += cost_function(trial_label, reference_output[i]);
+
+					const auto trial_answer = trial_label.max_element_id();
+					const auto ref_answer = reference_output[i].max_element_id();
+					result.CorrectAnswers += trial_answer == ref_answer;
+				}
 
 				return result;
-			}, std::plus<Real>());
+			}, std::plus<CostAndCorrectAnswers>());
 
-		return cost_sum / test_input.size() + l2_reg_factor * squared_weights_sum();
+		cost_and_answers_accumulated.Cost = cost_and_answers_accumulated.Cost / test_input.size() + l2_reg_factor * squared_weights_sum();
+		cost_and_answers_accumulated.CorrectAnswers /= test_input.size();
+
+		return cost_and_answers_accumulated;
 	}
 
 	template <class D>
@@ -328,10 +338,7 @@ namespace DeepLearning
 					const auto& test_item = test_input[test_item_id];
 					const auto ref_answer = labels[test_item_id].max_element_id();
 					const auto trial_label = act(test_item);
-					//after normalization each element of the trial answer can be treated
-					//as a probability of the corresponding class
-					const auto trial_answer_normalized = trial_label * (Real(1) / trial_label.sum());
-					const auto trial_answer = trial_answer_normalized.max_element_id();
+					const auto trial_answer = trial_label.max_element_id();
 
 					if (trial_answer == ref_answer)
 						result++;
@@ -402,4 +409,18 @@ namespace DeepLearning
 
 	template class Net<CpuDC>;
 	template class Net<GpuDC>;
+
+	CostAndCorrectAnswers& CostAndCorrectAnswers::operator += (const CostAndCorrectAnswers& item)
+	{
+		Cost += item.Cost;
+		CorrectAnswers += item.CorrectAnswers;
+
+		return *this;
+	}
+
+	CostAndCorrectAnswers operator +(const CostAndCorrectAnswers& item1, const CostAndCorrectAnswers& item2)
+	{
+		auto result = item1;
+		return result += item2;
+	}
 }
