@@ -19,6 +19,7 @@
 #include <Math/Matrix.h>
 #include <Math/Vector.h>
 #include <MsgPackUtils.h>
+#include <numeric>
 #include "Utilities.h"
 #include "StandardTestUtils.h"
 
@@ -372,6 +373,11 @@ namespace DeepLearningTest
 			const auto diff = (result1 - result2).max_abs();
 			Logger::WriteMessage((std::string("Difference = ") + Utils::to_string(diff) + "\n").c_str());
 			Assert::IsTrue(diff < 10 * std::numeric_limits<Real>::epsilon(), L"Unexpectedly high difference");
+		}
+
+		TEST_METHOD(VectorRandomSelectonMapTest)
+		{
+			StandardTestUtils::RandomSelectionMapTest<Vector>([](const auto dim) { return VectorFactory(dim); });
 		}
 	};
 }

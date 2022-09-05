@@ -158,7 +158,6 @@ namespace DeepLearningTest
 		{
 			//Arrange
 			const auto cuda_v1 = CudaVectorFactory();
-
 			Assert::IsTrue(cuda_v1.max_abs() > 0, L"Vectors is supposed to be nonzero");
 
 			//Act
@@ -168,6 +167,11 @@ namespace DeepLearningTest
 			const auto host_result = cuda_v1.to_host().sum();
 			Assert::IsTrue(std::abs(cuda_result - host_result) < 10 * std::numeric_limits<Real>::epsilon(),
 				L"Too high deviation from reference");
+		}
+
+		TEST_METHOD(RandomSelectionMapTest)
+		{
+			StandardTestUtils::RandomSelectionMapTest<CudaVector>([](const auto dim) { return CudaVectorFactory(dim); });
 		}
 	};
 }

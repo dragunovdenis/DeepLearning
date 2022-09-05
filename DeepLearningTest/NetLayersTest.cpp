@@ -205,7 +205,7 @@ namespace DeepLearningTest
 
 			RunGeneralDerivativeWithRespectToWeightsAndBiasesTest(nl, cost_function_id,
 				(std::is_same_v<Real, double> ? Real(8e-10) : Real(3e-3)),
-				(std::is_same_v<Real, double> ? Real(5e-10) : Real(3e-3)));
+				(std::is_same_v<Real, double> ? Real(7e-10) : Real(3e-3)));
 		}
 
 		/// <summary>

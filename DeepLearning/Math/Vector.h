@@ -210,6 +210,22 @@ namespace DeepLearning
 		/// </summary>
 		/// <param name="filename">Full name of the log file on disk</param>
 		void log(const std::filesystem::path& filename) const;
+
+		/// <summary>
+		/// Fills the current vector randomly with 1s and 0s, so that eventually it contains exactly
+		/// 'selected_cnt' elements initialized with `1`; If `selected_cnt` is greater or equal to
+		/// the size of the vector then after the call all the elements of the vector are initialized with `1`
+		/// </summary>
+		/// <param name="selected_cnt">Number of 1s in the collection after the call</param>
+		/// <param name="aux_collection">An auxiliary collection, can be allocated on the caller side and
+		/// provides a possibility to avoid unnecessary re-allocations when the method below is called multiple times
+		void generate_with_random_selection_map(const std::size_t& selected_cnt, std::vector<int>& aux_collection);
+
+		/// <summary>
+		/// Less optimal but more simple version of the method above
+		/// </summary>
+		/// <param name="selected_cnt">Number of selected elements from the current collection</param>
+		void generate_with_random_selection_map(const std::size_t& selected_cnt);
 	};
 
 	/// <summary>

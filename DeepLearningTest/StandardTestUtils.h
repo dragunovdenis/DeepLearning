@@ -24,6 +24,7 @@
 #include <chrono>
 #include <atlbase.h>
 #include <atlconv.h>
+#include <numeric>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;
@@ -374,6 +375,52 @@ namespace DeepLearningTest::StandardTestUtils
 	{
 		LogReal(message, value);
 		Assert::IsTrue(value <= upper_threshold, CA2W((message + ": " + std::string("Upper threshold exceeded.")).c_str()));
+	}
+
+	/// <summary>
+	/// "Standard" functional test to validate the random selection map functionality
+	/// </summary>
+	template <class T>
+	static void RandomSelectionMapTest(const std::function<T(int)>& factory)
+	{
+		constexpr auto dim = 5000;
+		auto vector = factory(dim);
+		Assert::AreEqual<std::size_t>(dim, vector.size(), L"Unexpected number of elements in the collection");
+		Assert::IsTrue(vector.max_abs() > 0, L"Vector is supposed to be nonnegative");
+
+		//Act
+		constexpr auto selection_count = 435;
+		vector.generate_with_random_selection_map(selection_count);
+
+		const auto vect_diag = vector.to_stdvector();
+		const auto map1 = vector;
+		vector.generate_with_random_selection_map(selection_count);
+		const auto map_diag = vector.to_stdvector();
+
+		//Assert
+		const auto vector_std = vector.to_stdvector();
+		const auto ones_count = std::count_if(vector_std.begin(), vector_std.end(), [](const auto x) { return x == Real(1); });
+		const auto zeros_count = std::count_if(vector_std.begin(), vector_std.end(), [](const auto x) { return x == Real(0); });
+		Assert::AreEqual<std::size_t>(ones_count, selection_count, L"Unexpected number of ones in the map");
+		Assert::AreEqual<std::size_t>(zeros_count, dim - selection_count, L"Unexpected number of zeros in the map");
+		Assert::IsTrue(map1 != vector, L"There is an extremely low probability that the two randomly generated maps of this size coincide");
+		//Check that the distribution of ones is approximately uniform through out the vector range
+		constexpr auto chunk_size = 500;
+		constexpr auto percentage_of_ones_expected = static_cast<Real>(selection_count) / dim;
+		for (auto range_start_id = 0ull; range_start_id <= vector_std.size() - chunk_size; range_start_id += chunk_size)
+		{
+			const auto ones_on_range = std::accumulate(vector_std.begin() + range_start_id, vector_std.begin() + range_start_id + chunk_size, Real(0));
+			const auto percentage_of_ones_on_range = ones_on_range / chunk_size;
+
+			const auto percentage_diff = std::abs(percentage_of_ones_on_range - percentage_of_ones_expected);
+			LogRealAndAssertLessOrEqualTo("Actual percentage of 1s ", percentage_diff, 0.05);
+		}
+
+		//Corner case
+		vector.generate_with_random_selection_map(vector.size() + 13);
+		const auto full_filled_vector_std = vector.to_stdvector();
+		const auto full_ones_count = std::count_if(full_filled_vector_std.begin(), full_filled_vector_std.end(), [](const auto x) { return x == Real(1); });
+		Assert::AreEqual<std::size_t>(full_ones_count, vector.size(), L"All the elements of the collection are supposed to be equal to 1");
 	}
 
 }

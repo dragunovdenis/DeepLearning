@@ -20,6 +20,11 @@
 #include "CudaUtils.cuh"
 #include <thrust/execution_policy.h>
 #include <thrust/equal.h>
+#include <thrust/sort.h>
+#include <thrust/sequence.h>
+#include "CudaArray.cuh"
+#include <thrust/scatter.h>
+#include <thrust/iterator/constant_iterator.h>
 
 namespace DeepLearning
 {
@@ -217,4 +222,34 @@ namespace DeepLearning
 	{
 		return vec * scalar;
 	}
+
+	void CudaVector::generate_with_random_selection_map(const std::size_t& selected_cnt, CudaArray<int>& aux_collection)
+	{
+		if (selected_cnt >= size())
+		{
+			fill(Real(1));
+			return;
+		}
+
+		aux_collection.resize(size());
+		thrust::sequence(thrust::cuda::par.on(cudaStreamPerThread), aux_collection.begin(), aux_collection.end(), 0);
+		uniform_random_fill(Real(-1), Real(1)); //fill the current collection with random values
+		//and use it as a key collection in the following sorting procedure
+		thrust::sort_by_key(thrust::cuda::par.on(cudaStreamPerThread), begin(), end(), aux_collection.begin());
+
+		const auto one_iterator = thrust::make_constant_iterator(Real(1));
+		thrust::scatter(thrust::cuda::par.on(cudaStreamPerThread), one_iterator, one_iterator + static_cast<int>(selected_cnt),
+			aux_collection.begin(), begin());
+
+		const auto zero_iterator = thrust::make_constant_iterator(Real(0));
+		thrust::scatter(thrust::cuda::par.on(cudaStreamPerThread), zero_iterator, zero_iterator + static_cast<int>(size() - selected_cnt),
+			aux_collection.begin() + static_cast<int>(selected_cnt), begin());
+	}
+
+	void CudaVector::generate_with_random_selection_map(const std::size_t& selected_cnt)
+	{
+		CudaArray<int> aux_collection;
+		generate_with_random_selection_map(selected_cnt, aux_collection);
+	}
+
 }

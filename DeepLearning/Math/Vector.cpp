@@ -250,6 +250,36 @@ namespace DeepLearning
 		Logging::log_as_table(get_handle(), dim(), 1, filename);
 	}
 
+	void Vector::generate_with_random_selection_map(const std::size_t& selected_cnt, std::vector<int>& aux_collection)
+	{
+		if (selected_cnt >= size())
+		{
+			fill(Real(1));
+			return;
+		}
+
+		aux_collection.resize(size());
+		std::iota(aux_collection.begin(), aux_collection.end(), 0);
+		Utils::fill_with_random_values(begin(), end(), Real(-1), Real(1));
+
+		std::sort(aux_collection.begin(), aux_collection.end(), [this](const auto a, const auto b)
+			{
+				return this->begin()[a] < this->begin()[b];
+			});
+
+		for (auto id = 0ull; id < selected_cnt; id++)
+			_data[aux_collection[id]] = Real(1);
+
+		for (auto id = selected_cnt; id < size(); id++)
+			_data[aux_collection[id]] = Real(0);
+	}
+
+	void Vector::generate_with_random_selection_map(const std::size_t& selected_cnt)
+	{
+		std::vector<int> aux_collection;
+		generate_with_random_selection_map(selected_cnt, aux_collection);
+	}
+
 	template Vector::Vector(const std::vector<unsigned char>& souurce);
 	template Vector::Vector(const std::vector<Real>& souurce);
 }

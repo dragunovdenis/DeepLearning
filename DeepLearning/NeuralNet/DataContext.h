@@ -35,7 +35,9 @@ namespace DeepLearning
 		using vector_t = Vector;
 		using matrix_t = Matrix;
 		using tensor_t = Tensor;
-		using index_array_t = std::vector<std::size_t>;
+
+		template <typename I>
+		using index_array_t = std::vector<I>;
 	};
 
 	/// <summary>
@@ -47,6 +49,8 @@ namespace DeepLearning
 		using vector_t = CudaVector;
 		using matrix_t = CudaMatrix;
 		using tensor_t = CudaTensor;
-		using index_array_t = CudaArray<std::size_t>;
+
+		template <typename I>
+		using index_array_t = CudaArray<I>;
 	};
 }
