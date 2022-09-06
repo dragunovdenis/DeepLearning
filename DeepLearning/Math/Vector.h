@@ -125,6 +125,11 @@ namespace DeepLearning
 		Vector& operator=(const Vector& vec);
 
 		/// <summary>
+		/// Move assignment operator
+		/// </summary>
+		Vector& operator=(Vector&& vec) noexcept;
+
+		/// <summary>
 		/// Constructs dense vector of the given dimension
 		/// </summary>
 		Vector(const std::size_t dim, const bool assign_zero = true);

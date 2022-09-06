@@ -285,6 +285,36 @@ namespace DeepLearningTest::StandardTestUtils
 			L"Unexpected state for a vector after being moved");
 	}
 
+	/// <summary>
+	/// Performs a "standard" move assignment operator test of class "T"
+	/// </summary>
+	/// <param name="factory">A factory method returning random instances of class "T"</param>
+	template <class T>
+	void MoveAssignmentTest(const std::function<T()>& factory)
+	{
+		//Arrange
+		auto instance_to_move = factory();
+		const auto instance_to_move_copy = instance_to_move;
+		const auto begin_pointer_before_move = instance_to_move.begin();
+		const auto end_pointer_before_move = instance_to_move.end();
+
+		//Act
+		T instance = std::move(instance_to_move);
+
+		//Assert
+		Assert::IsTrue(begin_pointer_before_move == instance.begin()
+			&& end_pointer_before_move == instance.end(), L"Move operator does not work as expected");
+
+		Assert::IsTrue(instance_to_move.begin() == nullptr && instance_to_move.size() == 0,
+			L"Unexpected state for a vector after being moved");
+
+		//Corner case: assignment to itself
+		instance = std::move(instance);
+		Assert::IsTrue(begin_pointer_before_move == instance.begin()
+			&& end_pointer_before_move == instance.end(), L"Move operator does not work as expected");
+		Assert::IsTrue(instance == instance_to_move_copy, L"The object was changed during the move assignment operation");
+	}
+
 	template <class T>
 	T mixed_arithmetic_function(const T& v1, const T& v2, const T& v3)
 	{

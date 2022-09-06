@@ -160,7 +160,9 @@ namespace DeepLearning
 
 	CudaTensor& CudaTensor::operator =(const CudaTensor& tensor)
 	{
-		assign(tensor);
+		if (this != &tensor)
+			assign(tensor);
+
 		return *this;
 	}
 
@@ -192,13 +194,16 @@ namespace DeepLearning
 
 	CudaTensor& CudaTensor::operator =(CudaTensor&& tensor) noexcept
 	{
-		free();
-		_layer_dim = tensor.layer_dim();
-		_row_dim = tensor.row_dim();
-		_col_dim = tensor.col_dim();
-		_data = tensor.begin();
-		_capacity = tensor.capacity();
-		tensor.abandon_resources();
+		if (this != &tensor)
+		{
+			free();
+			_layer_dim = tensor.layer_dim();
+			_row_dim = tensor.row_dim();
+			_col_dim = tensor.col_dim();
+			_data = tensor.begin();
+			_capacity = tensor.capacity();
+			tensor.abandon_resources();
+		}
 
 		return *this;
 	}

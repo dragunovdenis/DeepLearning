@@ -73,15 +73,15 @@ namespace DeepLearning
 
 	Tensor& Tensor::operator =(const Tensor& tensor)
 	{
-		resize(tensor.size_3d());
-		std::copy(tensor.begin(), tensor.end(), begin());
+		if (this != &tensor)
+		{
+			resize(tensor.size_3d());
+			std::copy(tensor.begin(), tensor.end(), begin());
+		}
 
 		return *this;
 	}
 
-	/// <summary>
-	/// Move constructor
-	/// </summary>
 	Tensor::Tensor(Vector&& vector) noexcept : _layer_dim(1ull),
 		_row_dim(1ull), _col_dim(vector.dim()), _capacity(vector.capacity())
 	{
@@ -89,9 +89,6 @@ namespace DeepLearning
 		vector.abandon_resources();
 	}
 
-	/// <summary>
-	/// Move constructor
-	/// </summary>
 	Tensor::Tensor(Matrix&& matrix) noexcept : _layer_dim(1ull),
 		_row_dim(matrix.row_dim()), _col_dim(matrix.col_dim()), _capacity(matrix.capacity())
 	{
@@ -102,7 +99,6 @@ namespace DeepLearning
 	Tensor& Tensor::operator =(Vector&& vector) noexcept
 	{
 		free();
-
 		_layer_dim = 1ull;
 		_row_dim = 1ull;
 		_col_dim = vector.dim();
@@ -129,14 +125,16 @@ namespace DeepLearning
 
 	Tensor& Tensor::operator =(Tensor&& tensor) noexcept
 	{
-		free();
-
-		_layer_dim = tensor.layer_dim();
-		_row_dim = tensor.row_dim();
-		_col_dim = tensor.col_dim();
-		_capacity = tensor.capacity();
-		_data = tensor.begin();
-		tensor.abandon_resources();
+		if (this != &tensor)
+		{
+			free();
+			_layer_dim = tensor.layer_dim();
+			_row_dim = tensor.row_dim();
+			_col_dim = tensor.col_dim();
+			_capacity = tensor.capacity();
+			_data = tensor.begin();
+			tensor.abandon_resources();
+		}
 
 		return *this;
 	}

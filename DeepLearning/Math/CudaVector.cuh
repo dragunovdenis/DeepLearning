@@ -131,6 +131,11 @@ namespace DeepLearning
 		CudaVector& operator=(const CudaVector& vec);
 
 		/// <summary>
+		///	Move assignment operator
+		/// </summary>
+		CudaVector& operator=(CudaVector&& vec) noexcept;
+
+		/// <summary>
 		/// Constructs dense vector of the given dimension
 		/// </summary>
 		CudaVector(const std::size_t dim, const bool assign_zero = true);

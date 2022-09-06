@@ -149,15 +149,32 @@ namespace DeepLearning
 	}
 
 	CudaMatrix::CudaMatrix(CudaMatrix&& matr) noexcept :
-		_row_dim(matr.row_dim()), _col_dim(matr.col_dim())
+		_row_dim(matr.row_dim()), _col_dim(matr.col_dim()), _capacity(matr._capacity)
 	{
 		_data = matr._data;
 		matr.abandon_resources();
 	}
 
+	CudaMatrix& CudaMatrix::operator =(CudaMatrix&& matr) noexcept
+	{
+		if (this != &matr)
+		{
+			free();
+			_row_dim = matr._row_dim;
+			_col_dim = matr._col_dim;
+			_capacity = matr._capacity;
+			_data = matr._data;
+			matr.abandon_resources();
+		}
+
+		return *this;
+	}
+
 	CudaMatrix& CudaMatrix::operator =(const CudaMatrix& matr)
 	{
-		assign(matr);
+		if (this != &matr)
+			assign(matr);
+
 		return *this;
 	}
 

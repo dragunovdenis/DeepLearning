@@ -52,6 +52,11 @@ namespace DeepLearningTest
 			StandardTestUtils::MoveConstructorTest<CudaMatrix>([]() {return CudaMatrixFactory(); });
 		}
 
+		TEST_METHOD(MoveAssignmentTest)
+		{
+			StandardTestUtils::MoveAssignmentTest<CudaMatrix>([]() {return CudaMatrixFactory(); });
+		}
+
 		TEST_METHOD(PackingTest)
 		{
 			StandardTestUtils::PackingTest<CudaMatrix>([]() { return CudaMatrixFactory(); });

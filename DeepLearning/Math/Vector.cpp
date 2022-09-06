@@ -35,7 +35,23 @@ namespace DeepLearning
 
 	Vector& Vector::operator=(const Vector& vec)
 	{
-		assign(vec);
+		if (this != &vec)
+			assign(vec);
+
+		return *this;
+	}
+
+	Vector& Vector::operator=(Vector&& vec) noexcept
+	{
+		if (this != &vec)
+		{
+			free();
+			_data = vec._data;
+			_dim = vec._dim;
+			_capacity = vec._capacity;
+			vec.abandon_resources();
+		}
+
 		return *this;
 	}
 
@@ -45,7 +61,7 @@ namespace DeepLearning
 		free();
 	}
 
-	Vector::Vector(Vector&& vec) noexcept : _dim(vec._dim)
+	Vector::Vector(Vector&& vec) noexcept : _dim(vec._dim), _capacity(vec._capacity)
 	{
 		_data = vec._data;
 		vec.abandon_resources();

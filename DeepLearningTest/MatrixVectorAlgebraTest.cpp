@@ -63,6 +63,11 @@ namespace DeepLearningTest
 			StandardTestUtils::MoveConstructorTest<Vector>([]() {return VectorFactory();  });
 		}
 
+		TEST_METHOD(VectorMoveAssignmentTest)
+		{
+			StandardTestUtils::MoveAssignmentTest<Vector>([]() {return VectorFactory();  });
+		}
+
 		TEST_METHOD(MatrixCopyConstructorTest)
 		{
 			StandardTestUtils::CopyConstructorTest<Matrix>([]() {return MatrixFactory();  });
@@ -76,6 +81,11 @@ namespace DeepLearningTest
 		TEST_METHOD(MatrixMoveConstructorTest)
 		{
 			StandardTestUtils::MoveConstructorTest<Matrix>([]() {return MatrixFactory();  });
+		}
+
+		TEST_METHOD(MatrixMoveAssignmentTest)
+		{
+			StandardTestUtils::MoveAssignmentTest<Matrix>([]() {return MatrixFactory();  });
 		}
 
 		TEST_METHOD(MatrixVectorMultiplicationTest)

@@ -133,7 +133,7 @@ namespace DeepLearning
 		uniform_random_fill(range_begin, range_end);
 	}
 
-	CudaVector::CudaVector(CudaVector&& vec) noexcept : _dim(vec._dim)
+	CudaVector::CudaVector(CudaVector&& vec) noexcept : _dim(vec._dim), _capacity(vec._capacity)
 	{
 		_data = vec._data;
 		vec.abandon_resources();
@@ -141,7 +141,23 @@ namespace DeepLearning
 
 	CudaVector& CudaVector::operator=(const CudaVector& vec)
 	{
-		assign(vec);
+		if (this != &vec)
+			assign(vec);
+
+		return *this;
+	}
+
+	CudaVector& CudaVector::operator=(CudaVector&& vec) noexcept
+	{
+		if (this != &vec)
+		{
+			free();
+			_dim = vec._dim;
+			_capacity = vec._capacity;
+			_data = vec._data;
+			vec.abandon_resources();
+		}
+
 		return *this;
 	}
 

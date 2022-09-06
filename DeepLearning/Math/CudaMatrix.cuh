@@ -153,6 +153,11 @@ namespace DeepLearning
 		CudaMatrix& operator =(const CudaMatrix& matr);
 
 		/// <summary>
+		///	Move assignment operator
+		/// </summary>
+		CudaMatrix& operator =(CudaMatrix&& matr) noexcept;
+
+		/// <summary>
 		/// Move constructor
 		/// </summary>
 		CudaMatrix(CudaMatrix&& matr) noexcept;

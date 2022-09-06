@@ -149,8 +149,11 @@ namespace DeepLearning
 
 	Matrix& Matrix::operator =(const Matrix& matr)
 	{
-		resize(matr.row_dim(), matr.col_dim());
-		std::copy(matr.begin(), matr.end(), begin());
+		if (this != &matr)
+		{
+			resize(matr.row_dim(), matr.col_dim());
+			std::copy(matr.begin(), matr.end(), begin());
+		}
 
 		return *this;
 	}
@@ -162,10 +165,25 @@ namespace DeepLearning
 	}
 
 	Matrix::Matrix(Matrix&& matr) noexcept 
-		: _col_dim(matr._col_dim), _row_dim(matr._row_dim)
+		: _col_dim(matr._col_dim), _row_dim(matr._row_dim), _capacity(matr._capacity)
 	{
 		_data = matr._data;
 		matr.abandon_resources();
+	}
+
+	Matrix& Matrix::operator =(Matrix&& matr) noexcept
+	{
+		if (this != &matr)
+		{
+			free();
+			_col_dim = matr._col_dim;
+			_row_dim = matr._row_dim;
+			_capacity = matr._capacity;
+			_data = matr._data;
+			matr.abandon_resources();
+		}
+
+		return *this;
 	}
 
 	void Matrix::free()

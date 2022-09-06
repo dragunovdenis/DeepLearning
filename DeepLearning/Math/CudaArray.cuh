@@ -35,6 +35,16 @@ namespace DeepLearning
 		std::size_t _capacity{};
 
 		/// <summary>
+		/// Abandons (not releases) the allocated resources
+		/// </summary>
+		void abandon_resources()
+		{
+			_data = nullptr;
+			_size = 0;
+			_capacity = 0;
+		}
+
+		/// <summary>
 		/// Frees memory allocated by the array
 		/// </summary>
 		void free()
@@ -42,9 +52,7 @@ namespace DeepLearning
 			if (_data != nullptr)
 				CudaUtils::cuda_free(_data);
 
-			_data = nullptr;
-			_size = 0;
-			_capacity = 0;
+			abandon_resources();
 		}
 	public:
 
@@ -125,13 +133,9 @@ namespace DeepLearning
 		/// <summary>
 		/// Move constructor
 		/// </summary>
-		CudaArray(CudaArray<T>&& arr) noexcept
+		CudaArray(CudaArray<T>&& arr) noexcept : _data(arr._data), _size(arr._size), _capacity(arr._capacity)
 		{
-			_data = arr._data;
-			_size = arr._size;
-
-			arr._data = nullptr;
-			arr._size = 0;
+			arr.abandon_resources();
 		}
 
 		/// <summary>
@@ -139,8 +143,13 @@ namespace DeepLearning
 		/// </summary>
 		CudaArray<T>& operator =(const CudaArray<T>& arr)
 		{
-			resize(arr.size());
-			CudaUtils::cuda_copy_device2device(_data, arr._data, size());
+			if (this != &arr)
+			{
+				resize(arr.size());
+				CudaUtils::cuda_copy_device2device(_data, arr._data, size());
+			}
+
+			return *this;
 		}
 
 		/// <summary>
@@ -148,13 +157,15 @@ namespace DeepLearning
 		/// </summary>
 		CudaArray<T>& operator =(CudaArray<T>&& arr) noexcept
 		{
-			free();
+			if (this != &arr)
+			{
+				free();
+				_data = arr._data;
+				_size = arr._size;
+				_capacity = arr._capacity;
 
-			_data = arr._data;
-			_size = arr._size;
-
-			arr._data = nullptr;
-			arr._size = 0;
+				arr.abandon_resources();
+			}
 
 			return *this;
 		}

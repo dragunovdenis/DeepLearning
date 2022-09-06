@@ -152,6 +152,11 @@ namespace DeepLearning
 		Matrix& operator =(const Matrix& matr);
 
 		/// <summary>
+		///	Move assignment operator
+		/// </summary>
+		Matrix& operator =(Matrix&& matr) noexcept;
+
+		/// <summary>
 		/// Move constructor
 		/// </summary>
 		Matrix(Matrix&& matr) noexcept;
