@@ -204,6 +204,21 @@ namespace DeepLearning
 		}
 
 		/// <summary>
+		///	Read-only access to the layers
+		/// </summary>
+		const ALayer<D>& operator [](const std::size_t& id) const;
+
+		/// <summary>
+		/// Access to the layers
+		/// </summary>
+		ALayer<D>& operator [](const std::size_t& id);
+
+		/// <summary>
+		///	Returns number of layers in the net
+		/// </summary>
+		std::size_t layers_count() const;
+
+		/// <summary>
 		/// Logs the net into the given directory (will be created if it does not exist) 
 		/// Logs of all the data are supposed to be done in a human-readable text format, since 
 		/// the main purpose of the logging functionality is diagnostics
@@ -220,14 +235,19 @@ namespace DeepLearning
 		/// <summary>
 		/// Saves net as a script-like string to the given file
 		/// </summary>
-		/// <param name="scrypt_path">Path to the file to save script to</param>
-		void save_script(const std::filesystem::path& scrypt_path) const;
+		/// <param name="script_path">Path to the file to save script to</param>
+		void save_script(const std::filesystem::path& script_path) const;
 
 		/// <summary>
 		/// Returns "true" if the current and the given networks coincide in terms of hyper-parameters,
 		/// i.e. layer types, their architecture etc.
 		/// </summary>
 		bool equal_hyperparams(const Net& net) const;
+
+		/// <summary>
+		///	Returns "true" if the given net is (absolutely) equal to the current one
+		/// </summary>
+		bool equal(const Net& net) const;
 
 		/// <summary>
 		/// Returns a human-readable description of the net through description of all its layers

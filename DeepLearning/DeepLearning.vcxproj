@@ -207,6 +207,7 @@
     <ClCompile Include="Math\DiffFunc.cpp" />
     <ClCompile Include="MnistDataUtils.cpp" />
     <ClInclude Include="NeuralNet\ALayer.h" />
+    <ClCompile Include="NeuralNet\ALayer.cpp" />
     <ClCompile Include="NeuralNet\CLayer.cpp" />
     <ClCompile Include="NeuralNet\CummulativeGradient.cpp" />
     <ClCompile Include="NeuralNet\LayerHandle.cpp" />

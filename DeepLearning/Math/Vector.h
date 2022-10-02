@@ -224,13 +224,13 @@ namespace DeepLearning
 		/// <param name="selected_cnt">Number of 1s in the collection after the call</param>
 		/// <param name="aux_collection">An auxiliary collection, can be allocated on the caller side and
 		/// provides a possibility to avoid unnecessary re-allocations when the method below is called multiple times
-		void generate_with_random_selection_map(const std::size_t& selected_cnt, std::vector<int>& aux_collection);
+		void fill_with_random_selection_map(const std::size_t& selected_cnt, std::vector<int>& aux_collection);
 
 		/// <summary>
 		/// Less optimal but more simple version of the method above
 		/// </summary>
 		/// <param name="selected_cnt">Number of selected elements from the current collection</param>
-		void generate_with_random_selection_map(const std::size_t& selected_cnt);
+		void fill_with_random_selection_map(const std::size_t& selected_cnt);
 	};
 
 	/// <summary>

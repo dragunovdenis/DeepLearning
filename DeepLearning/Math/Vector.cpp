@@ -266,7 +266,7 @@ namespace DeepLearning
 		Logging::log_as_table(get_handle(), dim(), 1, filename);
 	}
 
-	void Vector::generate_with_random_selection_map(const std::size_t& selected_cnt, std::vector<int>& aux_collection)
+	void Vector::fill_with_random_selection_map(const std::size_t& selected_cnt, std::vector<int>& aux_collection)
 	{
 		if (selected_cnt >= size())
 		{
@@ -290,10 +290,10 @@ namespace DeepLearning
 			_data[aux_collection[id]] = Real(0);
 	}
 
-	void Vector::generate_with_random_selection_map(const std::size_t& selected_cnt)
+	void Vector::fill_with_random_selection_map(const std::size_t& selected_cnt)
 	{
 		std::vector<int> aux_collection;
-		generate_with_random_selection_map(selected_cnt, aux_collection);
+		fill_with_random_selection_map(selected_cnt, aux_collection);
 	}
 
 	template Vector::Vector(const std::vector<unsigned char>& souurce);

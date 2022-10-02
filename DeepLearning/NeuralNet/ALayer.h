@@ -32,7 +32,72 @@ namespace DeepLearning
 	template <class D>
 	class ALayer
 	{
+		/// <summary>
+		/// An inverted drop-out mask, i.e. a mask that has "ones" on the positions with the indices of elements
+		/// that we want to keep and "zeros" on the positions with the indices of elements that we want to "drop"
+		/// </summary>
+		typename D::vector_t _keep_mask{};
+
+		/// <summary>
+		/// Auxiliary collection used to generate random keep masks
+		/// </summary>
+		typename D::template index_array_t<int> _keep_mask_aux_collection{};
+
+		/// <summary>
+		///	Default value of the "keep rate" parameter
+		/// </summary>
+		static constexpr Real DefaultKeepRate = Real(1);
+
+	protected:
+		/// <summary>
+		/// One minus dropout rate
+		/// </summary>
+		Real _keep_rate = DefaultKeepRate;
+
 	public:
+
+		/// <summary>
+		/// Getter for the "keep rate" property
+		/// </summary>
+		Real get_keep_rate() const;
+
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		/// <param name="keep_rate">One minus "dropout" rate, is supposed to be in (0, 1]. Keep rate "1.0" means that
+		/// no dropout will be used</param>
+		ALayer(const Real keep_rate);
+
+		/// <summary>
+		/// Default constructor
+		/// </summary>
+		ALayer() = default;
+
+		/// <summary>
+		/// Instantiation from the given script
+		/// </summary>
+		ALayer(const std::string& script);
+
+		/// <summary>
+		///	Initializes (or re-initializes) the mask that will be used to perform training with "drop-put" regularization
+		///	In fact it initializes an "inversion" of the drop-out mask, that is the "keep" mask
+		///	(as a rule this should be called by the training subroutine before each mini-batch)
+		/// </summary>
+		void SetUpDropoutMask();
+
+		/// <summary>
+		///	Method to free resources that has been allocated to do the "drop-out" regularization
+		///	(should be called by the training subroutine when the training is over)
+		/// </summary>
+		void DisposeDropoutMask();
+
+		/// <summary>
+		///	Applies dropout to the given tensor that is supposed to be an input for the current layer
+		/// </summary>
+		/// <param name="input">The input tensor for the current layer</param>
+		/// <param name="trainingMode">Mode flag. Should be set to "true" when training and "false" when inferring.</param>
+		void ApplyDropout(typename D::tensor_t& input, const bool trainingMode) const;
+
 		/// <summary>
 		/// Auxiliary data to perform learning on a level of single convolution layer
 		/// </summary>
@@ -69,8 +134,6 @@ namespace DeepLearning
 			/// </summary>
 			std::vector<typename D::tensor_t> Weights_grad{};
 		};
-
-	public:
 
 		/// <summary>
 		/// Size of the layer's input
@@ -179,6 +242,11 @@ namespace DeepLearning
 		/// Returns "true" if the current instance of the layer has the same set of hyper-parameters as the given one
 		/// </summary>
 		virtual bool equal_hyperparams(const ALayer<D>& layer) const = 0;
+
+		/// <summary>
+		/// Returns "true" if the given layer is (absolutely) equal to the current one
+		/// </summary>
+		virtual bool equal(const ALayer<D>& layer) const = 0;
 
 		/// <summary>
 		/// Returns sum of squared weight of the layer (needed, for example, to evaluate cost function when L2 regularization is involved)

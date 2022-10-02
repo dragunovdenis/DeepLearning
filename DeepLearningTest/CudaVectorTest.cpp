@@ -47,7 +47,7 @@ namespace DeepLearningTest
 
 			StandardTestUtils::LogReal("Mean", mean);
 			StandardTestUtils::LogReal("sigma_diff", sigma_diff);
-			Assert::IsTrue(std::abs(mean) < 0.2, L"Unexpectedly high deviation of the \"mean\" value from the reference");
+			Assert::IsTrue(std::abs(mean) < 0.35, L"Unexpectedly high deviation of the \"mean\" value from the reference");
 			Assert::IsTrue(std::abs(sigma_diff) < 0.02, L"Unexpectedly high deviation of the \"sigma\" value from the reference");
 		}
 

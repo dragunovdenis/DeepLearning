@@ -52,7 +52,7 @@ namespace DeepLearning
 		/// </summary>
 		static LayerTypeId ID() { return LayerTypeId::PULL; }
 
-		MSGPACK_DEFINE(_in_size, _pool_window_size, _strides, _pool_operator_id);
+		MSGPACK_DEFINE(this->_keep_rate, _in_size, _pool_window_size, _strides, _pool_operator_id);
 
 		/// <summary>
 		/// Default constructor
@@ -65,7 +65,9 @@ namespace DeepLearning
 		/// <param name="in_size">Size of input tensor for the layer</param>
 		/// <param name="pool_window_size">2d window of the pool operator</param>
 		/// <param name="pool_operator_id">Identifier of the pooling operator to be used</param>
-		PLayer(const Index3d& in_size, const Index2d& pool_window_size, const PoolTypeId pool_operator_id);
+		/// <param name="keep_rate">One minus "dropout" rate</param>
+		PLayer(const Index3d& in_size, const Index2d& pool_window_size, const PoolTypeId pool_operator_id,
+			const Real keep_rate = Real(1.0));
 
 		/// <summary>
 		/// Constructor to instantiate layer from the given string of certain format
@@ -76,22 +78,22 @@ namespace DeepLearning
 		/// <summary>
 		/// Size of the layer's input
 		/// </summary>
-		virtual Index3d in_size() const override;
+		Index3d in_size() const override;
 
 		/// <summary>
 		/// Size of the layer's output
 		/// </summary>
-		virtual Index3d out_size() const override;
+		Index3d out_size() const override;
 
 		/// <summary>
 		/// Returns size of pooling operator window
 		/// </summary>
-		virtual Index3d weight_tensor_size() const override;
+		Index3d weight_tensor_size() const override;
 
 		/// <summary>
 		/// See description in the base class
 		/// </summary>
-		virtual typename D::tensor_t act(const typename D::tensor_t& input, typename ALayer<D>::AuxLearningData* const aux_learning_data_ptr = nullptr) const override;
+		typename D::tensor_t act(const typename D::tensor_t& input, typename ALayer<D>::AuxLearningData* const aux_learning_data_ptr = nullptr) const override;
 
 		/// <summary>
 		/// See the summary to the corresponding method in the base class
@@ -101,40 +103,45 @@ namespace DeepLearning
 		/// <summary>
 		/// See description in the base class
 		/// </summary>
-		virtual std::tuple<typename D::tensor_t, typename ALayer<D>::LayerGradient> backpropagate(
+		std::tuple<typename D::tensor_t, typename ALayer<D>::LayerGradient> backpropagate(
 			const typename D::tensor_t& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
 			const bool evaluate_input_gradient = true) const override;
 
 		/// <summary>
 		/// See the summary to the corresponding method in the base class
 		/// </summary>
-		virtual void backpropagate(const typename D::tensor_t& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
+		void backpropagate(const typename D::tensor_t& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
 			typename D::tensor_t& input_grad, typename ALayer<D>::LayerGradient& layer_grad, const bool evaluate_input_gradient = true) const override;
 
 		/// <summary>
 		/// For the "pooling" layer this method does nothing except a sanity check that the input increments are empty
 		/// </summary>
-		virtual void update(const std::tuple<std::vector<typename D::tensor_t>, typename D::tensor_t>& weights_and_biases_increment, const Real& reg_factor) override;
+		void update(const std::tuple<std::vector<typename D::tensor_t>, typename D::tensor_t>& weights_and_biases_increment, const Real& reg_factor) override;
 
 		/// <summary>
 		/// Returns zero initialized instance of cumulative gradient suitable for the current instance of the layer
 		/// </summary>
-		virtual CummulativeGradient<D> init_cumulative_gradient() const override;
+		CummulativeGradient<D> init_cumulative_gradient() const override;
 
 		/// <summary>
 		/// See description in the base class
 		/// </summary>
-		virtual void log(const std::filesystem::path& directory) const override {/*do nothing since this layer does not have a "state" to log anything*/ }
+		void log(const std::filesystem::path& directory) const override {/*do nothing since this layer does not have a "state" to log anything*/ }
 
 		/// <summary>
 		/// See the summary to the corresponding method in the base class
 		/// </summary>
-		virtual std::string to_string() const override;
+		std::string to_string() const override;
 
 		/// <summary>
 		/// Returns "true" if the current instance of the layer has the same set of hyper-parameters as the given one
 		/// </summary>
 		bool equal_hyperparams(const ALayer<D>& layer) const override;
+
+		/// <summary>
+		/// Returns "true" if the given layer is (absolutely) equal to the current one
+		/// </summary>
+		bool equal(const ALayer<D>& layer) const override;
 
 		/// <summary>
 		/// Encodes hyper-parameters of the layer in a string-script which then can be used to instantiate 

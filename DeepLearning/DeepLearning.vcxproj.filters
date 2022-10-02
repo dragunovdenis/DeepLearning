@@ -260,6 +260,9 @@
     <ClCompile Include="ThreadPool.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="NeuralNet\ALayer.cpp">
+      <Filter>Source Files\NeuralNet</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

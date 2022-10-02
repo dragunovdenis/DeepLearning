@@ -390,7 +390,7 @@ namespace DeepLearningTest
 			const auto nl = ConstructStandardCLayer();
 
 			RunGeneralDerivativeWithRespectToWeightsAndBiasesTest(nl, CostFunctionId::SQUARED_ERROR,
-				(std::is_same_v<Real, double> ? Real(3e-8) : Real(2e-1)),
+				(std::is_same_v<Real, double> ? Real(3.1e-8) : Real(2e-1)),
 				(std::is_same_v<Real, double> ? Real(6e-9) : Real(3.5e-2)));
 		}
 

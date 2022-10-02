@@ -112,11 +112,13 @@ namespace DeepLearning
 		if (aux_data_ptr != nullptr && aux_data_ptr->size() != _layers.size())
 			throw std::exception("Invalid auxiliary data.");
 
-		_layers[0].layer().act(input, eval_data.Out, aux_data_ptr != nullptr ? &(*aux_data_ptr)[0] : nullptr);
-		for (auto layer_id = 1ull; layer_id < _layers.size(); layer_id++)
+		const auto training = aux_data_ptr != nullptr;
+		eval_data.Out = input;
+		for (auto layer_id = 0ull; layer_id < _layers.size(); layer_id++)
 		{
 			eval_data.swap();
-			_layers[layer_id].layer().act(eval_data.In, eval_data.Out, aux_data_ptr != nullptr ? &(*aux_data_ptr)[layer_id] : nullptr);
+			_layers[layer_id].layer().ApplyDropout(eval_data.In, training);
+			_layers[layer_id].layer().act(eval_data.In, eval_data.Out, training ? &(*aux_data_ptr)[layer_id] : nullptr);
 		}
 	}
 
@@ -212,7 +214,7 @@ namespace DeepLearning
 
 		auto  data_index_mapping = get_indices(training_items.size());
 
-		for (std::size_t epoch_id = 0; epoch_id < epochs_count; epoch_id++)
+		for (std::size_t epoch_id = 0; epoch_id < epochs_count; ++epoch_id)
 		{
 			apply_random_permutation(data_index_mapping);
 
@@ -221,6 +223,10 @@ namespace DeepLearning
 			{
 				//Reset gradient collectors before each batch
 				reset_gradient_collectors(gradient_collectors);
+
+				//Generate new grop-out masks
+				for (auto layer_id = 0ull; layer_id < _layers.size(); ++layer_id)
+					_layers[layer_id].layer().SetUpDropoutMask();
 
 				//If there remains less than 1.5 * batch_size elements in the collection we take all of them as a single batch
 				//This is aimed to ensure that an actual batch will always contain not less than half of the batch size elements
@@ -255,6 +261,9 @@ namespace DeepLearning
 									e_data.swap();
 									_layers[layer_id].layer().backpropagate(e_data.In, aux_data_ptr[layer_id],
 										e_data.Out, back_prop_out[layer_id], layer_id != 0);
+
+									if (layer_id != 0)
+										_layers[layer_id].layer().ApplyDropout(e_data.Out, true);
 								}
 
 								std::lock_guard guard(mutex);
@@ -277,6 +286,9 @@ namespace DeepLearning
 
 			epoch_callback(epoch_id, Real(0.5) * lambda_scaled);
 		}
+
+		for (auto layer_id = 0ull; layer_id < _layers.size(); ++layer_id)
+			_layers[layer_id].layer().DisposeDropoutMask();
 	}
 
 	template <class D>
@@ -350,6 +362,24 @@ namespace DeepLearning
 	}
 
 	template <class D>
+	const ALayer<D>& Net<D>::operator [](const std::size_t& id) const
+	{
+		return _layers[id].layer();
+	}
+
+	template <class D>
+	ALayer<D>& Net<D>::operator [](const std::size_t& id)
+	{
+		return _layers[id].layer();
+	}
+
+	template <class D>
+	std::size_t Net<D>::layers_count() const
+	{
+		return _layers.size();
+	}
+
+	template <class D>
 	void Net<D>::log(const std::filesystem::path& directory) const
 	{
 		for (auto layer_id = 0ull; layer_id < _layers.size(); layer_id++)
@@ -373,9 +403,9 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	void Net<D>::save_script(const std::filesystem::path& scrypt_path) const
+	void Net<D>::save_script(const std::filesystem::path& script_path) const
 	{
-		std::ofstream file(scrypt_path);
+		std::ofstream file(script_path);
 
 		if (!file.is_open())
 			throw std::exception("Can't create file");
@@ -391,6 +421,19 @@ namespace DeepLearning
 
 		for (auto layer_id = 0ull; layer_id < _layers.size(); layer_id++)
 			if (!_layers[layer_id].layer().equal_hyperparams(net._layers[layer_id].layer()))
+				return false;
+
+		return true;
+	}
+
+	template <class D>
+	bool Net<D>::equal(const Net& net) const
+	{
+		if (_layers.size() != net._layers.size())
+			return false;
+
+		for (auto layer_id = 0ull; layer_id < _layers.size(); layer_id++)
+			if (!_layers[layer_id].layer().equal(net._layers[layer_id].layer()))
 				return false;
 
 		return true;

@@ -45,6 +45,15 @@ namespace DeepLearning::Utils
     }
 
     /// <summary>
+    /// Returns std::vector of the given size filled
+    /// with uniformly distributed pseudo-random values within the given boundaries
+    /// </summary>
+    /// <param name="size">Size of the output vector</param>
+    /// <param name="min">Lower boundary for the pseudo-random values to populate the collection</param>
+    /// <param name="max">Upper boundary for the pseudo-random values to populate the collection</param>
+    std::vector<Real> get_random_std_vector(const std::size_t& size, const Real min, const Real max);
+
+    /// <summary>
     /// Returns uniformly distributed random value from the given interval
     /// </summary>
     Real get_random(const Real min, const Real max);
@@ -80,6 +89,36 @@ namespace DeepLearning::Utils
     }
 
     /// <summary>
+    /// Converts the given hexadecimal string to a double and returns the result
+    /// </summary>
+    double hex_to_double(const std::string& hex_str);
+
+    /// <summary>
+    /// Converts given hexadecimal string to float
+    /// </summary>
+    template <class T>
+    T hex_to_float(const std::string& hex_str)
+    {
+        return static_cast<T>(hex_to_double(hex_str));
+    }
+
+    /// <summary>
+    /// Converts the given double precision value to hexadecimal string and returns the result
+    /// </summary>
+    std::string double_to_hex(const double& val);
+
+    /// <summary>
+    /// Converts given floating point value to its string hexadecimal representation
+    /// </summary>
+    template <class R>
+    std::string float_to_hex(const R& val)
+    {
+        static_assert(std::is_floating_point_v<R>, "Only for floating point types");
+
+        return double_to_hex(static_cast<double>(val));
+    }
+
+    /// <summary>
     /// Substitutes "," and ";" characters with spaces
     /// </summary>
     std::string normalize_separator_characters(const std::string& str);
@@ -103,10 +142,12 @@ namespace DeepLearning::Utils
     }
 
     /// <summary>
-    /// Extracts and returns a single leftmost word from the given string (the given string is updated)
+    /// Extracts and returns a single leftmost (with respect to the given start position)
+    /// word from the given string (the given string is updated)
     /// By word we mean a sequence of characters without spaces (whose boundaries are defined by spaces)
+    /// which starts at the given `start_id` position
     /// </summary>
-    std::string extract_word(std::string& str);
+    std::string extract_word(std::string& str, const std::size_t& start_id = 0);
 
     /// <summary>
     /// From the given string extracts the leftmost sub-string of the form "{...}" (the input string gets updated)
@@ -188,4 +229,41 @@ namespace DeepLearning::Utils
     /// </summary>
     /// <param name="file_name">Full path to a text file to read</param>
     std::string read_all_text(const std::filesystem::path& file_name);
+
+    /// <summary>
+    /// Converts given floating point value to an exact string representation,
+    /// which is a combination of a human-readable decimal representation (might be not exact)
+    /// and an exact hexadecimal representation
+    /// </summary>
+    template <class R>
+    std::string float_to_str_exact(const R& val)
+    {
+        static_assert(std::is_floating_point_v<R>, "Only for floating point types");
+        //A combination of human-readable and exact representation of the number
+        return Utils::to_string(val) + "$" + float_to_hex(val);
+    }
+
+    /// <summary>
+    /// Parses given string to a floating point value, can process the "exact" representation produced by `float_to_str_exact`
+    /// </summary>
+    template <class R>
+    R str_to_float(const std::string& str)
+    {
+        static_assert(std::is_floating_point_v<R>, "Only for floating point types");
+
+        const auto parts = split_by_char(str, '$');
+
+        if (parts.size() > 2)
+            throw std::exception("Invalid input");
+
+        if (parts.size() == 2)
+            return hex_to_float<R>(parts[1]);
+
+        if constexpr (std::is_same_v<R, double>)
+			return std::stod(parts[0]);
+        else if constexpr (std::is_same_v<R, float>)
+            return std::stof(parts[0]);
+
+        throw std::exception("Unexpected input type");
+    }
 }

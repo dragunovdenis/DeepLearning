@@ -74,7 +74,7 @@ namespace DeepLearning
 		/// </summary>
 		static LayerTypeId ID() { return LayerTypeId::FULL; }
 
-		MSGPACK_DEFINE(_biases, _weights, _func_id);
+		MSGPACK_DEFINE(this->_keep_rate, _biases, _weights, _func_id);
 
 		/// <summary>
 		/// Dimensionality of the layer's input
@@ -100,12 +100,8 @@ namespace DeepLearning
 		/// Constructor with random weights and biases
 		/// </summary>
 		NLayer(const std::size_t in_dim, const std::size_t out_dim, ActivationFunctionId func_id = ActivationFunctionId::SIGMOID,
-			const Real rand_low = Real(-1), const Real rand_high = Real(1), const bool standard_init_for_weights = false);
-
-		/// <summary>
-		/// Copy constructor
-		/// </summary>
-		NLayer(const NLayer<D>& anotherLayer);
+			const Real rand_low = Real(-1), const Real rand_high = Real(1), const bool standard_init_for_weights = false,
+			const Real keep_rate = Real(1.0));
 
 		/// <summary>
 		/// Constructor to instantiate layer from the given string of certain format
@@ -131,8 +127,8 @@ namespace DeepLearning
 		/// <summary>
 		/// See the summary to the corresponding method in the base class
 		/// </summary>
-		virtual void backpropagate(const typename D::tensor_t& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
-			typename D::tensor_t& input_grad, typename ALayer<D>::LayerGradient& layer_grad, const bool evaluate_input_gradient = true) const override;
+		void backpropagate(const typename D::tensor_t& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
+		                   typename D::tensor_t& input_grad, typename ALayer<D>::LayerGradient& layer_grad, const bool evaluate_input_gradient = true) const override;
 
 		/// <summary>
 		/// See the summary to the corresponding method in the base class
@@ -142,17 +138,22 @@ namespace DeepLearning
 		/// <summary>
 		/// See the summary to the corresponding method in the base class
 		/// </summary>
-		virtual void log(const std::filesystem::path& directory) const override;
+		void log(const std::filesystem::path& directory) const override;
 
 		/// <summary>
 		/// See the summary to the corresponding method in the base class
 		/// </summary>
-		virtual std::string to_string() const override;
+		std::string to_string() const override;
 
 		/// <summary>
 		/// Returns "true" if the current instance of the layer has the same set of hyper-parameters as the given one
 		/// </summary>
 		bool equal_hyperparams(const ALayer<D>& layer) const override;
+
+		/// <summary>
+		/// Returns "true" if the given layer is (absolutely) equal to the current one
+		/// </summary>
+		bool equal(const ALayer<D>& layer) const override;
 
 		/// <summary>
 		/// Encodes hyper-parameters of the layer in a string-script which then can be used to instantiate 

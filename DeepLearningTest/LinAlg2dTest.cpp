@@ -59,7 +59,7 @@ namespace DeepLearningTest
 			Assert::IsTrue(mean_deviation < Real(1.5e-2), L"Too high deviation from the expected mean value.");
 			const auto stdev_deviation = std::abs(std::sqrt(Real(1) / 3) - stdev);
 			Logger::WriteMessage((std::string("Stdev deviation = ") + std::to_string(stdev_deviation) + "\n").c_str());
-			Assert::IsTrue(stdev_deviation < Real(7e-3), L"Too high deviation from the expected mean value.");
+			Assert::IsTrue(stdev_deviation < Real(8.5e-3), L"Too high deviation from the expected StdDev value.");
 		}
 
 		TEST_METHOD(RandomVector2dTest)

@@ -33,6 +33,13 @@ namespace DeepLearning::Utils
         return normalization_factor * dist(gen) + min;
     }
 
+    std::vector<Real> get_random_std_vector(const std::size_t& size, const Real min, const Real max)
+    {
+        std::vector<Real> result(size);
+        fill_with_random_values(result.begin(), result.end(), min, max);
+        return result;
+    }
+
     int get_random_int(const int min, const int max)
     {
         static std::random_device rd;
@@ -43,14 +50,14 @@ namespace DeepLearning::Utils
         return dist(gen) % interval_length + min;
     }
 
-    std::string extract_word(std::string& str)
+    std::string extract_word(std::string& str, const std::size_t& start_id)
     {
-        const auto word_start_pos = str.find_first_not_of(' ');
+        const auto word_start_pos = str.find_first_not_of(' ', start_id);
 
-        if (word_start_pos == std::string::npos) // there are no words
+        if (word_start_pos == std::string::npos) // nothing to extract
         {
-            str = std::string();
-            return std::string();
+            str.erase(start_id, str.size() - start_id);
+            return std::string("");
         }
 
         auto word_end_pos = str.find_first_of(' ', word_start_pos);
@@ -60,7 +67,7 @@ namespace DeepLearning::Utils
 
         const auto result = str.substr(word_start_pos, word_end_pos - word_start_pos);
 
-        str.erase(0, word_end_pos);
+        str.erase(start_id, word_end_pos - start_id);
 
         return result;
     }
@@ -92,6 +99,30 @@ namespace DeepLearning::Utils
             }, ' ');
 
         return result;
+    }
+
+    double hex_to_double(const std::string& hex_str) {
+        if (hex_str.size() != 16)
+            throw std::exception("Invalid input");
+
+        uint64_t i = std::stoll(hex_str, nullptr, 16);
+        double d;
+        std::memcpy(&d, &i, sizeof(double));
+        return d;
+    }
+
+    std::string double_to_hex(const double& val) {
+        uint64_t i;
+        std::memcpy(&i, &val, sizeof(double));
+        constexpr auto buf_size = sizeof(double) * 2 + 1;
+
+        char buf[buf_size];
+        if (snprintf(buf, sizeof(buf), "%016llx", i) != sizeof(double) * 2)
+            throw std::string("Conversion failed");
+
+        buf[buf_size - 1] = 0;
+
+        return std::string{ buf };
     }
 
     bool try_extract_vector_sub_string(std::string& str, std::string& out)

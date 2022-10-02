@@ -78,22 +78,22 @@ namespace DeepLearning
 		/// </summary>
 		static LayerTypeId ID() { return LayerTypeId::CONVOLUTION; }
 
-		MSGPACK_DEFINE(_in_size, _weight_tensor_size, _paddings, _strides, _func_id, _biases, _filters);
+		MSGPACK_DEFINE(this->_keep_rate, _in_size, _weight_tensor_size, _paddings, _strides, _func_id, _biases, _filters);
 
 		/// <summary>
 		/// See description in the base class
 		/// </summary>
-		virtual Index3d in_size() const override;
+		Index3d in_size() const override;
 
 		/// <summary>
 		/// See description in the base class
 		/// </summary>
-		virtual Index3d out_size() const override;
+		Index3d out_size() const override;
 
 		/// <summary>
 		/// See description in the base class
 		/// </summary>
-		virtual Index3d weight_tensor_size() const override;
+		Index3d weight_tensor_size() const override;
 
 		/// <summary>
 		/// Default constructor
@@ -108,9 +108,11 @@ namespace DeepLearning
 		/// <param name="filters_count">Number of filters. Defines number of channel in the output tensor of the layer</param>
 		/// <param name="paddings">Zero paddings to be applied to the input tensor before filters are applied</param>
 		/// <param name="strides">Define the minimal movement of the filter window (in 3 dimensions) when convolution is going on</param>
-		/// <param name="funcId">Id of the activation function to be used in the layer</param>
+		/// <param name="func_id">Id of the activation function to be used in the layer</param>
+		/// <param name="keep_rate">One minus "dropout" rate</param>
 		CLayer(const Index3d& in_size, const Index2d& filter_window_size,
-			const std::size_t& filters_count, const ActivationFunctionId func_id, const Index3d& paddings = { 0 }, const Index3d& strides = {1});
+			const std::size_t& filters_count, const ActivationFunctionId func_id,
+			const Index3d& paddings = { 0 }, const Index3d& strides = {1}, const Real keep_rate = Real(1.0));
 
 		/// <summary>
 		/// Constructor to instantiate layer from the given string of certain format
@@ -130,34 +132,39 @@ namespace DeepLearning
 		/// <summary>
 		/// See description in the base class
 		/// </summary>
-		virtual std::tuple<typename D::tensor_t, typename ALayer<D>::LayerGradient> backpropagate(const typename D::tensor_t& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
-			const bool evaluate_input_gradient = true) const override;
+		std::tuple<typename D::tensor_t, typename ALayer<D>::LayerGradient> backpropagate(const typename D::tensor_t& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
+		                                                                                  const bool evaluate_input_gradient = true) const override;
 
 		/// <summary>
 		/// See the summary to the corresponding method in the base class
 		/// </summary>
-		virtual void backpropagate(const typename D::tensor_t& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
-			typename D::tensor_t& input_grad, typename ALayer<D>::LayerGradient& layer_grad, const bool evaluate_input_gradient = true) const override;
+		void backpropagate(const typename D::tensor_t& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
+		                   typename D::tensor_t& input_grad, typename ALayer<D>::LayerGradient& layer_grad, const bool evaluate_input_gradient = true) const override;
 
 		/// <summary>
 		/// See description in the base class
 		/// </summary>
-		virtual void update(const std::tuple<std::vector<typename D::tensor_t>, typename D::tensor_t>& weights_and_biases_increment, const Real& reg_factor) override;
+		void update(const std::tuple<std::vector<typename D::tensor_t>, typename D::tensor_t>& weights_and_biases_increment, const Real& reg_factor) override;
 
 		/// <summary>
 		/// See description in the base class
 		/// </summary>
-		virtual void log(const std::filesystem::path& directory) const override;
+		void log(const std::filesystem::path& directory) const override;
 
 		/// <summary>
 		/// See the summary to the corresponding method in the base class
 		/// </summary>
-		virtual std::string to_string() const override;
+		std::string to_string() const override;
 
 		/// <summary>
 		/// Returns "true" if the current instance of the layer has the same set of hyper-parameters as the given one
 		/// </summary>
 		bool equal_hyperparams(const ALayer<D>& layer) const override;
+
+		/// <summary>
+		/// Returns "true" if the given layer is (absolutely) equal to the current one
+		/// </summary>
+		bool equal(const ALayer<D>& layer) const override;
 
 		/// <summary>
 		/// Encodes hyper-parameters of the layer in a string-script which then can be used to instantiate 

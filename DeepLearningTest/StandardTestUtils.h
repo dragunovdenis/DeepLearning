@@ -420,11 +420,11 @@ namespace DeepLearningTest::StandardTestUtils
 
 		//Act
 		constexpr auto selection_count = 435;
-		vector.generate_with_random_selection_map(selection_count);
+		vector.fill_with_random_selection_map(selection_count);
 
 		const auto vect_diag = vector.to_stdvector();
 		const auto map1 = vector;
-		vector.generate_with_random_selection_map(selection_count);
+		vector.fill_with_random_selection_map(selection_count);
 		const auto map_diag = vector.to_stdvector();
 
 		//Assert
@@ -447,7 +447,7 @@ namespace DeepLearningTest::StandardTestUtils
 		}
 
 		//Corner case
-		vector.generate_with_random_selection_map(vector.size() + 13);
+		vector.fill_with_random_selection_map(vector.size() + 13);
 		const auto full_filled_vector_std = vector.to_stdvector();
 		const auto full_ones_count = std::count_if(full_filled_vector_std.begin(), full_filled_vector_std.end(), [](const auto x) { return x == Real(1); });
 		Assert::AreEqual<std::size_t>(full_ones_count, vector.size(), L"All the elements of the collection are supposed to be equal to 1");

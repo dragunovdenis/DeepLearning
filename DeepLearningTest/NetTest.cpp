@@ -236,49 +236,51 @@ namespace DeepLearningTest
 				{ ActivationFunctionId::RELU, ActivationFunctionId::SIGMOID });
 		}
 
+		/// <summary>
+		///	Generates and returnes a "standard" net for testing
+		/// </summary>
+		static Net<CpuDC> GenerateStandardNet()
+		{
+			Net<CpuDC> net;
+			const auto keep_rates = Utils::get_random_std_vector(6, Real(0), Real(1.0));
+
+			auto size_in_next = Index3d{ 1, 222, 333 };
+			const auto out_size = 10;
+			size_in_next = net.append_layer<CLayer>(size_in_next, Index2d{ 5 }, 20, ActivationFunctionId::RELU, Index3d{ 0, 0, 0 }, Index3d{ 1, 1, 1 }, keep_rates[0]);
+			size_in_next = net.append_layer<PLayer>(size_in_next, Index2d{ 2 }, PoolTypeId::MAX, keep_rates[1]);
+			size_in_next = net.append_layer<CLayer>(size_in_next, Index2d{ 5 }, 10, ActivationFunctionId::RELU, Index3d{ 0, 0, 0 }, Index3d{ 1, 1, 1 }, keep_rates[2]);
+			size_in_next = net.append_layer<PLayer>(size_in_next, Index2d{ 2 }, PoolTypeId::MAX, keep_rates[3]);
+			size_in_next = net.append_layer<NLayer>(size_in_next.coord_prod(), 100, ActivationFunctionId::RELU, Real(-1), Real(1), true, keep_rates[4]);
+			size_in_next = net.append_layer<NLayer>(size_in_next.coord_prod(), out_size, ActivationFunctionId::SOFTMAX, Real(-1), Real(1), true, keep_rates[5]);
+
+			for (auto layer_id = 0ull; layer_id < net.layers_count(); layer_id++)
+				Assert::IsTrue(net[layer_id].get_keep_rate() == keep_rates[layer_id], L"Unexpected value of the `keep rate` parameter");
+
+			return net;
+		}
+
 		TEST_METHOD(NetSerializationTest)
 		{
 			//Arrange
-			const auto in_dimension = 784;
-			const auto out_dimension = 10;
-			const auto net = Net<CpuDC>(std::vector<std::size_t>{ in_dimension, 100, out_dimension });
+
+			const auto net = GenerateStandardNet();
 
 			//Act
 			const auto msg = MsgPack::pack(net);
 			const auto net_unpacked = MsgPack::unpack<Net<CpuDC>>(msg);
 
 			//Assert
-			const auto tests_samples_count = 100;
-			for (int test_sample_id = 0; test_sample_id < tests_samples_count; test_sample_id++)
-			{
-				//take a random input sample
-				const auto input_sample = Tensor(1, 1, in_dimension, -1, 1);
-				const auto ref_output = net.act(input_sample);
-				//Sanity check
-				Assert::IsTrue(ref_output.max_abs() > 0 && input_sample.max_abs() > 0, L"Both input sample and reference output are expected to be non-zero.");
-
-				const auto trial_output = net_unpacked.act(input_sample);
-
-				Assert::IsTrue(ref_output == trial_output, L"Nets are not the same.");
-			}
+			Assert::IsTrue(net.equal(net_unpacked), L"Original and restored nets are different");
 		}
 
 		TEST_METHOD(NetScriptInstantiationTest)
 		{
 			//Arrange
-			Net<CpuDC> net;
-			auto size_in_next = Index3d{1, 222, 333};
-			const auto out_size = 10;
-			size_in_next = net.append_layer<CLayer>(size_in_next, Index2d{ 5 }, 20, ActivationFunctionId::RELU);
-			size_in_next = net.append_layer<PLayer>(size_in_next, Index2d{ 2 }, PoolTypeId::MAX);
-			size_in_next = net.append_layer<CLayer>(size_in_next, Index2d{ 5 }, 10, ActivationFunctionId::RELU);
-			size_in_next = net.append_layer<PLayer>(size_in_next, Index2d{ 2 }, PoolTypeId::MAX);
-			size_in_next = net.append_layer<NLayer>(size_in_next.coord_prod(), 100, ActivationFunctionId::RELU, Real(-1), Real(1), true);
-			size_in_next = net.append_layer<NLayer>(size_in_next.coord_prod(), out_size, ActivationFunctionId::SOFTMAX, Real(-1), Real(1), true);
+			const auto net = GenerateStandardNet();
 
 			//Act
 			const auto script_str = net.to_script();
-			const auto net_restored = Net<CpuDC>(script_str);
+			const auto net_restored = Net(script_str);
 
 			//Assert
 			Assert::IsTrue(net.equal_hyperparams(net_restored), L"Original and restored nets are different");

@@ -30,13 +30,14 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	PLayer<D>::PLayer(const Index3d& in_size, const Index2d& pool_window_size, const PoolTypeId pool_operator_id)
+	PLayer<D>::PLayer(const Index3d& in_size, const Index2d& pool_window_size,
+		const PoolTypeId pool_operator_id, const Real keep_rate) : ALayer<D>(keep_rate)
 	{
 		initialize(in_size, pool_window_size, pool_operator_id);
 	}
 
 	template <class D>
-	PLayer<D>::PLayer(const std::string& str)
+	PLayer<D>::PLayer(const std::string& str) : ALayer<D>(str)
 	{
 		auto str_norm = Utils::normalize_string(str);
 
@@ -173,21 +174,31 @@ namespace DeepLearning
 	{
 		return DeepLearning::to_string(PLayer::ID()) + "; Input size: " + in_size().to_string() +
 			"; Out size: " + out_size().to_string() + "; Filter size: " + weight_tensor_size().to_string() +
-			"; Pool type: " + DeepLearning::to_string(_pool_operator_id);
+			"; Pool type: " + DeepLearning::to_string(_pool_operator_id) + ";" + ALayer<D>::to_string();
 	}
 
 	template <class D>
 	bool PLayer<D>::equal_hyperparams(const ALayer<D>& layer) const
 	{
 		const auto other_player_ptr = dynamic_cast<const PLayer*>(&layer);
-		return _in_size == layer.in_size() && _pool_window_size == layer.weight_tensor_size() &&
-			_strides == other_player_ptr->_strides && _pool_operator_id == other_player_ptr->_pool_operator_id;
+		return other_player_ptr != nullptr && 
+			ALayer<D>::equal_hyperparams(layer) && _in_size == layer.in_size() &&
+			_pool_window_size == layer.weight_tensor_size() &&
+			_strides == other_player_ptr->_strides &&
+			_pool_operator_id == other_player_ptr->_pool_operator_id;
+	}
+
+	template <class D>
+	bool PLayer<D>::equal(const ALayer<D>& layer) const
+	{
+		return equal_hyperparams(layer); // no other parameters to check for equality
 	}
 
 	template <class D>
 	std::string PLayer<D>::to_script() const
 	{
-		return _in_size.to_string() + _pool_window_size.yz().to_string()+ ";" + DeepLearning::to_string(_pool_operator_id);
+		return _in_size.to_string() + _pool_window_size.yz().to_string()+ ";" +
+			DeepLearning::to_string(_pool_operator_id) + ";" + ALayer<D>::to_script();
 	}
 
 	template <class D>

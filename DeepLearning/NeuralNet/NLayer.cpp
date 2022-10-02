@@ -40,21 +40,13 @@ namespace DeepLearning
 
 	template<class D>
 	NLayer<D>::NLayer(const std::size_t in_dim, const std::size_t out_dim, ActivationFunctionId func_id,
-		const Real rand_low, const Real rand_high, const bool standard_init_for_weights)
+		const Real rand_low, const Real rand_high, const bool standard_init_for_weights, const Real keep_rate) : ALayer<D>(keep_rate)
 	{
 		initialize(in_dim, out_dim, func_id, rand_low, rand_high, standard_init_for_weights);
 	}
 
 	template <class D>
-	NLayer<D>::NLayer(const NLayer<D>& anotherLayer)
-	{
-		_biases = anotherLayer._biases;
-		_weights = anotherLayer._weights;
-		_func_id = anotherLayer._func_id;
-	}
-
-	template <class D>
-	NLayer<D>::NLayer(const std::string& str)
+	NLayer<D>::NLayer(const std::string& str) : ALayer<D>(str)
 	{
 		auto str_norm = Utils::normalize_string(str);
 
@@ -72,7 +64,7 @@ namespace DeepLearning
 
 		const auto out_dim = temp.z;
 
-		const auto func_id = parse_activation_type(str_norm);
+		const auto func_id = parse_activation_type(Utils::extract_word(str_norm));
 		if (func_id == ActivationFunctionId::UNKNOWN)
 			throw std::exception("Failed to parse activation function type of NLayer");
 
@@ -180,20 +172,33 @@ namespace DeepLearning
 	std::string NLayer<D>::to_string() const
 	{
 		return DeepLearning::to_string(NLayer::ID()) + "; Input size: " + in_size().to_string() + "; Out size: " + out_size().to_string() + 
-			"; Activation: " + DeepLearning::to_string(_func_id);
+			"; Activation: " + DeepLearning::to_string(_func_id) +";" + ALayer<D>::to_string();
 	}
 
 	template <class D>
 	bool NLayer<D>::equal_hyperparams(const ALayer<D>& layer) const
 	{
 		const auto other_nlayer_ptr = dynamic_cast<const NLayer*>(&layer);
-		return other_nlayer_ptr != nullptr && in_size() == layer.in_size() && out_size() == layer.out_size() && _func_id == other_nlayer_ptr->_func_id;
+		return other_nlayer_ptr != nullptr && ALayer<D>::equal_hyperparams(layer)
+		&& in_size() == layer.in_size() && out_size() == layer.out_size() && _func_id == other_nlayer_ptr->_func_id;
+	}
+
+	template <class D>
+	bool NLayer<D>::equal(const ALayer<D>& layer) const
+	{
+		if (!equal_hyperparams(layer))
+			return false;
+
+		//no need to check if the casted value is null because the check is done in the "hyperparams" function
+		const auto other_nlayer_ptr = dynamic_cast<const NLayer*>(&layer); 
+		return other_nlayer_ptr->_weights == _weights && other_nlayer_ptr->_biases == _biases;
 	}
 
 	template <class D>
 	std::string NLayer<D>::to_script() const
 	{
-		return in_size().to_string() + out_size().to_string() + ";" + DeepLearning::to_string(_func_id);
+		return in_size().to_string() + out_size().to_string() + ";" +
+			DeepLearning::to_string(_func_id) + ";" + ALayer<D>::to_script();
 	}
 
 	template <class D>

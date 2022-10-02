@@ -45,13 +45,14 @@ namespace DeepLearning
 
 	template <class D>
 	CLayer<D>::CLayer(const Index3d& in_size, const Index2d& filter_window_size,
-		const std::size_t& filters_count, const ActivationFunctionId func_id, const Index3d& paddings, const Index3d& strides)
+		const std::size_t& filters_count, const ActivationFunctionId func_id,
+		const Index3d& paddings, const Index3d& strides, const Real keep_rate) : ALayer<D>(keep_rate)
 	{
 		initialize(in_size, filter_window_size,	filters_count, func_id, paddings, strides);
 	}
 
 	template <class D>
-	CLayer<D>::CLayer(const std::string& str)
+	CLayer<D>::CLayer(const std::string& str) : ALayer<D>(str)
 	{
 		auto str_norm = Utils::normalize_string(str);
 
@@ -221,14 +222,15 @@ namespace DeepLearning
 	{
 		return DeepLearning::to_string(CLayer::ID()) + "; Input size: " + in_size().to_string() +
 			"; Out size: " + out_size().to_string() + "; Filter size: " + weight_tensor_size().to_string() +
-			"; Activation: " + DeepLearning::to_string(_func_id);
+			"; Activation: " + DeepLearning::to_string(_func_id)+";" + ALayer<D>::to_string();
 	}
 
 	template <class D>
 	bool CLayer<D>::equal_hyperparams(const ALayer<D>& layer) const
 	{
 		const auto other_clayer_ptr = dynamic_cast<const CLayer*>(&layer);
-		return other_clayer_ptr != nullptr && _in_size == layer.in_size() &&
+		return other_clayer_ptr != nullptr &&
+			ALayer<D>::equal_hyperparams(layer) && _in_size == layer.in_size() &&
 			_weight_tensor_size == layer.weight_tensor_size() &&
 			_paddings == other_clayer_ptr->_paddings &&
 			_strides == other_clayer_ptr->_strides &&
@@ -236,11 +238,22 @@ namespace DeepLearning
 	}
 
 	template <class D>
+	bool CLayer<D>::equal(const ALayer<D>& layer) const
+	{
+		if (!equal_hyperparams(layer))
+			return false;
+
+		//no need to check if the casted value is null because the check is done in the "hyperparams" function
+		const auto other_nlayer_ptr = dynamic_cast<const CLayer*>(&layer);
+		return other_nlayer_ptr->_filters == _filters && other_nlayer_ptr->_biases == _biases;
+	}
+
+	template <class D>
 	std::string CLayer<D>::to_script() const
 	{
 		return in_size().to_string() + weight_tensor_size().yz().to_string()
 			+ ";" + Utils::to_string(out_size().x) + ";"
-			+ DeepLearning::to_string(_func_id) + ";"+ _paddings.to_string() + _strides.to_string();
+			+ DeepLearning::to_string(_func_id) + ";"+ _paddings.to_string() + _strides.to_string() + ";" + ALayer<D>::to_script();
 	}
 
 	template <class D>

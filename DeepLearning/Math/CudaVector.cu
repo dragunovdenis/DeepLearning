@@ -239,7 +239,7 @@ namespace DeepLearning
 		return vec * scalar;
 	}
 
-	void CudaVector::generate_with_random_selection_map(const std::size_t& selected_cnt, CudaArray<int>& aux_collection)
+	void CudaVector::fill_with_random_selection_map(const std::size_t& selected_cnt, CudaArray<int>& aux_collection)
 	{
 		if (selected_cnt >= size())
 		{
@@ -262,10 +262,10 @@ namespace DeepLearning
 			aux_collection.begin() + static_cast<int>(selected_cnt), begin());
 	}
 
-	void CudaVector::generate_with_random_selection_map(const std::size_t& selected_cnt)
+	void CudaVector::fill_with_random_selection_map(const std::size_t& selected_cnt)
 	{
 		CudaArray<int> aux_collection;
-		generate_with_random_selection_map(selected_cnt, aux_collection);
+		fill_with_random_selection_map(selected_cnt, aux_collection);
 	}
 
 }
