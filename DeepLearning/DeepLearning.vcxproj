@@ -38,7 +38,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='IntelCompiler2022|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>Intel C++ Compiler 2022</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -234,13 +234,13 @@
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\packages\msgpack-c-cpp-3.1.1-winsoft666.1.0.0.2\build\native\msgpack-c-cpp-3.1.1-winsoft666.targets" Condition="Exists('..\packages\msgpack-c-cpp-3.1.1-winsoft666.1.0.0.2\build\native\msgpack-c-cpp-3.1.1-winsoft666.targets')" />
+    <Import Project="$(SolutionDir)\packages\msgpack-c-cpp-3.1.1-winsoft666.1.0.0.2\build\native\msgpack-c-cpp-3.1.1-winsoft666.targets" Condition="Exists('$(SolutionDir)\packages\msgpack-c-cpp-3.1.1-winsoft666.1.0.0.2\build\native\msgpack-c-cpp-3.1.1-winsoft666.targets')" />
     <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 11.7.targets" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\msgpack-c-cpp-3.1.1-winsoft666.1.0.0.2\build\native\msgpack-c-cpp-3.1.1-winsoft666.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\msgpack-c-cpp-3.1.1-winsoft666.1.0.0.2\build\native\msgpack-c-cpp-3.1.1-winsoft666.targets'))" />
+    <Error Condition="!Exists('$(SolutionDir)\packages\msgpack-c-cpp-3.1.1-winsoft666.1.0.0.2\build\native\msgpack-c-cpp-3.1.1-winsoft666.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\packages\msgpack-c-cpp-3.1.1-winsoft666.1.0.0.2\build\native\msgpack-c-cpp-3.1.1-winsoft666.targets'))" />
   </Target>
 </Project>

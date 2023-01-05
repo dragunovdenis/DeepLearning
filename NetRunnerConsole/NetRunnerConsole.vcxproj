@@ -76,7 +76,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;CUDA_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>..\DeepLearning;..\packages\tclap.1.2.1\build\native\include\tclap;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\DeepLearning;$(SolutionDir)\packages\tclap.1.2.1\build\native\include\tclap;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
@@ -109,7 +109,7 @@ copy /Y "..\$(Platform)\$(Configuration)\ScottPlotWrapper.dll" "bin\$(Platform)\
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>..\DeepLearning;..\packages\tclap.1.2.1\build\native\include\tclap;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\DeepLearning;$(SolutionDir)\packages\tclap.1.2.1\build\native\include\tclap;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
@@ -143,7 +143,7 @@ copy /Y "..\$(Platform)\$(Configuration)\ScottPlotWrapper.dll" "bin\$(Platform)\
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>..\DeepLearning;..\packages\tclap.1.2.1\build\native\include\tclap;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\DeepLearning;$(SolutionDir)\packages\tclap.1.2.1\build\native\include\tclap;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
@@ -195,15 +195,15 @@ copy /Y "..\$(Platform)\$(Configuration)\ScottPlotWrapper.dll" "bin\$(Platform)\
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\packages\tclap.1.2.1\build\native\tclap.targets" Condition="Exists('..\packages\tclap.1.2.1\build\native\tclap.targets')" />
-    <Import Project="..\packages\msgpack-c-cpp-3.1.1-winsoft666.1.0.0.2\build\native\msgpack-c-cpp-3.1.1-winsoft666.targets" Condition="Exists('..\packages\msgpack-c-cpp-3.1.1-winsoft666.1.0.0.2\build\native\msgpack-c-cpp-3.1.1-winsoft666.targets')" />
+    <Import Project="$(SolutionDir)\packages\tclap.1.2.1\build\native\tclap.targets" Condition="Exists('$(SolutionDir)\packages\tclap.1.2.1\build\native\tclap.targets')" />
+    <Import Project="$(SolutionDir)\packages\msgpack-c-cpp-3.1.1-winsoft666.1.0.0.2\build\native\msgpack-c-cpp-3.1.1-winsoft666.targets" Condition="Exists('$(SolutionDir)\packages\msgpack-c-cpp-3.1.1-winsoft666.1.0.0.2\build\native\msgpack-c-cpp-3.1.1-winsoft666.targets')" />
     <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 11.7.targets" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\tclap.1.2.1\build\native\tclap.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\tclap.1.2.1\build\native\tclap.targets'))" />
-    <Error Condition="!Exists('..\packages\msgpack-c-cpp-3.1.1-winsoft666.1.0.0.2\build\native\msgpack-c-cpp-3.1.1-winsoft666.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\msgpack-c-cpp-3.1.1-winsoft666.1.0.0.2\build\native\msgpack-c-cpp-3.1.1-winsoft666.targets'))" />
+    <Error Condition="!Exists('$(SolutionDir)\packages\tclap.1.2.1\build\native\tclap.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\packages\tclap.1.2.1\build\native\tclap.targets'))" />
+    <Error Condition="!Exists('$(SolutionDir)\packages\msgpack-c-cpp-3.1.1-winsoft666.1.0.0.2\build\native\msgpack-c-cpp-3.1.1-winsoft666.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\packages\msgpack-c-cpp-3.1.1-winsoft666.1.0.0.2\build\native\msgpack-c-cpp-3.1.1-winsoft666.targets'))" />
   </Target>
 </Project>
