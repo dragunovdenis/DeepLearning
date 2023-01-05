@@ -239,10 +239,11 @@ namespace DeepLearningTest
 		/// <summary>
 		///	Generates and returnes a "standard" net for testing
 		/// </summary>
-		static Net<CpuDC> GenerateStandardNet()
+		static Net<CpuDC> GenerateStandardNet(const bool no_drop_out = false)
 		{
 			Net<CpuDC> net;
-			const auto keep_rates = Utils::get_random_std_vector(6, Real(0), Real(1.0));
+			const auto keep_rates = no_drop_out ? std::vector<Real>(6, static_cast<Real>(1)) :
+			Utils::get_random_std_vector(6, static_cast<Real>(0), static_cast<Real>(1.0));
 
 			auto size_in_next = Index3d{ 1, 222, 333 };
 			const auto out_size = 10;
@@ -284,6 +285,34 @@ namespace DeepLearningTest
 
 			//Assert
 			Assert::IsTrue(net.equal_hyperparams(net_restored), L"Original and restored nets are different");
+		}
+
+		TEST_METHOD(SingleItemLearnTest)
+		{
+			//Arrange
+			auto net = GenerateStandardNet(/*no_drop_out*/ true);
+			auto net_clone = MsgPack::unpack<Net<CpuDC>>(MsgPack::pack(net));
+			constexpr auto learning_rate = static_cast<Real>(0.1);
+			constexpr auto reg_factor = static_cast<Real>(1.5);
+			constexpr auto cost_func_id = CostFunctionId::SQUARED_ERROR;
+
+			Assert::IsTrue(net.equal(net_clone), L"Nets are supposed to be identical");
+
+			const auto input = typename CpuDC::tensor_t(net.in_size(), 0, 1);
+			const auto label = typename CpuDC::tensor_t(net.out_size(), 0, 1);
+
+			Assert::IsTrue(input.max_abs() > 0 && label.max_abs() > 0, 
+				L"Neither input nor label items are supposed to be trivial");
+
+			//Act
+			net.learn(input, label, learning_rate, cost_func_id, reg_factor);
+
+			//Assert
+			Assert::IsFalse(net.equal(net_clone), L"Nets are supposed to be different at this point");
+			//now we run learning of the clone network through the "general" method and compare the result with the "original" net
+			net_clone.learn({ input }, { label }, 1, 1, learning_rate, cost_func_id, reg_factor);
+
+			Assert::IsTrue(net.equal(net_clone), L"Nets after learning are supposed to be equal");
 		}
 	};
 }

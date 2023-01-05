@@ -224,7 +224,7 @@ namespace DeepLearning
 				//Reset gradient collectors before each batch
 				reset_gradient_collectors(gradient_collectors);
 
-				//Generate new grop-out masks
+				//Generate new drop-out masks
 				for (auto layer_id = 0ull; layer_id < _layers.size(); ++layer_id)
 					_layers[layer_id].layer().SetUpDropoutMask();
 
@@ -244,7 +244,7 @@ namespace DeepLearning
 
 					thread_pool.queue_job([&, currnt_thread_start_id, current_thread_end_id](const std::size_t local_thread_id)
 						{
-							auto& aux_data_ptr = aux_learning_data[local_thread_id];
+							auto& aux_data = aux_learning_data[local_thread_id];
 							auto& e_data = eval_data[local_thread_id];
 							auto& back_prop_out = layer_gradient_data[local_thread_id];
 							for (auto elem_id = currnt_thread_start_id; elem_id < current_thread_end_id; elem_id++)
@@ -252,14 +252,14 @@ namespace DeepLearning
 								const auto input_item_id = data_index_mapping[elem_id];
 								const auto& input = training_items[input_item_id];
 								const auto& reference = reference_items[input_item_id];
-								act(input, e_data, &aux_data_ptr);
+								act(input, e_data, &aux_data);
 								cost_function.deriv_in_place(e_data.Out, reference);
 
 								//Back-propagate through all the layers
-								for (long long layer_id = _layers.size() - 1; layer_id >= 0; layer_id--)
+								for (long long layer_id = _layers.size() - 1; layer_id >= 0; --layer_id)
 								{
 									e_data.swap();
-									_layers[layer_id].layer().backpropagate(e_data.In, aux_data_ptr[layer_id],
+									_layers[layer_id].layer().backpropagate(e_data.In, aux_data[layer_id],
 										e_data.Out, back_prop_out[layer_id], layer_id != 0);
 
 									if (layer_id != 0)
@@ -287,6 +287,49 @@ namespace DeepLearning
 			epoch_callback(epoch_id, Real(0.5) * lambda_scaled);
 		}
 
+		for (auto layer_id = 0ull; layer_id < _layers.size(); ++layer_id)
+			_layers[layer_id].layer().DisposeDropoutMask();
+	}
+
+	template <class D>
+	void Net<D>::learn(const typename D::tensor_t& training_item, const typename D::tensor_t& target_value,
+		const Real learning_rate, const CostFunctionId& cost_func_id, const Real& lambda)
+	{
+		const auto reg_factor = -learning_rate * lambda;
+
+		const auto cost_function = CostFunction<typename D::tensor_t>(cost_func_id);
+
+		//Generate drop-out masks (if required by the settings of each particular layer)
+		for (auto layer_id = 0ull; layer_id < _layers.size(); ++layer_id)
+			_layers[layer_id].layer().SetUpDropoutMask();
+
+		std::vector<typename ALayer<D>::AuxLearningData> aux_data(_layers.size());
+		std::vector<typename ALayer<D>::LayerGradient> back_prop_out(_layers.size());
+		InOutData e_data{};
+
+		//Forward move
+		act(training_item, e_data, &aux_data);
+		cost_function.deriv_in_place(e_data.Out, target_value);
+
+		//Back-propagate through all the layers
+		for (long long layer_id = _layers.size() - 1; layer_id >= 0; --layer_id)
+		{
+			e_data.swap();
+			_layers[layer_id].layer().backpropagate(e_data.In, aux_data[layer_id],
+				e_data.Out, back_prop_out[layer_id], layer_id != 0);
+
+			if (layer_id != 0)
+				_layers[layer_id].layer().ApplyDropout(e_data.Out, true);
+
+			back_prop_out[layer_id].Weights_grad *= -learning_rate;
+			back_prop_out[layer_id].Biases_grad *= -learning_rate;
+
+			_layers[layer_id].layer().update(
+				std::make_tuple(std::move(back_prop_out[layer_id].Weights_grad), 
+					std::move(back_prop_out[layer_id].Biases_grad)), reg_factor);
+		}
+
+		//Dispose auxiliary data structures created to do the "drop-out" regularization
 		for (auto layer_id = 0ull; layer_id < _layers.size(); ++layer_id)
 			_layers[layer_id].layer().DisposeDropoutMask();
 	}
@@ -448,6 +491,24 @@ namespace DeepLearning
 			result += layer_handle.layer().to_string() + "\n";
 
 		return result;
+	}
+
+	template <class D>
+	Index3d Net<D>::in_size() const
+	{
+		if (_layers.empty())
+			return { -1, -1, -1 };
+
+		return _layers[0].layer().in_size();
+	}
+
+	template <class D>
+	Index3d Net<D>::out_size() const
+	{
+		if (_layers.empty())
+			return { -1, -1, -1 };
+
+		return _layers.rbegin()[0].layer().out_size();
 	}
 
 	template class Net<CpuDC>;

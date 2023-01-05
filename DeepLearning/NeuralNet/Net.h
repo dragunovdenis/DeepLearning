@@ -171,6 +171,20 @@ namespace DeepLearning
 			const std::function<void(const std::size_t, const Real)>& epoch_callback = [](const auto epoch_id, const auto scaled_l2_reg_factor) {});
 
 		/// <summary>
+		/// Specific implementation of the corresponding general function which
+		/// performs learning on a single labeled item (single epoch, "batch size" equal to one)
+		/// Such an implementation can be handy when running, for example,
+		/// a semi-gradient-based approximation of a state-value function in reinforcement learning tasks.
+		/// </summary>
+		/// <param name="training_item">Training item</param>
+		/// <param name="target_value">Label of the training item</param>
+		/// <param name="learning_rate">Learning rate</param>
+		/// <param name="cost_func_id">Identifier of the cost function to use int the learning process</param>
+		/// <param name="lambda">Parameter of regularization</param>
+		void learn(const typename D::tensor_t& training_item, const typename D::tensor_t& target_value,
+		           const Real learning_rate, const CostFunctionId& cost_func_id, const Real& lambda = Real(0));
+
+		/// <summary>
 		/// Evaluates number of "correct answers" for the given collection of the
 		/// input data with respect to the given collection of reference labels 
 		/// It is assumed that the labels are in effect zero vectors with single positive element (defining the "correct" class)
@@ -253,5 +267,15 @@ namespace DeepLearning
 		/// Returns a human-readable description of the net through description of all its layers
 		/// </summary>
 		std::string to_string() const;
+
+		/// <summary>
+		///	Returns dimensions of the input data item (negative if the network does not have layers yet) 
+		/// </summary>
+		Index3d in_size() const;
+
+		/// <summary>
+		///	Returns dimensions of the output data item (negative if the network does not have layers yet)
+		/// </summary>
+		Index3d out_size() const;
 	};
 }
