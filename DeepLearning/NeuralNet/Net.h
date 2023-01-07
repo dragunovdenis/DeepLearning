@@ -185,14 +185,31 @@ namespace DeepLearning
 		           const Real learning_rate, const CostFunctionId& cost_func_id, const Real& lambda = Real(0));
 
 		/// <summary>
+		///	Returns gradient of the given cost function with respect to the weights and biases of the neural net
+		/// </summary>
+		/// <param name="training_item">An item at which the gradient should be evaluated</param>
+		/// <param name="target_value">"Label" item that should be used in the cost fucntion</param>
+		/// <param name="cost_func_id">Id of the cost function</param>
+		std::vector<typename ALayer<D>::LayerGradient> calc_gradient(
+			const typename D::tensor_t& training_item, const typename D::tensor_t& target_value, const CostFunctionId& cost_func_id);
+
+		/// <summary>
+		/// Updates weights and biases of all the layers with the given gradient
+		/// according to the given learning rate and regularization factor
+		/// </summary>
+		/// <param name="gradient">Collection of gradient structures, one for each layer;
+		/// <param name="learning_rate">Learning rate</param>
+		/// <param name="lambda">Regularization factor</param>
+		void update(const std::vector<typename ALayer<D>::LayerGradient>& gradient, const Real learning_rate, const Real& lambda);
+
+		/// <summary>
 		/// Evaluates number of "correct answers" for the given collection of the
 		/// input data with respect to the given collection of reference labels 
 		/// It is assumed that the labels are in effect zero vectors with single positive element (defining the "correct" class)
 		/// (i.e. the net is trained to solve classification problems)
 		/// </summary>
-		/// <param name="test_items">Input data</param>
+		/// <param name="test_input">Input data</param>
 		/// <param name="labels">Labels for the given input data</param>
-		/// <param name="min_answer_probability">Minimal "probability" that the answer
 		/// from the neural net should have in order to be considered as a "valid"</param>
 		std::size_t count_correct_answers(const std::vector<typename D::tensor_t>& test_input, const std::vector<typename D::tensor_t>& labels) const;
 

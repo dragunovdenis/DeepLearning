@@ -292,11 +292,9 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	void Net<D>::learn(const typename D::tensor_t& training_item, const typename D::tensor_t& target_value,
-		const Real learning_rate, const CostFunctionId& cost_func_id, const Real& lambda)
+	std::vector<typename ALayer<D>::LayerGradient> Net<D>::calc_gradient(
+		const typename D::tensor_t& training_item, const typename D::tensor_t& target_value, const CostFunctionId& cost_func_id)
 	{
-		const auto reg_factor = -learning_rate * lambda;
-
 		const auto cost_function = CostFunction<typename D::tensor_t>(cost_func_id);
 
 		//Generate drop-out masks (if required by the settings of each particular layer)
@@ -304,7 +302,7 @@ namespace DeepLearning
 			_layers[layer_id].layer().SetUpDropoutMask();
 
 		std::vector<typename ALayer<D>::AuxLearningData> aux_data(_layers.size());
-		std::vector<typename ALayer<D>::LayerGradient> back_prop_out(_layers.size());
+		std::vector<typename ALayer<D>::LayerGradient> result(_layers.size());
 		InOutData e_data{};
 
 		//Forward move
@@ -316,22 +314,41 @@ namespace DeepLearning
 		{
 			e_data.swap();
 			_layers[layer_id].layer().backpropagate(e_data.In, aux_data[layer_id],
-				e_data.Out, back_prop_out[layer_id], layer_id != 0);
+				e_data.Out, result[layer_id], layer_id != 0);
 
 			if (layer_id != 0)
 				_layers[layer_id].layer().ApplyDropout(e_data.Out, true);
-
-			back_prop_out[layer_id].Weights_grad *= -learning_rate;
-			back_prop_out[layer_id].Biases_grad *= -learning_rate;
-
-			_layers[layer_id].layer().update(
-				std::make_tuple(std::move(back_prop_out[layer_id].Weights_grad), 
-					std::move(back_prop_out[layer_id].Biases_grad)), reg_factor);
 		}
 
 		//Dispose auxiliary data structures created to do the "drop-out" regularization
 		for (auto layer_id = 0ull; layer_id < _layers.size(); ++layer_id)
 			_layers[layer_id].layer().DisposeDropoutMask();
+
+		return result;
+	}
+
+	template <class D>
+	void Net<D>::update(const std::vector<typename ALayer<D>::LayerGradient>& gradient, const Real learning_rate, const Real& lambda)
+	{
+		const auto reg_factor = -learning_rate * lambda;
+		for (auto layer_id = 0ull; layer_id < _layers.size(); ++layer_id)
+		{
+			auto weight_grad = gradient[layer_id].Weights_grad;
+			weight_grad *= -learning_rate;
+
+			auto biases_grad = gradient[layer_id].Biases_grad;
+			biases_grad *= -learning_rate;
+
+			_layers[layer_id].layer().update(std::make_tuple(std::move(weight_grad), std::move(biases_grad)), reg_factor);
+		}
+	}
+
+	template <class D>
+	void Net<D>::learn(const typename D::tensor_t& training_item, const typename D::tensor_t& target_value,
+		const Real learning_rate, const CostFunctionId& cost_func_id, const Real& lambda)
+	{
+		const auto gradient = calc_gradient(training_item, target_value, cost_func_id);
+		update(gradient, learning_rate, lambda);
 	}
 
 	template <class D>
