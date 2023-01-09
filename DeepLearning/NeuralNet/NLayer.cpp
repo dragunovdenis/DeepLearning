@@ -115,7 +115,7 @@ namespace DeepLearning
 
 	template <class D>
 	void NLayer<D>::backpropagate(const typename D::tensor_t& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
-		typename D::tensor_t& input_grad, typename ALayer<D>::LayerGradient& layer_grad, const bool evaluate_input_gradient) const
+		typename D::tensor_t& input_grad, LayerGradient<D>& layer_grad, const bool evaluate_input_gradient) const
 	{
 		if (deltas.size_3d() != Index3d{ 1, 1, static_cast<long long>(_biases.dim()) })
 			throw std::exception("Invalid input");
@@ -133,11 +133,11 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	std::tuple<typename D::tensor_t, typename ALayer<D>::LayerGradient> NLayer<D>::backpropagate(const typename D::tensor_t& deltas,
+	std::tuple<typename D::tensor_t, LayerGradient<D>> NLayer<D>::backpropagate(const typename D::tensor_t& deltas,
 		const typename ALayer<D>::AuxLearningData& aux_learning_data, const bool evaluate_input_gradient) const
 	{
 		typename D::tensor_t input_grad;
-		typename ALayer<D>::LayerGradient layer_grad;
+		LayerGradient<D> layer_grad;
 		backpropagate(deltas, aux_learning_data, input_grad, layer_grad, evaluate_input_gradient);
 		return std::make_tuple(std::move(input_grad), std::move(layer_grad));
 	}

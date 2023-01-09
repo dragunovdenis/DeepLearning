@@ -208,7 +208,7 @@ namespace DeepLearning
 		ThreadPool thread_pool(threads_to_use);
 
 		auto aux_learning_data = std::vector<std::vector<typename ALayer<D>::AuxLearningData>>(threads_to_use, std::vector<typename ALayer<D>::AuxLearningData>(_layers.size()));
-		auto layer_gradient_data = std::vector<std::vector<typename ALayer<D>::LayerGradient>>(threads_to_use, std::vector<typename ALayer<D>::LayerGradient>(_layers.size()));
+		auto layer_gradient_data = std::vector<std::vector<LayerGradient<D>>>(threads_to_use, std::vector<LayerGradient<D>>(_layers.size()));
 		auto eval_data = std::vector<InOutData>(threads_to_use);
 		std::mutex mutex;
 
@@ -292,7 +292,7 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	std::vector<typename ALayer<D>::LayerGradient> Net<D>::calc_gradient(
+	std::vector<LayerGradient<D>> Net<D>::calc_gradient(
 		const typename D::tensor_t& training_item, const typename D::tensor_t& target_value, const CostFunctionId& cost_func_id)
 	{
 		const auto cost_function = CostFunction<typename D::tensor_t>(cost_func_id);
@@ -302,7 +302,7 @@ namespace DeepLearning
 			_layers[layer_id].layer().SetUpDropoutMask();
 
 		std::vector<typename ALayer<D>::AuxLearningData> aux_data(_layers.size());
-		std::vector<typename ALayer<D>::LayerGradient> result(_layers.size());
+		std::vector<LayerGradient<D>> result(_layers.size());
 		InOutData e_data{};
 
 		//Forward move
@@ -328,7 +328,7 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	void Net<D>::update(const std::vector<typename ALayer<D>::LayerGradient>& gradient, const Real learning_rate, const Real& lambda)
+	void Net<D>::update(const std::vector<LayerGradient<D>>& gradient, const Real learning_rate, const Real& lambda)
 	{
 		const auto reg_factor = -learning_rate * lambda;
 		for (auto layer_id = 0ull; layer_id < _layers.size(); ++layer_id)

@@ -190,7 +190,7 @@ namespace DeepLearning
 		/// <param name="training_item">An item at which the gradient should be evaluated</param>
 		/// <param name="target_value">"Label" item that should be used in the cost fucntion</param>
 		/// <param name="cost_func_id">Id of the cost function</param>
-		std::vector<typename ALayer<D>::LayerGradient> calc_gradient(
+		std::vector<LayerGradient<D>> calc_gradient(
 			const typename D::tensor_t& training_item, const typename D::tensor_t& target_value, const CostFunctionId& cost_func_id);
 
 		/// <summary>
@@ -200,7 +200,7 @@ namespace DeepLearning
 		/// <param name="gradient">Collection of gradient structures, one for each layer;
 		/// <param name="learning_rate">Learning rate</param>
 		/// <param name="lambda">Regularization factor</param>
-		void update(const std::vector<typename ALayer<D>::LayerGradient>& gradient, const Real learning_rate, const Real& lambda);
+		void update(const std::vector<typename LayerGradient<D>>& gradient, const Real learning_rate, const Real& lambda);
 
 		/// <summary>
 		/// Evaluates number of "correct answers" for the given collection of the

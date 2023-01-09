@@ -27,6 +27,23 @@
 namespace DeepLearning
 {
 	/// <summary>
+	/// A data structure to hold output of the back-propagation procedure
+	/// </summary>
+	template <class D>
+	struct LayerGradient
+	{
+		/// <summary>
+		/// Gradient with respect to the biases of the convolution layer
+		/// </summary>
+		typename D::tensor_t Biases_grad{};
+
+		/// <summary>
+		/// Gradient with respect to the weights of the convolution layer
+		/// </summary>
+		std::vector<typename D::tensor_t> Weights_grad{};
+	};
+
+	/// <summary>
 	/// An abstract neural net layer
 	/// </summary>
 	template <class D>
@@ -120,22 +137,6 @@ namespace DeepLearning
 		};
 
 		/// <summary>
-		/// A data structure to hold output of the back-propagation procedure
-		/// </summary>
-		struct LayerGradient
-		{
-			/// <summary>
-			/// Gradient with respect to the biases of the convolution layer
-			/// </summary>
-			typename D::tensor_t Biases_grad{};
-
-			/// <summary>
-			/// Gradient with respect to the weights of the convolution layer
-			/// </summary>
-			std::vector<typename D::tensor_t> Weights_grad{};
-		};
-
-		/// <summary>
 		/// Size of the layer's input
 		/// </summary>
 		virtual Index3d in_size() const = 0;
@@ -178,7 +179,7 @@ namespace DeepLearning
 		/// <returns>Derivatives of the cost function with respect to the output of the previous neural layer
 		/// (or input of the current neural layer, which is the same) as well as the derivatives of the cost function
 		/// with respect to the weight and biases of the current layer</returns>
-		virtual std::tuple<typename D::tensor_t, LayerGradient> backpropagate(const typename D::tensor_t& deltas, const AuxLearningData& aux_learning_data,
+		virtual std::tuple<typename D::tensor_t, LayerGradient<D>> backpropagate(const typename D::tensor_t& deltas, const AuxLearningData& aux_learning_data,
 			const bool evaluate_input_gradient = true) const = 0;
 
 		/// <summary>
@@ -193,7 +194,7 @@ namespace DeepLearning
 		/// input data will be actually evaluated.
 		/// The evaluation is redundant for the very first layer of the net</param>
 		virtual void backpropagate(const typename D::tensor_t& deltas, const AuxLearningData& aux_learning_data,
-			typename D::tensor_t& input_grad, LayerGradient& layer_grad, const bool evaluate_input_gradient = true) const = 0;
+			typename D::tensor_t& input_grad, LayerGradient<D>& layer_grad, const bool evaluate_input_gradient = true) const = 0;
 
 		/// <summary>
 		/// Adds given increments to the weights and biases respectively
