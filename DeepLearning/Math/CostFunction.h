@@ -33,7 +33,7 @@ namespace DeepLearning
 		UNKNOWN = 0,
 		SQUARED_ERROR = 1,
 		CROSS_ENTROPY = 2,
-		IDENTITY = 3,
+		LINEAR = 3,
 	};
 
 	/// <summary>
@@ -74,7 +74,7 @@ namespace DeepLearning
 
 					return Func::nan_to_num(-(ref * log(x) + (Real(1) - ref) * log(Real(1) - x)));
 				};
-			case CostFunctionId::IDENTITY:return [](const auto& x, const auto& ref)
+			case CostFunctionId::LINEAR:return [](const auto& x, const auto& ref)
 			{
 				return x;
 			};

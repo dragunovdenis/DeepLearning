@@ -108,6 +108,7 @@ namespace DeepLearning
 		{
 		case CostFunctionId::SQUARED_ERROR: return "SQUARED_ERROR";
 		case CostFunctionId::CROSS_ENTROPY: return "CROSS_ENTROPY";
+		case CostFunctionId::LINEAR: return "LINEAR";
 		default:
 			return "UNKNOWN";
 		}
@@ -117,10 +118,11 @@ namespace DeepLearning
 	{
 		const auto str_normalized = Utils::normalize_string(str);
 
-		for (unsigned int id = (unsigned int)CostFunctionId::SQUARED_ERROR; id <= (unsigned int)CostFunctionId::CROSS_ENTROPY; id++)
+		for (auto id = static_cast<unsigned int>(CostFunctionId::SQUARED_ERROR);
+			id <= static_cast<unsigned int>(CostFunctionId::LINEAR); id++)
 		{
-			if (to_string((CostFunctionId)id) == str_normalized)
-				return (CostFunctionId)id;
+			if (to_string(static_cast<CostFunctionId>(id)) == str_normalized)
+				return static_cast<CostFunctionId>(id);
 		}
 
 		return CostFunctionId::UNKNOWN;

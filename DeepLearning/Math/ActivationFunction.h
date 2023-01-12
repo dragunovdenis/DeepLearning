@@ -37,6 +37,7 @@ namespace DeepLearning
 		TANH = 2, //Hyperbolic tangent activation function
 		RELU = 3, // rectified linear activation (unit)
 		SOFTMAX = 4,//soft-max function
+		LINEAR = 5, // a(x) = x
 	};
 
 	/// <summary>
@@ -139,6 +140,7 @@ namespace DeepLearning
 			case ActivationFunctionId::SIGMOID: return [](const auto& x) { return Func::sigmoid(x); };
 			case ActivationFunctionId::TANH: return [](const auto& x) { return tanh(x); };
 			case ActivationFunctionId::RELU: return [](const auto& x) { return  x < Real(0) ? Real(0) : x; };
+			case ActivationFunctionId::LINEAR: return [](const auto& x) { return  x; };
 			default: return [](const auto& x) { return decltype(x)(std::numeric_limits<Real>::signaling_NaN()); };
 			}
 		}

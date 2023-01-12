@@ -192,8 +192,9 @@ namespace DeepLearning
 		case ActivationFunctionId::TANH: return "TANH";
 		case ActivationFunctionId::RELU: return "RELU";
 		case ActivationFunctionId::SOFTMAX: return "SOFTMAX";
+		case ActivationFunctionId::LINEAR: return "LINEAR";
 		default:
-			return "UNKNOWN";
+			throw std::exception("Unknown activation ID");
 		}
 	}
 
@@ -201,10 +202,11 @@ namespace DeepLearning
 	{
 		const auto str_normalized = Utils::normalize_string(str);
 
-		for (unsigned int id = (unsigned int)ActivationFunctionId::SIGMOID; id <= (unsigned int)ActivationFunctionId::SOFTMAX; id++)
+		for (auto id = static_cast<unsigned int>(ActivationFunctionId::SIGMOID);
+		     id <= static_cast<unsigned int>(ActivationFunctionId::LINEAR); id++)
 		{
-			if (to_string((ActivationFunctionId)id) == str_normalized)
-				return (ActivationFunctionId)id;
+			if (to_string(static_cast<ActivationFunctionId>(id)) == str_normalized)
+				return static_cast<ActivationFunctionId>(id);
 		}
 
 		return ActivationFunctionId::UNKNOWN;
