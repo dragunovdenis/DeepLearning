@@ -476,5 +476,53 @@ namespace DeepLearningTest
 		{
 			RunSerializationTest(NLayer<CpuDC>(10, 23, ActivationFunctionId::SIGMOID));
 		}
+
+		/// <summary>
+		///	General functional test for the linear activation function
+		/// </summary>
+		template <class D>
+		void test_linear_activation(const ALayer<D>& layer)
+		{
+			//Arrange
+			if (layer.in_size() != Index3d{ 1, 1, 1 } || layer.out_size() != Index3d{ 1, 1, 1 })
+				throw std::exception("Inappropriate input/output dimensions of the layer");
+
+			const auto x0 = Utils::get_random(-1, 1);
+			const auto x1 = x0 + 10;
+			const auto x2 = x1 + 5;
+			typename D::tensor_t input(1, 1, 1);
+
+			//Act
+			input(0, 0, 0) = x0;
+			const auto y0 = layer.act(input)(0, 0, 0);
+
+			input(0, 0, 0) = x1;
+			const auto y1 = layer.act(input)(0, 0, 0);
+
+			input(0, 0, 0) = x2;
+			const auto y2 = layer.act(input)(0, 0, 0);
+
+			//Assert
+			const auto delta0 = (y1 - y0) / (x1 - x0);
+			const auto delta1 = (y2 - y1) / (x2 - x1);
+			const auto delta2 = (y2 - y0) / (x2 - x0);
+
+			Assert::IsTrue(std::abs(delta0 - delta1) < 10 * std::numeric_limits<Real>::epsilon() &&
+				std::abs(delta0 - delta2) < 10 * std::numeric_limits<Real>::epsilon(), 
+				L"Too high deviation between the values");
+		}
+
+		TEST_METHOD(LinearActivationNLayerTest)
+		{
+			const auto layer = NLayer(1, 1, ActivationFunctionId::LINEAR);
+			test_linear_activation(layer);
+		}
+
+		TEST_METHOD(LinearActivationCLayerTest)
+		{
+			const auto layer = CLayer(Index3d{ 1, 1, 1 },
+				Index2d{ 1 , 1}, 1, ActivationFunctionId::LINEAR);
+			test_linear_activation(layer);
+		}
 	};
 }

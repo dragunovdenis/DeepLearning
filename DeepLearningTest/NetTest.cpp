@@ -264,7 +264,6 @@ namespace DeepLearningTest
 		TEST_METHOD(NetSerializationTest)
 		{
 			//Arrange
-
 			const auto net = GenerateStandardNet();
 
 			//Act
@@ -314,6 +313,30 @@ namespace DeepLearningTest
 			net_clone.learn({ input }, { label }, 1, 1, learning_rate, cost_func_id, reg_factor);
 
 			Assert::IsTrue(net.equal(net_clone), L"Nets after learning are supposed to be equal");
+		}
+
+		TEST_METHOD(LinearCostTest)
+		{
+			//Arrange
+			Net<CpuDC> net;
+			net.append_layer<NLayer>(1, 1, ActivationFunctionId::LINEAR);
+			CpuDC::tensor_t input(1, 1, 1);
+			const auto x = Utils::get_random(-1, 1);
+			input(0, 0, 0) = x;
+			const CpuDC::tensor_t target_value(1, 1, 1);
+
+			//Act
+			const auto gradient = net.calc_gradient(input, target_value, CostFunctionId::LINEAR);
+
+			//Assert
+			const auto weight_deriv = gradient[0].Weights_grad[0](0, 0, 0);
+			const auto bias_deriv = gradient[0].Biases_grad(0, 0, 0);
+
+			Assert::IsTrue(std::abs(weight_deriv - x) < 10 * std::numeric_limits<Real>::epsilon(),
+				L"Too high deviation from the expected derivative with respect to the weight");
+
+			Assert::IsTrue(std::abs(bias_deriv - 1.0) < 10 * std::numeric_limits<Real>::epsilon(),
+				L"Too high deviation from the expected derivative with respect to the bias");
 		}
 	};
 }
