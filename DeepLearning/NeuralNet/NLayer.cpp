@@ -143,9 +143,9 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	void NLayer<D>::update(const std::tuple<std::vector<typename D::tensor_t>, typename D::tensor_t>& weights_and_biases_increment, const Real& reg_factor)
+	void NLayer<D>::update(const LayerGradient<D>& gradient, const Real& reg_factor)
 	{
-		const auto& weights_increment = std::get<0>(weights_and_biases_increment);
+		const auto& weights_increment = gradient.Weights_grad;
 
 		if (weights_increment.size() != 1)
 			throw std::exception("Invalid input");
@@ -155,7 +155,7 @@ namespace DeepLearning
 		else
 			_weights.add(weights_increment[0]);
 
-		_biases.add(std::get<1>(weights_and_biases_increment));
+		_biases.add(gradient.Biases_grad);
 	}
 
 	template <class D>

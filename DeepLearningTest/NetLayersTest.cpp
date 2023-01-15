@@ -125,14 +125,14 @@ namespace DeepLearningTest
 							weights_minus_delta[filter_id](layer_id, row_id, col_id) = -delta;
 
 							auto layer_minus = nl;//create a mutable copy of the initial layer
-							layer_minus.update(std::make_tuple(weights_minus_delta, zero_biases), Real(0));
+							layer_minus.update(LayerGradient<CpuDC>{zero_biases, weights_minus_delta}, Real(0));
 							const auto result_minus = cost_func(layer_minus.act(input), reference);
 
 							auto weights_plus_delta = zero_weights;
 							weights_plus_delta[filter_id](layer_id, row_id, col_id) = delta;
 
 							auto layer_plus = nl;//create a mutable copy of the initial layer
-							layer_plus.update(std::make_tuple(weights_plus_delta, zero_biases), Real(0));
+							layer_plus.update(LayerGradient<CpuDC>{zero_biases, weights_plus_delta}, Real(0));
 							const auto result_plus = cost_func(layer_plus.act(input), reference);
 
 							const auto deriv_numeric = (result_plus - result_minus) / (2 * delta);
@@ -158,14 +158,14 @@ namespace DeepLearningTest
 						biases_minus_delta(layer_id, row_id, col_id) = -delta;
 
 						auto layer_minus = nl;//create a mutable copy of the initial layer
-						layer_minus.update(std::make_tuple(zero_weights, biases_minus_delta), Real(0));
+						layer_minus.update(LayerGradient<CpuDC>{biases_minus_delta, zero_weights}, Real(0));
 						const auto result_minus = cost_func(layer_minus.act(input), reference);
 
 						auto biases_plus_delta = zero_biases;
 						biases_plus_delta(layer_id, row_id, col_id) = delta;
 
 						auto layer_plus = nl;//create a mutable copy of the initial layer
-						layer_plus.update(std::make_tuple(zero_weights, biases_plus_delta), Real(0));
+						layer_plus.update(LayerGradient<CpuDC>{biases_plus_delta, zero_weights}, Real(0));
 						const auto result_plus = cost_func(layer_plus.act(input), reference);
 
 						const auto deriv_numeric = (result_plus - result_minus) / (2 * delta);

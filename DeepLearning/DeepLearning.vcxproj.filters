@@ -183,6 +183,12 @@
     <ClInclude Include="ThreadPool.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="NeuralNet\LayerGradient.h">
+      <Filter>Header Files\NeuralNet</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\CollectionArithmetics.h">
+      <Filter>Source Files\Math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Matrix.cpp">
@@ -261,6 +267,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="NeuralNet\ALayer.cpp">
+      <Filter>Source Files\NeuralNet</Filter>
+    </ClCompile>
+    <ClCompile Include="NeuralNet\LayerGradient.cpp">
       <Filter>Source Files\NeuralNet</Filter>
     </ClCompile>
   </ItemGroup>

@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <exception>
 #include "DataContext.h"
+#include "../Math/CollectionArithmetics.h"
 
 namespace DeepLearning
 {
@@ -26,54 +27,33 @@ namespace DeepLearning
 	CummulativeGradient<D>::CummulativeGradient(const Index3d& weight_tensor_size, const Index3d& bias_tensor_size)
 	{
 		const auto filters_cnt = bias_tensor_size.x;//Number of layers (channels) in the tensor of biases
-		_sum_grad_weights = std::vector<typename D::tensor_t>(filters_cnt, typename D::tensor_t(weight_tensor_size) );
-		_sum_grad_biases = typename D::tensor_t(bias_tensor_size);
+		_gradient_sum.Weights_grad = std::vector<typename D::tensor_t>(filters_cnt, typename D::tensor_t(weight_tensor_size) );
+		_gradient_sum.Biases_grad = typename D::tensor_t(bias_tensor_size);
 	}
 
 	template <class D>
-	void CummulativeGradient<D>::add(const std::vector<typename D::tensor_t>& weight_grad, const typename D::tensor_t& bias_grad)
+	void CummulativeGradient<D>::add(const LayerGradient<D>& gradient)
 	{
-		if (weight_grad.size() != 0)
-			_sum_grad_weights += weight_grad;
-
-		if (bias_grad.size() != 0)
-			_sum_grad_biases += bias_grad;
-
+		_gradient_sum += gradient;
 		_accumulated_items_count++;
 	}
 
 	template <class D>
-	void CummulativeGradient<D>::add(const CummulativeGradient& gradient)
-	{
-		if (gradient._sum_grad_weights.size() != 0)
-			_sum_grad_weights += gradient._sum_grad_weights;
-
-		if (gradient._sum_grad_biases.size() != 0)
-			_sum_grad_biases += gradient._sum_grad_biases;
-
-		_accumulated_items_count += gradient._accumulated_items_count;
-	}
-
-	template <class D>
-	std::tuple<std::vector<typename D::tensor_t>, typename D::tensor_t> CummulativeGradient<D>::calc_average_grarient(const Real scale_factor) const
+	LayerGradient<D> CummulativeGradient<D>::calc_average_gradient(const Real scale_factor) const
 	{
 		if (_accumulated_items_count == 0)
 			throw std::exception("No items have been added.");
 
 		const auto factor = scale_factor / _accumulated_items_count;
-		auto average_grad_weights = _sum_grad_weights;
-
-		average_grad_weights *= factor;
-
-		return std::make_tuple(average_grad_weights, _sum_grad_biases * factor);
+		return _gradient_sum * factor;
 	}
 
 	template <class D>
 	void CummulativeGradient<D>::reset()
 	{
-		_sum_grad_biases.fill(Real(0));
-		for (auto item_id = 0ull; item_id < _sum_grad_weights.size(); item_id++)
-			_sum_grad_weights[item_id].fill(Real(0));
+		_gradient_sum.Biases_grad.fill(Real(0));
+		for (auto item_id = 0ull; item_id < _gradient_sum.Weights_grad.size(); item_id++)
+			_gradient_sum.Weights_grad[item_id].fill(Real(0));
 
 		_accumulated_items_count = 0;
 	}

@@ -19,6 +19,7 @@
 #include <Math/CudaTensor.cuh>
 #include <Math/CudaArray.cuh>
 #include <Math/ConvolutionUtils.h>
+#include <Math/CollectionArithmetics.h>
 #include "Math/PoolOperator.h"
 #include <Utilities.h>
 #include "StandardTestUtils.h"

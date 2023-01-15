@@ -282,25 +282,6 @@ namespace DeepLearning
 		return tensor * scalar;
 	}
 
-	std::vector<CudaTensor>& operator +=(std::vector<CudaTensor>& op1, const std::vector<CudaTensor>& op2)
-	{
-		if (op1.size() != op2.size())
-			throw std::exception("Incompatible input");
-
-		for (auto op_id = 0ull; op_id < op1.size(); op_id++)
-			op1[op_id] += op2[op_id];
-
-		return op1;
-	}
-
-	std::vector<CudaTensor>& operator *=(std::vector<CudaTensor>& op1, const Real& scalar)
-	{
-		for (auto op_id = 0ull; op_id < op1.size(); op_id++)
-			op1[op_id] *= scalar;
-
-		return op1;
-	}
-
 	bool CudaTensor::operator ==(const CudaTensor& tensor) const
 	{
 		return  layer_dim() == tensor.layer_dim() &&

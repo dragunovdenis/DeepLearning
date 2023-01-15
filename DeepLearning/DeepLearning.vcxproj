@@ -159,6 +159,7 @@
     <ClInclude Include="Math\AvxAcceleration.h" />
     <ClInclude Include="Math\BasicCollection.h" />
     <ClInclude Include="Math\BasicCudaCollection.cuh" />
+    <ClInclude Include="Math\CollectionArithmetics.h" />
     <ClInclude Include="Math\ConvolutionUtils.h" />
     <ClInclude Include="Math\CostFunction.h" />
     <ClInclude Include="Math\CudaArray.cuh" />
@@ -181,6 +182,7 @@
     <ClInclude Include="NeuralNet\CLayer.h" />
     <ClInclude Include="NeuralNet\CummulativeGradient.h" />
     <ClInclude Include="NeuralNet\DataContext.h" />
+    <ClInclude Include="NeuralNet\LayerGradient.h" />
     <ClInclude Include="NeuralNet\LayerHandle.h" />
     <ClInclude Include="NeuralNet\Net.h" />
     <ClInclude Include="NeuralNet\NLayer.h" />
@@ -210,6 +212,7 @@
     <ClCompile Include="NeuralNet\ALayer.cpp" />
     <ClCompile Include="NeuralNet\CLayer.cpp" />
     <ClCompile Include="NeuralNet\CummulativeGradient.cpp" />
+    <ClCompile Include="NeuralNet\LayerGradient.cpp" />
     <ClCompile Include="NeuralNet\LayerHandle.cpp" />
     <ClCompile Include="NeuralNet\LayerTypeId.cpp" />
     <ClInclude Include="NeuralNet\LayerTypeId.h" />

@@ -165,9 +165,9 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	void CLayer<D>::update(const std::tuple<std::vector<typename D::tensor_t>, typename D::tensor_t>& weights_and_biases_increment, const Real& reg_factor)
+	void CLayer<D>::update(const LayerGradient<D>& gradient, const Real& reg_factor)
 	{
-		const auto& weights_increment = std::get<0>(weights_and_biases_increment);
+		const auto& weights_increment = gradient.Weights_grad;
 
 		if (reg_factor != Real(0))
 			for (auto filter_id = 0ull; filter_id < _filters.size(); filter_id++)
@@ -176,7 +176,7 @@ namespace DeepLearning
 			for (auto filter_id = 0ull; filter_id < _filters.size(); filter_id++)
 				_filters[filter_id].add(weights_increment[filter_id]);
 
-		_biases.add(std::get<1>(weights_and_biases_increment));
+		_biases.add(gradient.Biases_grad);
 	}
 
 	template <class D>

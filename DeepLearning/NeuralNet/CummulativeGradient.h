@@ -19,6 +19,7 @@
 
 #include "../Math/Tensor.h"
 #include <vector>
+#include "LayerGradient.h"
 
 namespace DeepLearning
 {
@@ -33,14 +34,9 @@ namespace DeepLearning
 	class CummulativeGradient
 	{
 		/// <summary>
-		/// Sum of the derivatives with respect to layer weights
+		///	The gradient
 		/// </summary>
-		std::vector<typename D::tensor_t> _sum_grad_weights{};
-
-		/// <summary>
-		/// Sum of the derivatives with respect to layer biases
-		/// </summary>
-		typename D::tensor_t _sum_grad_biases{};
+		LayerGradient<D> _gradient_sum{};
 
 		/// <summary>
 		/// Number of the items accumulated in the corresponding sums
@@ -60,19 +56,12 @@ namespace DeepLearning
 		/// <summary>
 		/// Adds given gradients to the corresponding "sum" structures
 		/// </summary>
-		/// <param name="weight_grad">"Partial" gradient with respect to weights</param>
-		/// <param name="bias_grad">"Partial" gradient with respect to biases</param>
-		void add(const std::vector<typename D::tensor_t>& weight_grad, const typename D::tensor_t& bias_grad);
-
-		/// <summary>
-		/// Adds data from another cummulative gradient
-		/// </summary>
-		void add(const CummulativeGradient& gradient);
+		void add(const LayerGradient<D>& gradient);
 
 		/// <summary>
 		/// Calculates and returns the "average" gradient with respect to layer weights and biases
 		/// </summary>
-		std::tuple<std::vector<typename D::tensor_t>, typename D::tensor_t> calc_average_grarient(const Real scale_factor = Real(1)) const;
+		LayerGradient<D> calc_average_gradient(const Real scale_factor = Real(1)) const;
 
 		/// <summary>
 		/// Resets the cumulative structure

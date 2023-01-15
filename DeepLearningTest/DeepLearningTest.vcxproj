@@ -166,6 +166,7 @@
     <ClCompile Include="CudaTensorTest.cpp" />
     <ClCompile Include="CudaVectorTest.cpp" />
     <ClCompile Include="ImageProcessingTest.cpp" />
+    <ClCompile Include="LayerGradientTest.cpp" />
     <ClCompile Include="LinAlg2dTest.cpp" />
     <ClCompile Include="LinAlg3dTest.cpp" />
     <ClCompile Include="MatrixVectorAlgebraTest.cpp" />

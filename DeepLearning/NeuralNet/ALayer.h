@@ -23,26 +23,10 @@
 #include <string>
 #include "LayerTypeId.h"
 #include "DataContext.h"
+#include "LayerGradient.h"
 
 namespace DeepLearning
 {
-	/// <summary>
-	/// A data structure to hold output of the back-propagation procedure
-	/// </summary>
-	template <class D>
-	struct LayerGradient
-	{
-		/// <summary>
-		/// Gradient with respect to the biases of the convolution layer
-		/// </summary>
-		typename D::tensor_t Biases_grad{};
-
-		/// <summary>
-		/// Gradient with respect to the weights of the convolution layer
-		/// </summary>
-		std::vector<typename D::tensor_t> Weights_grad{};
-	};
-
 	/// <summary>
 	/// An abstract neural net layer
 	/// </summary>
@@ -199,10 +183,10 @@ namespace DeepLearning
 		/// <summary>
 		/// Adds given increments to the weights and biases respectively
 		/// </summary>
-		/// <param name="weights_and_biases_increment">Increment for weights and biases</param>
+		/// <param name="gradient">Increment for weights and biases</param>
 		/// <param name="reg_factor">Regularization factor, that (if non-zero) 
 		/// results in term "reg_factor*w_i" being added to each weight "w_i" </param>
-		virtual void update(const std::tuple<std::vector<typename D::tensor_t>, typename D::tensor_t>& weights_and_biases_increment, const Real& reg_factor) = 0;
+		virtual void update(const LayerGradient<D>& gradient, const Real& reg_factor) = 0;
 
 		/// <summary>
 		/// Returns zero initialized instance of cumulative gradient suitable for the current instance of the layer

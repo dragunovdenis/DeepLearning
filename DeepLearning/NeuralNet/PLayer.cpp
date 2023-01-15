@@ -156,10 +156,10 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	void PLayer<D>::update(const std::tuple<std::vector<typename D::tensor_t>, typename D::tensor_t>& weights_and_biases_increment, const Real& reg_factor)
+	void PLayer<D>::update(const LayerGradient<D>& gradient, const Real& reg_factor)
 	{
 		//Sanity check 
-		if (std::get<0>(weights_and_biases_increment).size() != 0 || std::get<1>(weights_and_biases_increment).size() != 0)
+		if (gradient.Weights_grad.size() != 0 || gradient.Biases_grad.size() != 0)
 			throw std::exception("There should be no increments for weights and/or biases");
 	}
 
