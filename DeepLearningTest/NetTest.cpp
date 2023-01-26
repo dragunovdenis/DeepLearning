@@ -338,5 +338,17 @@ namespace DeepLearningTest
 			Assert::IsTrue(std::abs(bias_deriv - 1.0) < 10 * std::numeric_limits<Real>::epsilon(),
 				L"Too high deviation from the expected derivative with respect to the bias");
 		}
+
+		TEST_METHOD(NetCopyTest)
+		{
+			//Arrange
+			const auto net = GenerateStandardNet(/*no_drop_out*/ false);
+
+			//Act
+			const auto net_copy = net;
+
+			//Assert
+			Assert::IsTrue(net.equal(net_copy), L"Copying failed");
+		}
 	};
 }

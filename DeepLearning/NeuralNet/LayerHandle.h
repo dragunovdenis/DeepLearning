@@ -48,7 +48,7 @@ namespace DeepLearning
 		/// </summary>
 		/// <param name="id">Layer identifier</param>
 		/// <param name="layer_ptr">Layer smart pointer</param>
-		LayerHandle(const LayerTypeId id, std::unique_ptr<ALayer<D>> layer_ptr);
+		LayerHandle(const LayerTypeId id, std::unique_ptr<ALayer<D>>&& layer_ptr);
 
 	public:
 
@@ -86,6 +86,11 @@ namespace DeepLearning
 
 			throw std::exception("Not implemented");
 		}
+
+		/// <summary>
+		/// Copy constructor
+		/// </summary>
+		LayerHandle(const LayerHandle<D>& handle);
 
 		/// <summary>
 		/// Custom "unpacking" method

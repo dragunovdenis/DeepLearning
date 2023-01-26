@@ -20,8 +20,24 @@
 namespace DeepLearning
 {
 	template <class D>
-	LayerHandle<D>::LayerHandle(const LayerTypeId id, std::unique_ptr<ALayer<D>> layer_ptr) : _layer_id(id), _layer_ptr(std::move(layer_ptr))
+	LayerHandle<D>::LayerHandle(const LayerTypeId id, std::unique_ptr<ALayer<D>>&& layer_ptr) : _layer_id(id), _layer_ptr(std::move(layer_ptr))
 	{}
+
+	template <class D>
+	LayerHandle<D>::LayerHandle(const LayerHandle& handle): _layer_id(handle._layer_id)
+	{
+		if (_layer_id == NLayer<D>::ID())
+		{
+			_layer_ptr = std::make_unique<NLayer<D>>(dynamic_cast<const NLayer<D>&>(handle.layer()));
+		} else if (_layer_id == CLayer<D>::ID())
+		{
+			_layer_ptr = std::make_unique<CLayer<D>>(dynamic_cast<const CLayer<D>&>(handle.layer()));
+		} else if (_layer_id == PLayer<D>::ID())
+		{
+			_layer_ptr = std::make_unique<PLayer<D>>(dynamic_cast<const PLayer<D>&>(handle.layer()));
+		}
+		else throw std::exception("Unsupported layer type ID");
+	}
 
 	template <class D>
 	void LayerHandle<D>::msgpack_unpack(msgpack::object const& msgpack_o)
