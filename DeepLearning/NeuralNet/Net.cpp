@@ -522,6 +522,18 @@ namespace DeepLearning
 		return _layers.rbegin()[0].layer().out_size();
 	}
 
+	template <class D>
+	std::vector<Index3d> Net<D>::get_dimensions() const
+	{
+		std::vector<Index3d> result;
+
+		for (const auto& layer : _layers)
+			result.emplace_back(layer.layer().in_size());
+		
+		result.emplace_back(_layers.rbegin()->layer().out_size());
+		return result;
+	}
+
 	template class Net<CpuDC>;
 	template class Net<GpuDC>;
 

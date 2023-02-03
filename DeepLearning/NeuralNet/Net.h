@@ -294,5 +294,12 @@ namespace DeepLearning
 		///	Returns dimensions of the output data item (negative if the network does not have layers yet)
 		/// </summary>
 		Index3d out_size() const;
+
+		/// <summary>
+		/// Returns collection of input dimensions of all the neural layers
+		/// in the order that corresponds to the order of layers and,
+		/// additionally, the output dimension of the last layer at the end of the returned collection
+		/// </summary>
+		std::vector<Index3d> get_dimensions() const;
 	};
 }
