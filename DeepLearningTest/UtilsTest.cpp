@@ -15,6 +15,7 @@
 //OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+#include <regex>
 #include "CppUnitTest.h"
 #include "Utilities.h"
 
@@ -237,6 +238,15 @@ namespace DeepLearningTest
 
 			Assert::IsTrue(diff < 100 * std::numeric_limits<Real>::epsilon(),
 				L"Too big difference between the two representations of the same floating-point number");
+		}
+
+		TEST_METHOD(GetGuidStringTest)
+		{
+			const auto guid_str = Utils::create_guid_string();
+
+			const std::regex pattern("^[{]?[0-9A-F]{8}-([0-9A-F]{4}-){3}[0-9A-F]{12}[}]?$");
+			Assert::IsTrue(guid_str.size() == 36, L"Unexpected number of characters in GUID");
+			Assert::IsTrue(regex_match(guid_str, pattern), L"String is not a GUID");
 		}
 	};
 }

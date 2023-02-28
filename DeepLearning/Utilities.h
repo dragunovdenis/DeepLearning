@@ -266,4 +266,9 @@ namespace DeepLearning::Utils
 
         throw std::exception("Unexpected input type");
     }
+
+    /// <summary>
+    /// Returns a globally unique identifier string
+    /// </summary>
+    std::string create_guid_string();
 }

@@ -20,6 +20,7 @@
 #include "Math/LinAlg3d.h"
 #include <regex>
 #include <fstream>
+#include <OleCtl.h>
 
 namespace DeepLearning::Utils
 {
@@ -211,6 +212,27 @@ namespace DeepLearning::Utils
         const auto text = std::string((std::istreambuf_iterator<char>(input_file)), std::istreambuf_iterator<char>());
 
         return text;
+    }
+
+    std::string create_guid_string()
+    {
+        GUID guid;
+
+        if (S_OK == CoCreateGuid(&guid))
+        {
+            constexpr int buffer_size = 37;
+            std::vector<char> buffer(buffer_size);
+
+            if (snprintf(buffer.data(), buffer.size(),
+                "%08lX-%04hX-%04hX-%02hhX%02hhX-%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX",
+                guid.Data1, guid.Data2, guid.Data3,
+                guid.Data4[0], guid.Data4[1], guid.Data4[2],
+                guid.Data4[3], guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]) != buffer_size - 1)
+                throw std::exception("snprintf has failed");
+            return {buffer.data()};
+        }
+
+        throw std::exception("Failed to create GUID");
     }
 
     template bool try_extract_vector(std::string& str, Vector2d<Real>& out);
