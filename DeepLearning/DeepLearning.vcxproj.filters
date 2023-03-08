@@ -189,6 +189,9 @@
     <ClInclude Include="Math\CollectionArithmetics.h">
       <Filter>Source Files\Math</Filter>
     </ClInclude>
+    <ClInclude Include="StopWatch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Matrix.cpp">
@@ -271,6 +274,9 @@
     </ClCompile>
     <ClCompile Include="NeuralNet\LayerGradient.cpp">
       <Filter>Source Files\NeuralNet</Filter>
+    </ClCompile>
+    <ClCompile Include="StopWatch.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
