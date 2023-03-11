@@ -235,6 +235,38 @@ namespace DeepLearning::Utils
         throw std::exception("Failed to create GUID");
     }
 
+    /// <summary>
+    /// Returns dd_hh:mm:ss string representation of the given time duration in milliseconds
+    ///	`SecRatio` template parameter specifies number of units of the given time argument in 1 second;
+    ///	i.e., 1 if the argument represents number of seconds,
+    ///	1000 if the argument represents number of milliseconds,
+    ///	1000000 if the argument represents number of microseconds and so on...
+    /// </summary>
+    template <int SecRatio = 1>
+    std::string time_to_dd_hh_mm_ss_string(const long long& time)
+    {
+        //extract number of full days as the `chrono` method below can't handle values that exceed 24 h
+        constexpr auto units_in_day = 3600 * 24 * SecRatio;
+        const auto days = time / units_in_day;
+        const auto time_normalized = time % units_in_day;
+        std::stringstream ss;
+        if (days > 0)
+            ss << days << "d:";
+
+        ss << std::chrono::hh_mm_ss(std::chrono::duration<int64_t, std::ratio<1, SecRatio>>(time_normalized));
+        return ss.str();
+    }
+
+    std::string seconds_to_dd_hh_mm_ss_string(const long long& time_sec)
+    {
+        return time_to_dd_hh_mm_ss_string(time_sec);
+    }
+
+    std::string milliseconds_to_dd_hh_mm_ss_string(const long long& time_msec)
+    {
+        return time_to_dd_hh_mm_ss_string<1000>(time_msec);
+    }
+
     template bool try_extract_vector(std::string& str, Vector2d<Real>& out);
     template bool try_extract_vector(std::string& str, Vector3d<Real>& out);
     template bool try_extract_vector(std::string& str, Index2d& out);

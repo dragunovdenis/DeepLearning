@@ -26,7 +26,6 @@
 #include <sstream>
 #include <vector>
 #include <filesystem>
-#include "CudaBridge.h"
 
 namespace DeepLearning::Utils
 {
@@ -175,6 +174,30 @@ namespace DeepLearning::Utils
         return parse_scalars<R>(extract_vector_sub_string(str));
     }
 
+    /// <summary
+    /// Returns string representation of the given vector
+    /// </summary>
+    template <class T>
+    std::string vector_to_str(const std::vector<T>& vec)
+    {
+        if (vec.empty())
+            return "{}";
+
+        std::stringstream ss;
+        ss << "{";
+
+        for (auto item_id = 0ull; item_id < vec.size(); ++item_id)
+        {
+            ss << vec[item_id];
+            if (item_id != vec.size() - 1)
+                ss << ", ";
+            else
+                ss << "}";
+        }
+
+        return ss.str();
+    }
+
     /// <summary>
     /// Removes leading trailing and extra spaces from the input string and returns the result
     /// </summary>
@@ -271,4 +294,14 @@ namespace DeepLearning::Utils
     /// Returns a globally unique identifier string
     /// </summary>
     std::string create_guid_string();
+
+    /// <summary>
+    /// Converts given amount of seconds into dd:hh:mm:ss string representation
+    /// </summary>
+    std::string seconds_to_dd_hh_mm_ss_string(const long long& time_sec);
+
+    /// <summary>
+    /// Converts given amount of milliseconds into dd:hh:mm:ss string representation
+    /// </summary>
+    std::string milliseconds_to_dd_hh_mm_ss_string(const long long& time_msec);
 }

@@ -108,6 +108,32 @@ namespace DeepLearningTest
 			Assert::IsTrue(extracted_string == expected_extracted_string, L"Unexpected value of the extracted string");
 		}
 
+		TEST_METHOD(RealVectorToStringTest)
+		{
+			//Arrange
+			const std::vector<Real> vec = { 3.235, 1.45, -13.45, -0.34 };
+
+			//Act
+			auto str = Utils::vector_to_str(vec);
+
+			//Assert
+			Assert::IsTrue(Utils::parse_vector<double>(str) == vec, L"Vectors are not the same");
+			Assert::IsTrue(str.empty(), L"Unexpected value of string after parsing");
+		}
+
+		TEST_METHOD(IntVectorToStringTest)
+		{
+			//Arrange
+			const std::vector<int> vec = { 3, 1, -13, -0 };
+
+			//Act
+			auto str = Utils::vector_to_str(vec);
+
+			//Assert
+			Assert::IsTrue(Utils::parse_vector<int>(str) == vec, L"Vectors are not the same");
+			Assert::IsTrue(str.empty(), L"Unexpected value of string after parsing");
+		}
+
 		TEST_METHOD(RemoveLeadingTrailingExtraSpacesTest)
 		{
 			//Arrange
@@ -247,6 +273,41 @@ namespace DeepLearningTest
 			const std::regex pattern("^[{]?[0-9A-F]{8}-([0-9A-F]{4}-){3}[0-9A-F]{12}[}]?$");
 			Assert::IsTrue(guid_str.size() == 36, L"Unexpected number of characters in GUID");
 			Assert::IsTrue(regex_match(guid_str, pattern), L"String is not a GUID");
+		}
+
+		TEST_METHOD(SecToDdHhMmSsString)
+		{
+			//Arrange
+			constexpr auto days = 5ll;
+			constexpr auto hours = 14ll;
+			constexpr auto minutes = 15ll;
+			constexpr auto secs = 47ll;
+			constexpr auto secs_total = 24 * 3600 * days + 3600 * hours + 60 * minutes + secs;
+
+			//Act
+			const auto str = Utils::seconds_to_dd_hh_mm_ss_string(secs_total);
+
+			//Assert
+			Assert::IsTrue(str == std::format("{}d:{}:{}:{}", days, hours, minutes, secs),
+				L"Unexpected string representation of the given time");
+		}
+
+		TEST_METHOD(MilliSecToDdHhMmSsString)
+		{
+			//Arrange
+			constexpr auto days = 5ll;
+			constexpr auto hours = 14ll;
+			constexpr auto minutes = 15ll;
+			constexpr auto secs = 47ll;
+			constexpr  auto milliseconds = 358ll;
+			constexpr auto milliseconds_total = 1000*(24 * 3600 * days + 3600 * hours + 60 * minutes + secs) + milliseconds;
+
+			//Act
+			const auto str = Utils::milliseconds_to_dd_hh_mm_ss_string(milliseconds_total);
+
+			//Assert
+			Assert::IsTrue(str == std::format("{}d:{}:{}:{}.{}", days, hours, minutes, secs, milliseconds),
+				L"Unexpected string representation of the given time");
 		}
 	};
 }

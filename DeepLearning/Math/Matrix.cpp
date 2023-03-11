@@ -47,7 +47,7 @@ namespace DeepLearning
 		/// </summary>
 		/// <param name="ptr">Pointer</param>
 		/// <param name="col_dim">Offset that will be used to calculate position of the "next" pointer</param>
-		ColumnIterator(pointer ptr, const std::size_t col_dim) :_ptr(ptr), _col_dim(col_dim){}
+		ColumnIterator(pointer ptr, const std::size_t col_dim) : _col_dim(col_dim), _ptr(ptr){}
 
 		reference operator *() const { return *_ptr; }
 		pointer operator ->() { return _ptr; }
@@ -165,7 +165,7 @@ namespace DeepLearning
 	}
 
 	Matrix::Matrix(Matrix&& matr) noexcept 
-		: _col_dim(matr._col_dim), _row_dim(matr._row_dim), _capacity(matr._capacity)
+		: _row_dim(matr._row_dim), _col_dim(matr._col_dim), _capacity(matr._capacity)
 	{
 		_data = matr._data;
 		matr.abandon_resources();

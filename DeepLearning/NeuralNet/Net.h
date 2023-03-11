@@ -200,7 +200,7 @@ namespace DeepLearning
 		/// <param name="gradient">Collection of gradient structures, one for each layer;
 		/// <param name="learning_rate">Learning rate</param>
 		/// <param name="lambda">Regularization factor</param>
-		void update(const std::vector<typename LayerGradient<D>>& gradient, const Real learning_rate, const Real& lambda);
+		void update(const std::vector<typename DeepLearning::LayerGradient<D>>& gradient, const Real learning_rate, const Real& lambda);
 
 		/// <summary>
 		/// Evaluates number of "correct answers" for the given collection of the
