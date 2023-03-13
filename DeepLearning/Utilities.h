@@ -30,14 +30,21 @@
 namespace DeepLearning::Utils
 {
     /// <summary>
+	/// Returns seeded Mersenne Twister generator
+	/// </summary>
+	inline std::mt19937 get_mt_generator()
+    {
+        return std::mt19937(std::random_device()());
+    }
+
+    /// <summary>
     /// Functionality to fill the given range with uniformly distributed pseudo-random numbers
     /// </summary>
     template< class Iter>
     void fill_with_random_values(Iter start, Iter end, const Real min, const Real max)
     {
-        static std::random_device rd;
-        static std::mt19937 gen(rd());
-        static std::uniform_int_distribution<int> dist(0, std::numeric_limits<int>::max());
+        thread_local auto gen = get_mt_generator();
+        const thread_local std::uniform_int_distribution<int> dist(0, std::numeric_limits<int>::max());
 
         const auto normalization_factor = (max - min) / std::numeric_limits<int>::max();
         std::generate(start, end, [&]() { return normalization_factor * dist(gen) + min; });
@@ -68,9 +75,8 @@ namespace DeepLearning::Utils
     template< class Iter>
     void fill_with_normal_random_values(Iter start, Iter end, const Real mean, const Real std)
     {
-        static std::random_device rd;
-        static std::mt19937 gen(rd());
-        std::normal_distribution<Real> dist{ mean, std };
+        thread_local auto gen = get_mt_generator();
+        thread_local std::normal_distribution<Real> dist{ mean, std };
 
         std::generate(start, end, [&]() { return dist(gen); });
     }

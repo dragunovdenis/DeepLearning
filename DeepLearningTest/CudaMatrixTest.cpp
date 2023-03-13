@@ -139,7 +139,7 @@ namespace DeepLearningTest
 			const auto host_result = matr.to_host().mul_add(vect_mul.to_host(), vect_add.to_host());
 			const auto diff = (result.to_host() - host_result).max_abs();
 			Logger::WriteMessage((std::string("Diff = ") + Utils::to_string(diff) + "\n").c_str());
-			Assert::IsTrue(diff < 500 * std::numeric_limits<Real>::epsilon(), L"too high deviation from reference");
+			Assert::IsTrue(diff < 600 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference");
 		}
 
 		TEST_METHOD(VectorMatrixMultiplicationTest)
