@@ -93,6 +93,72 @@ namespace DeepLearningTest
 			Assert::IsTrue(extracted_string == expected_extracted_string, L"Unexpected value of the extracted string");
 		}
 
+
+		/// <summary>
+		/// General method to test balanced sub-string extraction subroutine
+		/// </summary>
+		static void extract_balanced_sub_string_failed_check(std::string string_to_parse,
+		                                                     const std::string expected_string_after_extraction,
+		                                                     const std::string expected_extracted_string)
+		{
+			//Act
+			const auto extracted_string = Utils::extract_balanced_sub_string(string_to_parse);
+
+			//Assert
+			Assert::IsTrue(string_to_parse == expected_string_after_extraction, L"Unexpected value of input string");
+			Assert::IsTrue(extracted_string == expected_extracted_string, L"Unexpected value of the extracted string");
+		}
+
+		TEST_METHOD(ExtractBalancedSubStringSuccessfulTest)
+		{
+			//Arrange
+			extract_balanced_sub_string_failed_check(
+				"  ,;-1.2,something{{4.6, 7} ; else,;{5 6.2}}_some other garbage",
+			"  ,;-1.2,something_some other garbage",
+				"{4.6, 7} ; else,;{5 6.2}");
+		}
+
+		TEST_METHOD(ExtractBalancedSubStringNoStringFoundTest)
+		{
+			std::string string_to_parse = "  ,;-1.2,something((4.6, 7) ; else,;(5 6.2))_some other garbage";
+			extract_balanced_sub_string_failed_check(string_to_parse, string_to_parse, "");
+		}
+
+		/// <summary>
+		/// General method to test cases when balanced sub-string extraction subroutine throws exception
+		/// </summary>
+		static void extract_balanced_sub_string_failed_check(std::string string_to_parse)
+		{
+			const std::string expected_string_after_extraction = string_to_parse;
+
+			//Act
+			bool exception_thrown = false;
+			try
+			{
+				const auto extracted_string = Utils::extract_balanced_sub_string(string_to_parse);
+			}
+			catch (std::exception&)
+			{
+				exception_thrown = true;
+			}
+
+			//Assert
+			Assert::IsTrue(exception_thrown, L"Exception was not thrown");
+			Assert::IsTrue(string_to_parse == expected_string_after_extraction, L"Unexpected value of input string");
+		}
+
+		TEST_METHOD(ExtractBalancedSubStringMissingCloseCharTest)
+		{
+			//Arrange
+			extract_balanced_sub_string_failed_check("  ,;-1.2,something{{{4.6, 7} ; else,;{5 6.2}}_some other garbage");
+		}
+
+		TEST_METHOD(ExtractBalancedSubStringMissingOpenCharTest)
+		{
+			//Arrange
+			extract_balanced_sub_string_failed_check("  ,;-1.2,}something{{4.6, 7} ; else,;{5 6.2}}_some other garbage");
+		}
+
 		TEST_METHOD(ParseVectorTest)
 		{
 			//Arrange

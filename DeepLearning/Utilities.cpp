@@ -138,6 +138,52 @@ namespace DeepLearning::Utils
         return true;
     }
 
+    std::string extract_balanced_sub_string(std::string& str, const char open_char, const char close_char)
+    {
+        const auto start_pos = str.find(open_char);
+        const auto first_close_char_pos = str.find(close_char);
+
+        if (start_pos == std::string::npos && first_close_char_pos == std::string::npos)
+            return "";
+
+        if (first_close_char_pos == std::string::npos || first_close_char_pos < start_pos)
+            throw std::exception("Can't extract a balanced sub-string");
+
+        auto opened_cnt = 1;
+        auto pos = start_pos;
+
+        while (pos < str.size() && opened_cnt > 0)
+        {
+            ++pos;
+            if (str[pos] == open_char)
+                ++opened_cnt;
+            else if (str[pos] == close_char)
+                --opened_cnt;
+        }
+
+        if (opened_cnt != 0)
+          throw std::exception("Can't extract a balanced sub-string");
+
+        const auto result = str.substr(start_pos + 1, pos - start_pos - 1);
+        str.erase(start_pos, pos - start_pos + 1);
+
+        return result;
+    }
+
+    bool try_extract_balanced_sub_string(std::string& str, std::string& out, const char open_char, const char close_char)
+    {
+        try
+        {
+            out = extract_balanced_sub_string(str, open_char, close_char);
+        }
+        catch (const std::exception&)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
     std::string remove_leading_trailing_extra_spaces(const std::string& str)
     {
         return std::regex_replace(str, std::regex("^ +| +$|( ) +"), "$1");
@@ -146,7 +192,7 @@ namespace DeepLearning::Utils
     std::string to_upper_case(const std::string& str)
     {
         auto result = str;
-        std::transform(str.begin(), str.end(), result.begin(), ::toupper);
+        std::ranges::transform(str, result.begin(), ::toupper);
 
         return result;
     }

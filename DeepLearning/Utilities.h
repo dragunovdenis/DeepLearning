@@ -170,6 +170,28 @@ namespace DeepLearning::Utils
     bool try_extract_vector_sub_string(std::string& str, std::string& out);
 
     /// <summary>
+    /// From the given string extracts a sub-string enclosed within the left-most `open_char` character and the following
+    /// `close_char` character so that the sub-string is balanced with respect to the `open_char` and `close_char` characters.
+    /// By "balanced" here we mean that for each given character of the sub-string other than `open_char` and `close_char`
+    /// the difference between the numbers of `open_char` and 'close_char' characters to the left is nonnegative
+    /// and equal to the difference between numbers of `close_char` and 'open_char' characters to the right.
+    /// The sub-string is returned and erased from the input string (including the "defining" `open_char`-`close_char` pair).
+    /// Throws exception if either of `open_char`, 'cloase_char' characters is present in the input string but
+    /// a "balanced" sub-string can't be extracted;
+    /// </summary>
+    std::string extract_balanced_sub_string(std::string& str, const char open_char = '{', const char close_char = '}');
+
+    /// <summary>
+    /// A "try" pattern version of the corresponding method above that does not throw
+    /// exceptions in case it is not possible to extract the sub-string
+    /// </summary>
+    /// <param name="str">Input string that gets modified in case method succeeds</param>
+    /// <param name="out">The extracted sub-string in case method succeeds or "garbage" otherwise</param>
+    /// <param name="open_char">The "open" character</param>
+    /// <param name="close_char">The "close" character</param>
+    bool try_extract_balanced_sub_string(std::string& str, std::string& out, const char open_char = '{', const char close_char = '}');
+
+    /// <summary>
     /// From the given string extracts and parse the leftmost sub-string of the form "{...}" (the input string gets updated)
     /// The sub-string in the brackets is supposed to contain comma, semicolon or space separated strings that can be parsed
     /// into variables of type `R`; Returns vector of parsed values
