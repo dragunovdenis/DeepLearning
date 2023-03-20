@@ -94,6 +94,11 @@ namespace DeepLearning::Utils
     }
 
     /// <summary>
+    /// Returns 64  bit hash of the given string in hexadecimal representation (16 characters)
+    /// </summary>
+    std::string get_hash_as_hex_str(const std::string& str);
+
+    /// <summary>
     /// Converts the given hexadecimal string to a double and returns the result
     /// </summary>
     double hex_to_double(const std::string& hex_str);
@@ -106,6 +111,11 @@ namespace DeepLearning::Utils
     {
         return static_cast<T>(hex_to_double(hex_str));
     }
+
+    /// <summary>
+    /// Converts the given 64 bit unsigned integer to hexadecimal string
+    /// </summary>
+    std::string uint64_to_hex(const uint64_t& val);
 
     /// <summary>
     /// Converts the given double precision value to hexadecimal string and returns the result

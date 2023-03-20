@@ -100,6 +100,11 @@ namespace DeepLearning::Utils
         return result;
     }
 
+    std::string get_hash_as_hex_str(const std::string& str)
+    {
+        return uint64_to_hex(std::hash<std::string>()(str));
+    }
+
     double hex_to_double(const std::string& hex_str) {
         if (hex_str.size() != 16)
             throw std::exception("Invalid input");
@@ -110,18 +115,22 @@ namespace DeepLearning::Utils
         return d;
     }
 
-    std::string double_to_hex(const double& val) {
-        uint64_t i;
-        std::memcpy(&i, &val, sizeof(double));
+    std::string uint64_to_hex(const uint64_t& val)
+    {
         constexpr auto buf_size = sizeof(double) * 2 + 1;
-
         char buf[buf_size];
-        if (snprintf(buf, sizeof(buf), "%016llx", i) != sizeof(double) * 2)
+        if (snprintf(buf, sizeof(buf), "%016llx", val) != sizeof(double) * 2)
             throw std::string("Conversion failed");
 
         buf[buf_size - 1] = 0;
 
         return std::string{ buf };
+    }
+
+    std::string double_to_hex(const double& val) {
+        uint64_t i;
+        std::memcpy(&i, &val, sizeof(double));
+        return uint64_to_hex(i);
     }
 
     bool try_extract_vector_sub_string(std::string& str, std::string& out)
