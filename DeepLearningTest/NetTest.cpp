@@ -243,7 +243,7 @@ namespace DeepLearningTest
 		{
 			Net<CpuDC> net;
 			const auto keep_rates = no_drop_out ? std::vector<Real>(7, static_cast<Real>(1)) :
-			Utils::get_random_std_vector(6, static_cast<Real>(0), static_cast<Real>(1.0));
+			Utils::get_random_std_vector(7, static_cast<Real>(0), static_cast<Real>(1.0));
 
 			auto size_in_next = Index3d{ 1, 222, 333 };
 			const auto out_size = 10;

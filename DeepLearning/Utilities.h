@@ -44,7 +44,7 @@ namespace DeepLearning::Utils
     void fill_with_random_values(Iter start, Iter end, const Real min, const Real max)
     {
         thread_local auto gen = get_mt_generator();
-        const thread_local std::uniform_int_distribution<int> dist(0, std::numeric_limits<int>::max());
+        thread_local std::uniform_int_distribution<int> dist(0, std::numeric_limits<int>::max());
 
         const auto normalization_factor = (max - min) / std::numeric_limits<int>::max();
         std::generate(start, end, [&]() { return normalization_factor * dist(gen) + min; });
