@@ -192,6 +192,9 @@
     <ClInclude Include="StopWatch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Math\VectorNd.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Matrix.cpp">

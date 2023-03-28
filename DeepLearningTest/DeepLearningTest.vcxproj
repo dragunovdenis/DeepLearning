@@ -175,6 +175,7 @@
     <ClCompile Include="NetLayersTest.cpp" />
     <ClCompile Include="TensorTest.cpp" />
     <ClCompile Include="UtilsTest.cpp" />
+    <ClCompile Include="VectorNdTest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DeepLearning\DeepLearning.vcxproj">

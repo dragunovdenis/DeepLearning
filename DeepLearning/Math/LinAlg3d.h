@@ -242,6 +242,9 @@ namespace DeepLearning
 		return result -= vec2;
 	}
 
+	/// <summary>
+	/// Multiplication by scalar operator
+	/// </summary>
 	template <class T>
 	CUDA_CALLABLE Vector3d<T> operator *(const Vector3d<T>& vec, const T& scalar)
 	{
@@ -249,6 +252,9 @@ namespace DeepLearning
 		return result *= scalar;
 	}
 
+	/// <summary>
+	/// Multiplication by scalar operator
+	/// </summary>
 	template <class T>
 	CUDA_CALLABLE Vector3d<T> operator *(const T& scalar, const Vector3d<T>& vec)
 	{
