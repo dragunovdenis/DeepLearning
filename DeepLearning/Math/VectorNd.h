@@ -42,6 +42,33 @@ namespace DeepLearning
 		MSGPACK_DEFINE(_data);
 
 		/// <summary>
+		/// Default constructor
+		/// </summary>
+		VectorNd() = default;
+
+		/// <summary>
+		/// Constructor; fills all the elements with the given value
+		/// </summary>
+		VectorNd(const T& val)
+		{
+			for (auto i = 0; i < N; ++i)
+				_data[i] = val;
+		}
+
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		VectorNd(const std::initializer_list<T>& list)
+		{
+			if (list.size() != N)
+				throw std::exception("Invalid initialization");
+
+			auto i = 0;
+			for (const auto& val : list)
+				_data[i++] = val;
+		}
+
+		/// <summary>
 		/// Returns randomly assigned instance of the vector
 		/// </summary>
 		static VectorNd random(const T& min = T(0), const T& max = T(1))
@@ -104,7 +131,7 @@ namespace DeepLearning
 		{
 			T sum_of_squares = T(0);
 			for (auto i = 0; i < N; ++i)
-				sum_of_squares = _data[i] * _data[i];
+				sum_of_squares += _data[i] * _data[i];
 
 			return std::sqrt(sum_of_squares);
 		}
@@ -233,6 +260,14 @@ namespace DeepLearning
 
 			return result;
 		}
+
+		/// <summary>
+		/// Returns size of the vector
+		/// </summary>
+		static int size()
+		{
+			return N;
+		}
 	};
 
 	/// <summary>
@@ -273,4 +308,10 @@ namespace DeepLearning
 	{
 		return vec * scalar;
 	}
+
+	/// <summary>
+	/// A shortcut
+	/// </summary>
+	template <int N>
+	using VectorNdReal = VectorNd<Real, N>;
 }

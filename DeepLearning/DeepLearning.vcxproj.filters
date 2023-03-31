@@ -55,6 +55,9 @@
     <Filter Include="Source Files\Math\CUDA">
       <UniqueIdentifier>{e577e042-1adc-4f4f-9d18-bc8df40aef25}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Math\Optimization">
+      <UniqueIdentifier>{5d66a378-2377-41fd-abe1-0faab0dac4a8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="defs.h">
@@ -194,6 +197,9 @@
     </ClInclude>
     <ClInclude Include="Math\VectorNd.h">
       <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Optimization\NelderMeadOptimizer.h">
+      <Filter>Header Files\Math\Optimization</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

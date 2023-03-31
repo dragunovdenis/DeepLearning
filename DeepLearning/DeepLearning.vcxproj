@@ -170,6 +170,7 @@
     <ClInclude Include="Math\Functions.h" />
     <ClInclude Include="Math\LinAlg3d.h" />
     <ClInclude Include="Math\Matrix.h" />
+    <ClInclude Include="Math\Optimization\NelderMeadOptimizer.h" />
     <ClInclude Include="Math\PoolOperator.h" />
     <ClInclude Include="Math\Tensor.h" />
     <ClInclude Include="Math\Vector.h" />

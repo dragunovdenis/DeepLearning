@@ -171,6 +171,7 @@
     <ClCompile Include="LinAlg3dTest.cpp" />
     <ClCompile Include="MatrixVectorAlgebraTest.cpp" />
     <ClCompile Include="MnistDataUtilsTest.cpp" />
+    <ClCompile Include="NelderMeadOptimizationTest.cpp" />
     <ClCompile Include="NetTest.cpp" />
     <ClCompile Include="NetLayersTest.cpp" />
     <ClCompile Include="TensorTest.cpp" />

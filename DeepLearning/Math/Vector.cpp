@@ -199,7 +199,7 @@ namespace DeepLearning
 		return !(*this == vect);
 	}
 
-	static Vector random(const std::size_t dim, const Real range_begin, const Real range_end)
+	[[maybe_unused]] static Vector random(const std::size_t dim, const Real range_begin, const Real range_end)
 	{
 		auto result = Vector(dim);
 		Utils::fill_with_random_values(result.begin(), result.end(), range_begin, range_end);

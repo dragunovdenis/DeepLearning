@@ -342,4 +342,13 @@ namespace DeepLearning::Utils
     /// Converts given amount of milliseconds into dd:hh:mm:ss string representation
     /// </summary>
     std::string milliseconds_to_dd_hh_mm_ss_string(const long long& time_msec);
+
+    /// <summary>
+    /// Returns the argument squared
+    /// </summary>
+    template <class T>
+    T sqr(const T& x)
+    {
+        return x * x;
+    }
 }

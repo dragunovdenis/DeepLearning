@@ -17,7 +17,6 @@
 
 #pragma once
 #include <vector>
-#include <istream>
 #include <filesystem>
 
 namespace DeepLearning
@@ -41,12 +40,12 @@ namespace DeepLearning
 		/// <summary>
 		/// Read access to the height parameter of the image
 		/// </summary>
-		std::size_t height() const;
+		[[nodiscard]] std::size_t height() const;
 
 		/// <summary>
 		/// Read access to the width parameter of the image
 		/// </summary>
-		std::size_t width() const;
+		[[nodiscard]] std::size_t width() const;
 
 		/// <summary>
 		/// Default constructor

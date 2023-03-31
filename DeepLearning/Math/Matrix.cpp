@@ -331,7 +331,7 @@ namespace DeepLearning
 		return !(*this == matr);
 	}
 
-	static inline Matrix random(const std::size_t row_dim, const std::size_t col_dim, const Real range_begin, const Real range_end)
+	[[maybe_unused]] static inline Matrix random(const std::size_t row_dim, const std::size_t col_dim, const Real range_begin, const Real range_end)
 	{
 		auto result = Matrix(row_dim, col_dim);
 		Utils::fill_with_random_values(result.begin(), result.end(), range_begin, range_end);
