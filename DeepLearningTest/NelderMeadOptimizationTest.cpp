@@ -19,6 +19,7 @@
 #include <Utilities.h>
 #include "Math/Optimization/NelderMeadOptimizer.h"
 #include "Image8Bit.h"
+#include "MsgPackUtils.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;
@@ -198,13 +199,12 @@ namespace DeepLearningTest
 		}
 
 		/// <summary>
-		/// General method to run multi-dimensional optimization test
+		/// Returns the Rosenbrock function of the corresponding dimension
 		/// </summary>
 		template <int N>
-		void RunRosenbrockOptimizationTest(const VectorNdReal<N>& init_pt)
+		static typename NelderMeadOptimizer<N>::CostFunc get_Rosenbrock_func()
 		{
-			//Arrange
-			const typename NelderMeadOptimizer<N>::CostFunc cost_func = [](const VectorNdReal<N>& v)
+			return [](const VectorNdReal<N>& v)
 			{
 				auto result = static_cast<Real>(0);
 
@@ -213,13 +213,21 @@ namespace DeepLearningTest
 
 				return result;
 			};
+		}
 
+		/// <summary>
+		/// General method to run multi-dimensional optimization test
+		/// </summary>
+		template <int N>
+		void RunRosenbrockOptimizationTest(const VectorNdReal<N>& init_pt,
+			const Real epsilon = static_cast<Real>(1e-6))
+		{
+			//Arrange
 			NelderMeadOptimizer<N> optimizer;
-			constexpr auto epsilon = static_cast<Real>(1e-6);
 			optimizer.set_min_simplex_size(epsilon);
 
 			//Act
-			optimizer.optimize(cost_func, 1, init_pt);
+			optimizer.optimize(get_Rosenbrock_func<N>(), 1, init_pt);
 
 			//Assert
 			const auto point_diff = (VectorNdReal<N>(1) - optimizer.get_min_vertex()).max_abs();
@@ -254,5 +262,23 @@ namespace DeepLearningTest
 			Assert::IsTrue(point_diff < epsilon, L"Unexpected point of minimum");
 			Assert::IsTrue(value_diff < 500 * std::numeric_limits<Real>::epsilon(), L"Unexpected minimum value");
 		}
+
+		TEST_METHOD(PackingTest)
+		{
+			//Arrange
+			constexpr auto N = 7;
+			NelderMeadOptimizer<N> optimizer;
+			optimizer.set_min_simplex_size(0.1);
+			//Do some optimization so that the component has a nontrivial state
+			optimizer.optimize(get_Rosenbrock_func<N>(), 1, VectorNdReal<N>(0));
+
+			//Act
+			const auto msg = MsgPack::pack(optimizer);
+			const auto optimizer_unpacked = MsgPack::unpack<NelderMeadOptimizer<N>>(msg);
+
+			//Assert
+			Assert::IsTrue(optimizer.equal_state(optimizer_unpacked), L"De-serialized instance is not equal to the original one.");
+		}
+
 	};
 }

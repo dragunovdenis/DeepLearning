@@ -18,6 +18,7 @@
 #pragma once
 #include "../VectorNd.h"
 #include <functional>
+#include <msgpack.hpp>
 
 namespace DeepLearning
 {
@@ -267,6 +268,31 @@ namespace DeepLearning
 		}
 
 	public:
+
+		MSGPACK_DEFINE(_simplex, _func_values, _constraints_lower, _constraints_upper,
+			_rho, _chi, _gamma, _sigma, _min_simplex_size, _min_vertex_id, _max_vertex_id, _second_max_vertex_id);
+
+		/// <summary>
+		/// Returns "true" if the state of the current optimizer is equal to that of the given one.
+		///	By state here we mean all the data that are to be persisted by the "message-pack"
+		///	functionality and is necessary to continue optimization process from the point when the state was saved 
+		/// </summary>
+		[[nodiscard]] bool equal_state(const NelderMeadOptimizer& another_optimizer) const
+		{
+			return _simplex == another_optimizer._simplex &&
+				_func_values == another_optimizer._func_values &&
+				_constraints_lower == another_optimizer._constraints_lower &&
+				_constraints_upper == another_optimizer._constraints_upper &&
+				_rho == another_optimizer._rho &&
+				_chi == another_optimizer._chi &&
+				_gamma == another_optimizer._gamma &&
+				_sigma == another_optimizer._sigma &&
+				_min_simplex_size == another_optimizer._min_simplex_size &&
+				_min_vertex_id == another_optimizer._min_vertex_id &&
+				_max_vertex_id == another_optimizer._max_vertex_id &&
+				_second_max_vertex_id == another_optimizer._second_max_vertex_id;
+		}
+
 		/// <summary>
 		/// Returns minimal value of the cost function on the vertices of the simplex
 		/// </summary>

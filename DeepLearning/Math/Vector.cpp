@@ -18,8 +18,6 @@
 #include "Vector.h"
 #include "../Utilities.h"
 #include <exception>
-#include <stdlib.h>
-#include <time.h>
 #include <algorithm>
 #include <numeric>
 #include "../IndexIterator.h"
