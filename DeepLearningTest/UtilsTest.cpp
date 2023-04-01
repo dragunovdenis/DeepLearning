@@ -97,12 +97,13 @@ namespace DeepLearningTest
 		/// <summary>
 		/// General method to test balanced sub-string extraction subroutine
 		/// </summary>
-		static void extract_balanced_sub_string_failed_check(std::string string_to_parse,
-		                                                     const std::string expected_string_after_extraction,
-		                                                     const std::string expected_extracted_string)
+		static void extract_balanced_sub_string_check(std::string string_to_parse,
+		                                                     const std::string& expected_string_after_extraction,
+		                                                     const std::string& expected_extracted_string,
+		                                                     const bool keep_enclosure = false)
 		{
 			//Act
-			const auto extracted_string = Utils::extract_balanced_sub_string(string_to_parse);
+			const auto extracted_string = Utils::extract_balanced_sub_string(string_to_parse, '{', '}', keep_enclosure);
 
 			//Assert
 			Assert::IsTrue(string_to_parse == expected_string_after_extraction, L"Unexpected value of input string");
@@ -112,16 +113,25 @@ namespace DeepLearningTest
 		TEST_METHOD(ExtractBalancedSubStringSuccessfulTest)
 		{
 			//Arrange
-			extract_balanced_sub_string_failed_check(
+			extract_balanced_sub_string_check(
 				"  ,;-1.2,something{{4.6, 7} ; else,;{5 6.2}}_some other garbage",
 			"  ,;-1.2,something_some other garbage",
 				"{4.6, 7} ; else,;{5 6.2}");
 		}
 
+		TEST_METHOD(ExtractBalancedSubStringWithEnclosureSuccessfulTest)
+		{
+			//Arrange
+			extract_balanced_sub_string_check(
+				"  ,;-1.2,something{{4.6, 7} ; else,;{5 6.2}}_some other garbage",
+				"  ,;-1.2,something_some other garbage",
+				"{{4.6, 7} ; else,;{5 6.2}}", true /*keep enclosure*/);
+		}
+
 		TEST_METHOD(ExtractBalancedSubStringNoStringFoundTest)
 		{
-			std::string string_to_parse = "  ,;-1.2,something((4.6, 7) ; else,;(5 6.2))_some other garbage";
-			extract_balanced_sub_string_failed_check(string_to_parse, string_to_parse, "");
+			const std::string string_to_parse = "  ,;-1.2,something((4.6, 7) ; else,;(5 6.2))_some other garbage";
+			extract_balanced_sub_string_check(string_to_parse, string_to_parse, "");
 		}
 
 		/// <summary>

@@ -147,7 +147,7 @@ namespace DeepLearning::Utils
         return true;
     }
 
-    std::string extract_balanced_sub_string(std::string& str, const char open_char, const char close_char)
+    std::string extract_balanced_sub_string(std::string& str, const char open_char, const char close_char, const bool keep_enclosure)
     {
         const auto start_pos = str.find(open_char);
         const auto first_close_char_pos = str.find(close_char);
@@ -173,7 +173,9 @@ namespace DeepLearning::Utils
         if (opened_cnt != 0)
           throw std::exception("Can't extract a balanced sub-string");
 
-        const auto result = str.substr(start_pos + 1, pos - start_pos - 1);
+        auto result = keep_enclosure ? str.substr(start_pos, pos - start_pos + 1) :
+            str.substr(start_pos + 1, pos - start_pos - 1);
+
         str.erase(start_pos, pos - start_pos + 1);
 
         return result;

@@ -189,7 +189,8 @@ namespace DeepLearning::Utils
     /// Throws exception if either of `open_char`, 'cloase_char' characters is present in the input string but
     /// a "balanced" sub-string can't be extracted;
     /// </summary>
-    std::string extract_balanced_sub_string(std::string& str, const char open_char = '{', const char close_char = '}');
+    std::string extract_balanced_sub_string(std::string& str, const char open_char = '{',
+        const char close_char = '}', const bool keep_enclosure = false);
 
     /// <summary>
     /// A "try" pattern version of the corresponding method above that does not throw
