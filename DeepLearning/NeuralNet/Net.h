@@ -185,12 +185,13 @@ namespace DeepLearning
 		           const Real learning_rate, const CostFunctionId& cost_func_id, const Real& lambda = Real(0));
 
 		/// <summary>
-		///	Returns gradient of the given cost function with respect to the weights and biases of the neural net
+		/// Returns gradient of the given cost function with respect to the weights and biases of the neural net.
+		/// Additionally to that returns the "value" of the network inferred at the given "item".
 		/// </summary>
 		/// <param name="training_item">An item at which the gradient should be evaluated</param>
-		/// <param name="target_value">"Label" item that should be used in the cost fucntion</param>
+		/// <param name="target_value">"Label" item that should be used in the cost function</param>
 		/// <param name="cost_func_id">Id of the cost function</param>
-		std::vector<LayerGradient<D>> calc_gradient(
+		std::tuple<std::vector<LayerGradient<D>>, typename D::tensor_t> calc_gradient_and_value(
 			const typename D::tensor_t& training_item, const typename D::tensor_t& target_value, const CostFunctionId& cost_func_id);
 
 		/// <summary>

@@ -235,19 +235,19 @@ namespace DeepLearning
 					training_items.size() : batch_start_elem_id + batch_size;
 
 				const auto items_per_thread = (batch_end_elem_id - batch_start_elem_id + threads_to_use - 1) / threads_to_use;
-				auto currnt_thread_start_id = batch_start_elem_id;
+				auto current_thread_start_id = batch_start_elem_id;
 				auto actual_jobs_count = 0;
 
-				while (currnt_thread_start_id < batch_end_elem_id)
+				while (current_thread_start_id < batch_end_elem_id)
 				{
-					const auto current_thread_end_id = std::min(currnt_thread_start_id + items_per_thread, batch_end_elem_id);
+					const auto current_thread_end_id = std::min(current_thread_start_id + items_per_thread, batch_end_elem_id);
 
-					thread_pool.queue_job([&, currnt_thread_start_id, current_thread_end_id](const std::size_t local_thread_id)
+					thread_pool.queue_job([&, current_thread_start_id, current_thread_end_id](const std::size_t local_thread_id)
 						{
 							auto& aux_data = aux_learning_data[local_thread_id];
 							auto& e_data = eval_data[local_thread_id];
 							auto& back_prop_out = layer_gradient_data[local_thread_id];
-							for (auto elem_id = currnt_thread_start_id; elem_id < current_thread_end_id; elem_id++)
+							for (auto elem_id = current_thread_start_id; elem_id < current_thread_end_id; elem_id++)
 							{
 								const auto input_item_id = data_index_mapping[elem_id];
 								const auto& input = training_items[input_item_id];
@@ -272,7 +272,7 @@ namespace DeepLearning
 							}
 						});
 
-					currnt_thread_start_id = current_thread_end_id;
+					current_thread_start_id = current_thread_end_id;
 					++actual_jobs_count;
 				}
 
@@ -292,7 +292,7 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	std::vector<LayerGradient<D>> Net<D>::calc_gradient(
+	std::tuple<std::vector<LayerGradient<D>>, typename D::tensor_t> Net<D>::calc_gradient_and_value(
 		const typename D::tensor_t& training_item, const typename D::tensor_t& target_value, const CostFunctionId& cost_func_id)
 	{
 		const auto cost_function = CostFunction<typename D::tensor_t>(cost_func_id);
@@ -307,6 +307,7 @@ namespace DeepLearning
 
 		//Forward move
 		act(training_item, e_data, &aux_data);
+		auto value = e_data.Out;
 		cost_function.deriv_in_place(e_data.Out, target_value);
 
 		//Back-propagate through all the layers
@@ -324,7 +325,7 @@ namespace DeepLearning
 		for (auto layer_id = 0ull; layer_id < _layers.size(); ++layer_id)
 			_layers[layer_id].layer().DisposeDropoutMask();
 
-		return result;
+		return std::make_tuple(std::move(result), std::move(value));
 	}
 
 	template <class D>
@@ -341,8 +342,7 @@ namespace DeepLearning
 	void Net<D>::learn(const typename D::tensor_t& training_item, const typename D::tensor_t& target_value,
 		const Real learning_rate, const CostFunctionId& cost_func_id, const Real& lambda)
 	{
-		const auto gradient = calc_gradient(training_item, target_value, cost_func_id);
-		update(gradient, learning_rate, lambda);
+		update(std::get<0>(calc_gradient_and_value(training_item, target_value, cost_func_id)), learning_rate, lambda);
 	}
 
 	template <class D>

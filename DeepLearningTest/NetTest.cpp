@@ -319,24 +319,38 @@ namespace DeepLearningTest
 		{
 			//Arrange
 			Net<CpuDC> net;
-			net.append_layer<NLayer>(1, 1, ActivationFunctionId::LINEAR);
-			CpuDC::tensor_t input(1, 1, 1);
-			const auto x = Utils::get_random(-1, 1);
-			input(0, 0, 0) = x;
-			const CpuDC::tensor_t target_value(1, 1, 1);
+			constexpr auto out_dim = 100;
+			constexpr auto in_dim = 10;
+			net.append_layer<NLayer>(in_dim, out_dim, ActivationFunctionId::LINEAR);
+
+			const CpuDC::tensor_t input(1, 1, in_dim, -1, 1);
+			const CpuDC::tensor_t target_value(1, 1, out_dim, -1, 1);
+			Assert::IsTrue(input.max_abs() > 0 && target_value.max_abs() > 0, L"Vectors are supposed to be nonzero");
+
+			//Make up the "biases derivative"
+			CpuDC::tensor_t expected_bias_derivative(1, 1, out_dim);
+			expected_bias_derivative.fill(1);
+
+			//Make up the "weights derivative"
+			const CpuDC::tensor_t expected_weight_derivative = vector_col_times_vector_row(expected_bias_derivative, input);
 
 			//Act
-			const auto gradient = net.calc_gradient(input, target_value, CostFunctionId::LINEAR);
+			const auto gradient_and_value = net.calc_gradient_and_value(input, target_value, CostFunctionId::LINEAR);
 
 			//Assert
-			const auto weight_deriv = gradient[0].Weights_grad[0](0, 0, 0);
-			const auto bias_deriv = gradient[0].Biases_grad(0, 0, 0);
+			const auto gradient = std::get<0>(gradient_and_value);
+			const auto weight_derivative = gradient[0].Weights_grad[0];
+			const auto bias_derivative = gradient[0].Biases_grad;
 
-			Assert::IsTrue(std::abs(weight_deriv - x) < 10 * std::numeric_limits<Real>::epsilon(),
+			Assert::IsTrue((weight_derivative - expected_weight_derivative).max_abs() < 10 * std::numeric_limits<Real>::epsilon(),
 				L"Too high deviation from the expected derivative with respect to the weight");
 
-			Assert::IsTrue(std::abs(bias_deriv - 1.0) < 10 * std::numeric_limits<Real>::epsilon(),
+			Assert::IsTrue((bias_derivative - expected_bias_derivative).max_abs() < 10 * std::numeric_limits<Real>::epsilon(),
 				L"Too high deviation from the expected derivative with respect to the bias");
+
+			const auto value = std::get<1>(gradient_and_value);
+			const auto value_ref = net.act(input);
+			Assert::IsTrue(value == value_ref, L"Unexpected difference in the values of the net calculated via different interfaces");
 		}
 
 		TEST_METHOD(NetCopyTest)
