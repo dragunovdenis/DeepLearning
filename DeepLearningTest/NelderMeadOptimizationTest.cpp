@@ -33,7 +33,7 @@ namespace DeepLearningTest
 			//Arrange
 			constexpr int N = 5;
 			constexpr auto edge_length = static_cast<Real>(1);
-			const auto init_point = VectorNdReal<N>::random();
+			const auto init_point = VectorNdReal<N>(Utils::get_random_std_vector(N, -1, 1));
 
 			//Act
 			const auto regular_simplex = NelderMeadOptimizer<N>::create_regular_simplex(init_point, edge_length);
@@ -56,7 +56,7 @@ namespace DeepLearningTest
 			//Arrange
 			constexpr int N = 5;
 			constexpr auto edge_length = static_cast<Real>(1);
-			const auto init_point = VectorNdReal<N>::random();
+			const auto init_point = VectorNdReal<N>(Utils::get_random_std_vector(N, -1, 1));
 
 			//Act
 			const auto axes_aligned_simplex = NelderMeadOptimizer<N>::create_axes_aligned_simplex(init_point, edge_length);

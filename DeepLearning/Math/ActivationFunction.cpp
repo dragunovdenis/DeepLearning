@@ -26,6 +26,7 @@
 #include "CudaVector.cuh"
 #include "CudaMatrix.cuh"
 #include "CudaTensor.cuh"
+#include "../Utilities.h"
 
 namespace DeepLearning
 {

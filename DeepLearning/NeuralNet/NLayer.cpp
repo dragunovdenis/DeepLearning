@@ -18,6 +18,7 @@
 #include "NLayer.h"
 #include "../Math/ActivationFunction.h"
 #include <exception>
+#include "../Utilities.h"
 
 namespace DeepLearning
 {

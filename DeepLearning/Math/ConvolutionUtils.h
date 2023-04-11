@@ -17,7 +17,6 @@
 
 #pragma once
 #include "LinAlg3d.h"
-#include "../Utilities.h"
 
 namespace DeepLearning::ConvolutionUtils
 {

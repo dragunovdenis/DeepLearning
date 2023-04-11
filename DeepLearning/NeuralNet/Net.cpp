@@ -26,6 +26,7 @@
 #include "../Diagnostics/Logging.h"
 #include <fstream>
 #include "../ThreadPool.h"
+#include "../Utilities.h"
 
 namespace DeepLearning
 {

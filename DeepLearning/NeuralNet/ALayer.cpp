@@ -16,6 +16,7 @@
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "ALayer.h"
+#include "../Utilities.h"
 
 namespace DeepLearning
 {

@@ -467,8 +467,8 @@ namespace DeepLearningTest
 				L"The matrix is expected to be singular");
 
 			//Act + Assert
-			Assert::ExpectException<std::exception>([&]() {singular_matrix.inverse(); },
-				L"Inversing singular matrix must result in an exception thrown");
+			Assert::ExpectException<std::exception>([&]() { return singular_matrix.inverse(); },
+				L"Inverting singular matrix must result in an exception thrown");
 		}
 
 		TEST_METHOD(TransposeMatrixTest)

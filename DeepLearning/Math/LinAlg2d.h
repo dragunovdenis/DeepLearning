@@ -17,9 +17,10 @@
 
 #pragma once
 
-#include "../Utilities.h"
 #include "../defs.h"
 #include <exception>
+#include <string>
+#include <cmath>
 
 namespace DeepLearning
 {
@@ -66,10 +67,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Returns random vector
 		/// </summary>
-		static Vector2d<R> random()
-		{
-			return { R(Utils::get_random(-1, 1)), R(Utils::get_random(-1, 1)) };
-		}
+		static Vector2d<R> random();
 
 		/// <summary>
 		/// Compound addition operator
@@ -152,7 +150,7 @@ namespace DeepLearning
 		/// Returns normalized vector
 		/// In case the current vector is "zero" the result of normalization will be NaN
 		/// </summary>
-		Vector2d<R> normalize() const
+		[[nodiscard]] Vector2d<R> normalize() const
 		{
 			return *this / norm();
 		}
@@ -175,36 +173,14 @@ namespace DeepLearning
 		/// <summary>
 		/// Returns a human-readable representation of the vector
 		/// </summary>
-		std::string to_string() const
-		{
-			return std::string("{") + Utils::to_string(x) + ", " + Utils::to_string(y) + "}";
-		}
+		[[nodiscard]] std::string to_string() const;
 
 		/// <summary>
 		/// Tries to parse the given string consisting of 2 comma, semicolon or space separated sub-strings that are "compatible" with type `R`
 		/// into an instance of Vector2d<R>. Returns "true" if parsing succeeds, in which case "out" argument is assigned with parsed values.
 		/// Otherwise, "out" argument is assumed to be invalid
 		/// </summary>
-		static bool try_parse(const std::string& str, Vector2d<R>& out)
-		{
-			const auto scalars = Utils::parse_scalars<R>(str);
-
-			if (scalars.size() == 1)
-			{
-				out.x = scalars[0];
-				out.y = scalars[0];
-				return true;
-			}
-
-			if (scalars.size() == 2)
-			{
-				out.x = scalars[0];
-				out.y = scalars[1];
-				return true;
-			}
-
-			return false;
-		}
+		static bool try_parse(const std::string& str, Vector2d<R>& out);
 	};
 
 	/// <summary>
@@ -313,18 +289,12 @@ namespace DeepLearning
 		/// <summary>
 		/// Returns random vector
 		/// </summary>
-		static Matrix2x2<R> random()
-		{
-			return { R(Utils::get_random(-1, 1)),
-					 R(Utils::get_random(-1, 1)),
-					 R(Utils::get_random(-1, 1)),
-					 R(Utils::get_random(-1, 1)),};
-		}
+		static Matrix2x2<R> random();
 
 		/// <summary>
 		/// Returns transposed matrix
 		/// </summary>
-		Matrix2x2<R> transpose() const
+		[[nodiscard]] Matrix2x2<R> transpose() const
 		{
 			return { a00, a10, a01, a11 };
 		}
@@ -332,15 +302,15 @@ namespace DeepLearning
 		/// <summary>
 		/// Returns determinant of the matrix
 		/// </summary>
-		R det() const
+		[[nodiscard]] R det() const
 		{
 			return a00 * a11 - a01 * a10;
 		}
 
 		/// <summary>
-		/// Returns inversed matrix or throws exception is inversed matrix does not exist
+		/// Returns inverted matrix or throws exception if inverse matrix does not exist
 		/// </summary>
-		Matrix2x2<R> inverse() const
+		[[nodiscard]] Matrix2x2<R> inverse() const
 		{
 			const auto determinant = det();
 
@@ -432,7 +402,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Returns squared Frobenius norm of the matrix
 		/// </summary>
-		R norm_sqr() const
+		[[nodiscard]] R norm_sqr() const
 		{
 			return a00 * a00 + a01 * a01 + a10 * a10 + a11 * a11;
 		}
@@ -440,7 +410,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Returns Frobenius norm of the matrix
 		/// </summary>
-		R norm() const
+		[[nodiscard]] R norm() const
 		{
 			std::sqrt(norm_sqr());
 		}
@@ -448,7 +418,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Maximal absolute value of matrix elements
 		/// </summary>
-		R max_abs() const
+		[[nodiscard]] R max_abs() const
 		{
 			return std::max(std::abs(a00), std::max(std::abs(a01), std::max(std::abs(a10), std::abs(a11))));
 		}

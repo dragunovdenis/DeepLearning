@@ -20,6 +20,7 @@
 #include <numeric>
 #include "../Diagnostics/Logging.h"
 #include "../Math/ConvolutionUtils.h"
+#include "../Utilities.h"
 
 namespace DeepLearning
 {

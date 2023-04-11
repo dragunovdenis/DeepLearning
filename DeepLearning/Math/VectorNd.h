@@ -18,7 +18,6 @@
 #pragma once
 #include <msgpack.hpp>
 #include <vector>
-#include "../Utilities.h"
 
 namespace DeepLearning
 {
@@ -58,25 +57,23 @@ namespace DeepLearning
 		/// <summary>
 		/// Constructor
 		/// </summary>
+		VectorNd(const std::vector<T>& vec)
+		{
+			if (vec.size() != N)
+				throw std::exception("Invalid initialization");
+
+			std::copy(vec.begin(), vec.end(), _data);
+		}
+
+		/// <summary>
+		/// Constructor
+		/// </summary>
 		VectorNd(const std::initializer_list<T>& list)
 		{
 			if (list.size() != N)
 				throw std::exception("Invalid initialization");
 
-			auto i = 0;
-			for (const auto& val : list)
-				_data[i++] = val;
-		}
-
-		/// <summary>
-		/// Returns randomly assigned instance of the vector
-		/// </summary>
-		static VectorNd random(const T& min = T(0), const T& max = T(1))
-		{
-			VectorNd result;
-			Utils::fill_with_random_values(result._data, result._data + N, min, max);
-
-			return result;
+			std::copy(list.begin(), list.end(), _data);
 		}
 
 		/// <summary>

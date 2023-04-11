@@ -22,8 +22,8 @@
 #include <MnistDataUtils.h>
 #include <filesystem>
 #include <MsgPackUtils.h>
-#include <fstream>
 #include <chrono>
+#include "Utilities.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;

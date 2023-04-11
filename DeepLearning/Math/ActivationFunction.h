@@ -19,7 +19,6 @@
 #include "DiffFunc.h"
 #include<msgpack.hpp>
 #include <memory>
-#include "../Utilities.h"
 #include "../CudaBridge.h"
 #include "Functions.h"
 

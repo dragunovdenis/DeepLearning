@@ -17,6 +17,7 @@
 
 #include "PoolOperator.h"
 #include <exception>
+#include "../Utilities.h"
 
 namespace DeepLearning
 {

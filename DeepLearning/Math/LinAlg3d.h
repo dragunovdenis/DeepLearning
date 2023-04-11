@@ -16,7 +16,6 @@
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #pragma once
-#include "../Utilities.h"
 #include <msgpack.hpp>
 #include "LinAlg2d.h"
 #include "../CudaBridge.h"
@@ -85,10 +84,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Returns random vector
 		/// </summary>
-		static Vector3d<T> random(const T& min = -1, const T& max = 1)
-		{
-			return { T(Utils::get_random(min, max)), T(Utils::get_random(min, max)), T(Utils::get_random(min, max)) };
-		}
+		static Vector3d<T> random(const T& min = -1, const T& max = 1);
 
 		/// <summary>
 		/// Returns L-infinity norm of the vector 
@@ -125,7 +121,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Hadamard (component-wise) product of the vectors
 		/// </summary>
-		CUDA_CALLABLE Vector3d<T> hadamard_prod(const Vector3d<T>& vec) const
+		CUDA_CALLABLE [[nodiscard]] Vector3d<T> hadamard_prod(const Vector3d<T>& vec) const
 		{
 			return { x * vec.x, y * vec.y, z * vec.z };
 		}
@@ -164,43 +160,19 @@ namespace DeepLearning
 		/// <summary>
 		/// Returns a human-readable representation of the vector
 		/// </summary>
-		std::string to_string() const
-		{
-			return std::string("{") + Utils::to_string(x) + ", " + Utils::to_string(y) + ", " + Utils::to_string(z) + "}";
-		}
+		[[nodiscard]] std::string to_string() const;
 
 		/// <summary>
 		/// Tries to parse the given string consisting of 3 comma, semicolon or space separated sub-strings that are "compatible" with type `R`
 		/// into an instance of Vector3d<R>. Returns "true" if parsing succeeds, in which case "out" argument is assigned with parsed values.
 		/// Otherwise, "out" argument is assumed to be invalid
 		/// </summary>
-		static bool try_parse(const std::string& str, Vector3d<T>& out)
-		{
-			const auto scalars = Utils::parse_scalars<T>(str);
-
-			if (scalars.size() == 1)
-			{
-				out.x = scalars[0];
-				out.y = scalars[0];
-				out.z = scalars[0];
-				return true;
-			}
-
-			if (scalars.size() == 3)
-			{
-				out.x = scalars[0];
-				out.y = scalars[1];
-				out.z = scalars[2];
-				return true;
-			}
-
-			return false;
-		}
+		static bool try_parse(const std::string& str, Vector3d<T>& out);
 
 		/// <summary>
 		/// Returns XY projection of the vector
 		/// </summary>
-		Vector2d<T> xy() const
+		[[nodiscard]] Vector2d<T> xy() const
 		{
 			return { x, y };
 		}
@@ -208,7 +180,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Returns XZ projection of the vector
 		/// </summary>
-		Vector2d<T> xz() const
+		[[nodiscard]] Vector2d<T> xz() const
 		{
 			return { x, z };
 		}
@@ -216,7 +188,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Returns YZ projection of the vector
 		/// </summary>
-		Vector2d<T> yz() const
+		[[nodiscard]] Vector2d<T> yz() const
 		{
 			return { y, z };
 		}

@@ -28,10 +28,18 @@ namespace DeepLearningTest
 	{
 		using VectorInTest = VectorNd<Real, 11>;
 
+		/// <summary>
+		/// Returns random vector
+		/// </summary>
+		static VectorInTest get_random_vector()
+		{
+			return VectorInTest(Utils::get_random_std_vector(11, -1, 1));
+		}
+
 		TEST_METHOD(PackingTest)
 		{
 			//Arrange
-			const auto vec = VectorInTest::random();
+			const auto vec = get_random_vector();
 
 			//Act
 			const auto msg = MsgPack::pack(vec);
@@ -43,43 +51,43 @@ namespace DeepLearningTest
 
 		TEST_METHOD(SumWithZeroVectorTest)
 		{
-			StandardTestUtils::SumWithZeroElementTest<VectorInTest>([]() { return VectorInTest::random(); }, VectorInTest{});
+			StandardTestUtils::SumWithZeroElementTest<VectorInTest>([]() { return get_random_vector(); }, VectorInTest{});
 		}
 
 		TEST_METHOD(VectorAdditionCommutativityTest)
 		{
-			StandardTestUtils::AdditionCommutativityTest<VectorInTest>([]() { return VectorInTest::random(); });
+			StandardTestUtils::AdditionCommutativityTest<VectorInTest>([]() { return get_random_vector(); });
 		}
 
 		TEST_METHOD(DifferenceOfEqualVectoreIsZeroTest)
 		{
-			StandardTestUtils::DifferenceOfEqualInstancesTest<VectorInTest>([]() { return VectorInTest::random(); });
+			StandardTestUtils::DifferenceOfEqualInstancesTest<VectorInTest>([]() { return get_random_vector(); });
 		}
 
 		TEST_METHOD(VectorAdditionAssociativityTest)
 		{
-			StandardTestUtils::AdditionAssociativityTest<VectorInTest>([]() { return VectorInTest::random(); });
+			StandardTestUtils::AdditionAssociativityTest<VectorInTest>([]() { return get_random_vector(); });
 		}
 
 		TEST_METHOD(DistributivityOfScalarMultiplicationWuthRespectToVectorAdditionTest)
 		{
-			StandardTestUtils::ScalarMultiplicationDistributivityTest<VectorInTest>([]() { return VectorInTest::random(); });
+			StandardTestUtils::ScalarMultiplicationDistributivityTest<VectorInTest>([]() { return get_random_vector(); });
 		}
 
 		TEST_METHOD(VectorMultiplecationByOneTest)
 		{
-			StandardTestUtils::ScalarMultiplicationByOneTest<VectorInTest>([]() { return VectorInTest::random(); });
+			StandardTestUtils::ScalarMultiplicationByOneTest<VectorInTest>([]() { return get_random_vector(); });
 		}
 
 		TEST_METHOD(VectorUnaryMinusOperatorTest)
 		{
-			StandardTestUtils::UnaryMinusOperatorTest<VectorInTest>([]() { return VectorInTest::random(); });
+			StandardTestUtils::UnaryMinusOperatorTest<VectorInTest>([]() { return get_random_vector(); });
 		}
 
 		TEST_METHOD(VectorConversionToStdVectorAndBackTest)
 		{
 			//Arrange
-			const auto vec = VectorInTest::random();
+			const auto vec = get_random_vector();
 
 			//Act
 			VectorInTest vec_restored;
@@ -92,7 +100,7 @@ namespace DeepLearningTest
 		TEST_METHOD(VectorConversionToStringAndBackTest)
 		{
 			//Arrange
-			const auto vec = VectorInTest::random();
+			const auto vec = get_random_vector();
 
 			//Act
 			VectorInTest vec_restored;
