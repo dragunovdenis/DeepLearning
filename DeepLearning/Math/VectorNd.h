@@ -59,10 +59,7 @@ namespace DeepLearning
 		/// </summary>
 		VectorNd(const std::vector<T>& vec)
 		{
-			if (vec.size() != N)
-				throw std::exception("Invalid initialization");
-
-			std::copy(vec.begin(), vec.end(), _data);
+			assign(vec);
 		}
 
 		/// <summary>
@@ -212,30 +209,6 @@ namespace DeepLearning
 			std::copy(vec.begin(), vec.end(), _data);
 
 			return *this;
-		}
-
-		/// <summary>
-		///	Returns a human-readable representation of the vector
-		/// </summary>
-		[[nodiscard]] std::string to_string() const
-		{
-			return Utils::vector_to_str(to_std_vector());
-		}
-
-		/// <summary>
-		/// Tries to assign vector from the given string. Returns "true" if succeeded
-		/// </summary>
-		static bool try_parse(std::string& str, VectorNd& out)
-		{
-			try
-			{
-				out.assign(Utils::parse_vector<T>(str));
-			} catch (...)
-			{
-				return false;
-			}
-
-			return true;
 		}
 
 		/// <summary>

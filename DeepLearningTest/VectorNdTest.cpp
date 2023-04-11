@@ -96,22 +96,5 @@ namespace DeepLearningTest
 			//Assert
 			Assert::IsTrue(vec == vec_restored, L"Vectors are not the same");
 		}
-
-		TEST_METHOD(VectorConversionToStringAndBackTest)
-		{
-			//Arrange
-			const auto vec = get_random_vector();
-
-			//Act
-			VectorInTest vec_restored;
-			auto str = vec.to_string();
-			const auto parse_result = VectorInTest::try_parse(str, vec_restored);
-
-			//Assert
-			Assert::IsTrue(parse_result, L"Parsing has failed");
-			const auto diff = (vec - vec_restored).max_abs();
-			Logger::WriteMessage(std::format("Difference between the original and restored vectors: {}\n", diff).c_str());
-			Assert::IsTrue(diff < 1e-6, L"Unexpectedly high difference between the original and restored vectors");
-		}
 	};
 }
