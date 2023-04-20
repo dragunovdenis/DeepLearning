@@ -168,5 +168,10 @@ namespace DeepLearning
 		/// Converts the given instance to the one working within the "gpu data context" (CUDA "device" memory)
 		/// </summary>
 		PLayer<GpuDC> to_device() const;
+
+		/// <summary>
+		/// Sets all the "trainable" parameters (weights and biases) to zero
+		/// </summary>
+		void reset() override;
 	};
 }

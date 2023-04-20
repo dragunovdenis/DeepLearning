@@ -535,6 +535,15 @@ namespace DeepLearning
 		return result;
 	}
 
+	template <class D>
+	void Net<D>::reset()
+	{
+		std::ranges::for_each(_layers, [](LayerHandle<D>& layer_handle)
+			{
+				layer_handle.layer().reset();
+			});
+	}
+
 	template class Net<CpuDC>;
 	template class Net<GpuDC>;
 

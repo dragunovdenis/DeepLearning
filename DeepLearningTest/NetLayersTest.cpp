@@ -524,5 +524,45 @@ namespace DeepLearningTest
 				Index2d{ 1 , 1}, 1, ActivationFunctionId::LINEAR);
 			test_linear_activation(layer);
 		}
+
+		/// <summary>
+		/// Runs test of the layer "reset" functionality for the given instance of neural net layer;
+		/// Important: the layer is supposed to have "linear" activation function
+		/// </summary>
+		template <class D>
+		void ran_general_layer_reset_test(ALayer<D>& layer)
+		{
+			//Arrange
+			const typename D::tensor_t input(layer.in_size(), 1, 2);
+			Assert::IsTrue(input.max_abs() > 0, L"Input is not supposed to be zero");
+			const typename D::tensor_t zero_input(layer.in_size(), /*assign zero*/ true);
+			Assert::IsTrue(zero_input.max_abs() <=0, L"Zero input is supposed to be zero");
+
+			//Sanity check that the layer is not in the "reset" state already
+			Assert::IsTrue(layer.squared_weights_sum() > 0, L"Weights are already zero");
+			//In the test below we actually use the assumption about "linear" activation function
+			Assert::IsTrue(layer.act(zero_input).max_abs() > 0, L"Biases are already zero");
+
+			//Act
+			layer.reset();
+
+			//Assert
+			Assert::IsTrue(layer.squared_weights_sum() <= 0, L"Weights are are still non-zero");
+			Assert::IsTrue(layer.act(input).max_abs() <= 0, L"Biases are are still non-zero");
+		}
+
+		TEST_METHOD(CLayerResetTest)
+		{
+			auto layer = CLayer(Index3d{ 11, 25, 13 },
+				Index2d{ 3 , 5 }, 3, ActivationFunctionId::LINEAR);
+
+			ran_general_layer_reset_test(layer);
+		}
+
+		TEST_METHOD(NLayerResetTest)
+		{
+			auto layer = NLayer(35, 123, ActivationFunctionId::LINEAR);
+			ran_general_layer_reset_test(layer);
+		}
 	};
 }

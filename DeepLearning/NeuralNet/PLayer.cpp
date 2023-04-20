@@ -232,6 +232,12 @@ namespace DeepLearning
 		return *this;
 	}
 
+	template <class D>
+	void PLayer<D>::reset()
+	{
+		//no "trainable" parameters so nothing to reset
+	}
+
 	template <>
 	PLayer<GpuDC> PLayer<CpuDC>::to_device() const
 	{

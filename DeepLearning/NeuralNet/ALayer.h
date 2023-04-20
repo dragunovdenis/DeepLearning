@@ -237,5 +237,10 @@ namespace DeepLearning
 		/// Returns sum of squared weight of the layer (needed, for example, to evaluate cost function when L2 regularization is involved)
 		/// </summary>
 		virtual Real squared_weights_sum() const = 0;
+
+		/// <summary>
+		/// Sets all the "trainable" parameters (weights and biases) to zero
+		/// </summary>
+		virtual void reset() = 0;
 	};
 }

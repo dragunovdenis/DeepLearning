@@ -302,5 +302,10 @@ namespace DeepLearning
 		/// additionally, the output dimension of the last layer at the end of the returned collection
 		/// </summary>
 		std::vector<Index3d> get_dimensions() const;
+
+		/// <summary>
+		/// Sets all the "trainable" parameters (weights and biases) to zero
+		/// </summary>
+		void reset();
 	};
 }

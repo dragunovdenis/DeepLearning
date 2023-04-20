@@ -250,6 +250,13 @@ namespace DeepLearning
 		return result;
 	}
 
+	template <class D>
+	void NLayer<D>::reset()
+	{
+		_weights.fill(0);
+		_biases.fill(0);
+	}
+
 	template class NLayer<CpuDC>;
 	template class NLayer<GpuDC>;
 }

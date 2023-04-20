@@ -364,5 +364,29 @@ namespace DeepLearningTest
 			//Assert
 			Assert::IsTrue(net.equal(net_copy), L"Copying failed");
 		}
+
+		TEST_METHOD(NetResetTest)
+		{
+			//Arrange
+			auto net = GenerateStandardNet();
+			//Sanity check
+			for (auto layer_id = 0ull; layer_id < net.layers_count(); ++layer_id)
+			{
+				if (net[layer_id].get_type_id() == LayerTypeId::PULL)
+					continue;
+
+				Assert::IsTrue(net[layer_id].squared_weights_sum() > 0, L"Weights are already zero");
+			}
+
+			//Act
+			net.reset();
+
+			//Assert
+			//Simplified check (without biases), it is because we rely on the fact that net calls "reset" of all the layers.
+			//The fact that weights are zero means that "reset" of the corresponding layer was actually called which
+			//guarantees that both weights and biases are set to zero (see the corresponding tests for the "reset" functionality of layers)
+			for (auto layer_id = 0ull; layer_id < net.layers_count(); ++layer_id)
+				Assert::IsTrue(net[layer_id].squared_weights_sum() <= 0, L"Weights are non-zero");
+		}
 	};
 }

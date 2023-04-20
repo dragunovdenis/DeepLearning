@@ -324,6 +324,16 @@ namespace DeepLearning
 		return result;
 	}
 
+	template <class D>
+	void CLayer<D>::reset()
+	{
+		std::ranges::for_each(_filters,
+			[](typename D::tensor_t& filter)
+			{ filter.fill(0); });
+
+		_biases.fill(0);
+	}
+
 	template class CLayer<CpuDC>;
 	template class CLayer<GpuDC>;
 }
