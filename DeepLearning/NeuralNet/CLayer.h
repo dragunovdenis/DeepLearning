@@ -144,7 +144,7 @@ namespace DeepLearning
 		/// <summary>
 		/// See description in the base class
 		/// </summary>
-		void update(const LayerGradient<D>& gradient, const Real& reg_factor) override;
+		void update(const LayerGradient<D>& gradient, const Real& l_rate, const Real& reg_factor) override;
 
 		/// <summary>
 		/// See description in the base class

@@ -404,7 +404,7 @@ namespace DeepLearningTest::StandardTestUtils
 	inline void LogRealAndAssertLessOrEqualTo(const std::string& message, const Real& value, const Real& upper_threshold)
 	{
 		LogReal(message, value);
-		Assert::IsTrue(value <= upper_threshold, CA2W((message + ": " + std::string("Upper threshold exceeded.")).c_str()));
+		Assert::IsTrue(value <= upper_threshold, CA2W((message + ": " + std::string("Upper threshold has been exceeded.")).c_str()));
 	}
 
 	/// <summary>

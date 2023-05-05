@@ -59,9 +59,9 @@ namespace DeepLearning
 		const auto layer_scripts = Utils::split_by_char(script, '\n');
 
 		Index3d prev_layer_out_size = { -1, -1, -1 };
-		for (const auto& script : layer_scripts)
+		for (const auto& sub_script : layer_scripts)
 		{
-			auto script_normalized = Utils::normalize_string(script);
+			auto script_normalized = Utils::normalize_string(sub_script);
 			const auto layer_type_id = parse_layer_type(Utils::extract_word(script_normalized));
 
 			if (layer_type_id == LayerTypeId::UNKNOWN)
@@ -140,7 +140,7 @@ namespace DeepLearning
 		std::random_device rd;
 		std::mt19937 g(rd());
 
-		std::shuffle(indices.begin(), indices.end(), g);
+		std::ranges::shuffle(indices, g);
 	}
 
 	/// <summary>
@@ -282,7 +282,8 @@ namespace DeepLearning
 				batch_start_elem_id = batch_end_elem_id;
 
 				for (std::size_t layer_id = 0; layer_id < _layers.size(); layer_id++)
-					_layers[layer_id].layer().update(gradient_collectors[layer_id].calc_average_gradient(-learning_rate), reg_factor);
+					_layers[layer_id].layer().update(gradient_collectors[layer_id].get_gradient_sum(),
+						-learning_rate / static_cast<Real>(gradient_collectors[layer_id].items_count()), reg_factor);
 			}
 
 			epoch_callback(epoch_id, Real(0.5) * lambda_scaled);
@@ -335,7 +336,7 @@ namespace DeepLearning
 		const auto reg_factor = -learning_rate * lambda;
 		for (auto layer_id = 0ull; layer_id < _layers.size(); ++layer_id)
 		{
-			_layers[layer_id].layer().update(gradient[layer_id] * (-learning_rate), reg_factor);
+			_layers[layer_id].layer().update(gradient[layer_id], -learning_rate, reg_factor);
 		}
 	}
 

@@ -68,12 +68,17 @@ namespace DeepLearning
 		/// <summary>
 		///	L-infinity norm
 		/// </summary>
-		Real max_abs() const;
+		[[nodiscard]] Real max_abs() const;
 
 		/// <summary>
 		///	Returns "true" if the instance is trivial (default assigned)
 		/// </summary>
-		bool empty() const;
+		[[nodiscard]] bool empty() const;
+
+		/// <summary>
+		/// Adds the given gradient instance multiplied by the given scalar to the current gradient instance
+		/// </summary>
+		LayerGradient& add_scaled(const LayerGradient& lg, const Real& scalar);
 	};
 
 	/// <summary>

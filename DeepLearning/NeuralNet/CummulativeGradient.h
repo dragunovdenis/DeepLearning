@@ -64,6 +64,16 @@ namespace DeepLearning
 		LayerGradient<D> calc_average_gradient(const Real scale_factor = Real(1)) const;
 
 		/// <summary>
+		/// Returns reference to the accumulated gradient (sum of all added gradients)
+		/// </summary>
+		LayerGradient<D>& get_gradient_sum();
+
+		/// <summary>
+		/// Returns number of accumulated items
+		/// </summary>
+		std::size_t items_count() const;
+
+		/// <summary>
 		/// Resets the cumulative structure
 		/// </summary>
 		void reset();

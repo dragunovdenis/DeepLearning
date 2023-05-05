@@ -53,7 +53,9 @@ namespace DeepLearning
 		if (size() != collection.size())
 			throw std::exception("Collections must be of the same size");
 
-		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread), begin(), end(), collection.begin(), begin(), [scalar] __device__ (const auto& x, const auto& y) { return x + scalar * y; });
+		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread),
+			begin(), end(), collection.begin(), begin(),
+			[scalar] __device__ (const auto& x, const auto& y) { return x + scalar * y; });
 		CUDA_SANITY_CHECK
 	}
 
@@ -62,7 +64,21 @@ namespace DeepLearning
 		if (size() != collection.size())
 			throw std::exception("Collections must be of the same size");
 
-		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread), begin(), end(), collection.begin(), begin(), [scalar] __device__ (const auto& x, const auto& y) { return x * scalar +  y; });
+		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread),
+			begin(), end(), collection.begin(), begin(),
+			[scalar] __device__ (const auto& x, const auto& y) { return x * scalar +  y; });
+		CUDA_SANITY_CHECK
+	}
+
+	void BasicCudaCollection::scale_and_add_scaled(const Real& scalar_0, const BasicCudaCollection& collection,
+		const Real& scalar_1)
+	{
+		if (size() != collection.size())
+			throw std::exception("Collections must be of the same size");
+
+		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread),
+			begin(), end(), collection.begin(), begin(),
+			[scalar_0, scalar_1] __device__(const auto & x, const auto & y) { return x * scalar_0 + y * scalar_1; });
 		CUDA_SANITY_CHECK
 	}
 

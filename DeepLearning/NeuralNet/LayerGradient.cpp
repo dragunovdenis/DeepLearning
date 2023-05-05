@@ -121,6 +121,20 @@ namespace DeepLearning
 		return Weights_grad.empty() && Biases_grad.empty();
 	}
 
+	template <class D>
+	LayerGradient<D>& LayerGradient<D>::add_scaled(const LayerGradient& lg, const Real& scalar)
+	{
+		Biases_grad.add_scaled(lg.Biases_grad, scalar);
+
+		if (Weights_grad.size() != lg.Weights_grad.size())
+			throw std::exception("Inconsistent data");
+
+		for (auto item_id = 0ull; item_id < Weights_grad.size(); ++item_id)
+			Weights_grad[item_id].add_scaled(lg.Weights_grad[item_id], scalar);
+
+		return *this;
+	}
+
 	template struct LayerGradient<CpuDC>;
 	template struct LayerGradient<GpuDC>;
 }

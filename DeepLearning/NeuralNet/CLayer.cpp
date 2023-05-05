@@ -166,18 +166,18 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	void CLayer<D>::update(const LayerGradient<D>& gradient, const Real& reg_factor)
+	void CLayer<D>::update(const LayerGradient<D>& gradient, const Real& l_rate, const Real& reg_factor)
 	{
 		const auto& weights_increment = gradient.Weights_grad;
 
 		if (reg_factor != Real(0))
 			for (auto filter_id = 0ull; filter_id < _filters.size(); filter_id++)
-				_filters[filter_id].scale_and_add(weights_increment[filter_id], Real(1) + reg_factor);
+				_filters[filter_id].scale_and_add_scaled(Real(1) + reg_factor, weights_increment[filter_id], l_rate);
 		else
 			for (auto filter_id = 0ull; filter_id < _filters.size(); filter_id++)
-				_filters[filter_id].add(weights_increment[filter_id]);
+				_filters[filter_id].add_scaled(weights_increment[filter_id], l_rate);
 
-		_biases.add(gradient.Biases_grad);
+		_biases.add_scaled(gradient.Biases_grad, l_rate);
 	}
 
 	template <class D>

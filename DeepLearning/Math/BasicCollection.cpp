@@ -37,7 +37,18 @@ namespace DeepLearning
 		if (size() != collection.size())
 			throw std::exception("Collections must be of the same size");
 
-		std::transform(begin(), end(), collection.begin(), begin(), [scalar](const auto& x, const auto& y) { return x + y * scalar; });
+		std::transform(begin(), end(), collection.begin(), begin(),
+			[scalar](const auto& x, const auto& y) { return x + y * scalar; });
+	}
+
+	void BasicCollection::scale_and_add_scaled(const Real& scalar_0, const BasicCollection& collection,
+		const Real& scalar_1)
+	{
+		if (size() != collection.size())
+			throw std::exception("Collections must be of the same size");
+
+		std::transform(begin(), end(), collection.begin(), begin(),
+			[scalar_0, scalar_1](const auto& x, const auto& y) { return x * scalar_0 + y * scalar_1; });
 	}
 
 	void BasicCollection::scale_and_add(const BasicCollection& collection, const Real& scalar)

@@ -116,7 +116,7 @@ namespace DeepLearning
 		/// <summary>
 		/// For the "pooling" layer this method does nothing except a sanity check that the input increments are empty
 		/// </summary>
-		void update(const LayerGradient<D>& gradient, const Real& reg_factor) override;
+		void update(const LayerGradient<D>& gradient, const Real& l_rate, const Real& reg_factor) override;
 
 		/// <summary>
 		/// Returns zero initialized instance of cumulative gradient suitable for the current instance of the layer

@@ -49,6 +49,18 @@ namespace DeepLearning
 	}
 
 	template <class D>
+	LayerGradient<D>& CummulativeGradient<D>::get_gradient_sum()
+	{
+		return _gradient_sum;
+	}
+
+	template <class D>
+	std::size_t CummulativeGradient<D>::items_count() const
+	{
+		return _accumulated_items_count;
+	}
+
+	template <class D>
 	void CummulativeGradient<D>::reset()
 	{
 		_gradient_sum.Biases_grad.fill(Real(0));

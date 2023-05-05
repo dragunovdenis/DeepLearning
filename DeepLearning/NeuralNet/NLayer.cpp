@@ -144,7 +144,7 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	void NLayer<D>::update(const LayerGradient<D>& gradient, const Real& reg_factor)
+	void NLayer<D>::update(const LayerGradient<D>& gradient, const Real& l_rate, const Real& reg_factor)
 	{
 		const auto& weights_increment = gradient.Weights_grad;
 
@@ -152,11 +152,11 @@ namespace DeepLearning
 			throw std::exception("Invalid input");
 
 		if (reg_factor != Real(0))
-			_weights.scale_and_add(weights_increment[0], Real(1) + reg_factor);
+			_weights.scale_and_add_scaled(Real(1) + reg_factor, weights_increment[0], l_rate);
 		else
-			_weights.add(weights_increment[0]);
+			_weights.add_scaled(weights_increment[0], l_rate);
 
-		_biases.add(gradient.Biases_grad);
+		_biases.add_scaled(gradient.Biases_grad, l_rate);
 	}
 
 	template <class D>

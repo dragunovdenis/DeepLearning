@@ -53,6 +53,11 @@ namespace DeepLearning
 		void add_scaled(const BasicCollection& collection, const Real& scalar);
 
 		/// <summary>
+		/// Scales the current collection by "scalar_0" and adds the given collection scaled by "scalar_1"
+		/// </summary>
+		void scale_and_add_scaled(const Real& scalar_0, const BasicCollection& collection, const Real& scalar_1);
+
+		/// <summary>
 		/// Adds the given collection to the current collection scaled by the given factor
 		/// </summary>
 		void scale_and_add(const BasicCollection& collection, const Real& scalar);
@@ -71,12 +76,12 @@ namespace DeepLearning
 		/// <summary>
 		/// Size of the collection
 		/// </summary>
-		virtual std::size_t size() const = 0;
+		[[nodiscard]] virtual std::size_t size() const = 0;
 
 		/// <summary>
 		/// Returns number of preallocated elements ("capacity" can be greater than the size of collection)
 		/// </summary>
-		virtual std::size_t capacity() const = 0;
+		[[nodiscard]] virtual std::size_t capacity() const = 0;
 
 		/// <summary>
 		/// Pointer to the first element of the vector
@@ -86,7 +91,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Pointer to the first element of the vector (constant version)
 		/// </summary>
-		const Real* begin() const;
+		[[nodiscard]] const Real* begin() const;
 
 		/// <summary>
 		/// Pointer to the "behind last" element of the vector
@@ -96,7 +101,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Pointer to the "behind last" element of the vector (constant version)
 		/// </summary>
-		const Real* end() const;
+		[[nodiscard]] const Real* end() const;
 
 		/// <summary>
 		/// Subscript operator
@@ -111,7 +116,7 @@ namespace DeepLearning
 		/// <summary>
 		/// "Maximal absolute value" norm ("infinity" norm) of the collection
 		/// </summary>
-		Real max_abs() const;
+		[[nodiscard]] Real max_abs() const;
 
 		/// <summary>
 		/// Returns sum of all the elements of the collection transformed with the given operator
@@ -121,7 +126,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Returns sum of squares of the elements in the collection
 		/// </summary>
-		Real sum_of_squares() const;
+		[[nodiscard]] Real sum_of_squares() const;
 
 		/// <summary>
 		/// Assigns the given value to all the elements of the collection
@@ -131,7 +136,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Returns "true" if the collection is empty
 		/// </summary>
-		bool empty() const;
+		[[nodiscard]] bool empty() const;
 
 		/// <summary>
 		/// Performs the Hadamard (element-wise) product operation between the current collection and the input
@@ -152,7 +157,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Calculates dot product with another collection of the same size
 		/// </summary>
-		Real dot_product(const BasicCollection& collection) const;
+		[[nodiscard]] Real dot_product(const BasicCollection& collection) const;
 
 		/// <summary>
 		/// Returns index of the "maximal element" defined by the given comparer
@@ -174,12 +179,12 @@ namespace DeepLearning
 		/// Converter to std::vector
 		/// </summary>
 		/// <returns></returns>
-		std::vector<Real> to_stdvector() const;
+		[[nodiscard]] std::vector<Real> to_stdvector() const;
 
 		/// <summary>
 		/// Returns read-only memory handle to the data array of the collection
 		/// </summary>
-		RealMemHandleConst get_handle() const;
+		[[nodiscard]] RealMemHandleConst get_handle() const;
 
 		/// <summary>
 		/// Returns memory handle to the data array of the collection
@@ -196,16 +201,16 @@ namespace DeepLearning
 		/// <summary>
 		/// Returns "true" if at least one element of the collection is "nan"
 		/// </summary>
-		bool is_nan() const;
+		[[nodiscard]] bool is_nan() const;
 
 		/// <summary>
 		/// Returns "true" if at least one element of the collection is infinite (positive or negative)
 		/// </summary>
-		bool is_inf() const;
+		[[nodiscard]] bool is_inf() const;
 
 		/// <summary>
 		/// Virtual destructor to ensure that resources of the descending classes are properly released
 		/// </summary>
-		virtual ~BasicCollection() {}
+		virtual ~BasicCollection() = default;
 	};
 }

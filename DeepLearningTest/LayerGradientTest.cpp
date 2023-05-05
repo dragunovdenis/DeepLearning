@@ -40,8 +40,8 @@ namespace DeepLearningTest
 			return result;
 
 		result.Biases_grad.standard_random_fill();
-		for (auto item_id = 0ull; item_id < result.Weights_grad.size(); ++item_id)
-			result.Weights_grad[item_id].standard_random_fill();
+		for (auto& item : result.Weights_grad)
+			item.standard_random_fill();
 
 		return result;
 	}
@@ -82,6 +82,28 @@ namespace DeepLearningTest
 		TEST_METHOD(MultiplecationByOneTest)
 		{
 			StandardTestUtils::ScalarMultiplicationByOneTest<LayerGradient<CpuDC>>([]() { return layer_gradient_factory(); });
+		}
+
+		TEST_METHOD(AddScaledTest)
+		{
+			//Arrange
+			const auto gradient0 = layer_gradient_factory();
+			const auto gradient1 = layer_gradient_factory();
+			const auto scalar = Utils::get_random(1.0, 5.0);
+
+			//Sanity checks
+			Assert::IsTrue(gradient0.max_abs() > 0 && gradient1.max_abs() > 0, L"Gradients are supposed to be nonzero");
+			Assert::IsTrue(gradient0 != gradient1, L"Gradients are supposed to be different");
+
+			//Act
+			auto gradient = gradient0;
+			gradient.add_scaled(gradient1, scalar);
+
+			//Assert
+			const auto reference = gradient0 + gradient1 * scalar;
+
+			const auto diff = (gradient - reference).max_abs();
+			StandardTestUtils::LogRealAndAssertLessOrEqualTo("Difference", diff, 0);
 		}
 	};
 }

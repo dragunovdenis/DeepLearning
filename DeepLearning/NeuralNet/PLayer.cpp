@@ -157,7 +157,7 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	void PLayer<D>::update(const LayerGradient<D>& gradient, const Real& reg_factor)
+	void PLayer<D>::update(const LayerGradient<D>& gradient, const Real& l_rate, const Real& reg_factor)
 	{
 		//Sanity check 
 		if (gradient.Weights_grad.size() != 0 || gradient.Biases_grad.size() != 0)

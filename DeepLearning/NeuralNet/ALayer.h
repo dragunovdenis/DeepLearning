@@ -181,17 +181,18 @@ namespace DeepLearning
 			typename D::tensor_t& input_grad, LayerGradient<D>& layer_grad, const bool evaluate_input_gradient = true) const = 0;
 
 		/// <summary>
-		/// Adds given increments to the weights and biases respectively
+		/// Adds given increments multiplied by the "learning rate" to the weights and biases respectively
 		/// </summary>
 		/// <param name="gradient">Increment for weights and biases</param>
+		/// <param name="l_rate">Learning rate</param>
 		/// <param name="reg_factor">Regularization factor, that (if non-zero) 
 		/// results in term "reg_factor*w_i" being added to each weight "w_i" </param>
-		virtual void update(const LayerGradient<D>& gradient, const Real& reg_factor) = 0;
+		virtual void update(const LayerGradient<D>& gradient, const Real& l_rate, const Real& reg_factor) = 0;
 
 		/// <summary>
 		/// Returns zero initialized instance of cumulative gradient suitable for the current instance of the layer
 		/// </summary>
-		virtual CummulativeGradient<D> init_cumulative_gradient() const
+		[[nodiscard]] virtual CummulativeGradient<D> init_cumulative_gradient() const
 		{
 			return CummulativeGradient<D>(weight_tensor_size(), out_size());
 		}

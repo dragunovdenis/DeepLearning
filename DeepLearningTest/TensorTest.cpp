@@ -448,20 +448,20 @@ namespace DeepLearningTest
 			}
 		}
 
-		TEST_METHOD(AddScaleBinaryTest)
+		TEST_METHOD(AddScaledTest)
 		{
 			//Arrange
 			const auto tensor_size = Index3d{ 10, 22, 33 };
-			auto tensor1 = TensorFactory(tensor_size);//filled with random numbers
+			const auto tensor1 = TensorFactory(tensor_size);//filled with random numbers
 			const auto tensor2 = TensorFactory(tensor_size);//filled with random numbers
-			const auto scalar = Utils::get_random(-1, 1) + Real(2);
-			Assert::IsTrue(tensor1.max_abs() > 0 && tensor2.max_abs() > 0 && scalar > 0,
-				L"Tensors and scalar are supposed to be nonzero");
+			const auto scalar = Utils::get_random(1, 5);
+			Assert::IsTrue(tensor1.max_abs() > 0 && tensor2.max_abs() > 0,
+				L"Tensors are supposed to be nonzero");
 
 			//Act
 			auto result1 = tensor1;
 			result1.add_scaled(tensor2, scalar);
-			auto result2 = tensor1 + tensor2 * scalar;
+			const auto result2 = tensor1 + tensor2 * scalar;
 
 			//Assert
 			Assert::IsTrue(result1 == result2, L"Results are supposed to be the same");
@@ -471,19 +471,39 @@ namespace DeepLearningTest
 		{
 			//Arrange
 			const auto tensor_size = Index3d{ 10, 22, 33 };
-			auto tensor1 = TensorFactory(tensor_size);//filled with random numbers
+			const auto tensor1 = TensorFactory(tensor_size);//filled with random numbers
 			const auto tensor2 = TensorFactory(tensor_size);//filled with random numbers
-			const auto scalar = Utils::get_random(-1, 1) + Real(2);
-			Assert::IsTrue(tensor1.max_abs() > 0 && tensor2.max_abs() > 0 && scalar > 0,
-				L"Tensors and scalar are supposed to be nonzero");
+			const auto scalar = Utils::get_random(1, 5);
+			Assert::IsTrue(tensor1.max_abs() > 0 && tensor2.max_abs() > 0,
+				L"Tensors are supposed to be nonzero");
 
 			//Act
 			auto result1 = tensor1;
 			result1.scale_and_add(tensor2, scalar);
-			auto result2 = tensor1 * scalar  + tensor2;
+			const auto result2 = tensor1 * scalar  + tensor2;
 
 			//Assert
-			Assert::IsTrue((result1 - result2).max_abs() < 10 * std::numeric_limits<Real>::epsilon(), L"Results are supposed to be the same");
+			Assert::IsTrue(result1 == result2, L"Results are supposed to be the same");
+		}
+
+		TEST_METHOD(ScaleAndAddScaledTest)
+		{
+			//Arrange
+			const auto tensor_size = Index3d{ 10, 22, 33 };
+			const auto tensor1 = TensorFactory(tensor_size);//filled with random numbers
+			const auto tensor2 = TensorFactory(tensor_size);//filled with random numbers
+			const auto scalar_0 = Utils::get_random(1, 5);
+			const auto scalar_1 = Utils::get_random(1, 5);
+			Assert::IsTrue(tensor1.max_abs() > 0 && tensor2.max_abs() > 0,
+				L"Tensors are supposed to be nonzero");
+
+			//Act
+			auto result1 = tensor1;
+			result1.scale_and_add_scaled(scalar_0, tensor2, scalar_1);
+			const auto result2 = tensor1 * scalar_0 + tensor2 * scalar_1;
+
+			//Assert
+			Assert::IsTrue(result1 == result2, L"Results are supposed to be the same");
 		}
 
 		void min_max_pool_test_general(const bool max)
