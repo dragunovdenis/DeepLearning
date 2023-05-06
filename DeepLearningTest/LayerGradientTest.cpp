@@ -105,5 +105,27 @@ namespace DeepLearningTest
 			const auto diff = (gradient - reference).max_abs();
 			StandardTestUtils::LogRealAndAssertLessOrEqualTo("Difference", diff, 0);
 		}
+
+		TEST_METHOD(ScaleAndAddTest)
+		{
+			//Arrange
+			const auto gradient0 = layer_gradient_factory();
+			const auto gradient1 = layer_gradient_factory();
+			const auto scalar = Utils::get_random(1.0, 5.0);
+
+			//Sanity checks
+			Assert::IsTrue(gradient0.max_abs() > 0 && gradient1.max_abs() > 0, L"Gradients are supposed to be nonzero");
+			Assert::IsTrue(gradient0 != gradient1, L"Gradients are supposed to be different");
+
+			//Act
+			auto gradient = gradient0;
+			gradient.scale_and_add(scalar, gradient1);
+
+			//Assert
+			const auto reference = gradient0 * scalar + gradient1;
+
+			const auto diff = (gradient - reference).max_abs();
+			StandardTestUtils::LogRealAndAssertLessOrEqualTo("Difference", diff, 0);
+		}
 	};
 }

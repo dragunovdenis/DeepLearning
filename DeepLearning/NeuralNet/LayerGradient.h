@@ -79,6 +79,11 @@ namespace DeepLearning
 		/// Adds the given gradient instance multiplied by the given scalar to the current gradient instance
 		/// </summary>
 		LayerGradient& add_scaled(const LayerGradient& lg, const Real& scalar);
+
+		/// <summary>
+		/// Scales the current instance of gradient by the given scalar and adds the given instance of gradient to it
+		/// </summary>
+		LayerGradient& scale_and_add(const Real& scalar, const LayerGradient& lg);
 	};
 
 	/// <summary>
