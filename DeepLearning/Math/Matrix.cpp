@@ -282,16 +282,14 @@ namespace DeepLearning
 			throw std::exception("Incompatible matrix-vector dimension");
 
 		result.resize({ 1ull, 1ull, _col_dim });
+		result.fill(0);
 
-		const auto last_row_offset = _col_dim * (_row_dim - 1);
-
-		auto r_data = result.begin();
-
-		for (std::size_t col_id = 0; col_id < _col_dim; col_id++)
+		for (std::size_t row_id = 0; row_id < _row_dim; ++row_id)
 		{
-			const auto col_begin = ColumnIterator((_data + col_id), _col_dim);
-			const auto col_end = ++ColumnIterator((_data + last_row_offset + col_id), _col_dim);
-			r_data[col_id] = std::inner_product(col_begin, col_end, vec.begin(), Real(0));
+			const auto scalar = vec[row_id];
+
+			std::transform(result.begin(), result.end(), begin() + row_id * _col_dim, result.begin(),
+				[scalar](const auto& x, const auto& y) { return y * scalar + x; });
 		}
 	}
 
@@ -403,11 +401,11 @@ namespace DeepLearning
 		result.resize({ 1ull, vec_col.size(), vec_row.size() });
 		const auto col_dim = result.col_dim();
 
-		for (std::size_t col_id = 0; col_id < vec_row.size(); col_id++)
+		for (std::size_t row_id = 0; row_id < vec_col.size(); row_id++)
 		{
-			const auto col_begin = ColumnIterator(&*(result.begin() + col_id), col_dim);
-			const auto factor = vec_row[col_id];
-			std::transform(vec_col.begin(), vec_col.end(), col_begin, [factor](const auto& x) {return factor * x; });
+			const auto factor = vec_col[row_id];
+			std::transform(vec_row.begin(), vec_row.end(),
+				result.begin() + col_dim * row_id, [factor](const auto& x) {return factor * x; });
 		}
 	}
 
