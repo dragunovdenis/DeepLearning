@@ -95,17 +95,39 @@ namespace DeepLearning
 			}
 		};
 
-		/// <summary>
-		/// Evaluates network at the given input
-		/// </summary>
-		/// <param name="input">Input tensor</param>
-		/// <param name="eval_data">Evaluation data. When the method returns,
-		/// "Out" field of the object contains result of evaluation. One should
-		/// make no assumptions about the content of"In" field of the object.</param>
-		/// <param name="aux_data_ptr">Pointer to an auxiliary data structure that is used in the training process</param>
-		void act(const typename D::tensor_t& input, InOutData& eval_data, std::vector<typename ALayer<D>::AuxLearningData>* const aux_data_ptr) const;
-
 	public:
+		/// <summary>
+		/// Data structure that represents auxiliary resources needed to do inferring/training of the neural net 
+		/// </summary>
+		class Context
+		{
+			friend class Net;//keep everything private and visible only for the Net class
+			/// <summary>
+			/// Auxiliary resources used in the calculation of the neural net's gradient 
+			/// </summary>
+			std::vector<typename ALayer<D>::AuxLearningData> gradient_cache;
+			
+			/// <summary>
+			/// Auxiliary resources used in the calculation of the neural net's value 
+			/// </summary>
+			InOutData value_cache;
+
+		public:
+			/// <summary>
+			/// Read-only access to the "out" of the value cache
+			/// </summary>
+			const typename D::tensor_t& get_out() const;
+
+			/// <summary>
+			/// Default constructor
+			/// </summary>
+			Context() = default;
+
+			/// <summary>
+			/// Constructor allocating resources for the given number of layers
+			/// </summary>
+			Context(const std::size_t layers_count):gradient_cache(layers_count){}
+		};
 
 		MSGPACK_DEFINE(_layers);
 
@@ -150,7 +172,17 @@ namespace DeepLearning
 		/// <summary>
 		/// Returns output of the neural network calculated for the given input
 		/// </summary>
-		typename D::tensor_t act(const typename D::tensor_t& input, std::vector<typename ALayer<D>::AuxLearningData>* const aux_data_ptr = nullptr) const;
+		typename D::tensor_t act(const typename D::tensor_t& input) const;
+
+		/// <summary>
+		/// Evaluates network at the given input
+		/// </summary>
+		/// <param name="input">Input tensor</param>
+		/// <param name="context">Computation context (memory that can be allocated once and then re-used in many computations).
+		/// Context as such is not thread-safe</param>
+		/// <param name="calc_gradient_cache">If "true", gradient cache will be calculated during the method invocation and stored to the context.
+		/// The memory for the gradient cache should be allocated by the caller.</param>
+		void act(const typename D::tensor_t& input, Context& context, const bool calc_gradient_cache) const;
 
 		/// <summary>
 		/// A method that performs training of the neural net based on the given input data with references
@@ -188,11 +220,25 @@ namespace DeepLearning
 		/// Returns gradient of the given cost function with respect to the weights and biases of the neural net.
 		/// Additionally to that returns the "value" of the network inferred at the given "item".
 		/// </summary>
-		/// <param name="training_item">An item at which the gradient should be evaluated</param>
+		/// <param name="item">An item at which the gradient should be evaluated</param>
 		/// <param name="target_value">"Label" item that should be used in the cost function</param>
 		/// <param name="cost_func_id">Id of the cost function</param>
 		std::tuple<std::vector<LayerGradient<D>>, typename D::tensor_t> calc_gradient_and_value(
-			const typename D::tensor_t& training_item, const typename D::tensor_t& target_value, const CostFunctionId& cost_func_id);
+			const typename D::tensor_t& item, const typename D::tensor_t& target_value, const CostFunctionId& cost_func_id);
+
+		/// <summary>
+		/// Calculates gradient of the given cost function with respect to the weights and biases of the neural net.
+		/// Additionally to that calculates the "value" of the network inferred at the given "item".
+		/// </summary>
+		/// <param name="item">An item at which the gradient should be evaluated</param>
+		/// <param name="target_value">"Label" item that should be used in the cost function</param>
+		/// <param name="cost_func_id">Id of the cost function</param>
+		/// <param name="out_gradient">Output parameter the gradient is calculated into</param>
+		/// <param name="out_value">Output parameter the value is calculated into</param>
+		/// <param name="context">Calculation context, i.e. resources tht can be
+		/// allocated once and then re-used in each call of the method. Serves optimization purposes</param>
+		void calc_gradient_and_value(const typename D::tensor_t& item, const typename D::tensor_t& target_value, const CostFunctionId& cost_func_id,
+			std::vector<LayerGradient<D>>& out_gradient, typename D::tensor_t& out_value, Context& context);
 
 		/// <summary>
 		/// Updates weights and biases of all the layers with the given gradient
@@ -248,7 +294,7 @@ namespace DeepLearning
 		/// <summary>
 		///	Returns number of layers in the net
 		/// </summary>
-		std::size_t layers_count() const;
+		[[nodiscard]] std::size_t layers_count() const;
 
 		/// <summary>
 		/// Logs the net into the given directory (will be created if it does not exist) 
@@ -262,7 +308,7 @@ namespace DeepLearning
 		/// Encodes hyper-parameters of all the layers in a string-script which then can be used to instantiate 
 		/// another instance of the net with the same set of hyper-parameters (see the constructor taking string argument)
 		/// </summary>
-		std::string to_script() const;
+		[[nodiscard]] std::string to_script() const;
 
 		/// <summary>
 		/// Saves net as a script-like string to the given file
@@ -284,24 +330,24 @@ namespace DeepLearning
 		/// <summary>
 		/// Returns a human-readable description of the net through description of all its layers
 		/// </summary>
-		std::string to_string() const;
+		[[nodiscard]] std::string to_string() const;
 
 		/// <summary>
 		///	Returns dimensions of the input data item (negative if the network does not have layers yet) 
 		/// </summary>
-		Index3d in_size() const;
+		[[nodiscard]] Index3d in_size() const;
 
 		/// <summary>
 		///	Returns dimensions of the output data item (negative if the network does not have layers yet)
 		/// </summary>
-		Index3d out_size() const;
+		[[nodiscard]] Index3d out_size() const;
 
 		/// <summary>
 		/// Returns collection of input dimensions of all the neural layers
 		/// in the order that corresponds to the order of layers and,
 		/// additionally, the output dimension of the last layer at the end of the returned collection
 		/// </summary>
-		std::vector<Index3d> get_dimensions() const;
+		[[nodiscard]] std::vector<Index3d> get_dimensions() const;
 
 		/// <summary>
 		/// Sets all the "trainable" parameters (weights and biases) to zero

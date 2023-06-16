@@ -108,28 +108,30 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	void Net<D>::act(const typename D::tensor_t& input, InOutData& eval_data, std::vector<typename ALayer<D>::AuxLearningData>* const aux_data_ptr) const
+	void Net<D>::act(const typename D::tensor_t& input, Context& context, const bool calc_gradient_cache) const
 	{
-		if (aux_data_ptr != nullptr && aux_data_ptr->size() != _layers.size())
+		if (calc_gradient_cache && context.gradient_cache.size() != _layers.size())
 			throw std::exception("Invalid auxiliary data.");
 
-		const auto training = aux_data_ptr != nullptr;
+		auto& eval_data = context.value_cache;
+
 		eval_data.Out = input;
 		for (auto layer_id = 0ull; layer_id < _layers.size(); layer_id++)
 		{
 			eval_data.swap();
-			_layers[layer_id].layer().ApplyDropout(eval_data.In, training);
-			_layers[layer_id].layer().act(eval_data.In, eval_data.Out, training ? &(*aux_data_ptr)[layer_id] : nullptr);
+			_layers[layer_id].layer().ApplyDropout(eval_data.In, calc_gradient_cache);
+			_layers[layer_id].layer().act(eval_data.In, eval_data.Out,
+				calc_gradient_cache ? &context.gradient_cache[layer_id] : nullptr);
 		}
 	}
 
 	template <class D>
-	typename D::tensor_t Net<D>::act(const typename D::tensor_t& input, std::vector<typename ALayer<D>::AuxLearningData>* const aux_data_ptr) const
+	typename D::tensor_t Net<D>::act(const typename D::tensor_t& input) const
 	{
-		InOutData evalData;
-		act(input, evalData, aux_data_ptr);
+		Context context;
+		act(input, context, false);
 
-		return evalData.Out;
+		return context.value_cache.Out;
 	}
 
 	/// <summary>
@@ -208,9 +210,8 @@ namespace DeepLearning
 
 		ThreadPool thread_pool(threads_to_use);
 
-		auto aux_learning_data = std::vector<std::vector<typename ALayer<D>::AuxLearningData>>(threads_to_use, std::vector<typename ALayer<D>::AuxLearningData>(_layers.size()));
+		auto context_data = std::vector <Context>(threads_to_use, Context(_layers.size()));
 		auto layer_gradient_data = std::vector<std::vector<LayerGradient<D>>>(threads_to_use, std::vector<LayerGradient<D>>(_layers.size()));
-		auto eval_data = std::vector<InOutData>(threads_to_use);
 		std::mutex mutex;
 
 		auto  data_index_mapping = get_indices(training_items.size());
@@ -245,15 +246,16 @@ namespace DeepLearning
 
 					thread_pool.queue_job([&, current_thread_start_id, current_thread_end_id](const std::size_t local_thread_id)
 						{
-							auto& aux_data = aux_learning_data[local_thread_id];
-							auto& e_data = eval_data[local_thread_id];
+							auto& context = context_data[local_thread_id];
+							auto& aux_data = context.gradient_cache;
+							auto& e_data = context.value_cache;
 							auto& back_prop_out = layer_gradient_data[local_thread_id];
 							for (auto elem_id = current_thread_start_id; elem_id < current_thread_end_id; elem_id++)
 							{
 								const auto input_item_id = data_index_mapping[elem_id];
 								const auto& input = training_items[input_item_id];
 								const auto& reference = reference_items[input_item_id];
-								act(input, e_data, &aux_data);
+								act(input, context, true);
 								cost_function.deriv_in_place(e_data.Out, reference);
 
 								//Back-propagate through all the layers
@@ -295,7 +297,21 @@ namespace DeepLearning
 
 	template <class D>
 	std::tuple<std::vector<LayerGradient<D>>, typename D::tensor_t> Net<D>::calc_gradient_and_value(
-		const typename D::tensor_t& training_item, const typename D::tensor_t& target_value, const CostFunctionId& cost_func_id)
+		const typename D::tensor_t& item, const typename D::tensor_t& target_value, const CostFunctionId& cost_func_id)
+	{
+		Context context;
+		typename D::tensor_t out_value;
+		std::vector<LayerGradient<D>> out_gradient;
+
+		calc_gradient_and_value(item, target_value, cost_func_id, out_gradient, out_value, context);
+
+		return std::make_tuple(std::move(out_gradient), std::move(out_value));
+	}
+
+	template <class D>
+	void Net<D>::calc_gradient_and_value(const typename D::tensor_t& item, const typename D::tensor_t& target_value,
+		const CostFunctionId& cost_func_id, std::vector<LayerGradient<D>>& out_gradient,
+		typename D::tensor_t& out_value, Context& context)
 	{
 		const auto cost_function = CostFunction<typename D::tensor_t>(cost_func_id);
 
@@ -303,13 +319,18 @@ namespace DeepLearning
 		for (auto layer_id = 0ull; layer_id < _layers.size(); ++layer_id)
 			_layers[layer_id].layer().SetUpDropoutMask();
 
-		std::vector<typename ALayer<D>::AuxLearningData> aux_data(_layers.size());
-		std::vector<LayerGradient<D>> result(_layers.size());
-		InOutData e_data{};
+		if (context.gradient_cache.size() != _layers.size())
+			context.gradient_cache.resize(_layers.size());
+
+		if (out_gradient.size() != _layers.size())
+			out_gradient.resize(_layers.size());
+
+		auto& e_data = context.value_cache;
+		auto& aux_data = context.gradient_cache;
 
 		//Forward move
-		act(training_item, e_data, &aux_data);
-		auto value = e_data.Out;
+		act(item, context, true);
+		out_value = e_data.Out;
 		cost_function.deriv_in_place(e_data.Out, target_value);
 
 		//Back-propagate through all the layers
@@ -317,7 +338,7 @@ namespace DeepLearning
 		{
 			e_data.swap();
 			_layers[layer_id].layer().backpropagate(e_data.In, aux_data[layer_id],
-				e_data.Out, result[layer_id], layer_id != 0);
+				e_data.Out, out_gradient[layer_id], layer_id != 0);
 
 			if (layer_id != 0)
 				_layers[layer_id].layer().ApplyDropout(e_data.Out, true);
@@ -326,8 +347,6 @@ namespace DeepLearning
 		//Dispose auxiliary data structures created to do the "drop-out" regularization
 		for (auto layer_id = 0ull; layer_id < _layers.size(); ++layer_id)
 			_layers[layer_id].layer().DisposeDropoutMask();
-
-		return std::make_tuple(std::move(result), std::move(value));
 	}
 
 	template <class D>
@@ -352,6 +371,12 @@ namespace DeepLearning
 	{
 		return std::accumulate(_layers.begin(), _layers.end(), Real(0),
 			[](const auto& sum, const auto& layer_handle) { return sum + layer_handle.layer().squared_weights_sum(); });
+	}
+
+	template <class D>
+	const typename D::tensor_t& Net<D>::Context::get_out() const
+	{
+		return value_cache.Out;
 	}
 
 	template <class D>
