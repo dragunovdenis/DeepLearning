@@ -19,20 +19,18 @@
     <DebugType>pdbonly</DebugType>
     <LangVersion>7.3</LangVersion>
   </PropertyGroup>
-  <Import Project="$(SolutionDir)\packages\Costura.Fody.3.3.3\build\Costura.Fody.props" Condition="Exists('$(SolutionDir)\packages\Costura.Fody.3.3.3\build\Costura.Fody.props')" />
-  <Import Project="$(SolutionDir)\packages\Fody.4.2.1\build\Fody.targets" Condition="Exists('$(SolutionDir)\packages\Fody.4.2.1\build\Fody.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('$(SolutionDir)\packages\Fody.4.2.1\build\Fody.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\packages\Fody.4.2.1\build\Fody.targets'))" />
-    <Error Condition="!Exists('$(SolutionDir)\packages\Costura.Fody.3.3.3\build\Costura.Fody.props')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\packages\Costura.Fody.3.3.3\build\Costura.Fody.props'))" />
   </Target>
   <ItemGroup>
-    <PackageReference Include="Fody" Version="4.2.1">
+    <PackageReference Include="Costura.Fody" Version="5.7.0">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Fody" Version="6.8.0">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="ScottPlot" Version="4.1.57" />
-    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
   </ItemGroup>
 </Project>
