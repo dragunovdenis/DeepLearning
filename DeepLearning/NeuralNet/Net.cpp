@@ -297,7 +297,7 @@ namespace DeepLearning
 
 	template <class D>
 	std::tuple<std::vector<LayerGradient<D>>, typename D::tensor_t> Net<D>::calc_gradient_and_value(
-		const typename D::tensor_t& item, const typename D::tensor_t& target_value, const CostFunctionId& cost_func_id)
+		const typename D::tensor_t& item, const typename D::tensor_t& target_value, const CostFunctionId& cost_func_id) const
 	{
 		Context context;
 		typename D::tensor_t out_value;
@@ -311,7 +311,7 @@ namespace DeepLearning
 	template <class D>
 	void Net<D>::calc_gradient_and_value(const typename D::tensor_t& item, const typename D::tensor_t& target_value,
 		const CostFunctionId& cost_func_id, std::vector<LayerGradient<D>>& out_gradient,
-		typename D::tensor_t& out_value, Context& context)
+		typename D::tensor_t& out_value, Context& context) const
 	{
 		const auto cost_function = CostFunction<typename D::tensor_t>(cost_func_id);
 

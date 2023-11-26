@@ -224,7 +224,7 @@ namespace DeepLearning
 		/// <param name="target_value">"Label" item that should be used in the cost function</param>
 		/// <param name="cost_func_id">Id of the cost function</param>
 		std::tuple<std::vector<LayerGradient<D>>, typename D::tensor_t> calc_gradient_and_value(
-			const typename D::tensor_t& item, const typename D::tensor_t& target_value, const CostFunctionId& cost_func_id);
+			const typename D::tensor_t& item, const typename D::tensor_t& target_value, const CostFunctionId& cost_func_id) const;
 
 		/// <summary>
 		/// Calculates gradient of the given cost function with respect to the weights and biases of the neural net.
@@ -238,7 +238,7 @@ namespace DeepLearning
 		/// <param name="context">Calculation context, i.e. resources tht can be
 		/// allocated once and then re-used in each call of the method. Serves optimization purposes</param>
 		void calc_gradient_and_value(const typename D::tensor_t& item, const typename D::tensor_t& target_value, const CostFunctionId& cost_func_id,
-			std::vector<LayerGradient<D>>& out_gradient, typename D::tensor_t& out_value, Context& context);
+			std::vector<LayerGradient<D>>& out_gradient, typename D::tensor_t& out_value, Context& context) const;
 
 		/// <summary>
 		/// Updates weights and biases of all the layers with the given gradient

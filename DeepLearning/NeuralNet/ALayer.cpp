@@ -26,7 +26,7 @@ namespace DeepLearning
 	const std::string KeepTag = "KEEP";
 
 	template <class D>
-	void ALayer<D>::SetUpDropoutMask()
+	void ALayer<D>::SetUpDropoutMask() const
 	{
 		if (_keep_rate < Real(1)) // do this only if we actually want to drop something out
 		{
@@ -38,7 +38,7 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	void ALayer<D>::DisposeDropoutMask()
+	void ALayer<D>::DisposeDropoutMask() const
 	{
 		//relying on the move assignment operator
 		_keep_mask = typename D::vector_t();

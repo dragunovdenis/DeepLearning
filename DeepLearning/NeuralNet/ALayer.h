@@ -37,12 +37,12 @@ namespace DeepLearning
 		/// An inverted drop-out mask, i.e. a mask that has "ones" on the positions with the indices of elements
 		/// that we want to keep and "zeros" on the positions with the indices of elements that we want to "drop"
 		/// </summary>
-		typename D::vector_t _keep_mask{};
+		mutable typename D::vector_t _keep_mask{};
 
 		/// <summary>
 		/// Auxiliary collection used to generate random keep masks
 		/// </summary>
-		typename D::template index_array_t<int> _keep_mask_aux_collection{};
+		mutable typename D::template index_array_t<int> _keep_mask_aux_collection{};
 
 		/// <summary>
 		///	Default value of the "keep rate" parameter
@@ -80,17 +80,17 @@ namespace DeepLearning
 		ALayer(const std::string& script);
 
 		/// <summary>
-		///	Initializes (or re-initializes) the mask that will be used to perform training with "drop-put" regularization
-		///	In fact it initializes an "inversion" of the drop-out mask, that is the "keep" mask
-		///	(as a rule this should be called by the training subroutine before each mini-batch)
+		/// Initializes (or re-initializes) the mask that will be used to perform training with "drop-put" regularization
+		/// In fact it initializes an "inversion" of the drop-out mask, that is the "keep" mask
+		/// (as a rule this should be called by the training subroutine before each mini-batch)
 		/// </summary>
-		void SetUpDropoutMask();
+		void SetUpDropoutMask() const;
 
 		/// <summary>
-		///	Method to free resources that has been allocated to do the "drop-out" regularization
-		///	(should be called by the training subroutine when the training is over)
+		/// Method to free resources that has been allocated to do the "drop-out" regularization
+		/// (should be called by the training subroutine when the training is over)
 		/// </summary>
-		void DisposeDropoutMask();
+		void DisposeDropoutMask() const;
 
 		/// <summary>
 		///	Applies dropout to the given tensor that is supposed to be an input for the current layer
