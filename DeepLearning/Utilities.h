@@ -345,6 +345,23 @@ namespace DeepLearning::Utils
     std::string milliseconds_to_dd_hh_mm_ss_string(const long long& time_msec);
 
     /// <summary>
+    /// Returns time-string formatted as (an example) "Wed Jun 30 21:49:08 1993".
+    /// </summary>
+    std::string format_date_time(const std::chrono::system_clock::time_point& time_pt);
+
+    /// <summary>
+    /// Returns formatted duration between the start and stop time points.
+    /// </summary>
+    std::string get_elapsed_time_formatted(const std::chrono::system_clock::time_point& start_pt,
+        const std::chrono::system_clock::time_point& stop_pt);
+
+    /// <summary>
+    /// Return string with formatted elapsed time and updates given time-point with new measurement.
+    /// </summary>
+    /// <param name="start_pt">Start time point.</param>
+    std::string get_elapsed_time_formatted(std::chrono::system_clock::time_point& start_pt);
+
+    /// <summary>
     /// Returns the argument squared
     /// </summary>
     template <class T>

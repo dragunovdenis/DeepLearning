@@ -17,7 +17,6 @@
 
 #include <iostream>
 #include <filesystem>
-#include <sstream>
 #include <tclap/CmdLine.h>
 #include <defs.h>
 #include <NeuralNet/Net.h>
@@ -26,53 +25,11 @@
 #include "Math/CostFunction.h"
 #include "Utilities.h"
 #include <chrono>
-#include <time.h>
 #include <format>
 #include <string>
 
 using namespace DeepLearning;
 using namespace NetRunnerConsole;
-
-/// <summary>
-/// Returns time-string formated as "day of week"-"month"-"date"-hh-mm-ss-year
-/// </summary>
-/// <param name="time_pt"></param>
-std::string format_time(const std::chrono::system_clock::time_point& time_pt)
-{
-	std::time_t t = std::chrono::system_clock::to_time_t(time_pt);
-	char str[100];
-	ctime_s(str, sizeof str,  &t);
-	const auto cnt = std::find(str, str + sizeof(str), '\0') - &str[0];
-	auto result = Utils::remove_leading_trailing_extra_spaces(std::string(str, cnt-1));
-	std::replace_if(result.begin(), result.end(),[](const auto x) {
-			return x == ' ' || x == ':';
-		}, '-');
-
-	return result;
-}
-
-/// <summary>
-/// Returns formatted duration between the start and stop time points
-/// </summary>
-std::string get_elapsed_time_formatted(const std::chrono::system_clock::time_point& start_pt, const std::chrono::system_clock::time_point& stop_pt)
-{
-	const auto epoch_time_sec = std::chrono::duration_cast<std::chrono::seconds>(stop_pt - start_pt);
-	std::string result = std::format("{:%T}", epoch_time_sec);
-	return result;
-}
-
-/// <summary>
-/// Return string with formatted elapsed time and updates given time-point with new measurement
-/// </summary>
-/// <param name="start_pt">Start time point</param>
-/// <returns></returns>
-std::string get_elapsed_time_formatted(std::chrono::system_clock::time_point& start_pt)
-{
-	const auto stop_pt = std::chrono::system_clock::now();
-	const auto result = get_elapsed_time_formatted(start_pt, stop_pt);
-	start_pt = stop_pt;
-	return result;
-}
 
 int main(int argc, char** argv)
 {
@@ -141,7 +98,7 @@ int main(int argc, char** argv)
 
 	std::cout << summary;
 
-	const auto training_images_count = 60000;
+	constexpr auto training_images_count = 60000;
 	const auto training_data_tuple = MnistDataUtils::load_labeled_data(
 		"TestData\\MNIST\\train-images.idx3-ubyte",
 		"TestData\\MNIST\\train-labels.idx1-ubyte",
@@ -150,7 +107,7 @@ int main(int argc, char** argv)
 	const auto& training_data = std::get<0>(training_data_tuple);
 	const auto& training_labels = std::get<1>(training_data_tuple);
 
-	const auto test_images_count = 10000;
+	constexpr auto test_images_count = 10000;
 	const auto test_data_tuple = MnistDataUtils::load_labeled_data(
 		"TestData\\MNIST\\t10k-images.idx3-ubyte",
 		"TestData\\MNIST\\t10k-labels.idx1-ubyte",
@@ -165,7 +122,7 @@ int main(int argc, char** argv)
 
 	const auto start = std::chrono::system_clock::now();
 	auto epoch_start = start;
-	std::cout << "Started at: " << format_time(start) << std::endl;
+	std::cout << "Started at: " << Utils::format_date_time(start) << std::endl;
 	for (auto iter_id = 1; iter_id <= iteration_arg.getValue(); iter_id++)
 	{
 		net_to_train.try_load_from_script_file(script_path); //re-instantiate the net (to start from scratch, so to speak)
@@ -176,7 +133,7 @@ int main(int argc, char** argv)
 			const auto correct_answers_test_data = net_to_train.count_correct_answers(test_data, test_labels) * Real(1) / test_data.size();
 			const auto cost_and_answers = net_to_train.evaluate_cost_function_and_correct_answers(training_data, training_labels, cost_func_id, scaled_l2_reg_factor);
 			reporter.add_data(correct_answers_test_data, cost_and_answers.CorrectAnswers, cost_and_answers.Cost);
-			const auto elapsed_time_str = get_elapsed_time_formatted(epoch_start);
+			const auto elapsed_time_str = Utils::get_elapsed_time_formatted(epoch_start);
 			std::cout << "Iteration : " << iter_id << "; Epoch : " << epoch_id << "; success rate : "
 				<< correct_answers_test_data << " %; time: " << elapsed_time_str << std::endl;
 		};
@@ -186,12 +143,12 @@ int main(int argc, char** argv)
 	}
 
 	const auto stop = std::chrono::system_clock::now();
-	std::cout << "Finished at: " << format_time(stop) << std::endl;
-	std::cout << "Total execution time : " << get_elapsed_time_formatted(start, stop) << std::endl;
+	std::cout << "Finished at: " << Utils::format_date_time(stop) << std::endl;
+	std::cout << "Total execution time : " << Utils::get_elapsed_time_formatted(start, stop) << std::endl;
 
 	//Save report
-	const auto start_time_str = format_time(start);
-	const auto end_time_str = format_time(stop);
+	const auto start_time_str = Utils::format_date_time(start);
+	const auto end_time_str = Utils::format_date_time(stop);
 	const auto report_base_name = script_path.stem().string() + "_" + start_time_str + "_" + end_time_str + "_report.txt";
 	const auto report_full_path = directory / report_base_name;
 	reporter.save_report(report_full_path);

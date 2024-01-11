@@ -322,6 +322,31 @@ namespace DeepLearning::Utils
         return time_to_dd_hh_mm_ss_string<1000>(time_msec);
     }
 
+    std::string format_date_time(const std::chrono::system_clock::time_point& time_pt)
+    {
+        std::time_t t = std::chrono::system_clock::to_time_t(time_pt);
+        char str[100];
+
+        if (ctime_s(str, sizeof str, &t) != 0)
+            throw std::exception("Can't convert time to string");
+
+        return str;
+    }
+
+    std::string get_elapsed_time_formatted(const std::chrono::system_clock::time_point& start_pt, const std::chrono::system_clock::time_point& stop_pt)
+    {
+        const auto epoch_time_sec = std::chrono::duration_cast<std::chrono::seconds>(stop_pt - start_pt);
+        return std::format("{:%T}", epoch_time_sec);
+    }
+
+    std::string get_elapsed_time_formatted(std::chrono::system_clock::time_point& start_pt)
+    {
+        const auto stop_pt = std::chrono::system_clock::now();
+        const auto result = get_elapsed_time_formatted(start_pt, stop_pt);
+        start_pt = stop_pt;
+        return result;
+    }
+
     template bool try_extract_vector(std::string& str, Vector2d<Real>& out);
     template bool try_extract_vector(std::string& str, Vector3d<Real>& out);
     template bool try_extract_vector(std::string& str, Index2d& out);
