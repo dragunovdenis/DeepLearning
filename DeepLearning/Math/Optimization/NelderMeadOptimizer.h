@@ -19,6 +19,7 @@
 #include "../VectorNd.h"
 #include <functional>
 #include <msgpack.hpp>
+#include <stop_token>
 
 namespace DeepLearning
 {
