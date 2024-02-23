@@ -27,10 +27,8 @@ namespace DeepLearning::Utils
     Real get_random(const Real min, const Real max)
     {
         thread_local auto gen = get_mt_generator();
-        thread_local std::uniform_int_distribution<int> dist(0, std::numeric_limits<int>::max());
-
-        const auto normalization_factor = (max - min) / std::numeric_limits<int>::max();
-        return normalization_factor * dist(gen) + min;
+        std::uniform_real_distribution<Real> dist(min, max);
+        return dist(gen);
     }
 
     std::vector<Real> get_random_std_vector(const std::size_t& size, const Real min, const Real max)
@@ -43,10 +41,8 @@ namespace DeepLearning::Utils
     int get_random_int(const int min, const int max)
     {
         thread_local auto gen = get_mt_generator();
-        thread_local std::uniform_int_distribution<int> dist(0, std::numeric_limits<int>::max());
-
-        const auto interval_length = (static_cast<long long>(max) - min) + 1;
-        return dist(gen) % interval_length + min;
+        std::uniform_int_distribution<int> dist(min, max);
+        return dist(gen);
     }
 
     std::string extract_word(std::string& str, const std::size_t& start_id)

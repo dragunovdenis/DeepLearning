@@ -189,6 +189,7 @@
     <ClInclude Include="NeuralNet\Net.h" />
     <ClInclude Include="NeuralNet\NLayer.h" />
     <ClInclude Include="NeuralNet\PLayer.h" />
+    <ClInclude Include="RandomGenerator.h" />
     <ClInclude Include="StopWatch.h" />
     <ClInclude Include="ThirdParty\BitmapUtils.h" />
     <ClInclude Include="ThreadPool.h" />
@@ -224,6 +225,7 @@
     <ClCompile Include="NeuralNet\Net.cpp" />
     <ClCompile Include="NeuralNet\NLayer.cpp" />
     <ClCompile Include="NeuralNet\PLayer.cpp" />
+    <ClCompile Include="RandomGenerator.cpp" />
     <ClCompile Include="StopWatch.cpp" />
     <ClCompile Include="ThirdParty\BitmapUtils.cpp" />
     <ClCompile Include="ThreadPool.cpp" />

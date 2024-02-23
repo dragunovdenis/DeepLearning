@@ -201,6 +201,9 @@
     <ClInclude Include="Math\Optimization\NelderMeadOptimizer.h">
       <Filter>Header Files\Math\Optimization</Filter>
     </ClInclude>
+    <ClInclude Include="RandomGenerator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Matrix.cpp">
@@ -292,6 +295,9 @@
     </ClCompile>
     <ClCompile Include="Math\LinAlg3d.cpp">
       <Filter>Source Files\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="RandomGenerator.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
