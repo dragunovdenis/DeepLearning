@@ -38,10 +38,13 @@ namespace DeepLearning
 		if (out_channel_size.x != 1)
 			throw std::exception("Unexpected channel size");
 
-		_biases = typename D::tensor_t(filters_count, out_channel_size.y, out_channel_size.z, Real(-1), Real(1));
+		auto ran_gen_ptr = &ALayer<D>::ran_gen();
+		_biases = typename D::tensor_t(filters_count, out_channel_size.y, out_channel_size.z,
+			Real(-1), Real(1), ran_gen_ptr);
 		_filters = std::vector(filters_count, typename D::tensor_t(_weight_tensor_size, false));
 
-		std::for_each(_filters.begin(), _filters.end(), [](auto& filter) { filter.standard_random_fill(); });
+		std::for_each(_filters.begin(), _filters.end(), [ran_gen_ptr](auto& filter)
+			{ filter.standard_random_fill(/*sigma*/ -1, ran_gen_ptr); });
 	}
 
 	template <class D>

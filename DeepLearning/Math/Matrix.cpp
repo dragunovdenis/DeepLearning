@@ -137,9 +137,10 @@ namespace DeepLearning
 	}
 
 	Matrix::Matrix(const std::size_t row_dim, const std::size_t col_dim,
-		const Real range_begin, const Real range_end) : Matrix(row_dim, col_dim, false)
+		const Real range_begin, const Real range_end, std::mt19937* seeder) :
+		Matrix(row_dim, col_dim, false)
 	{
-		Utils::fill_with_random_values(begin(), end(), range_begin, range_end);
+		uniform_random_fill(range_begin, range_end, seeder);
 	}
 
 	Matrix::Matrix(const Matrix& matr) : Matrix(matr.row_dim(), matr.col_dim(), false)

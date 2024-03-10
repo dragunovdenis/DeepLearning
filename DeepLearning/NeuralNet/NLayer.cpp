@@ -26,15 +26,16 @@ namespace DeepLearning
 	void NLayer<D>::initialize(const std::size_t in_dim, const std::size_t out_dim, ActivationFunctionId func_id,
 		const Real rand_low, const Real rand_high, const bool standard_init_for_weights)
 	{
-		_biases = typename D::vector_t(out_dim, rand_low, rand_high);
+		auto ran_gen_ptr = &ALayer<D>::ran_gen();
+		_biases = typename D::vector_t(out_dim, rand_low, rand_high, ran_gen_ptr);
 
 		if (standard_init_for_weights)
 		{
 			_weights = typename D::matrix_t(out_dim, in_dim, false);
-			_weights.standard_random_fill(Real(1) / std::sqrt(in_dim));
+			_weights.standard_random_fill(Real(1) / std::sqrt(in_dim), ran_gen_ptr);
 		}
 		else
-			_weights = typename D::matrix_t(out_dim, in_dim, rand_low, rand_high);
+			_weights = typename D::matrix_t(out_dim, in_dim, rand_low, rand_high, ran_gen_ptr);
 
 		_func_id = func_id;
 	}

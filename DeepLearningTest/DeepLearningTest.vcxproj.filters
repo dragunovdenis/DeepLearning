@@ -19,6 +19,9 @@
     <Filter Include="TestData\MNIST">
       <UniqueIdentifier>{b98d451f-f41c-46b8-9f0b-5067b0db0419}</UniqueIdentifier>
     </Filter>
+    <Filter Include="TestData\Regression">
+      <UniqueIdentifier>{70c643bd-c4e2-412e-8b6b-2739b0f2b18e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MatrixVectorAlgebraTest.cpp">
@@ -92,6 +95,9 @@
     </None>
     <None Include="..\Shared\TestData\MNIST\train-labels.idx1-ubyte">
       <Filter>TestData\MNIST</Filter>
+    </None>
+    <None Include="TestData\Regression\reference_net.dat">
+      <Filter>TestData\Regression</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

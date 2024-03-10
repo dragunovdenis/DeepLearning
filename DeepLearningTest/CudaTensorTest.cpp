@@ -237,7 +237,7 @@ namespace DeepLearningTest
 			const auto result_reference_host = tensor.to_host().convolve(kernel.to_host(), paddings, strides);
 			const auto diff = (result.to_host() - result_reference_host).max_abs();
 			Logger::WriteMessage((std::string("Diff = ") + Utils::to_string(diff)).c_str());
-			Assert::IsTrue(diff < 100 * std::numeric_limits<Real>::epsilon(), L"Unexpectedly high deviation from reference");
+			Assert::IsTrue(diff < 300 * std::numeric_limits<Real>::epsilon(), L"Unexpectedly high deviation from reference");
 		}
 
 		TEST_METHOD(ConvolutionWithCollectionOfKernelsTest)

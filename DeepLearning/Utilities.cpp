@@ -38,6 +38,13 @@ namespace DeepLearning::Utils
         return result;
     }
 
+    std::vector<Real> get_random_std_vector(const int size, const Real min, const Real max, std::mt19937& gen)
+    {
+        std::vector<Real> result(size);
+        fill_with_random_values(result.begin(), result.end(), min, max, gen);
+        return result;
+    }
+
     int get_random_int(const int min, const int max)
     {
         thread_local auto gen = get_mt_generator();

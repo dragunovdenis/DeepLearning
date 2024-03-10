@@ -131,9 +131,10 @@ namespace DeepLearning
 	}
 
 	CudaMatrix::CudaMatrix(const std::size_t row_dim, const std::size_t col_dim,
-		const Real range_begin, const Real range_end) : CudaMatrix(row_dim, col_dim, false /*assign zero*/)
+		const Real range_begin, const Real range_end, std::mt19937* seeder) :
+		CudaMatrix(row_dim, col_dim, false /*assign zero*/)
 	{
-		uniform_random_fill(range_begin, range_end);
+		uniform_random_fill(range_begin, range_end, seeder);
 	}
 
 	CudaMatrix::CudaMatrix(const CudaMatrix& matr) :

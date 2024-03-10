@@ -25,14 +25,11 @@
 #include <thrust/fill.h>
 #include <thrust/inner_product.h>
 #include <thrust/extrema.h>
-#include <thrust/generate.h>
 #include <thrust/random/linear_congruential_engine.h>
 #include <thrust/random/normal_distribution.h>
 #include <thrust/random.h>
-#include <thrust/device_ptr.h>
 #include <thrust/logical.h>
 #include "CudaUtils.cuh"
-#include <algorithm>
 #include <exception>
 #include <random>
 #include "../Utilities.h"
@@ -233,9 +230,9 @@ namespace DeepLearning
 		/// <summary>
 		/// The operator
 		/// </summary>
-		__device__	Real operator () (int idx)
+		__device__	Real operator () (int idx) const
 		{
-			thrust::minstd_rand rng(seed);
+			thrust::default_random_engine rng(seed);
 			thrust::random::normal_distribution<Real> dist(mean, sigma);
 			rng.discard(idx);
 			return dist(rng);
@@ -254,7 +251,7 @@ namespace DeepLearning
 		/// <summary>
 		/// The operator
 		/// </summary>
-		__device__	Real operator () (int idx)
+		__device__	Real operator () (int idx) const
 		{
 			thrust::default_random_engine rng(seed);
 			thrust::uniform_real_distribution<Real> dist(min, max);
@@ -263,24 +260,26 @@ namespace DeepLearning
 		}
 	};
 
-	void BasicCudaCollection::standard_random_fill(const Real& sigma)
+	void BasicCudaCollection::standard_random_fill(const Real& sigma, std::mt19937* seeder)
 	{
 		if (empty())
 			return;
 
 		const auto stddev = sigma < Real(0) ? Real(1) / Real(std::sqrt(size())) : sigma;
 		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread), thrust::make_counting_iterator(0),
-			thrust::make_counting_iterator(static_cast<int>(size())), begin(), NormalRandGen{0, stddev, Utils::get_random_int()});
+			thrust::make_counting_iterator(static_cast<int>(size())), begin(),
+			NormalRandGen{0, stddev, seeder ? static_cast<int>((*seeder)()) : Utils::get_random_int()});
 		CUDA_SANITY_CHECK
 	}
 
-	void BasicCudaCollection::uniform_random_fill(const Real& min, const Real& max)
+	void BasicCudaCollection::uniform_random_fill(const Real& min, const Real& max, std::mt19937* seeder)
 	{
 		if (empty())
 			return;
 
 		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread), thrust::make_counting_iterator(0),
-			thrust::make_counting_iterator(static_cast<int>(size())), begin(), UniformRandGen{ min, max, Utils::get_random_int()});
+			thrust::make_counting_iterator(static_cast<int>(size())), begin(),
+			UniformRandGen{ min, max,  seeder ? static_cast<int>((*seeder)()) : Utils::get_random_int()});
 		CUDA_SANITY_CHECK
 	}
 

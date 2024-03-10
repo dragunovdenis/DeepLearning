@@ -127,10 +127,11 @@ namespace DeepLearning
 		assign(vec);
 	}
 
-	CudaVector::CudaVector(const std::size_t dim, const Real range_begin, const Real range_end) :
+	CudaVector::CudaVector(const std::size_t dim, const Real range_begin,
+		const Real range_end, std::mt19937* seeder) :
 		CudaVector(dim, false /*assign zero*/)
 	{
-		uniform_random_fill(range_begin, range_end);
+		uniform_random_fill(range_begin, range_end, seeder);
 	}
 
 	CudaVector::CudaVector(CudaVector&& vec) noexcept : _dim(vec._dim), _capacity(vec._capacity)
@@ -239,25 +240,26 @@ namespace DeepLearning
 		return vec * scalar;
 	}
 
-	void CudaVector::fill_with_random_selection_map(const std::size_t& selected_cnt, CudaArray<int>& aux_collection)
+	void CudaVector::fill_with_random_selection_map(const std::size_t& selected_cnt,
+		CudaArray<int>& aux_collection, std::mt19937* seeder)
 	{
 		if (selected_cnt >= size())
 		{
-			fill(Real(1));
+			fill(static_cast<Real>(1));
 			return;
 		}
 
 		aux_collection.resize(size());
 		thrust::sequence(thrust::cuda::par.on(cudaStreamPerThread), aux_collection.begin(), aux_collection.end(), 0);
-		uniform_random_fill(Real(-1), Real(1)); //fill the current collection with random values
+		uniform_random_fill(Real(-1), Real(1), seeder); //fill the current collection with random values
 		//and use it as a key collection in the following sorting procedure
 		thrust::sort_by_key(thrust::cuda::par.on(cudaStreamPerThread), begin(), end(), aux_collection.begin());
 
-		const auto one_iterator = thrust::make_constant_iterator(Real(1));
+		const auto one_iterator = thrust::make_constant_iterator(static_cast<Real>(1));
 		thrust::scatter(thrust::cuda::par.on(cudaStreamPerThread), one_iterator, one_iterator + static_cast<int>(selected_cnt),
 			aux_collection.begin(), begin());
 
-		const auto zero_iterator = thrust::make_constant_iterator(Real(0));
+		const auto zero_iterator = thrust::make_constant_iterator(static_cast<Real>(0));
 		thrust::scatter(thrust::cuda::par.on(cudaStreamPerThread), zero_iterator, zero_iterator + static_cast<int>(size() - selected_cnt),
 			aux_collection.begin() + static_cast<int>(selected_cnt), begin());
 	}

@@ -25,7 +25,6 @@
 #include "Math/CostFunction.h"
 #include "Utilities.h"
 #include <chrono>
-#include <format>
 #include <string>
 
 using namespace DeepLearning;

@@ -21,7 +21,6 @@
 #include <algorithm>
 #include <ios>
 #include "defs.h"
-#include <cmath>
 #include <string>
 #include <sstream>
 #include <vector>
@@ -41,11 +40,20 @@ namespace DeepLearning::Utils
     /// Functionality to fill the given range with uniformly distributed pseudo-random numbers
     /// </summary>
     template< class Iter>
+    void fill_with_random_values(Iter start, Iter end, const Real min, const Real max, std::mt19937& gen)
+    {
+        std::uniform_real_distribution<Real> dist(min, max);
+        std::generate(start, end, [&]() { return dist(gen); });
+    }
+
+    /// <summary>
+    /// Functionality to fill the given range with uniformly distributed pseudo-random numbers
+    /// </summary>
+    template< class Iter>
     void fill_with_random_values(Iter start, Iter end, const Real min, const Real max)
     {
         thread_local auto gen = get_mt_generator();
-        std::uniform_real_distribution<Real> dist(min, max);
-        std::generate(start, end, [&]() { return dist(gen); });
+        fill_with_random_values(start, end, min, max, gen);
     }
 
     /// <summary>
@@ -56,6 +64,12 @@ namespace DeepLearning::Utils
     /// <param name="min">Lower boundary for the pseudo-random values to populate the collection</param>
     /// <param name="max">Upper boundary for the pseudo-random values to populate the collection</param>
     std::vector<Real> get_random_std_vector(const std::size_t& size, const Real min, const Real max);
+
+    /// <summary>
+    /// Returns std::vector of the given size filled
+    /// with the values provided by the generator.
+    /// </summary>
+    std::vector<Real> get_random_std_vector(const int size, const Real min, const Real max, std::mt19937& gen);
 
     /// <summary>
     /// Returns uniformly distributed random value from the given interval

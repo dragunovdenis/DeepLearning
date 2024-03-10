@@ -27,9 +27,15 @@
 #include <fstream>
 #include "../ThreadPool.h"
 #include "../Utilities.h"
+#include "../MsgPackUtils.h"
 
 namespace DeepLearning
 {
+	namespace
+	{
+		thread_local std::mt19937 _ran_gen{ std::random_device{}() };
+	}
+
 	template <class D>
 	Net<D>::Net(const std::vector<std::size_t>& layer_dimensions, const std::vector<ActivationFunctionId>& activ_func_ids)
 	{
@@ -137,12 +143,9 @@ namespace DeepLearning
 	/// <summary>
 	/// Applies random permutation to the given collection of indices
 	/// </summary>
-	void apply_random_permutation(std::vector<std::size_t>& indices)
+	void apply_random_permutation(std::vector<std::size_t>& indices, std::mt19937 ran_gen)
 	{
-		std::random_device rd;
-		std::mt19937 g(rd());
-
-		std::ranges::shuffle(indices, g);
+		std::ranges::shuffle(indices, ran_gen);
 	}
 
 	/// <summary>
@@ -187,7 +190,7 @@ namespace DeepLearning
 	template <class D>
 	void Net<D>::learn(const std::vector<typename D::tensor_t>& training_items, const std::vector<typename D::tensor_t>& reference_items,
 		const std::size_t batch_size, const std::size_t epochs_count, const Real learning_rate, const CostFunctionId& cost_func_id,
-		const Real& lambda, const std::function<void(const std::size_t, const Real)>& epoch_callback)
+		const Real& lambda, const std::function<void(const std::size_t, const Real)>& epoch_callback, const bool single_threaded)
 	{
 		if (training_items.size() != reference_items.size())
 			throw std::exception("Incompatible collection of training and reference items.");
@@ -206,7 +209,7 @@ namespace DeepLearning
 		//For some reason, this exact number of threads (when used in the parallel "for" loop below)
 		//gives the best performance on a PC with i7-10750H (the only PC where this code was
 		//tested so far). Whoever is reading this comment, feel free to try other numbers of the threads.
-		const auto threads_to_use = std::max<int>(1, physical_cores_count);
+		const auto threads_to_use = single_threaded ? 1 : std::max<int>(1, physical_cores_count);
 
 		ThreadPool thread_pool(threads_to_use);
 
@@ -218,7 +221,7 @@ namespace DeepLearning
 
 		for (std::size_t epoch_id = 0; epoch_id < epochs_count; ++epoch_id)
 		{
-			apply_random_permutation(data_index_mapping);
+			apply_random_permutation(data_index_mapping, _ran_gen);
 
 			std::size_t batch_start_elem_id = 0;
 			while (batch_start_elem_id < training_items.size())
@@ -568,6 +571,32 @@ namespace DeepLearning
 			{
 				layer_handle.layer().reset();
 			});
+	}
+
+	template <class D>
+	void Net<D>::reset_random_generator(const unsigned seed)
+	{
+		_ran_gen.seed(seed);
+		ALayer<D>::reset_random_generator(seed);
+	}
+
+	template <class D>
+	void Net<D>::reset_random_generator()
+	{
+		_ran_gen.seed(std::random_device{}());
+		ALayer<D>::reset_random_generator();
+	}
+
+	template <class D>
+	void Net<D>::save_to_file(const std::filesystem::path& file_name) const
+	{
+		MsgPack::save_to_file(*this, file_name);
+	}
+
+	template <class D>
+	Net<D> Net<D>::load_from_file(const std::filesystem::path& file_name)
+	{
+		return MsgPack::load_from_file<Net<D>>(file_name);
 	}
 
 	template class Net<CpuDC>;

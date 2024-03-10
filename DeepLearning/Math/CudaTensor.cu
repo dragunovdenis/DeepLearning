@@ -148,14 +148,15 @@ namespace DeepLearning
 	}
 
 	CudaTensor::CudaTensor(const std::size_t layer_dim, const std::size_t row_dim,
-		const std::size_t col_dim, const Real range_begin, const Real range_end) : 
+		const std::size_t col_dim, const Real range_begin, const Real range_end, std::mt19937* seeder) :
 		CudaTensor(layer_dim, row_dim, col_dim, false /*assign zero*/)
 	{
-		uniform_random_fill(range_begin, range_end);
+		uniform_random_fill(range_begin, range_end, seeder);
 	}
 
-	CudaTensor::CudaTensor(const Index3d& size, const Real range_begin, const Real range_end) :
-		CudaTensor(size.x, size.y, size.z, range_begin, range_end)
+	CudaTensor::CudaTensor(const Index3d& size, const Real range_begin,
+		const Real range_end, std::mt19937* seeder) :
+		CudaTensor(size.x, size.y, size.z, range_begin, range_end, seeder)
 	{}
 
 	CudaTensor& CudaTensor::operator =(const CudaTensor& tensor)

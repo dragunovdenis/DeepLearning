@@ -19,8 +19,6 @@
 
 #include <vector>
 #include "../defs.h"
-#include <msgpack.hpp>
-#include <functional>
 #include "BasicCollection.h"
 #include <filesystem>
 #include "LinAlg3d.h"
@@ -149,7 +147,7 @@ namespace DeepLearning
 		/// Constructs dense vector of the given dimension filled with
 		/// uniformly distributed pseudo-random values from the given range
 		/// </summary>
-		Vector(const std::size_t dim, const Real range_begin, const Real range_end);
+		Vector(const std::size_t dim, const Real range_begin, const Real range_end, std::mt19937* seeder = nullptr);
 
 		/// <summary>
 		/// Destructor
@@ -223,8 +221,10 @@ namespace DeepLearning
 		/// </summary>
 		/// <param name="selected_cnt">Number of 1s in the collection after the call</param>
 		/// <param name="aux_collection">An auxiliary collection, can be allocated on the caller side and
-		/// provides a possibility to avoid unnecessary re-allocations when the method below is called multiple times
-		void fill_with_random_selection_map(const std::size_t& selected_cnt, std::vector<int>& aux_collection);
+		/// provides a possibility to avoid unnecessary re-allocations when the method below is called multiple times</param>
+		/// <param name="seeder">Seed value provider (for pseudo-random generators)</param>
+		void fill_with_random_selection_map(const std::size_t& selected_cnt,
+			std::vector<int>& aux_collection, std::mt19937* seeder = nullptr);
 
 		/// <summary>
 		/// Less optimal but more simple version of the method above

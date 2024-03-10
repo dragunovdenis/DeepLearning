@@ -190,6 +190,10 @@
     <None Include="..\Shared\TestData\MNIST\t10k-labels.idx1-ubyte" />
     <None Include="..\Shared\TestData\MNIST\train-images.idx3-ubyte" />
     <None Include="..\Shared\TestData\MNIST\train-labels.idx1-ubyte" />
+    <None Include="TestData\Regression\reference_net.dat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="StandardTestUtils.h" />

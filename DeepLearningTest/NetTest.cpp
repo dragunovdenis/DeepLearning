@@ -237,22 +237,26 @@ namespace DeepLearningTest
 		}
 
 		/// <summary>
-		///	Generates and returnes a "standard" net for testing
+		///	Generates and returns a "standard" net for testing
 		/// </summary>
 		static Net<CpuDC> GenerateStandardNet(const bool no_drop_out = false)
 		{
 			Net<CpuDC> net;
-			const auto keep_rates = no_drop_out ? std::vector<Real>(7, static_cast<Real>(1)) :
-			Utils::get_random_std_vector(7, static_cast<Real>(0), static_cast<Real>(1.0));
+			constexpr auto layers_count = 7;
+			std::mt19937 rg(0);
+			const auto keep_rates = no_drop_out ? std::vector<Real>(layers_count, static_cast<Real>(1)) :
+			Utils::get_random_std_vector(layers_count, 0, 1, rg);
 
-			auto size_in_next = Index3d{ 1, 222, 333 };
-			const auto out_size = 10;
-			size_in_next = net.append_layer<CLayer>(size_in_next, Index2d{ 5 }, 20, ActivationFunctionId::RELU, Index3d{ 0, 0, 0 }, Index3d{ 1, 1, 1 }, keep_rates[0]);
+			auto size_in_next = Index3d{ 1, 22, 33 };
+			constexpr auto out_size = 10;
+			size_in_next = net.append_layer<CLayer>(size_in_next, Index2d{ 5 }, 20, ActivationFunctionId::RELU,
+				Index3d{ 0, 0, 0 }, Index3d{ 1, 1, 1 }, keep_rates[0]);
 			size_in_next = net.append_layer<PLayer>(size_in_next, Index2d{ 2 }, PoolTypeId::MAX, keep_rates[1]);
-			size_in_next = net.append_layer<CLayer>(size_in_next, Index2d{ 5 }, 10, ActivationFunctionId::TANH, Index3d{ 0, 0, 0 }, Index3d{ 1, 1, 1 }, keep_rates[2]);
-			size_in_next = net.append_layer<PLayer>(size_in_next, Index2d{ 2 }, PoolTypeId::MAX, keep_rates[3]);
-			size_in_next = net.append_layer<NLayer>(size_in_next.coord_prod(), 100, ActivationFunctionId::LINEAR, Real(-1), Real(1), true, keep_rates[4]);
-			size_in_next = net.append_layer<NLayer>(size_in_next.coord_prod(), 100, ActivationFunctionId::SIGMOID, Real(-1), Real(1), true, keep_rates[5]);
+			size_in_next = net.append_layer<CLayer>(size_in_next, Index2d{ 5 }, 10, ActivationFunctionId::TANH,
+				Index3d{ 0, 0, 0 }, Index3d{ 1, 1, 1 }, keep_rates[2]);
+			size_in_next = net.append_layer<PLayer>(size_in_next, Index2d{ 2 }, PoolTypeId::AVERAGE, keep_rates[3]);
+			size_in_next = net.append_layer<NLayer>(size_in_next.coord_prod(), 10, ActivationFunctionId::LINEAR, Real(-1), Real(1), true, keep_rates[4]);
+			size_in_next = net.append_layer<NLayer>(size_in_next.coord_prod(), 10, ActivationFunctionId::SIGMOID, Real(-1), Real(1), true, keep_rates[5]);
 			size_in_next = net.append_layer<NLayer>(size_in_next.coord_prod(), out_size, ActivationFunctionId::SOFTMAX, Real(-1), Real(1), true, keep_rates[6]);
 
 			for (auto layer_id = 0ull; layer_id < net.layers_count(); layer_id++)
@@ -287,6 +291,26 @@ namespace DeepLearningTest
 			Assert::IsTrue(net.equal_hyperparams(net_restored), L"Original and restored nets are different");
 		}
 
+		/// <summary>
+		/// Generates artificial data set for training.
+		/// </summary>
+		template <class D>
+		std::tuple<std::vector<typename D::tensor_t>, std::vector<typename D::tensor_t>> generate_artificial_training_data(
+			const int items_count, const Index3d& in_size, const Index3d& out_size)
+		{
+			std::mt19937 rg{ 0 };
+			std::vector<typename D::tensor_t> input;
+			std::vector<typename D::tensor_t> labels;
+
+			for (auto item_id = 0; item_id < items_count; ++item_id)
+			{
+				input.emplace_back(in_size, -1, 1, &rg);
+				labels.emplace_back(out_size, -1, 1, &rg);
+			}
+
+			return std::make_tuple(input, labels);
+		}
+
 		TEST_METHOD(SingleItemLearnTest)
 		{
 			//Arrange
@@ -298,21 +322,42 @@ namespace DeepLearningTest
 
 			Assert::IsTrue(net.equal(net_clone), L"Nets are supposed to be identical");
 
-			const auto input = typename CpuDC::tensor_t(net.in_size(), 0, 1);
-			const auto label = typename CpuDC::tensor_t(net.out_size(), 0, 1);
+			const auto [input, labels] = generate_artificial_training_data<CpuDC>(1, net.in_size(), net.out_size());
 
-			Assert::IsTrue(input.max_abs() > 0 && label.max_abs() > 0, 
+			Assert::IsTrue(input[0].max_abs() > 0 && labels[0].max_abs() > 0,
 				L"Neither input nor label items are supposed to be trivial");
 
 			//Act
-			net.learn(input, label, learning_rate, cost_func_id, reg_factor);
+			net.learn(input[0], labels[0], learning_rate, cost_func_id, reg_factor);
 
 			//Assert
 			Assert::IsFalse(net.equal(net_clone), L"Nets are supposed to be different at this point");
 			//now we run learning of the clone network through the "general" method and compare the result with the "original" net
-			net_clone.learn({ input }, { label }, 1, 1, learning_rate, cost_func_id, reg_factor);
+			net_clone.learn(input, labels, 1, 1, learning_rate, cost_func_id, reg_factor);
 
 			Assert::IsTrue(net.equal(net_clone), L"Nets after learning are supposed to be equal");
+		}
+
+		TEST_METHOD(NetLearnRegressionTest)
+		{
+			//Arrange
+			Net<CpuDC>::reset_random_generator(0);
+			auto net = GenerateStandardNet(/*no_drop_out*/ false);
+
+			const auto [input, labels] =
+				generate_artificial_training_data<CpuDC>(40, net.in_size(), net.out_size());
+
+			//Act
+			net.learn(input, labels, /*batch size*/10, /*epochs count*/ 3,
+				/*learning rate*/ 0.1, /*const func*/CostFunctionId::SQUARED_ERROR, /*regularization*/1.5,
+				[](const auto a, const auto b) {}, /*single threaded*/ true);
+
+			Net<CpuDC>::reset_random_generator();
+
+			//Assert
+			//net.save_to_file("../../DeepLearningTest/TestData/Regression//reference_net.dat");
+			const auto reference_net = Net<CpuDC>::load_from_file("TestData\\Regression\\reference_net.dat");
+			Assert::IsTrue(net.equal(reference_net), L"Nets are supposed to be equal.");
 		}
 
 		TEST_METHOD(LinearCostTest)

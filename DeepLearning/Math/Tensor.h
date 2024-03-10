@@ -17,11 +17,9 @@
 
 #pragma once
 #include "../defs.h"
-#include <msgpack.hpp>
 #include "BasicCollection.h"
 #include <filesystem>
 #include "LinAlg3d.h"
-#include "LinAlg2d.h"
 
 namespace DeepLearning
 {
@@ -167,13 +165,14 @@ namespace DeepLearning
 		/// uniformly distributed pseudo-random values from the given range
 		/// </summary>
 		Tensor(const std::size_t layer_dim, const std::size_t row_dim,
-			const std::size_t col_dim, const Real range_begin, const Real range_end);
+			const std::size_t col_dim, const Real range_begin,
+			const Real range_end, std::mt19937* seeder = nullptr);
 
 		/// <summary>
 		/// Constructs dense tensor of the given dimension filled with
 		/// uniformly distributed pseudo-random values from the given range
 		/// </summary>
-		Tensor(const Index3d& size, const Real range_begin, const Real range_end);
+		Tensor(const Index3d& size, const Real range_begin, const Real range_end, std::mt19937* seeder = nullptr);
 
 		/// <summary>
 		/// Assignment operator

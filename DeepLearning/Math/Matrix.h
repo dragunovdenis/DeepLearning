@@ -18,8 +18,6 @@
 #pragma once
 
 #include <vector>
-#include <msgpack.hpp>
-#include <functional>
 #include "../defs.h"
 #include "BasicCollection.h"
 #include <filesystem>
@@ -139,7 +137,7 @@ namespace DeepLearning
 		/// with a uniformly distributed pseudo-random values from the given range
 		/// </summary>
 		Matrix(const std::size_t row_dim, const std::size_t col_dim,
-			const Real range_begin, const Real range_end);
+			const Real range_begin, const Real range_end, std::mt19937* seeder = nullptr);
 
 		/// <summary>
 		/// Copy constructor

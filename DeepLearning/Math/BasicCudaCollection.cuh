@@ -17,10 +17,9 @@
 
 #pragma once
 
+#include <random>
 #include "../defs.h"
 #include <vector>
-#include <functional>
-#include <cuda_runtime.h>
 #include "../Memory/MemHandle.h"
 #include "LinAlg3d.h"
 
@@ -189,12 +188,12 @@ namespace DeepLearning
 		/// and the given standard deviation "sigma", which is by default equal to one divided
 		/// by the square root of the elements in the collection
 		/// </summary>
-		void standard_random_fill(const Real& sigma = -1);
+		void standard_random_fill(const Real& sigma = -1, std::mt19937* seeder = nullptr);
 
 		/// <summary>
 		/// Fills the collection with uniformly distributed random values from [min, max] segment
 		/// </summary>
-		void uniform_random_fill(const Real& min, const Real& max);
+		void uniform_random_fill(const Real& min, const Real& max, std::mt19937* seeder = nullptr);
 
 		/// <summary>
 		/// Returns "true" if at least one element of the collection is "nan"

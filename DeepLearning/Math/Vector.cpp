@@ -87,10 +87,10 @@ namespace DeepLearning
 		std::copy(source.begin(), source.end(), begin());
 	}
 
-	Vector::Vector(const std::size_t dim, const Real range_begin, const Real range_end)
+	Vector::Vector(const std::size_t dim, const Real range_begin, const Real range_end, std::mt19937* seeder)
 		: Vector(dim, false)
 	{
-		Utils::fill_with_random_values(begin(), end(), range_begin, range_end);
+		uniform_random_fill(range_begin, range_end, seeder);
 	}
 
 	Vector::~Vector()
@@ -264,22 +264,23 @@ namespace DeepLearning
 		Logging::log_as_table(get_handle(), dim(), 1, filename);
 	}
 
-	void Vector::fill_with_random_selection_map(const std::size_t& selected_cnt, std::vector<int>& aux_collection)
+	void Vector::fill_with_random_selection_map(const std::size_t& selected_cnt,
+		std::vector<int>& aux_collection, std::mt19937* seeder)
 	{
 		if (selected_cnt >= size())
 		{
-			fill(Real(1));
+			fill(static_cast<Real>(1));
 			return;
 		}
 
 		aux_collection.resize(size());
 		std::iota(aux_collection.begin(), aux_collection.end(), 0);
-		Utils::fill_with_random_values(begin(), end(), Real(-1), Real(1));
+		uniform_random_fill(Real(-1), Real(1), seeder);
 
-		std::sort(aux_collection.begin(), aux_collection.end(), [this](const auto a, const auto b)
-			{
-				return this->begin()[a] < this->begin()[b];
-			});
+		std::ranges::sort(aux_collection, [this](const auto a, const auto b)
+		{
+			return this->begin()[a] < this->begin()[b];
+		});
 
 		for (auto id = 0ull; id < selected_cnt; id++)
 			_data[aux_collection[id]] = Real(1);

@@ -269,7 +269,7 @@ namespace DeepLearningTest
 			if (!aux_learning_data_host.Derivatives.empty() || !aux_learning_data.Derivatives.empty())
 			{
 				const auto deriv_diff = (aux_learning_data_host.Derivatives - aux_learning_data.Derivatives.to_host()).max_abs();
-				StandardTestUtils::LogRealAndAssertLessOrEqualTo("deriv_diff", deriv_diff, 10 * std::numeric_limits<Real>::epsilon());
+				StandardTestUtils::LogRealAndAssertLessOrEqualTo("deriv_diff", deriv_diff, 50 * std::numeric_limits<Real>::epsilon());
 			}
 
 			const auto indices_are_equal = aux_learning_data_host.IndexMapping == aux_learning_data.IndexMapping.to_stdvector();

@@ -40,8 +40,8 @@ namespace DeepLearning
 		: Tensor(size.x, size.y, size.z, assign_zero)
 	{}
 
-	Tensor::Tensor(const Index3d& size, const Real range_begin, const Real range_end)
-		: Tensor(size.x, size.y, size.z, range_begin, range_end)
+	Tensor::Tensor(const Index3d& size, const Real range_begin, const Real range_end, std::mt19937* seeder)
+		: Tensor(size.x, size.y, size.z, range_begin, range_end, seeder)
 	{}
 
 	Tensor::Tensor(const Tensor& tensor)
@@ -65,10 +65,10 @@ namespace DeepLearning
 	}
 
 	Tensor::Tensor(const std::size_t layer_dim, const std::size_t row_dim,
-		const std::size_t col_dim, const Real range_begin, const Real range_end)
+		const std::size_t col_dim, const Real range_begin, const Real range_end, std::mt19937* seeder)
 		: Tensor(layer_dim, row_dim, col_dim, false)
 	{
-		Utils::fill_with_random_values(begin(), end(), range_begin, range_end);
+		uniform_random_fill(range_begin, range_end, seeder);
 	}
 
 	Tensor& Tensor::operator =(const Tensor& tensor)

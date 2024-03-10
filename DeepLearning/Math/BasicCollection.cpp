@@ -173,16 +173,26 @@ namespace DeepLearning
 		return RealMemHandle(begin(), size());
 	}
 
-	void BasicCollection::standard_random_fill(const Real& sigma)
+	void BasicCollection::uniform_random_fill(const Real& min, const Real& max, std::mt19937* seeder)
 	{
 		if (empty())
 			return;
 
-		static std::random_device rd;
-		static std::mt19937 gen(rd());
-		std::normal_distribution<Real> dist{ 0, sigma < Real(0) ? Real(1) / Real(std::sqrt(size())) : sigma };
+		thread_local std::mt19937 gen(std::random_device{}());
+		auto& gen_alias = seeder ? *seeder : gen;
+		std::uniform_real_distribution<Real> dist(min, max);
+		std::generate(begin(), end(), [&]() {return dist(gen_alias); });
+	}
 
-		std::generate(begin(), end(), [&]() {return dist(gen); });
+	void BasicCollection::standard_random_fill(const Real& sigma, std::mt19937* seeder)
+	{
+		if (empty())
+			return;
+
+		thread_local std::mt19937 gen(std::random_device{}());
+		auto& gen_alias = seeder ? *seeder : gen;
+		std::normal_distribution<Real> dist{ 0, sigma < Real(0) ? Real(1) / Real(std::sqrt(size())) : sigma };
+		std::generate(begin(), end(), [&]() {return dist(gen_alias); });
 	}
 
 	bool BasicCollection::is_nan() const

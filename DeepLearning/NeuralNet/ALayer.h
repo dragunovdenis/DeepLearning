@@ -16,7 +16,6 @@
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #pragma once
-#include <vector>
 #include "../Math/Tensor.h"
 #include "CummulativeGradient.h"
 #include <filesystem>
@@ -47,9 +46,15 @@ namespace DeepLearning
 		/// <summary>
 		///	Default value of the "keep rate" parameter
 		/// </summary>
-		static constexpr Real DefaultKeepRate = Real(1);
+		static constexpr Real DefaultKeepRate = static_cast<Real>(1);
 
 	protected:
+
+		/// <summary>
+		/// Returns reference to random generator.
+		/// </summary>
+		static std::mt19937& ran_gen();
+
 		/// <summary>
 		/// One minus dropout rate
 		/// </summary>
@@ -243,5 +248,15 @@ namespace DeepLearning
 		/// Sets all the "trainable" parameters (weights and biases) to zero
 		/// </summary>
 		virtual void reset() = 0;
+
+		/// <summary>
+		/// Resets random generator with the given seed.
+		/// </summary>
+		static void reset_random_generator(const unsigned seed);
+
+		/// <summary>
+		/// Resets random generator with the std::random_device generated seed.
+		/// </summary>
+		static void reset_random_generator();
 	};
 }

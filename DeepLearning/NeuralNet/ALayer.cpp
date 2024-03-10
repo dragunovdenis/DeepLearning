@@ -33,7 +33,7 @@ namespace DeepLearning
 			const auto input_linear_size = in_size().coord_prod();
 			const auto selected_cnt = static_cast<std::size_t>(input_linear_size * _keep_rate);
 			_keep_mask.resize(input_linear_size);
-			_keep_mask.fill_with_random_selection_map(selected_cnt, _keep_mask_aux_collection);
+			_keep_mask.fill_with_random_selection_map(selected_cnt, _keep_mask_aux_collection, &ran_gen());
 		}
 	}
 
@@ -61,6 +61,17 @@ namespace DeepLearning
 	ALayer<D>::ALayer(const Real keep_rate) : _keep_rate(keep_rate)
 	{}
 
+	namespace
+	{
+		thread_local std::mt19937 _ran_gen{ std::random_device{}() };
+	}
+
+	template <class D>
+	std::mt19937& ALayer<D>::ran_gen()
+	{
+		return _ran_gen;
+	}
+
 	template <class D>
 	Real ALayer<D>::get_keep_rate() const
 	{
@@ -86,6 +97,18 @@ namespace DeepLearning
 	bool ALayer<D>::equal_hyperparams(const ALayer<D>& layer) const
 	{
 		return _keep_rate == layer._keep_rate;
+	}
+
+	template <class D>
+	void ALayer<D>::reset_random_generator(const unsigned seed)
+	{
+		ran_gen().seed(seed);
+	}
+
+	template <class D>
+	void ALayer<D>::reset_random_generator()
+	{
+		ran_gen().seed(std::random_device{}());
 	}
 
 	template <class D>
