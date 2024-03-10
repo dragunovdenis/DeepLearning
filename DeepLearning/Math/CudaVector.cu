@@ -110,8 +110,7 @@ namespace DeepLearning
 	{
 		resize(dim);
 
-		if (assign_zero)
-			CudaUtils::fill_zero(_data, _dim);
+		if (assign_zero) fill_zero();
 	}
 
 	CudaVector::CudaVector(const Index3d& size, const bool assign_zero) : 

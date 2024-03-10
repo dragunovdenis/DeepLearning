@@ -94,12 +94,17 @@ namespace DeepLearning
 		void resize(const Index3d& size_3d) override;
 
 		/// <summary>
+		/// Resizes the tensor and returns reference to it.
+		/// </summary>
+		Tensor& get_resized(const Index3d& size_3d);
+
+		/// <summary>
 		/// Return total number of elements in the tensor
 		/// </summary>
 		std::size_t size() const override;
 
 		/// <summary>
-		/// Returns number of preallocated elements ("capacity" can be greater than the size of collection)
+		/// Returns number of pre-allocated elements ("capacity" can be greater than the size of collection)
 		/// </summary>
 		std::size_t capacity() const override;
 
@@ -197,7 +202,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Destructor
 		/// </summary>
-		~Tensor();
+		~Tensor() override;
 
 		/// <summary>
 		/// Number of "layers"
@@ -252,7 +257,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Returns "sizes" of the tensor in all the 3 directions
 		/// </summary>
-		Index3d size_3d() const;
+		Index3d size_3d() const override;
 
 		/// <summary>
 		/// Changes size of the tensor without modifying of the underlying data container
@@ -341,15 +346,16 @@ namespace DeepLearning
 		/// <param name="strides">Strides used for computing the convolution</param>
 		/// <param name="kernel_grad">Place holder to store the gradient with respect to convolution kernel dF/dK
 		/// Will be allocated and initialized during the method call</param>
+		/// <param name="kernel_grad_scale">Scale factor to be applied to the content of
+		/// `kernel_grad` before adding the gradient value to it.</param>
 		template <bool CALC_INPUT_GRAD>
 		void convolution_gradient(const RealMemHandleConst& conv_res_grad, Tensor& input_grad, Tensor& kernel_grad, const Tensor& kernel, const Index3d& paddings,
-			const Index3d& strides) const;
+			const Index3d& strides, const Real kernel_grad_scale) const;
 
 		/// <summary>
 		/// More general implementation of the convolution operation, that can perform pooling operations
 		/// </summary>
 		/// <param name="pool_operator">Instance of the pool operator to be applied (generalization of the convolution kernel)</param>
-		/// <param name="kernel_size">Size of the "window" for the pooling agent operate</param>
 		/// <param name="paddings">Zero paddings (will be applied to the base tensor)</param>
 		/// <param name="strides">Strides defining movement of the "window"</param>
 		Tensor pool(const PoolOperator& pool_operator, const Index3d& paddings = Index3d{ 0, 0, 0 },

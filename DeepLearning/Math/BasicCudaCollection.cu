@@ -139,6 +139,11 @@ namespace DeepLearning
 		thrust::fill(thrust::cuda::par.on(cudaStreamPerThread), begin(), end(), val);
 	}
 
+	void BasicCudaCollection::fill_zero()
+	{
+		CudaUtils::fill_zero(begin(), size());
+	}
+
 	bool BasicCudaCollection::empty() const
 	{
 		return size() == 0;
@@ -166,10 +171,16 @@ namespace DeepLearning
 
 	void BasicCudaCollection::hadamard_prod_in_place(const BasicCudaCollection& collection)
 	{
-		if (size() != collection.size())
+		hadamard_prod(*this, collection);
+	}
+
+	void BasicCudaCollection::hadamard_prod(const BasicCudaCollection& op0, const BasicCudaCollection& op1)
+	{
+		if (size() != op0.size() || size() != op1.size())
 			throw std::exception("Inconsistent input");
 
-		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread), begin(), end(), collection.begin(), begin(), [] __device__ (const auto& x, const auto& y) { return x * y; });
+		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread), op0.begin(), op0.end(),
+			op1.begin(), begin(), [] __device__(const auto & x, const auto & y) { return x * y; });
 		CUDA_SANITY_CHECK
 	}
 
@@ -193,11 +204,11 @@ namespace DeepLearning
 		if (empty())
 			return std::numeric_limits<Real>::quiet_NaN();
 
-		return thrust::reduce(thrust::cuda::par.on(cudaStreamPerThread), begin(), end(), Real(0),
+		return thrust::reduce(thrust::cuda::par.on(cudaStreamPerThread), begin(), end(),
+			-std::numeric_limits<Real>::max(),
 			[] __device__(const auto & x, const auto & y) {
 			return  (x < y) ? y : x;
 		});
-		CUDA_SANITY_CHECK
 	}
 
 	std::vector<Real> BasicCudaCollection::to_stdvector() const

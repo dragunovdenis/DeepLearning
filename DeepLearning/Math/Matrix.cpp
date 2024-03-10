@@ -85,7 +85,7 @@ namespace DeepLearning
 		if (_capacity < new_size)
 		{
 			free();
-			_data = reinterpret_cast<Real*>(std::malloc(new_size * sizeof(Real)));
+			_data = static_cast<Real*>(std::malloc(new_size * sizeof(Real)));
 			_capacity = new_size;
 		}
 
@@ -126,7 +126,7 @@ namespace DeepLearning
 		resize(row_dim, col_dim);
 
 		if (assign_zero)
-			std::fill(begin(), end(), Real(0));
+			fill_zero();
 	}
 
 	Matrix::Matrix(const Index3d& size, const bool assign_zero) :
@@ -145,7 +145,7 @@ namespace DeepLearning
 
 	Matrix::Matrix(const Matrix& matr) : Matrix(matr.row_dim(), matr.col_dim(), false)
 	{
-		std::copy(matr.begin(), matr.end(), begin());
+		std::ranges::copy(matr, begin());
 	}
 
 	Matrix& Matrix::operator =(const Matrix& matr)
@@ -153,7 +153,7 @@ namespace DeepLearning
 		if (this != &matr)
 		{
 			resize(matr.row_dim(), matr.col_dim());
-			std::copy(matr.begin(), matr.end(), begin());
+			std::ranges::copy(matr, begin());
 		}
 
 		return *this;
@@ -283,7 +283,7 @@ namespace DeepLearning
 			throw std::exception("Incompatible matrix-vector dimension");
 
 		result.resize({ 1ull, 1ull, _col_dim });
-		result.fill(0);
+		result.fill_zero();
 
 		for (std::size_t row_id = 0; row_id < _row_dim; ++row_id)
 		{
@@ -399,7 +399,6 @@ namespace DeepLearning
 	template <class T>
 	void vector_col_times_vector_row(const BasicCollection& vec_col, const BasicCollection& vec_row, T& result)
 	{
-		result.resize({ 1ull, vec_col.size(), vec_row.size() });
 		const auto col_dim = result.col_dim();
 
 		for (std::size_t row_id = 0; row_id < vec_col.size(); row_id++)
@@ -410,12 +409,31 @@ namespace DeepLearning
 		}
 	}
 
+	template <class T>
+	void scale_and_add_vector_col_times_vector_row(const BasicCollection& vec_col, const BasicCollection& vec_row,
+		T& result, const Real& scale_factor)
+	{
+		const auto col_dim = result.col_dim();
+
+		for (std::size_t row_id = 0; row_id < vec_col.size(); row_id++)
+		{
+			const auto factor = vec_col[row_id];
+			const auto result_row_ptr = result.begin() + col_dim * row_id;
+			std::transform(vec_row.begin(), vec_row.end(), result_row_ptr,
+				result_row_ptr, [factor, scale_factor](const auto& x, const auto& r) {return factor * x + scale_factor * r; });
+		}
+	}
+
 	template void vector_col_times_vector_row<Matrix>(const BasicCollection& vec_col, const BasicCollection& vec_row, Matrix& result);
 	template void vector_col_times_vector_row<Tensor>(const BasicCollection& vec_col, const BasicCollection& vec_row, Tensor& result);
+	template void scale_and_add_vector_col_times_vector_row<Matrix>(const BasicCollection& vec_col,
+		const BasicCollection& vec_row, Matrix& result, const Real& scale_factor);
+	template void scale_and_add_vector_col_times_vector_row<Tensor>(const BasicCollection& vec_col,
+		const BasicCollection& vec_row, Tensor& result, const Real& scale_factor);
 
 	Matrix vector_col_times_vector_row(const BasicCollection& vec_col, const BasicCollection& vec_row)
 	{
-		Matrix result;
+		Matrix result(vec_col.size(), vec_row.size());
 		vector_col_times_vector_row(vec_col, vec_row, result);
 		return result;
 	}
@@ -426,7 +444,7 @@ namespace DeepLearning
 		std::size_t row_dim, col_dim;
 		msgpack::type::make_define_array(row_dim, col_dim, proxy).msgpack_unpack(msgpack_o);
 		resize(row_dim, col_dim);
-		std::copy(proxy.begin(), proxy.end(), begin());
+		std::ranges::copy(proxy, begin());
 	}
 
 	void Matrix::log(const std::filesystem::path& filename) const

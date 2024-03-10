@@ -82,6 +82,12 @@ namespace DeepLearning
 		_col_dim = new_col_dim;
 	}
 
+	CudaTensor& CudaTensor::get_resized(const Index3d& size_3d)
+	{
+		resize(size_3d);
+		return *this;
+	}
+
 	std::size_t CudaTensor::size() const
 	{
 		return _layer_dim * _row_dim * _col_dim;
@@ -112,8 +118,7 @@ namespace DeepLearning
 	{
 		resize(layer_dim, row_dim, col_dim);
 
-		if (assign_zero)
-			CudaUtils::fill_zero(_data, size());
+		if (assign_zero) fill_zero();
 	}
 
 	CudaTensor::CudaTensor(const Index3d& size, const bool assign_zero) :
@@ -513,15 +518,16 @@ namespace DeepLearning
 	CudaTensor CudaTensor::convolution_gradient(const RealMemHandleConst& conv_res_grad, CudaTensor& input_grad, const CudaTensor& kernel, const Index3d& paddings,
 		const Index3d& strides) const
 	{
-		auto kernel_grad = CudaTensor(kernel.size_3d(), true);
-		convolution_gradient<CALC_INPUT_GRAD>(conv_res_grad, input_grad, kernel_grad, kernel, paddings, strides);
+		auto kernel_grad = CudaTensor(kernel.size_3d(), false);
+		convolution_gradient<CALC_INPUT_GRAD>(conv_res_grad, input_grad, kernel_grad, kernel, paddings, strides, static_cast<Real>(0));
 
 		return kernel_grad;
 	}
 
 	template <bool CALC_INPUT_GRAD>
-	void CudaTensor::convolution_gradient(const RealMemHandleConst& conv_res_grad, CudaTensor& input_grad, CudaTensor& kernel_grad, const CudaTensor& kernel, const Index3d& paddings,
-		const Index3d& strides) const
+	void CudaTensor::convolution_gradient(const RealMemHandleConst& conv_res_grad, CudaTensor& input_grad,
+		CudaTensor& kernel_grad, const CudaTensor& kernel, const Index3d& paddings,
+		const Index3d& strides, const Real kernel_grad_scale) const
 	{
 		const auto tensor_size = size_3d();
 		const auto kernel_size = kernel.size_3d();
@@ -533,8 +539,10 @@ namespace DeepLearning
 		if (CALC_INPUT_GRAD && input_grad.size_3d() != tensor_size)
 			throw std::exception("Unexpected size of the input gradient container");
 
-		kernel_grad.resize(kernel_size);
-		kernel_grad.fill(Real(0));
+		if (kernel_grad_scale != static_cast<Real>(0))
+			kernel_grad *= kernel_grad_scale;
+		else
+			kernel_grad.fill_zero();
 
 		const auto blocks_cnt = CudaSetup::calc_blocks(conv_res_grad.size());
 
@@ -544,15 +552,17 @@ namespace DeepLearning
 		CUDA_SANITY_CHECK
 	}
 
-	template void CudaTensor::convolution_gradient<true>(const RealMemHandleConst& conv_res_grad, CudaTensor& input_grad, CudaTensor& kernel_grad, const CudaTensor& kernel, const Index3d& paddings,
-		const Index3d& strides) const;
-	template void CudaTensor::convolution_gradient<false>(const RealMemHandleConst& conv_res_grad, CudaTensor& input_grad, CudaTensor& kernel_grad, const CudaTensor& kernel, const Index3d& paddings,
-		const Index3d& strides) const;
+	template void CudaTensor::convolution_gradient<true>(const RealMemHandleConst& conv_res_grad, CudaTensor& input_grad,
+		CudaTensor& kernel_grad, const CudaTensor& kernel, const Index3d& paddings,
+		const Index3d& strides, const Real kernel_grad_scale) const;
+	template void CudaTensor::convolution_gradient<false>(const RealMemHandleConst& conv_res_grad, CudaTensor& input_grad,
+		CudaTensor& kernel_grad, const CudaTensor& kernel, const Index3d& paddings,
+		const Index3d& strides, const Real kernel_grad_scale) const;
 
-	template CudaTensor CudaTensor::convolution_gradient<true>(const RealMemHandleConst& conv_res_grad, CudaTensor& input_grad, const CudaTensor& kernel, const Index3d& paddings,
-		const Index3d& strides) const;
-	template CudaTensor CudaTensor::convolution_gradient<false>(const RealMemHandleConst& conv_res_grad, CudaTensor& input_grad, const CudaTensor& kernel, const Index3d& paddings,
-		const Index3d& strides) const;
+	template CudaTensor CudaTensor::convolution_gradient<true>(const RealMemHandleConst& conv_res_grad, CudaTensor& input_grad,
+		const CudaTensor& kernel, const Index3d& paddings, const Index3d& strides) const;
+	template CudaTensor CudaTensor::convolution_gradient<false>(const RealMemHandleConst& conv_res_grad, CudaTensor& input_grad,
+		const CudaTensor& kernel, const Index3d& paddings, const Index3d& strides) const;
 
 	CudaTensor CudaTensor::pool(const PoolOperator& pool_operator, const Index3d& paddings,	const Index3d& strides) const
 	{
@@ -631,12 +641,12 @@ namespace DeepLearning
 
 	CudaTensor CudaTensor::average_pool(const Index3d& window_size) const
 	{
-		return scale_pool(window_size, Real(1) / window_size.coord_prod());
+		return scale_pool(window_size, static_cast<Real>(1) / window_size.coord_prod());
 	}
 
 	void CudaTensor::average_pool(const Index3d& window_size, CudaTensor& result) const
 	{
-		scale_pool(window_size, Real(1) / window_size.coord_prod(), result);
+		scale_pool(window_size, static_cast<Real>(1) / window_size.coord_prod(), result);
 	}
 
 	/// <summary>
@@ -680,7 +690,7 @@ namespace DeepLearning
 			throw std::exception("Unexpected size of the gradient tensor");
 
 		result.resize(tensor_size);
-		result.fill(Real(0));
+		result.fill_zero();
 
 		const auto blocks_cnt = CudaSetup::calc_blocks(pool_res_gradient.size());
 
@@ -779,7 +789,7 @@ namespace DeepLearning
 			throw std::exception("Inconsistent input");
 
 		result.resize(size_3d());
-		result.fill(Real(0));
+		result.fill_zero();
 
 		thrust::scatter(thrust::cuda::par.on(cudaStreamPerThread), pool_res_gradient.begin(), pool_res_gradient.end(), out_to_in_mapping.begin(), result.begin());
 		CUDA_SANITY_CHECK

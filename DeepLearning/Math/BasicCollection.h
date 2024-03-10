@@ -80,6 +80,11 @@ namespace DeepLearning
 		[[nodiscard]] virtual std::size_t size() const = 0;
 
 		/// <summary>
+		/// 3d representation of the collection's size
+		/// </summary>
+		[[nodiscard]] virtual Index3d size_3d() const = 0;
+
+		/// <summary>
 		/// Returns number of preallocated elements ("capacity" can be greater than the size of collection)
 		/// </summary>
 		[[nodiscard]] virtual std::size_t capacity() const = 0;
@@ -135,6 +140,11 @@ namespace DeepLearning
 		void fill(const Real& val);
 
 		/// <summary>
+		/// Fill the collection with "zeros"
+		/// </summary>
+		void fill_zero();
+
+		/// <summary>
 		/// Returns "true" if the collection is empty
 		/// </summary>
 		[[nodiscard]] bool empty() const;
@@ -143,6 +153,12 @@ namespace DeepLearning
 		/// Performs the Hadamard (element-wise) product operation between the current collection and the input
 		/// </summary>
 		void hadamard_prod_in_place(const BasicCollection& collection);
+
+		/// <summary>
+		/// Calculates Hadamard (element-wise) product of the two given operands and
+		/// assigns the result to the current collection.
+		/// </summary>
+		void hadamard_prod(const BasicCollection& op0, const BasicCollection& op1);
 
 		/// <summary>
 		/// Performs the Hadamard (element-wise) product operation between the current collection and the input

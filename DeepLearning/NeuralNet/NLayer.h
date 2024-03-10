@@ -128,7 +128,13 @@ namespace DeepLearning
 		/// See the summary to the corresponding method in the base class
 		/// </summary>
 		void backpropagate(const typename D::tensor_t& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
-		                   typename D::tensor_t& input_grad, LayerGradient<D>& layer_grad, const bool evaluate_input_gradient = true) const override;
+			typename D::tensor_t& input_grad, LayerGradient<D>& layer_grad,
+			const bool evaluate_input_gradient = true, const Real gradient_scale_factor = static_cast<Real>(0)) const override;
+
+		/// <summary>
+		/// Resizes the given container so that it matches the size of the layer's gradient.
+		/// </summary>
+		void allocate(LayerGradient<D>& gradient_container, bool fill_zeros) const override;
 
 		/// <summary>
 		/// See the summary to the corresponding method in the base class

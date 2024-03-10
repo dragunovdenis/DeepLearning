@@ -16,6 +16,8 @@
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "CudaUtils.cuh"
+#include <exception>
+#include <string>
 
 namespace DeepLearning::CudaUtils
 {

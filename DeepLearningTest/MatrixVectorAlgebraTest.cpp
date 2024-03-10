@@ -343,6 +343,28 @@ namespace DeepLearningTest
 			}
 		}
 
+		TEST_METHOD(VectorColByVectorRowMultiplicationWithScalingTest)
+		{
+			//Arrange
+			const auto row_dim = 10;
+			const auto col_dim = 23;
+			const auto vec_col = Vector(row_dim, -1, 1);
+			const auto vec_row = Vector(col_dim, -1, 1);
+			const auto result_in = Matrix(row_dim, col_dim, -1, 1);
+			const auto scale_factor = Utils::get_random(-1, 1);
+			Assert::IsTrue(vec_col.max_abs() > 0 && vec_row.max_abs() > 0 && result_in.max_abs() > 0,
+				L"The input vectors are supposed to be non-zero!");
+
+			//Act
+			auto result_out = result_in;
+			scale_and_add_vector_col_times_vector_row(vec_col, vec_row, result_out, scale_factor);
+
+			//Assert
+			const auto reference_result = vector_col_times_vector_row(vec_col, vec_row) + result_in * scale_factor;
+			Assert::IsTrue((result_out - reference_result).max_abs() < 10 * std::numeric_limits<Real>::epsilon(),
+				L"Unexpectedly high deviation from the reference matrix.");
+		}
+
 		TEST_METHOD(HadamardVectorProductTest)
 		{
 			//Arrange
@@ -388,6 +410,19 @@ namespace DeepLearningTest
 		TEST_METHOD(VectorRandomSelectonMapTest)
 		{
 			StandardTestUtils::RandomSelectionMapTest<Vector>([](const auto dim) { return VectorFactory(dim); });
+		}
+
+		TEST_METHOD(FillZeroTest)
+		{
+			// Arrange
+			Vector vec(100, -1, 1);
+			Assert::IsTrue(vec.max_abs() > 0, L"Vector should be non-zero");
+
+			// Act
+			vec.fill_zero();
+
+			// Assert
+			Assert::IsTrue(vec.max_abs() == 0, L"Vector is supposed to be zero");
 		}
 	};
 }

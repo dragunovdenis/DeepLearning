@@ -17,9 +17,8 @@
 
 #pragma once
 
+#include "../defs.h"
 #include <cuda_runtime.h>
-#include <string>
-#include <exception>
 
 
 namespace DeepLearning

@@ -304,6 +304,38 @@ namespace DeepLearningTest
 			Assert::IsTrue(input_grad_diff < 50 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference for the input gradient");
 		}
 
+		TEST_METHOD(ConvolutionGradientWithScalingTest)
+		{
+			// Arrange
+			const CudaTensor tensor(10, 28, 30, -1, 1);
+			const CudaTensor kernel(10, 5, 4, -1, 1);
+			const Index3d paddings = { 0, 1, 2 };
+			const Index3d strides = { 1, 2, 3 };
+			const CudaTensor res_grad(ConvolutionUtils::calc_conv_res_size(tensor.size_3d(), kernel.size_3d(), paddings, strides), -1, 1);
+			const CudaTensor kernel_grad_input_data(kernel.size_3d(), -1, 1);
+			auto gradient_container = kernel_grad_input_data;
+			const auto gradient_scale_factor = Utils::get_random(-1, 1);
+			CudaTensor in_grad(tensor.size_3d(), /*fill zeros*/ true);
+			Assert::IsTrue(kernel_grad_input_data.max_abs() > 0, L"Input gradient container must be on-zero");
+			Assert::IsTrue(tensor.max_abs() > 0, L"The tensor is supposed to be non-zero");
+			Assert::IsTrue(res_grad.max_abs() > 0, L"The convolution gradient is supposed to be non-zero");
+			Assert::IsTrue(kernel.max_abs() > 0, L"The kernel is supposed to be non-zero");
+
+			// Act
+			tensor.convolution_gradient<true>(res_grad.get_handle(), in_grad, gradient_container,
+				kernel, paddings, strides, gradient_scale_factor);
+
+			// Assert
+			const auto [ref_kernel_grad, ref_in_grad] = tensor.convolution_gradient(res_grad, kernel, paddings, strides);
+			const auto diff = (gradient_container - (kernel_grad_input_data * gradient_scale_factor + ref_kernel_grad)).max_abs();
+			Logger::WriteMessage((std::string("Gradient diff. =  ") + Utils::to_string(diff) + "\n").c_str());
+			Assert::IsTrue(diff < 100 * std::numeric_limits<Real>::epsilon(),
+				L"Too high deviation between actual and reference kernel gradients");
+
+			Assert::IsTrue((in_grad - ref_in_grad).max_abs() < 10 * std::numeric_limits<Real>::epsilon(),
+				L"Too high deviation between actual and reference input gradient tensors");
+		}
+
 		void min_max_pool_optimixed_test(const bool max)
 		{
 			//Arrange

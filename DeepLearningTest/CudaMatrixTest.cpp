@@ -170,17 +170,26 @@ namespace DeepLearningTest
 			const auto col_dim = 135;
 			const auto vect_col = CudaVector(row_dim, -1, 1);
 			const auto vect_row = CudaVector(col_dim, -1, 1);
+			const auto result_in = CudaMatrix(row_dim, col_dim, -1, 1);
+			const auto scale_factor = Utils::get_random(-1, 1);
 
-			Assert::IsTrue(vect_col.max_abs() > 0 && vect_row.max_abs() > 0, L"Input vectors are supposed to be non-zero");
+			Assert::IsTrue(vect_col.max_abs() > 0 && vect_row.max_abs() > 0 &&
+				result_in.max_abs() > 0, L"Input vectors are supposed to be non-zero");
 
 			//Act
 			const auto result = vector_col_times_vector_row(vect_col, vect_row);
+			auto result_out = result_in;
+			scale_and_add_vector_col_times_vector_row(vect_col, vect_row, result_out, scale_factor);
 
 			//Assert
 			const auto host_result = vector_col_times_vector_row(vect_col.to_host(), vect_row.to_host());
 			const auto diff = (result.to_host() - host_result).max_abs();
 			Logger::WriteMessage((std::string("Diff = ") + Utils::to_string(diff) + "\n").c_str());
 			Assert::IsTrue(diff < 10 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference");
+
+			const auto result_out_reference = result + result_in * scale_factor;
+			Assert::IsTrue((result_out - result_out_reference).max_abs() <
+				10 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference (scaled result)");
 		}
 
 		TEST_METHOD(TransposeTest)

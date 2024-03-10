@@ -94,7 +94,7 @@ namespace DeepLearning
 	template <class D>
 	void NLayer<D>::act(const typename D::tensor_t& input, typename D::tensor_t& output, typename ALayer<D>::AuxLearningData* const aux_learning_data_ptr) const
 	{
-		const auto function = ActivationWrapper<typename D::tensor_t>(ActivationFunctionId(_func_id));
+		const auto function = ActivationWrapper<typename D::tensor_t>(_func_id);
 
 		output.resize(out_size());
 		_weights.mul_add(input, _biases, output);
@@ -117,21 +117,47 @@ namespace DeepLearning
 
 	template <class D>
 	void NLayer<D>::backpropagate(const typename D::tensor_t& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
-		typename D::tensor_t& input_grad, LayerGradient<D>& layer_grad, const bool evaluate_input_gradient) const
+		typename D::tensor_t& input_grad, LayerGradient<D>& layer_grad, const bool evaluate_input_gradient,
+		const Real gradient_scale_factor) const
 	{
 		if (deltas.size_3d() != Index3d{ 1, 1, static_cast<long long>(_biases.dim()) })
 			throw std::exception("Invalid input");
 
-		const auto function = ActivationWrapper<typename D::tensor_t>(ActivationFunctionId(_func_id));
-		function().calc_input_gradient(deltas, aux_learning_data.Derivatives, layer_grad.Biases_grad);
-		layer_grad.Weights_grad.resize(1);
-		vector_col_times_vector_row(layer_grad.Biases_grad, aux_learning_data.Input, layer_grad.Weights_grad[0]);
+		const auto nontrivial_scaling = gradient_scale_factor != static_cast<Real>(0);
+		thread_local typename D::tensor_t bias_shared;
+		auto& pure_bias_grad = nontrivial_scaling ? bias_shared.
+			get_resized(layer_grad.Biases_grad.size_3d()) : layer_grad.Biases_grad;
+
+		const auto function = ActivationWrapper<typename D::tensor_t>(_func_id);
+		function().calc_input_gradient(deltas, aux_learning_data.Derivatives, pure_bias_grad);
+
+		if (nontrivial_scaling)
+		{
+			layer_grad.Biases_grad.scale_and_add(pure_bias_grad, gradient_scale_factor);
+			scale_and_add_vector_col_times_vector_row(pure_bias_grad, aux_learning_data.Input,
+				layer_grad.Weights_grad[0], gradient_scale_factor);
+		} else
+			vector_col_times_vector_row(pure_bias_grad, aux_learning_data.Input, layer_grad.Weights_grad[0]);
 
 		if (!evaluate_input_gradient) return;
 
-		_weights.transpose_mul(layer_grad.Biases_grad, input_grad);
+		_weights.transpose_mul(pure_bias_grad, input_grad);
 		input_grad.reshape(aux_learning_data.Input.size_3d()); //Reshape, because inside this layer, we work with a "flattened" data,
 															   //whereas previous layer might expect data of certain shape
+	}
+
+	template <class D>
+	void NLayer<D>::allocate(LayerGradient<D>& gradient_container, bool fill_zeros) const
+	{
+		gradient_container.Biases_grad.resize(_biases.size_3d());
+		gradient_container.Weights_grad.resize(1);
+		gradient_container.Weights_grad[0].resize(_weights.size_3d());
+
+		if (fill_zeros)
+		{
+			gradient_container.Biases_grad.fill_zero();
+			gradient_container.Weights_grad[0].fill_zero();
+		}
 	}
 
 	template <class D>
@@ -140,6 +166,7 @@ namespace DeepLearning
 	{
 		typename D::tensor_t input_grad;
 		LayerGradient<D> layer_grad;
+		allocate(layer_grad, /*fill zeros*/false);
 		backpropagate(deltas, aux_learning_data, input_grad, layer_grad, evaluate_input_gradient);
 		return std::make_tuple(std::move(input_grad), std::move(layer_grad));
 	}
@@ -254,8 +281,8 @@ namespace DeepLearning
 	template <class D>
 	void NLayer<D>::reset()
 	{
-		_weights.fill(0);
-		_biases.fill(0);
+		_weights.fill_zero();
+		_biases.fill_zero();
 	}
 
 	template class NLayer<CpuDC>;

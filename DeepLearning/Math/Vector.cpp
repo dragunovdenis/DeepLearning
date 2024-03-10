@@ -28,7 +28,7 @@ namespace DeepLearning
 	Vector::Vector(const Vector& vec)
 		: Vector(vec.dim(), false)
 	{
-		std::copy(vec.begin(), vec.end(), begin());
+		std::ranges::copy(vec, begin());
 	}
 
 	Vector& Vector::operator=(const Vector& vec)
@@ -70,7 +70,7 @@ namespace DeepLearning
 		resize(dim);
 
 		if (assign_zero)
-			std::fill(begin(), end(), Real(0));
+			fill_zero();
 	}
 
 	Vector::Vector(const Index3d& size, const bool assign_zero) :
@@ -84,7 +84,7 @@ namespace DeepLearning
 	Vector::Vector(const std::vector<T>& source)
 		: Vector(source.size(), false)
 	{
-		std::copy(source.begin(), source.end(), begin());
+		std::ranges::copy(source, begin());
 	}
 
 	Vector::Vector(const std::size_t dim, const Real range_begin, const Real range_end, std::mt19937* seeder)
@@ -115,7 +115,7 @@ namespace DeepLearning
 	void Vector::assign(const S& source)
 	{
 		resize(source.size());
-		std::copy(source.begin(), source.end(), begin());
+		std::ranges::copy(source, begin());
 	}
 
 	template void Vector::assign(const std::vector<Real>& source);
@@ -126,7 +126,7 @@ namespace DeepLearning
 		if (_capacity < new_size)
 		{
 			free();
-			_data = reinterpret_cast<Real*>(std::malloc(new_size * sizeof(Real)));
+			_data = static_cast<Real*>(std::malloc(new_size * sizeof(Real)));
 			_capacity = new_size;
 		}
 
@@ -295,6 +295,6 @@ namespace DeepLearning
 		fill_with_random_selection_map(selected_cnt, aux_collection);
 	}
 
-	template Vector::Vector(const std::vector<unsigned char>& souurce);
-	template Vector::Vector(const std::vector<Real>& souurce);
+	template Vector::Vector(const std::vector<unsigned char>& source);
+	template Vector::Vector(const std::vector<Real>& source);
 }

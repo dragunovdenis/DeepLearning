@@ -182,8 +182,16 @@ namespace DeepLearning
 		/// <param name="evaluate_input_gradient">Determines whether the gradient with respect to the
 		/// input data will be actually evaluated.
 		/// The evaluation is redundant for the very first layer of the net</param>
+		/// <param name="gradient_scale_factor">Scale factor to be applied to the content of
+		/// `kernel_grad` before adding the gradient value to it.</param>
 		virtual void backpropagate(const typename D::tensor_t& deltas, const AuxLearningData& aux_learning_data,
-			typename D::tensor_t& input_grad, LayerGradient<D>& layer_grad, const bool evaluate_input_gradient = true) const = 0;
+			typename D::tensor_t& input_grad, LayerGradient<D>& layer_grad,
+			const bool evaluate_input_gradient = true, const Real gradient_scale_factor = static_cast<Real>(0)) const = 0;
+
+		/// <summary>
+		/// Resizes the given container so that it matches the size of the layer's gradient.
+		/// </summary>
+		virtual void allocate(LayerGradient<D>& gradient_container, bool fill_zeros) const = 0;
 
 		/// <summary>
 		/// Adds given increments multiplied by the "learning rate" to the weights and biases respectively

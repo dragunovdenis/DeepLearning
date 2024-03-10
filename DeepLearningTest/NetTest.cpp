@@ -433,5 +433,71 @@ namespace DeepLearningTest
 			for (auto layer_id = 0ull; layer_id < net.layers_count(); ++layer_id)
 				Assert::IsTrue(net[layer_id].squared_weights_sum() <= 0, L"Weights are non-zero");
 		}
+
+		/// <summary>
+		/// Fills given gradient container with random values.
+		/// </summary>
+		static void randomize_gradient(std::vector<LayerGradient<CpuDC>>& gradient)
+		{
+			auto check = 0.0;
+			for (auto& layer_grad : gradient)
+			{
+				layer_grad.Biases_grad.uniform_random_fill(-1, 1);
+
+				for (auto& filter_grad : layer_grad.Weights_grad)
+					filter_grad.uniform_random_fill(-1, 1);
+
+				check = layer_grad.max_abs();
+
+
+			}
+
+			Assert::IsTrue(std::ranges::all_of(gradient,
+				[](const auto& g) { return g.max_abs() > 0 ||
+				g.Weights_grad.empty() && g.Biases_grad.empty(); }), L"There should not be zero gradients");
+		}
+
+		TEST_METHOD(NetGradientWithScalingTest)
+		{
+			////Arrange
+			const auto net = GenerateStandardNet(/*no_drop_out*/ false);
+			std::vector<LayerGradient<CpuDC>> out_gradient;
+			net.allocate(out_gradient, /*fill zero*/ false);
+			randomize_gradient(out_gradient);
+			const auto in_gradient = out_gradient;
+
+			Tensor out_value;
+			Net<CpuDC>::Context context;
+
+			constexpr auto cost_func_id = CostFunctionId::SQUARED_ERROR;
+			const auto scale_factor = Utils::get_random(-1, 1);
+			const auto [input, labels] =
+				generate_artificial_training_data<CpuDC>(1, net.in_size(), net.out_size());
+
+			Assert::IsTrue(input[0].max_abs() > 0 && labels[0].max_abs() > 0,
+				L"Neither input nor label items are supposed to be trivial");
+
+			//Act
+			net.reset_random_generator(0); // for reproducible dropout
+			net.calc_gradient_and_value(input[0], labels[0], cost_func_id, out_gradient, out_value, scale_factor, context);
+
+			// Assert
+			net.reset_random_generator(0); // for reproducible dropout
+			const auto [pure_gradient_ref, value_ref] =
+				net.calc_gradient_and_value(input[0], labels[0], cost_func_id);
+
+			net.reset_random_generator();
+
+			Assert::IsTrue(pure_gradient_ref.size() == net.layers_count(), L"Reference gradient has unexpected size.");
+			Assert::IsTrue(out_gradient.size() == net.layers_count(), L"Trial gradient has unexpected size.");
+
+			for (auto layer_id = 0ull; layer_id < net.layers_count(); ++layer_id)
+			{
+				const auto layer_gradient_diff = (out_gradient[layer_id] - (in_gradient[layer_id] * scale_factor + pure_gradient_ref[layer_id])).max_abs();
+				Assert::IsTrue(layer_gradient_diff < 10 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from the reference gradient");
+			}
+
+			Assert::IsTrue(value_ref == out_value, L"Net value should not be affected by scaling");
+		}
 	};
 }

@@ -178,5 +178,18 @@ namespace DeepLearningTest
 		{
 			StandardTestUtils::RandomSelectionMapTest<CudaVector>([](const auto dim) { return CudaVectorFactory(dim); });
 		}
+
+		TEST_METHOD(FillZeroTest)
+		{
+			// Arrange
+			CudaVector vec(100, -1, 1);
+			Assert::IsTrue(vec.max_abs() > 0, L"Vector should be non-zero");
+
+			// Act
+			vec.fill_zero();
+
+			// Assert
+			Assert::IsTrue(vec.max_abs() == 0, L"Vector is supposed to be zero");
+		}
 	};
 }

@@ -85,7 +85,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Returns size of the collection in a "unified" form
 		/// </summary>
-		Index3d size_3d() const;
+		Index3d size_3d() const override;
 
 		/// <summary>
 		/// Custom "packing" method
@@ -152,7 +152,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Destructor
 		/// </summary>
-		~Vector();
+		~Vector() override;
 
 		/// <summary>
 		/// Returns dimension of the vector

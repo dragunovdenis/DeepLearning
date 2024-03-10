@@ -95,6 +95,11 @@ namespace DeepLearning
 		void resize(const Index3d& size_3d) override;
 
 		/// <summary>
+		/// Resizes the tensor and returns reference to it.
+		/// </summary>
+		CudaTensor& get_resized(const Index3d& size_3d);
+
+		/// <summary>
 		/// Assignment from a "host" tensor
 		/// </summary>
 		void assign(const Tensor& source);
@@ -211,7 +216,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Destructor
 		/// </summary>
-		~CudaTensor();
+		~CudaTensor() override;
 
 		/// <summary>
 		/// Number of "layers"
@@ -256,7 +261,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Returns "sizes" of the tensor in all the 3 directions
 		/// </summary>
-		Index3d size_3d() const;
+		Index3d size_3d() const override;
 
 		/// <summary>
 		/// Changes size of the tensor without modifying of the underlying data container
@@ -345,9 +350,11 @@ namespace DeepLearning
 		/// <param name="strides">Strides used for computing the convolution</param>
 		/// <param name="kernel_grad">Place holder to store the gradient with respect to convolution kernel dF/dK
 		/// Will be allocated and initialized during the method call</param>
+		/// <param name="kernel_grad_scale">Scale factor to be applied to the content of
+		/// `kernel_grad` before adding the gradient value to it.</param>
 		template <bool CALC_INPUT_GRAD = true>
 		void convolution_gradient(const RealMemHandleConst& conv_res_grad, CudaTensor& input_grad, CudaTensor& kernel_grad, const CudaTensor& kernel, const Index3d& paddings,
-			const Index3d& strides) const;
+			const Index3d& strides, const Real kernel_grad_scale) const;
 
 		/// <summary>
 		/// More general implementation of the convolution operation, that can perform pooling operations

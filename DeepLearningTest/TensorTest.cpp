@@ -21,6 +21,7 @@
 #include <MsgPackUtils.h>
 #include "Utilities.h"
 #include "StandardTestUtils.h"
+#include "Math/ConvolutionUtils.h"
 #include "Math/PoolOperator.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -267,6 +268,40 @@ namespace DeepLearningTest
 						Logger::WriteMessage((std::string("Rel. diff. =  ") + Utils::to_string(rel_diff) + "\n").c_str());
 						Assert::IsTrue(rel_diff < Real(8e-4), L"Too high deviation from reference.");
 					}
+		}
+
+		TEST_METHOD(ConvolutionKernelGradientWithScaleTest)
+		{
+			// Arrange
+			const auto tensor_size = Index3d{ 10, 22, 33 };
+			const auto tensor = TensorFactory(tensor_size);//filled with random numbers
+			Assert::IsTrue(tensor.max_abs() > 0, L"Tensor is expected to be nonzero");
+
+			const auto kernel_size = Index3d{ 3, 5, 7 };
+			const auto kernel = TensorFactory(kernel_size);//filled with random numbers
+			Assert::IsTrue(kernel.max_abs() > 0, L"Kernel is expected to be nonzero");
+			Tensor in_grad(tensor_size, /*fill zeros*/ true);
+
+			const auto strides = Index3d{ 2, 1, 5 };
+			const auto paddings = Index3d{ 0, 3, 4 };
+			const auto result_size = ConvolutionUtils::calc_conv_res_size(tensor_size, kernel_size, paddings, strides);
+			const auto res_gradient = TensorFactory(result_size);//filled with random numbers
+			const auto kernel_grad_input_data = TensorFactory(kernel_size);//filled with random numbers;
+			auto gradient_container = kernel_grad_input_data;
+			const auto gradient_scale_factor = Utils::get_random(-1, 1);
+
+			// Act
+			tensor.convolution_gradient<true>(res_gradient.get_handle(), in_grad, gradient_container,
+				kernel, paddings, strides, gradient_scale_factor);
+
+			// Assert
+			const auto [ref_kernel_grad, ref_in_grad] = tensor.convolution_gradient(res_gradient, kernel, paddings, strides);
+			const auto diff = (gradient_container - (kernel_grad_input_data * gradient_scale_factor + ref_kernel_grad)).max_abs();
+			Logger::WriteMessage((std::string("Gradient diff. =  ") + Utils::to_string(diff) + "\n").c_str());
+			Assert::IsTrue(diff < 100 * std::numeric_limits<Real>::epsilon(),
+				L"Too high deviation between actual and reference kernel gradients");
+
+			Assert::IsTrue(in_grad == ref_in_grad, L"Reference and actual input gradients must coincide.");
 		}
 
 		TEST_METHOD(ConvolutionInputGradientTest)

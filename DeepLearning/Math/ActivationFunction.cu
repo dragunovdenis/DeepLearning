@@ -28,7 +28,8 @@ namespace DeepLearning::ActivationFunctionHelper
 {
 	void evaluate_in_place(BasicCudaCollection& collection, const ActivationFunctionId id)
 	{
-		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread), collection.begin(), collection.end(), collection.begin(),
+		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread),
+			collection.begin(), collection.end(), collection.begin(),
 			[id] __device__ (const auto& x) {
 			return make<nvstd::function<Real(Real)>>(id)(x);
 		});
@@ -46,20 +47,23 @@ namespace DeepLearning::ActivationFunctionHelper
 
 	void normalize_and_evaluate_exponent_in_place(BasicCudaCollection& collection)
 	{
-		const auto max_element_ptr = thrust::max_element(thrust::cuda::par.on(cudaStreamPerThread), collection.begin(), collection.end());
-		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread), collection.begin(), collection.end(), collection.begin(),
-			[max_element_ptr] __device__ (const auto& x) { return std::exp(x - *max_element_ptr); });
+		const auto max_val = collection.max_element();
+		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread),
+			collection.begin(), collection.end(), collection.begin(),
+			[max_val] __device__ (const auto& x) { return std::exp(x - max_val); });
 	}
 
 	void evaluate_softmax_input_grad(const BasicCudaCollection& input_exp, const BasicCudaCollection& out_grad, BasicCudaCollection& result)
 	{
 		const auto one_over_denominator = Real(1) / input_exp.sum();
-		const auto one_over_denominator_squared = one_over_denominator * one_over_denominator;
 
-		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread), result.begin(), result.end(), out_grad.begin(), result.begin(),
+		result.resize(input_exp.size_3d());
+		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread),
+			input_exp.begin(), input_exp.end(), out_grad.begin(), result.begin(),
 			[one_over_denominator] __device__ (const auto& x, const auto& y) { return x * y * one_over_denominator; });
 		const auto temp_sum = result.sum() * one_over_denominator;
-		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread), result.begin(), result.end(), input_exp.begin(), result.begin(),
+		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread),
+			result.begin(), result.end(), input_exp.begin(), result.begin(),
 			[temp_sum] __device__ (const auto& x, const auto& a) { return x - a * temp_sum; });
 	}
 }

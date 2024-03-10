@@ -19,7 +19,6 @@
 #include "CudaTensor.cuh"
 #include "CudaVector.cuh"
 #include "CudaUtils.cuh"
-#include "Vector.h"
 #include "device_launch_parameters.h"
 #include <thrust/execution_policy.h>
 #include <thrust/equal.h>
@@ -119,8 +118,7 @@ namespace DeepLearning
 	{
 		resize(row_dim, col_dim);
 
-		if (assign_zero)
-			CudaUtils::fill_zero(_data, size());
+		if (assign_zero) fill_zero();
 	}
 
 	CudaMatrix::CudaMatrix(const Index3d& size, const bool assign_zero) : 
@@ -478,7 +476,7 @@ namespace DeepLearning
 
 	CudaMatrix vector_col_times_vector_row(const BasicCudaCollection& vec_col, const BasicCudaCollection& vec_row)
 	{
-		CudaMatrix result;
+		CudaMatrix result(vec_col.size(), vec_row.size());
 		vector_col_times_vector_row(vec_col, vec_row, result);		
 		return result;
 	}
@@ -486,7 +484,6 @@ namespace DeepLearning
 	template <class T>
 	void vector_col_times_vector_row(const BasicCudaCollection& vec_col, const BasicCudaCollection& vec_row, T& result)
 	{
-		result.resize({ 1ull, vec_col.size(), vec_row.size() });
 		const auto blocks_cnt = CudaSetup::calc_blocks(result.size());
 		const auto threads_per_block = CudaSetup::max_threads_per_block();
 
@@ -496,6 +493,46 @@ namespace DeepLearning
 		CUDA_SANITY_CHECK
 	}
 
+	/// <summary>
+	/// CUDA kernel to perform vector-column by vector-row multiplication.
+	///	The result of multiplication gets added to `result` collection scaled by `scale_factor`.
+	/// </summary>
+	/// <param name="vec_col_size">Size of the "column" vector</param>
+	/// <param name="vec_col_data">Pointer to the array of elements of the "column" vector</param>
+	/// <param name="vec_row_size">Size of the "row" vector</param>
+	/// <param name="vec_row_data">Pointer to the array of elements of the "row" vector</param>
+	/// <param name="result">Pointer to the array of "result" (i.e. vec_col_size x vec_row_size matrix)</param>
+	/// <param name="scale_factor">Scale factor to be applied to `result`.</param>
+	__global__ void vector_col_times_vector_row_kernel(const int vec_col_size, const Real* vec_col_data,
+		const int vec_row_size, const Real* vec_row_data, Real* result, const Real scale_factor)
+	{
+		const auto id = blockIdx.x * blockDim.x + threadIdx.x;
+
+		if (id >= vec_col_size * vec_row_size) return;
+
+		const auto row_id = id / vec_row_size;
+		const auto col_id = id % vec_row_size;
+
+		result[id] = scale_factor * result[id] + vec_row_data[col_id] * vec_col_data[row_id];
+	}
+
+	template <class T>
+	void scale_and_add_vector_col_times_vector_row(const BasicCudaCollection& vec_col,
+		const BasicCudaCollection& vec_row, T& result, const Real& scale_factor)
+	{
+		const auto blocks_cnt = CudaSetup::calc_blocks(result.size());
+		const auto threads_per_block = CudaSetup::max_threads_per_block();
+
+		vector_col_times_vector_row_kernel << <blocks_cnt, threads_per_block, 0, cudaStreamPerThread >> >
+			(static_cast<int>(vec_col.size()), vec_col.begin(),
+				static_cast<int>(vec_row.size()), vec_row.begin(), result.begin(), scale_factor);
+		CUDA_SANITY_CHECK
+	}
+
 	template void vector_col_times_vector_row<CudaMatrix>(const BasicCudaCollection& vec_col, const BasicCudaCollection& vec_row, CudaMatrix& result);
 	template void vector_col_times_vector_row<CudaTensor>(const BasicCudaCollection& vec_col, const BasicCudaCollection& vec_row, CudaTensor& result);
+	template void scale_and_add_vector_col_times_vector_row<CudaMatrix>(const BasicCudaCollection& vec_col,
+		const BasicCudaCollection& vec_row, CudaMatrix& result, const Real& scale_factor);
+	template void scale_and_add_vector_col_times_vector_row<CudaTensor>(const BasicCudaCollection& vec_col,
+		const BasicCudaCollection& vec_row, CudaTensor& result, const Real& scale_factor);
 }

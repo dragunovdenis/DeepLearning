@@ -20,6 +20,7 @@
 #include <numeric>
 #include <exception>
 #include <random>
+#include <ranges>
 #include "AvxAcceleration.h"
 
 namespace DeepLearning
@@ -95,6 +96,11 @@ namespace DeepLearning
 		std::fill(begin(), end(), val);
 	}
 
+	void BasicCollection::fill_zero()
+	{
+		std::memset(begin(), 0, size() * sizeof(Real));
+	}
+
 	bool BasicCollection::empty() const
 	{
 		return size() == 0;
@@ -122,10 +128,16 @@ namespace DeepLearning
 
 	void BasicCollection::hadamard_prod_in_place(const BasicCollection& collection)
 	{
-		if (size() != collection.size())
+		hadamard_prod(*this, collection);
+	}
+
+	void BasicCollection::hadamard_prod(const BasicCollection& op0, const BasicCollection& op1)
+	{
+		if (size() != op0.size() || size() != op1.size())
 			throw std::exception("Inconsistent input");
 
-		std::transform(begin(), end(), collection.begin(), begin(), [](const auto& x, const auto& y) { return x * y; });
+		std::transform(op0.begin(), op0.end(), op1.begin(), begin(),
+			[](const auto& x, const auto& y) { return x * y; });
 	}
 
 	Real BasicCollection::dot_product(const BasicCollection& collection) const

@@ -22,7 +22,6 @@
 #include <Math/CostFunction.h>
 #include <Utilities.h>
 #include <MsgPackUtils.h>
-#include <type_traits>
 #include <optional>
 #include <numeric>
 #include <algorithm>
@@ -36,6 +35,90 @@ namespace DeepLearningTest
 {
 	TEST_CLASS(NetLayersTest)
 	{
+
+		/// <summary>
+		/// Generic method to construct a "standard" CLayer for tests (generic version).
+		/// </summary>
+		template <class D>
+		static CLayer<D> CreateCLayer(const ActivationFunctionId activation)
+		{
+			const auto input_dim = Index3d(5, 13, 17);
+			const auto filter_window = Index2d(3);
+			constexpr auto filters_count = 7;
+			const auto paddings = Index3d(0, 3, 6);
+			const auto strides = Index3d(2);
+			return CLayer<D>(input_dim, filter_window, filters_count, activation, paddings, strides);
+		}
+
+		/// <summary>
+		/// Returns a "standard" CLayer instance to be used in testing (CUDA version)
+		/// </summary>
+		static CLayer<GpuDC> CreateCudaCLayer(const ActivationFunctionId activation = ActivationFunctionId::SIGMOID)
+		{
+			return CreateCLayer<GpuDC>(activation);
+		}
+
+		/// <summary>
+		/// Returns a "standard" CLayer instance to be used in testing
+		/// </summary>
+		static CLayer<CpuDC> CreateCpuCLayer(const ActivationFunctionId activation = ActivationFunctionId::SIGMOID)
+		{
+			return CreateCLayer<CpuDC>(activation);
+		}
+
+		/// <summary>
+		/// Returns a "standard" PLayer instance to be used in testing (generic version)
+		/// </summary>
+		template <class D>
+		static PLayer<D> CreatePLayer(const PoolTypeId pool_oper_id)
+		{
+			const auto input_dim = Index3d(5, 10, 7);
+			const auto filter_window = Index2d(3, 4);
+			return PLayer<D>(input_dim, filter_window, pool_oper_id);
+		}
+
+		/// <summary>
+		/// Returns a "standard" PLayer instance to be used in testing (CUDA version)
+		/// </summary>
+		static PLayer<GpuDC> CreateCudaPLayer(const PoolTypeId pool_oper_id)
+		{
+			return CreatePLayer<GpuDC>(pool_oper_id);
+		}
+
+		/// <summary>
+		/// Returns a "standard" PLayer instance to be used in testing
+		/// </summary>
+		static PLayer<CpuDC> CreateCpuPLayer(const PoolTypeId pool_oper_id = PoolTypeId::MAX)
+		{
+			return CreatePLayer<CpuDC>(pool_oper_id);
+		}
+
+		/// <summary>
+		/// Returns a "standard" NLayer instance to be used in testing (generic version)
+		/// </summary>
+		template <class D>
+		static NLayer<D> CreateNLayer(const ActivationFunctionId activation_func_id)
+		{
+			const auto input_dim = 10;
+			const auto output_dim = 23;
+			return NLayer<D>(input_dim, output_dim, activation_func_id);
+		}
+
+		/// <summary>
+		/// Returns a "standard" NLayer instance to be used in testing (CUDA version)
+		/// </summary>
+		static NLayer<GpuDC> CreateCudaNLayer(const ActivationFunctionId activation_func_id = ActivationFunctionId::SIGMOID)
+		{
+			return CreateNLayer<GpuDC>(activation_func_id);
+		}
+
+		/// <summary>
+		/// Returns a "standard" NLayer instance to be used in testing
+		/// </summary>
+		static NLayer<CpuDC> CreateCpuNLayer(const ActivationFunctionId activation_func_id = ActivationFunctionId::SIGMOID)
+		{
+			return CreateNLayer<CpuDC>(activation_func_id);
+		}
 
 		/// <summary>
 		/// General method to exercise back-propagation algorithm (for a single neural layer)
@@ -91,7 +174,7 @@ namespace DeepLearningTest
 			const auto out_size = nl.out_size();
 			const auto filters_count = out_size.x;
 
-			const auto reference = Tensor(out_size, -1, 1);;
+			const auto reference = Tensor(out_size, -1, 1);
 			const auto cost_func = CostFunction<Tensor>(cost_function_id);
 
 			//Act
@@ -181,15 +264,48 @@ namespace DeepLearningTest
 		}
 
 		/// <summary>
+		/// General method to test gradient with scaling factor calculation
+		/// </summary>
+		template <template <typename> class L, class D>
+		void RunGeneralGradientWithScalingTest(const L<D>& nl)
+		{
+			const typename D::tensor_t input(nl.in_size(), static_cast<Real>(-1), static_cast<Real>(1));
+			typename D::tensor_t input_grad_result(nl.in_size(), /*fill zeros*/ true);
+			auto aux_data = ALayer<D>::AuxLearningData();
+			LayerGradient<D> gradient_container;
+			nl.allocate(gradient_container, /*fill zeros*/ false);
+
+			gradient_container.Biases_grad.standard_random_fill();
+			for (auto& filter_gradient : gradient_container.Weights_grad)
+				filter_gradient.standard_random_fill();
+
+			const auto gradient_container_input = gradient_container;
+			const auto gradient_scale_factor = Utils::get_random(-1, 1);
+
+			//Act
+			const auto output = nl.act(input, &aux_data);
+			nl.backpropagate(output, aux_data, input_grad_result, gradient_container,
+				/*evaluate_input_gradient*/ true, gradient_scale_factor);
+
+			// Assert
+			const auto [reference_input_grad_result, reference_layer_grad_result] = nl.backpropagate(output, aux_data);
+			const auto diff = (gradient_container_input * gradient_scale_factor +
+				reference_layer_grad_result - gradient_container).max_abs();
+			Logger::WriteMessage((std::string("Gradient discrepancy = ") + Utils::to_string(diff) + '\n').c_str());
+			Assert::IsTrue(diff < 10 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference");
+			const auto input_grad_diff = (reference_input_grad_result - input_grad_result).max_abs();
+			Logger::WriteMessage((std::string("Input gradient discrepancy = ") + Utils::to_string(input_grad_diff) + '\n').c_str());
+			Assert::IsTrue(input_grad_diff < 10 * std::numeric_limits<Real>::epsilon(),
+				L"Input gradient must not be affected by scaling factor");
+		}
+
+		/// <summary>
 		/// General method to exercise back-propagation algorithm (for a single neural layer)
 		/// in the part of calculating derivatives with respect to the input 
 		/// </summary>
 		void CheckDerivativeWithRespectToInputValuesCalculation(const ActivationFunctionId activation_func_id, const CostFunctionId cost_function_id)
 		{
-			const auto input_dim = 10;
-			const auto output_dim = 23;
-			const auto nl = NLayer<CpuDC>(input_dim, output_dim, activation_func_id);
-
+			const auto nl = CreateCpuNLayer(activation_func_id);
 			RunGeneralDerivativeWithRespectToInputValuesTest(nl, cost_function_id, (std::is_same_v<Real, double> ? Real(2e-9) : Real(5e-3)));
 		}
 
@@ -199,10 +315,7 @@ namespace DeepLearningTest
 		/// </summary>
 		void CheckDerivativeWithRespectToWeightsAndBiasesCalculation(const ActivationFunctionId activation_func_id, const CostFunctionId cost_function_id)
 		{
-			const auto input_dim = 10;
-			const auto output_dim = 23;
-			const auto nl = NLayer<CpuDC>(input_dim, output_dim, activation_func_id);
-
+			const auto nl = CreateCpuNLayer(activation_func_id);
 			RunGeneralDerivativeWithRespectToWeightsAndBiasesTest(nl, cost_function_id,
 				(std::is_same_v<Real, double> ? Real(8e-10) : Real(3e-3)),
 				(std::is_same_v<Real, double> ? Real(7e-10) : Real(3e-3)));
@@ -281,13 +394,6 @@ namespace DeepLearningTest
 				500 * std::numeric_limits<Real>::epsilon());
 		}
 
-		static NLayer<GpuDC> CreateCudaNLayer(const ActivationFunctionId activation_func_id)
-		{
-			const auto input_dim = 10;
-			const auto output_dim = 23;
-			return NLayer<GpuDC>(input_dim, output_dim, activation_func_id);
-		}
-
 		TEST_METHOD(NLayerSigmoidCudaSupportTest)
 		{
 			LayerCudaSupportTest<NLayer>([]() { return CreateCudaNLayer(ActivationFunctionId::SIGMOID); });
@@ -298,16 +404,6 @@ namespace DeepLearningTest
 			LayerCudaSupportTest<NLayer>([]() { return CreateCudaNLayer(ActivationFunctionId::SOFTMAX); });
 		}
 
-		static CLayer<GpuDC> CreateCudaCLayer(const ActivationFunctionId activation_func_id)
-		{
-			const auto input_dim = Index3d(5, 13, 17);
-			const auto filter_window = Index2d(3, 4);
-			const auto filters_count = 7;
-			const auto paddings = Index3d(0, 3, 6);
-			const auto strides = Index3d(1, 2, 3);
-			return CLayer<GpuDC>(input_dim, filter_window, filters_count, ActivationFunctionId::SIGMOID, paddings, strides);
-		}
-
 		TEST_METHOD(CLayerSigmoidCudaSupportTest)
 		{
 			LayerCudaSupportTest<CLayer>([]() { return CreateCudaCLayer(ActivationFunctionId::SIGMOID); });
@@ -316,13 +412,6 @@ namespace DeepLearningTest
 		TEST_METHOD(CLayerSoftMaxCudaSupportTest)
 		{
 			LayerCudaSupportTest<CLayer>([]() { return CreateCudaCLayer(ActivationFunctionId::SOFTMAX); });
-		}
-
-		static PLayer<GpuDC> CreateCudaPLayer(const PoolTypeId pool_oper_id)
-		{
-			const auto input_dim = Index3d(5, 10, 7);
-			const auto filter_window = Index2d(3, 4);
-			return PLayer<GpuDC>(input_dim, filter_window, pool_oper_id);
 		}
 
 		TEST_METHOD(PLayerMaxCudaSupportTest)
@@ -355,39 +444,36 @@ namespace DeepLearningTest
 			CheckDerivativeWithRespectToWeightsAndBiasesCalculation(ActivationFunctionId::SIGMOID, CostFunctionId::CROSS_ENTROPY);
 		}
 
-		/// <summary>
-		/// Returns a "standard" CLayer instance to be used in testing
-		/// </summary>
-		static CLayer<CpuDC> ConstructStandardCLayer()
+		TEST_METHOD(NLayerGradientWithScalingTest)
 		{
-			const auto input_dim = Index3d(5, 13, 17);
-			const auto filter_window = Index2d(3);
-			const auto filters_count = 7;
-			const auto paddings = Index3d(0, 3, 6);
-			const auto strides = Index3d(2);
-			return CLayer<CpuDC>(input_dim, filter_window, filters_count, ActivationFunctionId::SIGMOID, paddings, strides);
+			RunGeneralGradientWithScalingTest(CreateCpuNLayer());
 		}
 
-		/// <summary>
-		/// Returns a "standard" PLayer instance to be used in testing
-		/// </summary>
-		static PLayer<CpuDC> ConstructStandardPLayer()
+		TEST_METHOD(NLayerGradientWithScalingCudaTest)
 		{
-			const auto input_dim = Index3d(5, 10, 7);
-			const auto filter_window = Index2d(3);
-			return PLayer<CpuDC>(input_dim, filter_window, PoolTypeId::MAX);
+			RunGeneralGradientWithScalingTest(CreateCudaNLayer());
+		}
+
+		TEST_METHOD(CLayerGradientWithScalingTest)
+		{
+			RunGeneralGradientWithScalingTest(CreateCpuCLayer());
+		}
+
+		TEST_METHOD(CLayerGradientWithScalingCudaTest)
+		{
+			RunGeneralGradientWithScalingTest(CreateCudaCLayer());
 		}
 
 		TEST_METHOD(CLayerDerivativeWithRespectToInputValuesCalculationSquaredErrorTest)
 		{
-			const auto nl = ConstructStandardCLayer();
+			const auto nl = CreateCpuCLayer();
 
 			RunGeneralDerivativeWithRespectToInputValuesTest(nl, CostFunctionId::SQUARED_ERROR, (std::is_same_v<Real, double> ? Real(2e-8) : Real(8e-2)));
 		}
 
 		TEST_METHOD(CLayerDerivativeWithRespectToWeightsAndBiasesCalculationSquaredErrorTest)
 		{
-			const auto nl = ConstructStandardCLayer();
+			const auto nl = CreateCpuCLayer();
 
 			RunGeneralDerivativeWithRespectToWeightsAndBiasesTest(nl, CostFunctionId::SQUARED_ERROR,
 				(std::is_same_v<Real, double> ? Real(3.1e-8) : Real(2e-1)),
@@ -396,7 +482,7 @@ namespace DeepLearningTest
 
 		TEST_METHOD(PLayerDerivativeWithRespectToInputValuesCalculationSquaredErrorTest)
 		{
-			const auto nl = ConstructStandardPLayer();
+			const auto nl = CreateCpuPLayer();
 			auto input = Tensor(nl.in_size(), false);
 			auto input_vals = std::vector<int>(input.size());
 			std::iota(input_vals.begin(), input_vals.end(), 0);
@@ -419,7 +505,7 @@ namespace DeepLearningTest
 		TEST_METHOD(PLayerDerivativeWithRespectToWeightsAndbiasesCalculationSquaredErrorTest)
 		{
 			//Arrange
-			const auto nl = ConstructStandardPLayer();
+			const auto nl = CreateCpuPLayer();
 			const auto input = Tensor(nl.in_size(), Real(-1), Real(1));
 			const auto reference = Tensor(nl.out_size(), -1, 1);;
 
@@ -464,12 +550,12 @@ namespace DeepLearningTest
 
 		TEST_METHOD(PLayerSerializationTest)
 		{
-			RunSerializationTest(ConstructStandardPLayer());
+			RunSerializationTest(CreateCpuPLayer());
 		}
 
 		TEST_METHOD(CLayerSerializationTest)
 		{
-			RunSerializationTest(ConstructStandardCLayer());
+			RunSerializationTest(CreateCpuCLayer());
 		}
 
 		TEST_METHOD(NLayerSerializationTest)

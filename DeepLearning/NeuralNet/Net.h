@@ -236,16 +236,19 @@ namespace DeepLearning
 		/// <param name="cost_func_id">Id of the cost function</param>
 		/// <param name="out_gradient">Output parameter the gradient is calculated into</param>
 		/// <param name="out_value">Output parameter the value is calculated into</param>
+		/// <param name="gradient_scale_factor">Scale factor to be applied to the content of the `out_gradient`
+		/// container before adding the calculated gradient to it.</param>
 		/// <param name="context">Calculation context, i.e. resources tht can be
 		/// allocated once and then re-used in each call of the method. Serves optimization purposes</param>
-		void calc_gradient_and_value(const typename D::tensor_t& item, const typename D::tensor_t& target_value, const CostFunctionId& cost_func_id,
-			std::vector<LayerGradient<D>>& out_gradient, typename D::tensor_t& out_value, Context& context) const;
+		void calc_gradient_and_value(const typename D::tensor_t& item, const typename D::tensor_t& target_value,
+			const CostFunctionId& cost_func_id, std::vector<LayerGradient<D>>& out_gradient, typename D::tensor_t& out_value,
+			const Real gradient_scale_factor, Context& context) const;
 
 		/// <summary>
 		/// Updates weights and biases of all the layers with the given gradient
 		/// according to the given learning rate and regularization factor
 		/// </summary>
-		/// <param name="gradient">Collection of gradient structures, one for each layer;
+		/// <param name="gradient">Collection of gradient structures, one for each layer.</param>
 		/// <param name="learning_rate">Learning rate</param>
 		/// <param name="lambda">Regularization factor</param>
 		void update(const std::vector<typename DeepLearning::LayerGradient<D>>& gradient, const Real learning_rate, const Real& lambda);
@@ -281,6 +284,11 @@ namespace DeepLearning
 			_layers.push_back(LayerHandle<D>::template make<L<D>>(std::forward<Types>(args)...));
 			return _layers.rbegin()->layer().out_size();
 		}
+
+		/// <summary>
+		/// Allocates memory needed to store gradient of all the parameters of the neural net (in layer-wise manner).
+		/// </summary>
+		void allocate(std::vector<LayerGradient<D>>& gradient_container, bool fill_zeros) const;
 
 		/// <summary>
 		///	Read-only access to the layers

@@ -121,41 +121,62 @@ namespace DeepLearning
 
 	template <class D>
 	void CLayer<D>::backpropagate(const typename D::tensor_t& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
-		typename D::tensor_t& input_grad, LayerGradient<D>& layer_grad, const bool evaluate_input_gradient) const
+		typename D::tensor_t& input_grad, LayerGradient<D>& layer_grad, const bool evaluate_input_gradient,
+		const Real gradient_scale_factor) const
 	{
 		if (deltas.size_3d() != aux_learning_data.Derivatives.size_3d())
 			throw std::exception("Unexpected size of the input tensor of derivatives");
 
-		const auto function = ActivationWrapper<typename D::tensor_t>(ActivationFunctionId(_func_id));
-		function().calc_input_gradient(deltas, aux_learning_data.Derivatives, layer_grad.Biases_grad);
+		const auto nontrivial_scaling = gradient_scale_factor != static_cast<Real>(0);
+		thread_local typename D::tensor_t bias_shared;
+		auto& pure_bias_grad = nontrivial_scaling ? bias_shared.
+			get_resized(layer_grad.Biases_grad.size_3d()) : layer_grad.Biases_grad;
 
-		if (layer_grad.Weights_grad.size() != _filters.size())
-			layer_grad.Weights_grad.resize(_filters.size());
+		const auto function = ActivationWrapper<typename D::tensor_t>(_func_id);
+		function().calc_input_gradient(deltas, aux_learning_data.Derivatives, pure_bias_grad);
+
+		if (nontrivial_scaling)
+			layer_grad.Biases_grad.scale_and_add(pure_bias_grad, gradient_scale_factor);
 
 		auto& filters_grad = layer_grad.Weights_grad;
 
 		if (evaluate_input_gradient)
 		{
 			input_grad.resize(in_size());
-			input_grad.fill(Real(0));
+			input_grad.fill_zero();
 		}
-		const auto& input_tensor = aux_learning_data.Input;
-		const auto& biases_grad = layer_grad.Biases_grad;
 
-		if (evaluate_input_gradient)
-			for (auto filter_id = 0ull; filter_id < _filters.size(); filter_id++)
-			{
+		const auto& input_tensor = aux_learning_data.Input;
+
+		for (auto filter_id = 0ull; filter_id < _filters.size(); filter_id++)
+		{
+			if (evaluate_input_gradient)
 				input_tensor.template convolution_gradient<true>(
-					static_cast<const typename D::tensor_t&>(biases_grad).get_layer_handle(filter_id), input_grad, filters_grad[filter_id],
-					_filters[filter_id], _paddings, _strides);
-			}
-		else
-			for (auto filter_id = 0ull; filter_id < _filters.size(); filter_id++)
-			{
+					static_cast<const typename D::tensor_t&>(pure_bias_grad).get_layer_handle(filter_id),
+					input_grad, filters_grad[filter_id], _filters[filter_id], _paddings, _strides, gradient_scale_factor);
+			else
 				input_tensor.template convolution_gradient<false>(
-					static_cast<const typename D::tensor_t&>(biases_grad).get_layer_handle(filter_id), input_grad, filters_grad[filter_id],
-					_filters[filter_id], _paddings, _strides);
-			}
+					static_cast<const typename D::tensor_t&>(pure_bias_grad).get_layer_handle(filter_id),
+					input_grad, filters_grad[filter_id], _filters[filter_id], _paddings, _strides, gradient_scale_factor);
+		}
+	}
+
+	template <class D>
+	void CLayer<D>::allocate(LayerGradient<D>& gradient_container, bool fill_zeros) const
+	{
+		gradient_container.Biases_grad.resize(_biases.size_3d());
+		gradient_container.Weights_grad.resize(_filters.size());
+		auto& weights_grad = gradient_container.Weights_grad;
+
+		for (auto filter_id = 0ull; filter_id < _filters.size(); ++filter_id)
+			weights_grad[filter_id].resize(_filters[filter_id].size_3d());
+
+		if (fill_zeros)
+		{
+			gradient_container.Biases_grad.fill_zero();
+			for (auto filter_id = 0ull; filter_id < _filters.size(); ++filter_id)
+				weights_grad[filter_id].fill_zero();
+		}
 	}
 
 	template <class D>
@@ -164,6 +185,7 @@ namespace DeepLearning
 	{
 		typename D::tensor_t input_grad;
 		LayerGradient<D> layer_grad;
+		allocate(layer_grad, /*fill zeros*/ false);
 		backpropagate(deltas, aux_learning_data, input_grad, layer_grad, evaluate_input_gradient);
 		return std::make_tuple(std::move(input_grad), std::move(layer_grad));
 	}
@@ -173,7 +195,7 @@ namespace DeepLearning
 	{
 		const auto& weights_increment = gradient.Weights_grad;
 
-		if (reg_factor != Real(0))
+		if (reg_factor != static_cast<Real>(0))
 			for (auto filter_id = 0ull; filter_id < _filters.size(); filter_id++)
 				_filters[filter_id].scale_and_add_scaled(Real(1) + reg_factor, weights_increment[filter_id], l_rate);
 		else
@@ -332,9 +354,9 @@ namespace DeepLearning
 	{
 		std::ranges::for_each(_filters,
 			[](typename D::tensor_t& filter)
-			{ filter.fill(0); });
+			{ filter.fill_zero(); });
 
-		_biases.fill(0);
+		_biases.fill_zero();
 	}
 
 	template class CLayer<CpuDC>;

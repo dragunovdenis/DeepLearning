@@ -213,34 +213,34 @@ namespace DeepLearning
 		/// <summary>
 		/// The function
 		/// </summary>
-		virtual T operator ()(const T& input) const override;
+		T operator ()(const T& input) const override;
 
 		/// <summary>
 		/// See the summary of the corresponding method in the base class
 		/// </summary>
-		virtual void func_in_place(T& in_out) const override;
+		void func_in_place(T& in_out) const override;
 
 		/// <summary>
 		/// Calculates function and auxiliary data needed to calculate gradient with respect to the input
 		/// </summary>
-		virtual std::tuple<T, T> func_and_aux(const T& input) const override;
+		std::tuple<T, T> func_and_aux(const T& input) const override;
 
 		/// <summary>
 		/// See the summary of the corresponding method in the base class
 		/// </summary>
-		virtual void func_and_aux_in_place(T& in_out, T& aux) const override;
+		void func_and_aux_in_place(T& in_out, T& aux) const override;
 
 		/// <summary>
 		/// Calculates gradient with respect to the function's input 
 		/// </summary>
 		/// <param name="out_grad">Gradient with respect to the function's output</param>
 		/// <param name="aux_data">Auxiliary data calculated by function "func_and_aux"</param>
-		virtual T calc_input_gradient(const typename T::Base& out_grad, const T& aux_data) const override;
+		T calc_input_gradient(const typename T::Base& out_grad, const T& aux_data) const override;
 
 		/// <summary>
 		/// See the summary of the corresponding method in the base class
 		/// </summary>
-		virtual void calc_input_gradient(const typename T::Base& out_grad, const T& aux_data, T& result) const override;
+		void calc_input_gradient(const typename T::Base& out_grad, const T& aux_data, T& result) const override;
 	};
 
 	/// <summary>
@@ -259,34 +259,34 @@ namespace DeepLearning
 		/// <summary>
 		/// The function
 		/// </summary>
-		virtual T operator ()(const T& input) const override;
+		T operator ()(const T& input) const override;
 
 		/// <summary>
 		/// See the summary of the corresponding method in the base class
 		/// </summary>
-		virtual void func_in_place(T& in_out) const override;
+		void func_in_place(T& in_out) const override;
 
 		/// <summary>
 		/// Calculates function and auxiliary data needed to calculate gradient with respect to the input
 		/// </summary>
-		virtual std::tuple<T, T> func_and_aux(const T& input) const override;
+		std::tuple<T, T> func_and_aux(const T& input) const override;
 
 		/// <summary>
 		/// See the summary of the corresponding method in the base class
 		/// </summary>
-		virtual void func_and_aux_in_place(T& in_out, T& aux) const override;
+		void func_and_aux_in_place(T& in_out, T& aux) const override;
 
 		/// <summary>
 		/// Calculates gradient with respect to the function's input 
 		/// </summary>
 		/// <param name="out_grad">Gradient with respect to the function's output</param>
 		/// <param name="aux_data">Auxiliary data calculated by function "func_and_aux"</param>
-		virtual T calc_input_gradient(const typename T::Base& out_grad, const T& aux_data) const override;
+		T calc_input_gradient(const typename T::Base& out_grad, const T& aux_data) const override;
 
 		/// <summary>
 		/// See the summary of the corresponding method in the base class
 		/// </summary>
-		virtual void calc_input_gradient(const typename T::Base& out_grad, const T& aux_data, T& result) const override;
+		void calc_input_gradient(const typename T::Base& out_grad, const T& aux_data, T& result) const override;
 	};
 }
 

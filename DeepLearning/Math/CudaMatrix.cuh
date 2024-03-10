@@ -86,7 +86,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Returns size of the collection in a "unified" form
 		/// </summary>
-		Index3d size_3d() const;
+		Index3d size_3d() const override;
 
 		/// <summary>
 		/// Converts the current instance of CUDA vector into its "host" counterpart
@@ -163,7 +163,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Destructor
 		/// </summary>
-		~CudaMatrix();
+		~CudaMatrix() override;
 
 		/// <summary>
 		/// Multiplication by a vector from the right
@@ -278,9 +278,21 @@ namespace DeepLearning
 	/// </summary>
 	/// <param name="vec_col">Vector-column</param>
 	/// <param name="vec_row">Vector-row</param>
-	/// <param name="out">Place-holder for the result</param>
+	/// <param name="result">Place-holder for the result</param>
 	template <class T>
 	void vector_col_times_vector_row(const BasicCudaCollection& vec_col, const BasicCudaCollection& vec_row, T& result);
+
+	/// <summary>
+	/// Scales `result` by the given `scale_factor` and adds result of
+	/// multiplication of the given vector-column by the given vector-row to it.
+	/// </summary>
+	/// <param name="vec_col">Vector-column</param>
+	/// <param name="vec_row">Vector-row</param>
+	/// <param name="result">Place-holder for the result</param>
+	/// <param name="scale_factor">Scale factor to be applied to result.</param>
+	template <class T>
+	void scale_and_add_vector_col_times_vector_row(const BasicCudaCollection& vec_col,
+		const BasicCudaCollection& vec_row, T& result, const Real& scale_factor);
 
 	/// <summary>
 	/// Multiplication by a vector from the left

@@ -63,9 +63,9 @@ namespace DeepLearning
 	template <class D>
 	void CummulativeGradient<D>::reset()
 	{
-		_gradient_sum.Biases_grad.fill(Real(0));
+		_gradient_sum.Biases_grad.fill_zero();
 		for (auto item_id = 0ull; item_id < _gradient_sum.Weights_grad.size(); item_id++)
-			_gradient_sum.Weights_grad[item_id].fill(Real(0));
+			_gradient_sum.Weights_grad[item_id].fill_zero();
 
 		_accumulated_items_count = 0;
 	}

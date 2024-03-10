@@ -20,7 +20,6 @@
 #include "Vector.h"
 #include "Matrix.h"
 #include "Tensor.h"
-#include <vector>
 #include <algorithm>
 #include <exception>
 #include "CudaVector.cuh"
@@ -36,8 +35,7 @@ namespace DeepLearning
 		{
 			const auto func = make<std::function<Real(Real)>>(id);
 
-			std::transform(collection.begin(), collection.end(), collection.begin(),
-				[&](const auto& x) { return  func(x); });
+			std::ranges::transform(collection, collection.begin(), [&](const auto& x) { return  func(x); });
 		}
 
 		void evaluate_in_place(BasicCollection& collection_func, BasicCollection& collection_deriv, const ActivationFunctionId id)
@@ -54,14 +52,14 @@ namespace DeepLearning
 		void normalize_and_evaluate_exponent_in_place(BasicCollection& collection)
 		{
 			const auto max_element = collection.max_element();
-			std::transform(collection.begin(), collection.end(), collection.begin(), [max_element](const auto& x) { return std::exp(x - max_element); });
+			std::ranges::transform(collection, collection.begin(), [max_element](const auto& x) { return std::exp(x - max_element); });
 		}
 
 		void evaluate_softmax_input_grad(const BasicCollection& input_exp, const BasicCollection& out_grad, BasicCollection& result)
 		{
 			const auto one_over_denominator = Real(1) / input_exp.sum();
-
-			std::transform(result.begin(), result.end(), out_grad.begin(), result.begin(),
+			result.resize(input_exp.size_3d());
+			std::transform(input_exp.begin(), input_exp.end(), out_grad.begin(), result.begin(),
 				[one_over_denominator](const auto& x, const auto& y) { return x * y * one_over_denominator; });
 			const auto temp_sum = result.sum() * one_over_denominator;
 			std::transform(result.begin(), result.end(), input_exp.begin(), result.begin(),
@@ -105,7 +103,7 @@ namespace DeepLearning
 	template <class T>
 	T ActivationFunction<T>::calc_input_gradient(const typename T::Base& out_grad, const T& aux_data) const
 	{
-		T result;
+		T result(aux_data.size_3d());
 		calc_input_gradient(out_grad, aux_data, result);
 		return result;
 	}
@@ -113,8 +111,7 @@ namespace DeepLearning
 	template <class T>
 	void ActivationFunction<T>::calc_input_gradient(const typename T::Base& out_grad, const T& aux_data, T& result) const
 	{
-		result = aux_data;
-		result.hadamard_prod_in_place(out_grad);
+		result.hadamard_prod(aux_data, out_grad);
 	}
 
 	template <class T>
@@ -165,7 +162,6 @@ namespace DeepLearning
 		if (out_grad.size() != aux_data.size())
 			throw std::exception("Inconsistent input data");
 
-		result = aux_data;
 		ActivationFunctionHelper::evaluate_softmax_input_grad(aux_data, out_grad, result);
 	}
 

@@ -187,6 +187,16 @@ namespace DeepLearning
 			collectors[collector_id].reset();
 	}
 
+	/// <summary>
+	/// Allocates gradient container for multi-thread computations
+	/// </summary>
+	template <class D>
+	void allocate_per_thread(const Net<D>& net, std::vector<std::vector<LayerGradient<D>>>& per_thread_gradient_container)
+	{
+		for (auto& thread_container : per_thread_gradient_container)
+			net.allocate(thread_container, /*fill_zeros*/ false);
+	}
+
 	template <class D>
 	void Net<D>::learn(const std::vector<typename D::tensor_t>& training_items, const std::vector<typename D::tensor_t>& reference_items,
 		const std::size_t batch_size, const std::size_t epochs_count, const Real learning_rate, const CostFunctionId& cost_func_id,
@@ -214,7 +224,8 @@ namespace DeepLearning
 		ThreadPool thread_pool(threads_to_use);
 
 		auto context_data = std::vector <Context>(threads_to_use, Context(_layers.size()));
-		auto layer_gradient_data = std::vector<std::vector<LayerGradient<D>>>(threads_to_use, std::vector<LayerGradient<D>>(_layers.size()));
+		auto layer_gradient_data = std::vector<std::vector<LayerGradient<D>>>(threads_to_use);
+		allocate_per_thread(*this, layer_gradient_data);
 		std::mutex mutex;
 
 		auto  data_index_mapping = get_indices(training_items.size());
@@ -291,7 +302,7 @@ namespace DeepLearning
 						-learning_rate / static_cast<Real>(gradient_collectors[layer_id].items_count()), reg_factor);
 			}
 
-			epoch_callback(epoch_id, Real(0.5) * lambda_scaled);
+			epoch_callback(epoch_id, static_cast<Real>(0.5) * lambda_scaled);
 		}
 
 		for (auto layer_id = 0ull; layer_id < _layers.size(); ++layer_id)
@@ -305,8 +316,8 @@ namespace DeepLearning
 		Context context;
 		typename D::tensor_t out_value;
 		std::vector<LayerGradient<D>> out_gradient;
-
-		calc_gradient_and_value(item, target_value, cost_func_id, out_gradient, out_value, context);
+		allocate(out_gradient, /*fill zeros*/ false);
+		calc_gradient_and_value(item, target_value, cost_func_id, out_gradient, out_value, /*gradient_scale_factor*/ 0, context);
 
 		return std::make_tuple(std::move(out_gradient), std::move(out_value));
 	}
@@ -314,7 +325,7 @@ namespace DeepLearning
 	template <class D>
 	void Net<D>::calc_gradient_and_value(const typename D::tensor_t& item, const typename D::tensor_t& target_value,
 		const CostFunctionId& cost_func_id, std::vector<LayerGradient<D>>& out_gradient,
-		typename D::tensor_t& out_value, Context& context) const
+		typename D::tensor_t& out_value, const Real gradient_scale_factor, Context& context) const
 	{
 		const auto cost_function = CostFunction<typename D::tensor_t>(cost_func_id);
 
@@ -324,9 +335,6 @@ namespace DeepLearning
 
 		if (context.gradient_cache.size() != _layers.size())
 			context.gradient_cache.resize(_layers.size());
-
-		if (out_gradient.size() != _layers.size())
-			out_gradient.resize(_layers.size());
 
 		auto& e_data = context.value_cache;
 		auto& aux_data = context.gradient_cache;
@@ -341,7 +349,7 @@ namespace DeepLearning
 		{
 			e_data.swap();
 			_layers[layer_id].layer().backpropagate(e_data.In, aux_data[layer_id],
-				e_data.Out, out_gradient[layer_id], layer_id != 0);
+				e_data.Out, out_gradient[layer_id], layer_id != 0, gradient_scale_factor);
 
 			if (layer_id != 0)
 				_layers[layer_id].layer().ApplyDropout(e_data.Out, true);
@@ -443,6 +451,15 @@ namespace DeepLearning
 			}, std::plus<int>());
 
 		return  correct_answers;
+	}
+
+	template <class D>
+	void Net<D>::allocate(std::vector<LayerGradient<D>>& gradient_container, bool fill_zeros) const
+	{
+		gradient_container.resize(_layers.size());
+
+		for (auto layer_id = 0ull; layer_id < _layers.size(); ++layer_id)
+			_layers[layer_id].layer().allocate(gradient_container[layer_id], fill_zeros);
 	}
 
 	template <class D>

@@ -116,13 +116,11 @@ namespace DeepLearning
 
 	template <class D>
 	void PLayer<D>::backpropagate(const typename D::tensor_t& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
-		typename D::tensor_t& input_grad, LayerGradient<D>& layer_grad, const bool evaluate_input_gradient) const
+		typename D::tensor_t& input_grad, LayerGradient<D>& layer_grad, const bool evaluate_input_gradient,
+		const Real gradient_scale_factor) const
 	{
 		if (deltas.size_3d() != out_size())
 			throw std::exception("Unexpected size of the input tensor of derivatives");
-
-		layer_grad.Biases_grad.resize({ 0, 0, 0 });
-		layer_grad.Weights_grad.resize(0);
 
 		if (!evaluate_input_gradient)
 		{
@@ -146,12 +144,20 @@ namespace DeepLearning
 	}
 
 	template <class D>
+	void PLayer<D>::allocate(LayerGradient<D>& gradient_container, bool fill_zeros) const
+	{
+		gradient_container.Biases_grad.resize({ 0, 0, 0 });
+		gradient_container.Weights_grad.resize(0);
+	}
+
+	template <class D>
 	std::tuple<typename D::tensor_t, LayerGradient<D>> PLayer<D>::backpropagate(
 		const typename D::tensor_t& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
 		const bool evaluate_input_gradient) const
 	{
 		typename D::tensor_t input_grad;
 		LayerGradient<D> layer_grad;
+		allocate(layer_grad, /*fill zeros*/ false);
 		backpropagate(deltas, aux_learning_data, input_grad, layer_grad, evaluate_input_gradient);
 		return std::make_tuple(std::move(input_grad), std::move(layer_grad));
 	}

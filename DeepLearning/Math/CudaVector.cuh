@@ -86,7 +86,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Returns size of the collection in a "unified" form
 		/// </summary>
-		Index3d size_3d() const;
+		Index3d size_3d() const override;
 
 		/// <summary>
 		/// Converts the current instance of CUDA vector into its "host" counterpart
@@ -153,7 +153,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Destructor
 		/// </summary>
-		~CudaVector();
+		~CudaVector() override;
 
 		/// <summary>
 		/// Returns dimension of the vector
