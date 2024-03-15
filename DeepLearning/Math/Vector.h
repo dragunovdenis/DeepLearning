@@ -36,25 +36,21 @@ namespace DeepLearning
 		std::size_t _dim{};
 
 		/// <summary>
-		/// Number of reserved elements
-		/// </summary>
-		std::size_t _capacity{};
-
-		/// <summary>
 		/// Returns "true" if the given index is valid (within the boundaries of the underlying "data" collection)
 		/// </summary>
 		bool check_bounds(const ::std::size_t id) const;
-
-		/// <summary>
-		/// Frees the allocated memory
-		/// </summary>
-		void free();
 
 		/// <summary>
 		/// Assignment from another Vector
 		/// </summary>
 		template <class S>
 		void assign(const S& source);
+
+	protected:
+		/// <summary>
+		/// Method to abandon resources (should be called when the resources are being "moved")
+		/// </summary>
+		void abandon_resources() override;
 
 	public:
 
@@ -76,11 +72,6 @@ namespace DeepLearning
 		/// Size of the vector
 		/// </summary>
 		std::size_t size() const override;
-
-		/// <summary>
-		/// Returns number of allocated (reserved) elements (can be greater or equal to size)
-		/// </summary>
-		std::size_t capacity() const override;
 
 		/// <summary>
 		/// Returns size of the collection in a "unified" form
@@ -150,28 +141,9 @@ namespace DeepLearning
 		Vector(const std::size_t dim, const Real range_begin, const Real range_end, std::mt19937* seeder = nullptr);
 
 		/// <summary>
-		/// Destructor
-		/// </summary>
-		~Vector() override;
-
-		/// <summary>
 		/// Returns dimension of the vector
 		/// </summary>
 		std::size_t dim() const;
-
-		/// <summary>
-		/// Element access operator
-		/// </summary>
-		/// <param name="id">Index of the element to be accessed</param>
-		/// <returns>Reference to the element</returns>
-		Real& operator ()(const std::size_t id);
-
-		/// <summary>
-		/// Element access operator (constant version)
-		/// </summary>
-		/// <param name="id">Index of the element to be accessed</param>
-		/// <returns>Constant reference to the element</returns>
-		const Real& operator ()(const std::size_t id) const;
 
 		/// <summary>
 		/// Compound addition operator
@@ -191,22 +163,12 @@ namespace DeepLearning
 		/// <summary>
 		/// Equality operator
 		/// </summary>
-		bool operator ==(const Vector& vect) const;
+		bool operator ==(const Vector& vec) const;
 
 		/// <summary>
 		/// Inequality operator
 		/// </summary>
-		bool operator !=(const Vector& vect) const;
-
-		/// <summary>
-		/// Generates a vector filled with uniformly distributed pseudo random values
-		/// </summary>
-		static Vector random(const std::size_t dim, const Real range_begin, const Real range_end);
-
-		/// <summary>
-		/// Method to abandon resources (should be called when the resources are "moved")
-		/// </summary>
-		void abandon_resources() override;
+		bool operator !=(const Vector& vec) const;
 
 		/// <summary>
 		/// Logs the vector to a text file

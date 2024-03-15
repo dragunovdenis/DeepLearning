@@ -25,6 +25,44 @@
 
 namespace DeepLearning
 {
+	void BasicCollection::allocate(const std::size_t new_capacity)
+	{
+		if (_capacity < new_capacity)
+		{
+			free();
+			_data = static_cast<Real*>(std::malloc(new_capacity * sizeof(Real)));
+			_capacity = new_capacity;
+		}
+	}
+
+	void BasicCollection::free()
+	{
+		if (_data != nullptr)
+		{
+			std::free(_data);
+			_data = nullptr;
+		}
+
+		_capacity = 0;
+	}
+
+	void BasicCollection::abandon_resources()
+	{
+		_data = nullptr;
+		free();
+	}
+
+	void BasicCollection::take_over_resources(BasicCollection&& collection)
+	{
+		if (this == &collection)
+			return;
+
+		free();
+		_data = collection._data;
+		_capacity = collection._capacity;
+		collection.abandon_resources();
+	}
+
 	void BasicCollection::add(const BasicCollection& collection)
 	{
 		if (size() != collection.size())
@@ -166,9 +204,9 @@ namespace DeepLearning
 		return *std::max_element(begin(), end(), comparer);
 	}
 
-	Real& BasicCollection::operator [](const std::size_t& id) { return begin()[id]; };
+	Real& BasicCollection::operator [](const std::size_t& id) { return _data[id]; };
 
-	const Real& BasicCollection::operator [](const std::size_t& id) const { return begin()[id]; };
+	const Real& BasicCollection::operator [](const std::size_t& id) const { return _data[id]; };
 
 	std::vector<Real> BasicCollection::to_stdvector() const
 	{
@@ -215,5 +253,10 @@ namespace DeepLearning
 	bool BasicCollection::is_inf() const
 	{
 		return std::any_of(begin(), end(), [](const auto& x) { return std::isinf(x); });
+	}
+
+	BasicCollection::~BasicCollection()
+	{
+		free();
 	}
 }

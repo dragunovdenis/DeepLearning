@@ -30,24 +30,12 @@
 
 namespace DeepLearning
 {
-	void CudaTensor::free()
-	{
-		if (_data != nullptr)
-		{
-			CudaUtils::cuda_free(_data);
-			_data = nullptr;
-		}
-
-		_row_dim = 0;
-		_col_dim = 0;
-		_layer_dim = 0;
-		_capacity = 0;
-	}
-
 	void CudaTensor::abandon_resources()
 	{
-		_data = nullptr;
-		free();
+		Base::abandon_resources();
+		_layer_dim = 0;
+		_row_dim = 0;
+		_col_dim = 0;
 	}
 
 	void CudaTensor::assign(const Tensor& source)
@@ -70,12 +58,7 @@ namespace DeepLearning
 	void CudaTensor::resize(const std::size_t& new_layer_dim, const std::size_t& new_row_dim, const std::size_t& new_col_dim)
 	{
 		const auto new_size = new_layer_dim * new_row_dim * new_col_dim;
-		if (_capacity < new_size)
-		{
-			free();
-			_data = CudaUtils::cuda_allocate<Real>(new_size);
-			_capacity = new_size;
-		}
+		allocate(new_size);
 
 		_layer_dim = new_layer_dim;
 		_row_dim = new_row_dim;
@@ -91,11 +74,6 @@ namespace DeepLearning
 	std::size_t CudaTensor::size() const
 	{
 		return _layer_dim * _row_dim * _col_dim;
-	}
-
-	std::size_t CudaTensor::capacity() const
-	{
-		return _capacity;
 	}
 
 	Tensor CudaTensor::to_host() const
@@ -128,28 +106,25 @@ namespace DeepLearning
 	CudaTensor::CudaTensor(const CudaTensor& tensor) :
 		CudaTensor(tensor.layer_dim(), tensor.row_dim(), tensor.col_dim(), false /*assign zero*/)
 	{
-		CudaUtils::cuda_copy_device2device(begin(), tensor.begin(), size());
+		CudaUtils::cuda_copy_device2device(begin(), tensor.begin(), CudaTensor::size());
 	}
 
 	CudaTensor::CudaTensor(CudaVector&& vector) noexcept :
-		_layer_dim(1), _row_dim(1), _col_dim(vector.dim()), _capacity(vector.capacity())
+		_layer_dim(1), _row_dim(1), _col_dim(vector.dim())
 	{
-		_data = vector.begin();
-		vector.abandon_resources();
+		take_over_resources(std::move(vector));
 	}
 
 	CudaTensor::CudaTensor(CudaMatrix&& matrix) noexcept :
-		_layer_dim(1), _row_dim(matrix.row_dim()), _col_dim(matrix.col_dim()), _capacity(matrix.capacity())
+		_layer_dim(1), _row_dim(matrix.row_dim()), _col_dim(matrix.col_dim())
 	{
-		_data = matrix.begin();
-		matrix.abandon_resources();
+		take_over_resources(std::move(matrix));
 	}
 
 	CudaTensor::CudaTensor(CudaTensor&& tensor) noexcept :
-		_layer_dim(tensor.layer_dim()), _row_dim(tensor.row_dim()), _col_dim(tensor.col_dim()), _capacity(tensor.capacity())
+		_layer_dim(tensor.layer_dim()), _row_dim(tensor.row_dim()), _col_dim(tensor.col_dim())
 	{
-		_data = tensor.begin();
-		tensor.abandon_resources();
+		take_over_resources(std::move(tensor));
 	}
 
 	CudaTensor::CudaTensor(const std::size_t layer_dim, const std::size_t row_dim,
@@ -174,26 +149,20 @@ namespace DeepLearning
 
 	CudaTensor& CudaTensor::operator =(CudaVector&& vector) noexcept
 	{
-		free();
 		_layer_dim = 1ull;
 		_row_dim = 1ull;
 		_col_dim = vector.dim();
-		_data = vector.begin();
-		_capacity = vector.capacity();
-		vector.abandon_resources();
+		take_over_resources(std::move(vector));
 
 		return *this;
 	}
 
 	CudaTensor& CudaTensor::operator =(CudaMatrix&& matrix) noexcept
 	{
-		free();
 		_layer_dim = 1ull;
 		_row_dim = matrix.row_dim();
 		_col_dim = matrix.col_dim();
-		_data = matrix.begin();
-		_capacity = matrix.capacity();
-		matrix.abandon_resources();
+		take_over_resources(std::move(matrix));
 
 		return *this;
 	}
@@ -202,21 +171,13 @@ namespace DeepLearning
 	{
 		if (this != &tensor)
 		{
-			free();
 			_layer_dim = tensor.layer_dim();
 			_row_dim = tensor.row_dim();
 			_col_dim = tensor.col_dim();
-			_data = tensor.begin();
-			_capacity = tensor.capacity();
-			tensor.abandon_resources();
+			take_over_resources(std::move(tensor));
 		}
 
 		return *this;
-	}
-
-	CudaTensor::~CudaTensor()
-	{
-		free();
 	}
 
 	std::size_t CudaTensor::layer_dim() const
@@ -420,7 +381,7 @@ namespace DeepLearning
 
 		const auto blocks_cnt = CudaSetup::calc_blocks(result_handle.size());
 
-		convolve_kernel<<<blocks_cnt , CudaSetup::max_threads_per_block(), 0, cudaStreamPerThread>>>(_data, tensor_size,
+		convolve_kernel<<<blocks_cnt , CudaSetup::max_threads_per_block(), 0, cudaStreamPerThread>>>(begin(), tensor_size,
 			kernel.begin(), kernel_size, paddings, strides,	result_handle.data(), result_size);
 		CUDA_SANITY_CHECK
 		return result_size;
@@ -444,7 +405,7 @@ namespace DeepLearning
 
 		for (auto kernel_id = 0ull; kernel_id < kernels.size(); kernel_id++)
 		{
-			convolve_kernel << <blocks_cnt, CudaSetup::max_threads_per_block(), 0, cudaStreamPerThread>> > (_data, tensor_size,
+			convolve_kernel << <blocks_cnt, CudaSetup::max_threads_per_block(), 0, cudaStreamPerThread>> > (begin(), tensor_size,
 				kernels[kernel_id].begin(), kernel_size, paddings, strides,	result.get_layer_handle(kernel_id).data(), result_size);
 			CUDA_SANITY_CHECK
 		}
@@ -547,7 +508,7 @@ namespace DeepLearning
 		const auto blocks_cnt = CudaSetup::calc_blocks(conv_res_grad.size());
 
 		convolution_gradient_kernel<CALC_INPUT_GRAD> << <blocks_cnt, CudaSetup::max_threads_per_block(), 0, cudaStreamPerThread >> >
-			(_data, tensor_size, conv_res_grad.data(), conv_result_size, kernel.begin(), kernel_size,
+			(begin(), tensor_size, conv_res_grad.data(), conv_result_size, kernel.begin(), kernel_size,
 				paddings, strides, input_grad.begin(), kernel_grad.begin());
 		CUDA_SANITY_CHECK
 	}
@@ -597,7 +558,6 @@ namespace DeepLearning
 	/// <param name="paddings">3d size of zero paddings to be applied to the input tensor</param>
 	/// <param name="result">Pointer to the array to store the result of the operation</param>
 	/// <param name="result_size">3d size of the result tensor</param>
-	/// <returns></returns>
 	__global__ void scale_pool_kernel(const Real* __restrict__ tensor, const Index3d tensor_size,
 		const Index3d window_size, const Real scale_factor, const Index3d paddings, Real* __restrict__ result, const Index3d result_size)
 	{
@@ -635,7 +595,7 @@ namespace DeepLearning
 		const auto blocks_cnt = CudaSetup::calc_blocks(result.size());
 		
 		scale_pool_kernel<<<blocks_cnt, CudaSetup::max_threads_per_block(), 0, cudaStreamPerThread>>>
-			(_data, tensor_size, window_size, scale_factor, paddings, result.begin(), result_size);
+			(begin(), tensor_size, window_size, scale_factor, paddings, result.begin(), result_size);
 		CUDA_SANITY_CHECK
 	}
 
@@ -672,7 +632,7 @@ namespace DeepLearning
 		const auto [tensor_offsets, kernel_start_offsets, kernel_stop_offsets] =
 			ConvolutionUtils::calc_kernel_loop_offsets(result_offsets, result_size, window_size, paddings, window_size);
 
-		auto value = pool_res_gradient[res_gradient_flattened_id] * scale_factor;
+		const auto value = pool_res_gradient[res_gradient_flattened_id] * scale_factor;
 		KERNEL_LOOP(kernel_start_offsets, kernel_stop_offsets, tensor_offsets,
 			//We assume that "pool windows" do not intersect (strides == wingow_size) and thus
 			//use direct assignment ("=") instead of accumulation ("+=") in the line below
@@ -772,10 +732,10 @@ namespace DeepLearning
 
 		if (max)
 			min_max_pull_kernel<true, EVAL_MAP> << <blocks_cnt, CudaSetup::max_threads_per_block(), 0, cudaStreamPerThread>> >
-			(_data, tensor_size, window_size, result.begin(), result_size, index_map.begin());
+			(begin(), tensor_size, window_size, result.begin(), result_size, index_map.begin());
 		else
 			min_max_pull_kernel<false, EVAL_MAP> << <blocks_cnt, CudaSetup::max_threads_per_block(), 0, cudaStreamPerThread>>>
-			(_data, tensor_size, window_size, result.begin(), result_size, index_map.begin());
+			(begin(), tensor_size, window_size, result.begin(), result_size, index_map.begin());
 
 		CUDA_SANITY_CHECK
 	}
@@ -819,7 +779,7 @@ namespace DeepLearning
 			throw std::exception("Index out of bounds");
 #endif // CHECK_BOUNDS
 
-		return RealMemHandleConst(_data + coords_to_data_id(layer_id, 0, 0), _row_dim * _col_dim);
+		return RealMemHandleConst(begin() + coords_to_data_id(layer_id, 0, 0), _row_dim * _col_dim);
 	}
 
 	RealMemHandle CudaTensor::get_layer_handle(const std::size_t& layer_id)
@@ -829,7 +789,7 @@ namespace DeepLearning
 			throw std::exception("Index out of bounds");
 #endif // CHECK_BOUNDS
 
-		return RealMemHandle(_data + coords_to_data_id(layer_id, 0, 0), _row_dim * _col_dim);
+		return RealMemHandle(begin() + coords_to_data_id(layer_id, 0, 0), _row_dim * _col_dim);
 	}
 
 	void CudaTensor::log_layer(const std::size_t& layer_id, const std::filesystem::path& filename) const

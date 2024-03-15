@@ -36,6 +36,45 @@
 
 namespace DeepLearning
 {
+	void BasicCudaCollection::free()
+	{
+		if (_data != nullptr)
+		{
+			CudaUtils::cuda_free(_data);
+			_data = nullptr;
+		}
+
+		_capacity = 0;
+	}
+
+	void BasicCudaCollection::allocate(const std::size_t new_capacity)
+	{
+		if (_capacity < new_capacity)
+		{
+			free();
+			_data = CudaUtils::cuda_allocate<Real>(new_capacity);
+			_capacity = new_capacity;
+		}
+
+	}
+
+	void BasicCudaCollection::abandon_resources()
+	{
+		_data = nullptr;
+		free();
+	}
+
+	void BasicCudaCollection::take_over_resources(BasicCudaCollection&& collection)
+	{
+		if (this == &collection)
+			return;
+
+		free();
+		_data = collection._data;
+		_capacity = collection._capacity;
+		collection.abandon_resources();
+	}
+
 	void BasicCudaCollection::add(const BasicCudaCollection& collection)
 	{
 		if (size() != collection.size())
@@ -306,5 +345,10 @@ namespace DeepLearning
 		const auto result = thrust::any_of(thrust::cuda::par.on(cudaStreamPerThread), begin(), end(), [] __device__ (const auto& x) { return isinf(x); });
 		CUDA_SANITY_CHECK
 		return result;
+	}
+
+	BasicCudaCollection::~BasicCudaCollection()
+	{
+		free();
 	}
 }

@@ -39,11 +39,6 @@ namespace DeepLearning
 		std::size_t _col_dim{};
 
 		/// <summary>
-		/// Number of "reserved" items
-		/// </summary>
-		std::size_t _capacity{};
-
-		/// <summary>
 		/// Returns true if the given row and column indices are valid
 		/// </summary>
 		bool check_bounds(const std::size_t row_id, const std::size_t col_id) const;
@@ -56,10 +51,11 @@ namespace DeepLearning
 		/// <param name="col_id">Column index</param>
 		std::size_t row_col_to_data_id(const std::size_t row_id, const std::size_t col_id) const;
 
+	protected:
 		/// <summary>
-		/// Method to free the data array
+		/// Method to abandon resources (should be called when the resources are being "moved")
 		/// </summary>
-		void free();
+		void abandon_resources() override;
 
 	public:
 
@@ -81,11 +77,6 @@ namespace DeepLearning
 		/// Total number of elements in the matrix
 		/// </summary>
 		std::size_t size() const override;
-
-		/// <summary>
-		/// Returns number of allocated (reserved) elements (can be greater or equal to size)
-		/// </summary>
-		std::size_t capacity() const override;
 
 		/// <summary>
 		/// Returns size of the collection in a "unified" form
@@ -160,15 +151,10 @@ namespace DeepLearning
 		Matrix(Matrix&& matr) noexcept;
 
 		/// <summary>
-		/// Destructor
-		/// </summary>
-		~Matrix() override;
-
-		/// <summary>
 		/// Element access operator
 		/// </summary>
 		/// <param name="row_id">Index of the row</param>
-		/// <param name="col_idj">Index of the column</param>
+		/// <param name="col_id">Index of the column</param>
 		/// <returns>Reference to the element with the given row and column indices</returns>
 		Real& operator ()(const std::size_t row_id, const std::size_t col_id);
 
@@ -176,7 +162,7 @@ namespace DeepLearning
 		/// Element access operator (constant version)
 		/// </summary>
 		/// <param name="row_id">Index of the row</param>
-		/// <param name="col_idj">Index of the column</param>
+		/// <param name="col_id">Index of the column</param>
 		/// <returns>Constant reference to the element with the given row and column indices</returns>
 		const Real& operator ()(const std::size_t row_id, const std::size_t col_id) const;
 
@@ -232,11 +218,6 @@ namespace DeepLearning
 		bool operator !=(const Matrix& matr) const;
 
 		/// <summary>
-		/// Generates a vector filled with uniformly distributed pseudo random values
-		/// </summary>
-		static inline Matrix random(const std::size_t row_dim, const std::size_t col_dim, const Real range_begin, const Real range_end);
-
-		/// <summary>
 		/// Compound addition operator
 		/// </summary>
 		Matrix& operator +=(const Matrix &mat);
@@ -250,11 +231,6 @@ namespace DeepLearning
 		/// Compound scalar multiplication operator
 		/// </summary>
 		Matrix& operator *=(const Real& scalar);
-
-		/// <summary>
-		/// Method to abandon resources (should be called when the resources are "moved")
-		/// </summary>
-		void abandon_resources() override;
 
 		/// <summary>
 		/// Logs the matrix to a text file

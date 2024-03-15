@@ -28,30 +28,9 @@
 
 namespace DeepLearning
 {
-	/// <summary>
-	/// Frees the allocated memory
-	/// </summary>
-	void CudaVector::free()
-	{
-		if (_data != nullptr)
-		{
-			CudaUtils::cuda_free(_data);
-			_data = nullptr;
-		}
-
-		_dim = 0;
-		_capacity = 0;
-	}
-
 	void CudaVector::resize(const std::size_t& new_size)
 	{
-		if (_capacity < new_size)
-		{
-			free();
-			_data = CudaUtils::cuda_allocate<Real>(new_size);
-			_capacity = new_size;
-		}
-
+		allocate(new_size);
 		_dim = new_size;
 	}
 
@@ -79,11 +58,6 @@ namespace DeepLearning
 	std::size_t CudaVector::size() const
 	{
 		return _dim;
-	}
-
-	std::size_t CudaVector::capacity() const
-	{
-		return _capacity;
 	}
 
 	Index3d CudaVector::size_3d() const
@@ -133,10 +107,9 @@ namespace DeepLearning
 		uniform_random_fill(range_begin, range_end, seeder);
 	}
 
-	CudaVector::CudaVector(CudaVector&& vec) noexcept : _dim(vec._dim), _capacity(vec._capacity)
+	CudaVector::CudaVector(CudaVector&& vec) noexcept : _dim(vec._dim)
 	{
-		_data = vec._data;
-		vec.abandon_resources();
+		take_over_resources(std::move(vec));
 	}
 
 	CudaVector& CudaVector::operator=(const CudaVector& vec)
@@ -151,19 +124,11 @@ namespace DeepLearning
 	{
 		if (this != &vec)
 		{
-			free();
 			_dim = vec._dim;
-			_capacity = vec._capacity;
-			_data = vec._data;
-			vec.abandon_resources();
+			take_over_resources(std::move(vec));
 		}
 
 		return *this;
-	}
-
-	CudaVector::~CudaVector()
-	{
-		free();
 	}
 
 	std::size_t CudaVector::dim() const
@@ -173,8 +138,8 @@ namespace DeepLearning
 
 	void CudaVector::abandon_resources()
 	{
-		_data = nullptr;
-		free();
+		Base::abandon_resources();
+		_dim = 0;
 	}
 
 	CudaVector& CudaVector::operator += (const CudaVector& vec)
@@ -204,11 +169,6 @@ namespace DeepLearning
 	bool CudaVector::operator !=(const CudaVector& vect) const
 	{
 		return !(*this == vect);
-	}
-
-	CudaVector CudaVector::random(const std::size_t dim, const Real range_begin, const Real range_end)
-	{
-		return CudaVector(dim, range_begin, range_end);
 	}
 
 	void CudaVector::log(const std::filesystem::path& file_name) const

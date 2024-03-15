@@ -39,19 +39,17 @@ namespace DeepLearning
 		std::size_t _col_dim{};
 
 		/// <summary>
-		/// Number of "reserved" items
-		/// </summary>
-		std::size_t _capacity{};
-
-		/// <summary>
-		/// Method to free the data array
-		/// </summary>
-		void free();
-
-		/// <summary>
 		/// Assignment from another CUDA matrix
 		/// </summary>
 		void assign(const CudaMatrix& source);
+
+	protected:
+
+		/// <summary>
+		/// Method to abandon resources (should be called when the resources are being "moved")
+		/// </summary>
+		void abandon_resources() override;
+
 	public:
 
 		using Base = BasicCudaCollection;
@@ -77,11 +75,6 @@ namespace DeepLearning
 		/// Total number of elements in the matrix
 		/// </summary>
 		std::size_t size() const override;
-
-		/// <summary>
-		/// Returns number of allocated (reserved) elements (can be greater or equal to size)
-		/// </summary>
-		std::size_t capacity() const override;
 
 		/// <summary>
 		/// Returns size of the collection in a "unified" form
@@ -161,11 +154,6 @@ namespace DeepLearning
 		CudaMatrix(CudaMatrix&& matr) noexcept;
 
 		/// <summary>
-		/// Destructor
-		/// </summary>
-		~CudaMatrix() override;
-
-		/// <summary>
 		/// Multiplication by a vector from the right
 		/// </summary>
 		CudaVector friend operator *(const CudaMatrix& matr, const BasicCudaCollection& vec);
@@ -217,11 +205,6 @@ namespace DeepLearning
 		bool operator !=(const CudaMatrix & matr) const;
 
 		/// <summary>
-		/// Generates a vector filled with uniformly distributed pseudo random values
-		/// </summary>
-		static CudaMatrix random(const std::size_t row_dim, const std::size_t col_dim, const Real range_begin, const Real range_end);
-
-		/// <summary>
 		/// Compound addition operator
 		/// </summary>
 		CudaMatrix& operator +=(const CudaMatrix& mat);
@@ -237,14 +220,9 @@ namespace DeepLearning
 		CudaMatrix& operator *=(const Real & scalar);
 
 		/// <summary>
-		/// Method to abandon resources (should be called when the resources are "moved")
-		/// </summary>
-		void abandon_resources() override;
-
-		/// <summary>
 		/// Logs the matrix to a text file
 		/// </summary>
-		/// <param name="filename">Full name of the log file on disk</param>
+		/// <param name="file_name">Full name of the log file on disk</param>
 		void log(const std::filesystem::path & file_name) const;
 	};
 

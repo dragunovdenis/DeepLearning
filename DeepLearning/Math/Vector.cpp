@@ -43,11 +43,8 @@ namespace DeepLearning
 	{
 		if (this != &vec)
 		{
-			free();
-			_data = vec._data;
 			_dim = vec._dim;
-			_capacity = vec._capacity;
-			vec.abandon_resources();
+			take_over_resources(std::move(vec));
 		}
 
 		return *this;
@@ -55,14 +52,13 @@ namespace DeepLearning
 
 	void Vector::abandon_resources()
 	{
-		_data = nullptr;
-		free();
+		Base::abandon_resources();
+		_dim = 0;
 	}
 
-	Vector::Vector(Vector&& vec) noexcept : _dim(vec._dim), _capacity(vec._capacity)
+	Vector::Vector(Vector&& vec) noexcept : _dim(vec._dim)
 	{
-		_data = vec._data;
-		vec.abandon_resources();
+		take_over_resources(std::move(vec));
 	}
 
 	Vector::Vector(const std::size_t dim, const bool assign_zero)
@@ -93,24 +89,6 @@ namespace DeepLearning
 		uniform_random_fill(range_begin, range_end, seeder);
 	}
 
-	Vector::~Vector()
-	{
-		free();
-	}
-
-	/// <summary>
-	/// Frees the allocated memory
-	/// </summary>
-	void Vector::free()
-	{
-		if (_data != nullptr)
-		{
-			delete[] _data;
-			_data = nullptr;
-		}
-		_dim = 0;
-	}
-
 	template <class S>
 	void Vector::assign(const S& source)
 	{
@@ -123,13 +101,7 @@ namespace DeepLearning
 
 	void Vector::resize(const std::size_t& new_size)
 	{
-		if (_capacity < new_size)
-		{
-			free();
-			_data = static_cast<Real*>(std::malloc(new_size * sizeof(Real)));
-			_capacity = new_size;
-		}
-
+		allocate(new_size);
 		_dim = new_size;
 	}
 
@@ -156,53 +128,22 @@ namespace DeepLearning
 		return _dim;
 	}
 
-	std::size_t Vector::capacity() const
-	{
-		return _capacity;
-	}
-
 	Index3d Vector::size_3d() const
 	{
 		return { 1ull, 1ull, _dim };
 	}
 
-	Real& Vector::operator ()(const std::size_t id)
+	bool Vector::operator ==(const Vector& vec) const
 	{
-#ifdef CHECK_BOUNDS
-		if (!check_bounds(id))
-			throw std::exception("Index out of bounds");
-#endif // CHECK_BOUNDS
-
-			return _data[id];
+		const auto data = begin();
+		const auto vec_data = vec.begin();
+		return _dim == vec._dim && std::all_of(IndexIterator(0), IndexIterator(static_cast<int>(_dim)),
+			[&](const auto& index) { return data[index] == vec_data[index]; });
 	}
 
-	const Real& Vector::operator ()(const std::size_t id) const
+	bool Vector::operator !=(const Vector& vec) const
 	{
-#ifdef CHECK_BOUNDS
-		if (!check_bounds(id))
-			throw std::exception("Index out of bounds");
-#endif // CHECK_BOUNDS
-
-			return _data[id];
-	}
-
-	bool Vector::operator ==(const Vector& vect) const
-	{
-		return _dim == vect._dim && std::all_of(IndexIterator(0), IndexIterator(static_cast<int>(_dim)),
-			[&](const auto& index) { return _data[index] == vect._data[index]; });
-	}
-
-	bool Vector::operator !=(const Vector& vect) const
-	{
-		return !(*this == vect);
-	}
-
-	[[maybe_unused]] static Vector random(const std::size_t dim, const Real range_begin, const Real range_end)
-	{
-		auto result = Vector(dim);
-		Utils::fill_with_random_values(result.begin(), result.end(), range_begin, range_end);
-
-		return result;
+		return !(*this == vec);
 	}
 
 	Vector& Vector::operator += (const Vector& vec)
@@ -282,11 +223,13 @@ namespace DeepLearning
 			return this->begin()[a] < this->begin()[b];
 		});
 
+		auto data = begin();
+
 		for (auto id = 0ull; id < selected_cnt; id++)
-			_data[aux_collection[id]] = Real(1);
+			data[aux_collection[id]] = Real(1);
 
 		for (auto id = selected_cnt; id < size(); id++)
-			_data[aux_collection[id]] = Real(0);
+			data[aux_collection[id]] = Real(0);
 	}
 
 	void Vector::fill_with_random_selection_map(const std::size_t& selected_cnt)

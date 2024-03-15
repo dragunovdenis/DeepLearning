@@ -64,7 +64,7 @@ namespace DeepLearningTest
 
 			for (std::size_t item_id = 0; item_id < vector.dim(); item_id++)
 			{
-				const auto diff = std::abs(result(item_id) - sigmoid(vector(item_id)));
+				const auto diff = std::abs(result[item_id] - sigmoid(vector[item_id]));
 				Logger::WriteMessage((std::string("Difference = ") + std::to_string(diff) + "\n").c_str());
 				Assert::IsTrue(diff < std::numeric_limits<Real>::epsilon(),
 					L"Unexpectedly high deviation from the reference value.");
@@ -109,7 +109,7 @@ namespace DeepLearningTest
 
 			for (std::size_t item_id = 0; item_id < vector.dim(); item_id++)
 			{
-				const auto deriv_diff = std::abs(result_deriv(item_id) - sigmoid_deriv(vector(item_id)));
+				const auto deriv_diff = std::abs(result_deriv[item_id] - sigmoid_deriv(vector[item_id]));
 				Logger::WriteMessage((std::string("Derivative difference = ") + std::to_string(deriv_diff) + "\n").c_str());
 				Assert::IsTrue(deriv_diff < std::numeric_limits<Real>::epsilon(),
 					L"Unexpectedly high deviation from the derivative reference value.");

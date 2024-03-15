@@ -51,21 +51,6 @@ namespace DeepLearning
 		std::size_t _col_dim{};
 
 		/// <summary>
-		/// Size of available preallocated memory 
-		/// </summary>
-		std::size_t _capacity{};
-
-		/// <summary>
-		/// Releases allocated resources
-		/// </summary>
-		void free();
-
-		/// <summary>
-		/// Method to abandon resources (should be called when the resources are "moved")
-		/// </summary>
-		void abandon_resources() override;
-
-		/// <summary>
 		/// Assignment from a "host" tensor
 		/// </summary>
 		void assign(const CudaTensor& source);
@@ -79,6 +64,13 @@ namespace DeepLearning
 		/// Returns "true" if the given triplet of coordinates is valid to access "data" array
 		/// </summary>
 		bool check_bounds(const std::size_t layer_id, const std::size_t row_id, const std::size_t col_id) const;
+
+	protected:
+
+		/// <summary>
+		/// Method to abandon resources (should be called when the resources are being "moved")
+		/// </summary>
+		void abandon_resources() override;
 
 	public:
 
@@ -110,11 +102,6 @@ namespace DeepLearning
 		/// Return total number of elements in the tensor
 		/// </summary>
 		std::size_t size() const override;
-
-		/// <summary>
-		/// Returns amount of preallocated elements
-		/// </summary>
-		std::size_t capacity() const override;
 
 		/// <summary>
 		/// Converts the current instance of CUDA tensor to the "host" counterpart
@@ -212,11 +199,6 @@ namespace DeepLearning
 		/// Move assignment operator for tensor right-hand side operand
 		/// </summary>
 		CudaTensor& operator =(CudaTensor&& tensor) noexcept;
-
-		/// <summary>
-		/// Destructor
-		/// </summary>
-		~CudaTensor() override;
 
 		/// <summary>
 		/// Number of "layers"
@@ -360,7 +342,6 @@ namespace DeepLearning
 		/// More general implementation of the convolution operation, that can perform pooling operations
 		/// </summary>
 		/// <param name="pool_operator">Instance of the pool operator to be applied (generalization of the convolution kernel)</param>
-		/// <param name="kernel_size">Size of the "window" for the pooling agent operate</param>
 		/// <param name="paddings">Zero paddings (will be applied to the base tensor)</param>
 		/// <param name="strides">Strides defining movement of the "window"</param>
 		CudaTensor pool(const PoolOperator& pool_operator, const Index3d& paddings = Index3d{ 0, 0, 0 },
@@ -373,7 +354,6 @@ namespace DeepLearning
 		/// It is supposed that the size of the handle is equal to the product of sizes in three dimensions returned by method `calc_conv_res_size()`.
 		/// Otherwise an exception will be thrown.</param>
 		/// <param name="pool_operator">Instance of the pool operator to be applied (generalization of the convolution kernel)</param>
-		/// <param name="kernel_size">Size of the "window" for the pooling agent operate</param>
 		/// <param name="paddings">Zero paddings (will be applied to the base tensor)</param>
 		/// <param name="strides">Strides defining movement of the "window"</param>
 		/// <returns>Size of the convolution result. To be used to interpret the memory pointed by the handle parameter.</returns>
@@ -385,7 +365,6 @@ namespace DeepLearning
 		/// </summary>
 		/// <param name="pool_operator">Instance of the pool operator to be applied (generalization of the convolution kernel)</param>
 		/// <param name="pool_res_grad">Gradient of the function F with respect to the result of the pooling operation R: dF/dR</param>
-		/// <param name="kernel_size">Size of the "window" for the pooling agent operate</param>
 		/// <param name="paddings">Zero paddings (will be applied to the base tensor)</param>
 		/// <param name="strides">Strides defining movement of the "window"</param>
 		CudaTensor pool_input_gradient(const CudaTensor& pool_res_grad, const PoolOperator& pool_operator, const Index3d& paddings,
@@ -396,7 +375,6 @@ namespace DeepLearning
 		/// </summary>
 		/// <param name="pool_operator">Instance of the pool operator to be applied (generalization of the convolution kernel)</param>
 		/// <param name="pool_res_grad">Handle of the memory containing gradient of the function F with respect to the result of the pooling operation R: dF/dR</param>
-		/// <param name="kernel_size">Size of the "window" for the pooling agent operate</param>
 		/// <param name="paddings">Zero paddings (will be applied to the base tensor)</param>
 		/// <param name="strides">Strides defining movement of the "window"</param>
 		CudaTensor pool_input_gradient(const RealMemHandleConst& pool_res_grad, const PoolOperator& pool_operator, const Index3d& paddings,
@@ -409,7 +387,7 @@ namespace DeepLearning
 		/// of the pooling to the flattened indices of input elements that have been pooled pooling.
 		/// The mapping allows to simplify a back-propagation procedure.
 		/// </summary>
-		/// <param name="window">Operation window size</param>
+		/// <param name="window_size">Operation window size</param>
 		/// <param name="max">If "true" the method implements "max pulling" otherwise -- "min pulling";</param>
 		std::tuple<CudaTensor, CudaArray<std::size_t>> min_max_pool(const Index3d& window_size, const bool max) const;
 
@@ -420,7 +398,7 @@ namespace DeepLearning
 		/// of the pooling to the flattened indices of input elements that have been pooled.
 		/// The mapping allows to simplify a back-propagation procedure.
 		/// </summary>
-		/// <param name="window">Operation window size</param>
+		/// <param name="window_size">Operation window size</param>
 		/// <param name="max">If "true" the method implements "max pulling" otherwise -- "min pulling";</param>
 		/// <param name="result">Place-holder for the pool result</param>
 		/// <param name="index_map">Place-holder for the output-to-input index mapping (used to calculate gradient)</param>
@@ -434,7 +412,7 @@ namespace DeepLearning
 		/// of the pooling to the flattened indices of input elements that have been pooled.
 		/// The mapping allows to simplify a back-propagation procedure.
 		/// </summary>
-		/// <param name="window">Operation window size</param>
+		/// <param name="window_size">Operation window size</param>
 		/// <param name="max">If "true" the method implements "max pulling" otherwise -- "min pulling";</param>
 		/// <param name="result">Place-holder for the pool result</param>
 		void min_max_pool(const Index3d& window_size, const bool max, CudaTensor& result) const;

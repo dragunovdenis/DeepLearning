@@ -82,13 +82,7 @@ namespace DeepLearning
 	void Matrix::resize(const std::size_t& new_row_dim, const std::size_t& new_col_dim)
 	{
 		const auto new_size = new_row_dim * new_col_dim;
-		if (_capacity < new_size)
-		{
-			free();
-			_data = static_cast<Real*>(std::malloc(new_size * sizeof(Real)));
-			_capacity = new_size;
-		}
-
+		allocate(new_size);
 		_row_dim = new_row_dim;
 		_col_dim = new_col_dim;
 	}
@@ -104,11 +98,6 @@ namespace DeepLearning
 	std::size_t Matrix::size() const
 	{
 		return _row_dim * _col_dim;
-	}
-
-	std::size_t Matrix::capacity() const
-	{
-		return _capacity;
 	}
 
 	Index3d Matrix::size_3d() const
@@ -161,48 +150,27 @@ namespace DeepLearning
 
 	void Matrix::abandon_resources()
 	{
-		_data = nullptr;
-		free();
+		Base::abandon_resources();
+		_col_dim = 0;
+		_row_dim = 0;
 	}
 
 	Matrix::Matrix(Matrix&& matr) noexcept 
-		: _row_dim(matr._row_dim), _col_dim(matr._col_dim), _capacity(matr._capacity)
+		: _row_dim(matr._row_dim), _col_dim(matr._col_dim)
 	{
-		_data = matr._data;
-		matr.abandon_resources();
+		take_over_resources(std::move(matr));
 	}
 
 	Matrix& Matrix::operator =(Matrix&& matr) noexcept
 	{
 		if (this != &matr)
 		{
-			free();
 			_col_dim = matr._col_dim;
 			_row_dim = matr._row_dim;
-			_capacity = matr._capacity;
-			_data = matr._data;
-			matr.abandon_resources();
+			take_over_resources(std::move(matr));
 		}
 
 		return *this;
-	}
-
-	void Matrix::free()
-	{
-		if (_data != nullptr)
-		{
-			delete[] _data;
-			_data = nullptr;
-		}
-
-		_col_dim = 0;
-		_row_dim = 0;
-		_capacity = 0;
-	}
-
-	Matrix::~Matrix()
-	{
-		free();
 	}
 
 	std::size_t Matrix::row_col_to_data_id(const std::size_t row_id, const std::size_t col_id) const
@@ -217,7 +185,7 @@ namespace DeepLearning
 			throw std::exception("Index out of bounds");
 #endif // CHECK_BOUNDS
 
-		return _data[row_col_to_data_id(row_id, col_id)];
+		return begin()[row_col_to_data_id(row_id, col_id)];
 	}
 
 	const Real& Matrix::operator ()(const std::size_t row_id, const std::size_t col_id) const
@@ -227,7 +195,7 @@ namespace DeepLearning
 			throw std::exception("Index out of bounds");
 #endif // CHECK_BOUNDS
 
-		return _data[row_col_to_data_id(row_id, col_id)];
+		return begin()[row_col_to_data_id(row_id, col_id)];
 	}
 
 	Vector operator *(const Matrix& matr, const BasicCollection& vec)
@@ -236,16 +204,17 @@ namespace DeepLearning
 			throw std::exception("Incompatible matrix-vector dimensionality");
 
 		auto result = Vector(matr._row_dim);
+		const auto matr_data = matr.begin();
 
 		for (std::size_t row_id = 0; row_id < matr._row_dim; row_id++)
 		{
 #ifdef USE_AVX2
-			const auto begin_row_ptr = matr._data + row_id * matr._col_dim;
-			result(row_id) = Avx::mm256_dot_product(begin_row_ptr, vec.begin(), vec.size());
+			const auto begin_row_ptr = matr_data + row_id * matr._col_dim;
+			result[row_id] = Avx::mm256_dot_product(begin_row_ptr, vec.begin(), vec.size());
 #else
-			const auto row_begin = matr._data.begin() + row_id * matr._col_dim;
-			const auto row_end = matr._data.begin() + row_id * matr._col_dim + matr._col_dim;
-			result(row_id) = std::inner_product(row_begin, row_end, vec.begin(), Real(0));
+			const auto row_begin = matr_data + row_id * matr._col_dim;
+			const auto row_end = matr_data + row_id * matr._col_dim + matr._col_dim;
+			result[row_id] = std::inner_product(row_begin, row_end, vec.begin(), Real(0));
 #endif // USE_AVX2
 		}
 
@@ -264,15 +233,17 @@ namespace DeepLearning
 		if (mul_vec.size() != _col_dim || add_vec.size() != _row_dim || result.size() != _row_dim)
 			throw std::exception("Incompatible matrix-vector dimensionality");
 
+		const auto data = begin();
+
 		for (std::size_t row_id = 0; row_id < row_dim(); row_id++)
 		{
 #ifdef USE_AVX2
-			const auto begin_row_ptr = _data + row_id * _col_dim;
-			result.begin()[row_id] = Avx::mm256_dot_product(begin_row_ptr, mul_vec.begin(), _col_dim) + add_vec[row_id];
+			const auto begin_row_ptr = data + row_id * _col_dim;
+			result[row_id] = Avx::mm256_dot_product(begin_row_ptr, mul_vec.begin(), _col_dim) + add_vec[row_id];
 #else
-			const auto row_begin = _data.begin() + row_id * col_dim();
-			const auto row_end = _data.begin() + (row_id + 1) * _col_dim;
-			result.begin()[row_id] = std::inner_product(row_begin, row_end, mul_vec.begin(), Real(0)) + add_vec[row_id];
+			const auto row_begin = data + row_id * _col_dim;
+			const auto row_end = data + (row_id + 1) * _col_dim;
+			result[row_id] = std::inner_product(row_begin, row_end, mul_vec.begin(), Real(0)) + add_vec[row_id];
 #endif // USE_AVX2
 		}
 	}
@@ -312,30 +283,27 @@ namespace DeepLearning
 	{
 		out.resize({ 1ull, _col_dim, _row_dim });
 
+		const auto data = begin();
+		const auto out_data = out.begin();
+
 		for (auto row_id = 0ull; row_id < _row_dim; ++row_id)
 			for (auto col_id = 0ull; col_id < _col_dim; ++col_id)
-				out._data[col_id * _row_dim + row_id] = _data[row_id * _col_dim + col_id];
+				out_data[col_id * _row_dim + row_id] = data[row_id * _col_dim + col_id];
 	}
 
 	bool Matrix::operator ==(const Matrix& matr) const
 	{
+		const auto data = begin();
+		const auto matr_data = matr.begin();
 		return _row_dim == matr._row_dim &&
 			   _col_dim == matr._col_dim &&
 			std::all_of(IndexIterator(0), IndexIterator(static_cast<int>(size())),
-				[&](const auto id) { return _data[id] == matr._data[id]; });
+				[&](const auto id) { return data[id] == matr_data[id]; });
 	}
 
 	bool Matrix::operator !=(const Matrix& matr) const
 	{
 		return !(*this == matr);
-	}
-
-	[[maybe_unused]] static inline Matrix random(const std::size_t row_dim, const std::size_t col_dim, const Real range_begin, const Real range_end)
-	{
-		auto result = Matrix(row_dim, col_dim);
-		Utils::fill_with_random_values(result.begin(), result.end(), range_begin, range_end);
-
-		return result;
 	}
 
 	Matrix& Matrix::operator +=(const Matrix& mat)

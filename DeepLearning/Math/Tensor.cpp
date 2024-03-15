@@ -52,16 +52,18 @@ namespace DeepLearning
 
 	void Tensor::abandon_resources()
 	{
-		_data = nullptr;
-		free();
+		Base::abandon_resources();
+		_layer_dim = 0;
+		_row_dim = 0;
+		_col_dim = 0;
+
 	}
 
 	Tensor::Tensor(Tensor&& tensor) noexcept
 		: _layer_dim(tensor._layer_dim),
-		_row_dim(tensor._row_dim), _col_dim(tensor._col_dim), _capacity(tensor.capacity())
+		_row_dim(tensor._row_dim), _col_dim(tensor._col_dim)
 	{
-		_data = tensor._data;
-		tensor.abandon_resources();
+		take_over_resources(std::move(tensor));
 	}
 
 	Tensor::Tensor(const std::size_t layer_dim, const std::size_t row_dim,
@@ -83,42 +85,33 @@ namespace DeepLearning
 	}
 
 	Tensor::Tensor(Vector&& vector) noexcept : _layer_dim(1ull),
-		_row_dim(1ull), _col_dim(vector.dim()), _capacity(vector.capacity())
+		_row_dim(1ull), _col_dim(vector.dim())
 	{
-		_data = vector.begin();
-		vector.abandon_resources();
+		take_over_resources(std::move(vector));
 	}
 
 	Tensor::Tensor(Matrix&& matrix) noexcept : _layer_dim(1ull),
-		_row_dim(matrix.row_dim()), _col_dim(matrix.col_dim()), _capacity(matrix.capacity())
+		_row_dim(matrix.row_dim()), _col_dim(matrix.col_dim())
 	{
-		_data = matrix.begin();
-		matrix.abandon_resources();
+		take_over_resources(std::move(matrix));
 	}
 
 	Tensor& Tensor::operator =(Vector&& vector) noexcept
 	{
-		free();
 		_layer_dim = 1ull;
 		_row_dim = 1ull;
 		_col_dim = vector.dim();
-		_capacity = vector.capacity();
-		_data = vector.begin();
-		vector.abandon_resources();
+		take_over_resources(std::move(vector));
 
 		return *this;
 	}
 
 	Tensor& Tensor::operator =(Matrix&& matrix) noexcept
 	{
-		free();
-
 		_layer_dim = 1ull;
 		_row_dim = matrix.row_dim();
 		_col_dim = matrix.col_dim();
-		_capacity = matrix.capacity();
-		_data = matrix.begin();
-		matrix.abandon_resources();
+		take_over_resources(std::move(matrix));
 
 		return *this;
 	}
@@ -127,47 +120,19 @@ namespace DeepLearning
 	{
 		if (this != &tensor)
 		{
-			free();
 			_layer_dim = tensor.layer_dim();
 			_row_dim = tensor.row_dim();
 			_col_dim = tensor.col_dim();
-			_capacity = tensor.capacity();
-			_data = tensor.begin();
-			tensor.abandon_resources();
+			take_over_resources(std::move(tensor));
 		}
 
 		return *this;
 	}
 
-	Tensor::~Tensor()
-	{
-		free();
-	}
-
-	void Tensor::free()
-	{
-		if (_data != nullptr)
-		{
-			delete[] _data;
-			_data = nullptr;
-		}
-
-		_layer_dim = 0;
-		_row_dim = 0;
-		_col_dim = 0;
-		_capacity = 0;
-	}
-
 	void Tensor::resize(const std::size_t& new_layer_dim, const std::size_t& new_row_dim, const std::size_t& new_col_dim)
 	{
 		const auto new_size = new_layer_dim * new_row_dim * new_col_dim;
-		if (_capacity < new_size)
-		{
-			free();
-			_data = reinterpret_cast<Real*>(std::malloc(new_size * sizeof(Real)));
-			_capacity = new_size;
-		}
-
+		allocate(new_size);
 		_layer_dim = new_layer_dim;
 		_row_dim = new_row_dim;
 		_col_dim = new_col_dim;
@@ -187,11 +152,6 @@ namespace DeepLearning
 	std::size_t Tensor::size() const
 	{
 		return _layer_dim * _row_dim * _col_dim;
-	}
-
-	std::size_t Tensor::capacity() const
-	{
-		return _capacity;
 	}
 
 	std::size_t Tensor::layer_dim() const
@@ -231,7 +191,7 @@ namespace DeepLearning
 			throw std::exception("Index out of bounds");
 #endif // CHECK_BOUNDS
 
-		return _data[coords_to_data_id(layer_id, row_id, col_id)];
+		return begin()[coords_to_data_id(layer_id, row_id, col_id)];
 	}
 
 	const Real& Tensor::operator ()(const std::size_t layer_id, const std::size_t row_id, const std::size_t col_id) const
@@ -241,7 +201,7 @@ namespace DeepLearning
 			throw std::exception("Index out of bounds");
 #endif // CHECK_BOUNDS
 
-		return _data[coords_to_data_id(layer_id, row_id, col_id)];
+		return begin()[coords_to_data_id(layer_id, row_id, col_id)];
 	}
 
 	Tensor& Tensor::operator +=(const Tensor& tensor)
@@ -303,11 +263,13 @@ namespace DeepLearning
 
 	bool Tensor::operator ==(const Tensor& tensor) const
 	{
+		const auto data = begin();
+		const auto tensor_data = tensor.begin();
 		return _layer_dim == tensor._layer_dim &&
 			_row_dim == tensor._row_dim &&
 			_col_dim == tensor._col_dim &&
 			std::all_of(IndexIterator(0), IndexIterator(static_cast<int>(size())),
-				[&](const auto& id) { return _data[id] == tensor._data[id]; });
+				[&](const auto& id) { return data[id] == tensor_data[id]; });
 	}
 
 	bool Tensor::operator !=(const Tensor& tensor) const
@@ -343,6 +305,8 @@ namespace DeepLearning
 		if (result_handle.size() != result_size.x * result_size.y * result_size.z)
 			throw std::exception("Unexpected amount of memory to store the result");
 
+		const auto data = begin();
+
 		for (std::size_t res_data_id = 0; res_data_id < result_handle.size(); res_data_id++)
 		{
 			const auto result_offsets = ConvolutionUtils::data_id_to_index_3d(res_data_id, result_size);
@@ -352,7 +316,7 @@ namespace DeepLearning
 			Real part_res = static_cast<Real>(0);
 
 			KERNEL_LOOP(kernel_start_offsets, kernel_stop_offsets, tensor_offsets,
-				part_res += _data[coords_to_data_id(t_x, t_y, t_z)] * kernel(k_x, k_y, k_z);)
+				part_res += data[coords_to_data_id(t_x, t_y, t_z)] * kernel(k_x, k_y, k_z);)
 
 			result_handle[res_data_id] = part_res;
 		}
@@ -389,6 +353,8 @@ namespace DeepLearning
 		if (result_handle.size() != result_size.coord_prod())
 			throw std::exception("Unexpected amount of memory to store the result");
 
+		const auto data = begin();
+
 		for (std::size_t res_data_id = 0; res_data_id < result_handle.size(); res_data_id++)
 		{
 			const auto result_offsets = ConvolutionUtils::data_id_to_index_3d(res_data_id, result_size);
@@ -398,7 +364,7 @@ namespace DeepLearning
 			const auto operator_clone = pool_operator.clone();
 
 			KERNEL_LOOP(kernel_start_offsets, kernel_stop_offsets, tensor_offsets,
-				operator_clone->add({ k_x, k_y, k_z }, _data[coords_to_data_id(t_x, t_y, t_z)]);)
+				operator_clone->add({ k_x, k_y, k_z }, data[coords_to_data_id(t_x, t_y, t_z)]);)
 
 			result_handle[res_data_id] = operator_clone->pool();
 		}
@@ -435,6 +401,8 @@ namespace DeepLearning
 		else
 			kernel_grad.fill_zero();
 
+		const auto data = begin();
+
 		for (std::size_t res_data_id = 0; res_data_id < conv_res_grad.size(); res_data_id++)
 		{
 			const auto factor = conv_res_grad[res_data_id];
@@ -446,7 +414,7 @@ namespace DeepLearning
 				ConvolutionUtils::calc_kernel_loop_offsets(result_offsets, tensor_size, kernel_size, paddings, strides);
 
 			KERNEL_LOOP(kernel_start_offsets, kernel_stop_offsets, tensor_offsets,
-				kernel_grad(k_x, k_y, k_z) += _data[coords_to_data_id(t_x, t_y, t_z)] * factor;
+				kernel_grad(k_x, k_y, k_z) += data[coords_to_data_id(t_x, t_y, t_z)] * factor;
 			if (CALC_INPUT_GRAD)
 				input_grad(t_x, t_y, t_z) += kernel(k_x, k_y, k_z) * factor;)
 		}
@@ -497,6 +465,7 @@ namespace DeepLearning
 			throw std::exception("Unexpected size of the pool result gradient");
 
 		auto in_grad = Tensor(tensor_size, true);
+		const auto data = begin();
 
 		for (std::size_t res_data_id = 0; res_data_id < pool_res_grad.size(); res_data_id++)
 		{
@@ -508,11 +477,11 @@ namespace DeepLearning
 			if (factor == Real(0))
 				continue;
 
-			auto pool_operator_clone = pool_operator.clone();
+			const auto pool_operator_clone = pool_operator.clone();
 
 			//Make the agent familiar with the items in the current window
 			KERNEL_LOOP(kernel_start_offsets, kernel_stop_offsets, tensor_offsets,
-				pool_operator_clone->add({ k_x, k_y, k_z }, _data[coords_to_data_id(t_x, t_y, t_z)]);)
+				pool_operator_clone->add({ k_x, k_y, k_z }, data[coords_to_data_id(t_x, t_y, t_z)]);)
 
 			//Add derivatives calculated by the agent
 			KERNEL_LOOP(kernel_start_offsets, kernel_stop_offsets, tensor_offsets,
@@ -563,6 +532,9 @@ namespace DeepLearning
 			static_cast<std::function<bool(const Real&, const Real&)>>([](const auto& a, const auto& b) { return a < b; }) :
 			[](const auto& a, const auto& b) { return a > b; };
 
+		const auto data = begin();
+		const auto result_data = result.begin();
+
 		for (std::size_t res_data_id = 0; res_data_id < result.size(); res_data_id++)
 		{
 			const auto result_offsets = ConvolutionUtils::data_id_to_index_3d(res_data_id, result_size);
@@ -573,7 +545,7 @@ namespace DeepLearning
 			auto poolled_id = 0ull;
 			KERNEL_LOOP(kernel_start_offsets, kernel_stop_offsets, tensor_offsets,
 				const auto tensor_data_id = coords_to_data_id(t_x, t_y, t_z);
-				const auto & current_val = _data[tensor_data_id];
+				const auto & current_val = data[tensor_data_id];
 				if (comparer(poolled_val, current_val))
 				{
 					poolled_val = current_val;
@@ -583,7 +555,7 @@ namespace DeepLearning
 			if (EVAL_MAP)
 				index_map[res_data_id] = poolled_id;
 
-			result._data[res_data_id] = poolled_val;
+			result_data[res_data_id] = poolled_val;
 		}
 	}
 
@@ -598,9 +570,11 @@ namespace DeepLearning
 		result.resize(size_3d());
 		result.fill_zero();
 
+		const auto result_data = result.begin();
+
 		auto map_ptr = out_to_in_mapping.begin();
 		for (auto grad_ptr = pool_res_gradient.begin(); grad_ptr != pool_res_gradient.end(); ++grad_ptr, ++map_ptr)
-			result._data[*map_ptr] = *grad_ptr;
+			result_data[*map_ptr] = *grad_ptr;
 	}
 
 	Tensor Tensor::min_max_pool_input_gradient(const Tensor& pool_res_gradient, const std::vector<std::size_t>& out_to_in_mapping) const
@@ -625,6 +599,9 @@ namespace DeepLearning
 
 		result.resize(result_size);
 
+		const auto data = begin();
+		const auto result_data = result.begin();
+
 		for (std::size_t res_data_id = 0; res_data_id < result.size(); res_data_id++)
 		{
 			const auto result_offsets = ConvolutionUtils::data_id_to_index_3d(res_data_id, result_size);
@@ -633,9 +610,9 @@ namespace DeepLearning
 
 			auto poolled_val = Real(0);
 			KERNEL_LOOP(kernel_start_offsets, kernel_stop_offsets, tensor_offsets,
-				poolled_val += _data[coords_to_data_id(t_x, t_y, t_z)];);
+				poolled_val += data[coords_to_data_id(t_x, t_y, t_z)];);
 
-			result._data[res_data_id] = poolled_val * scale_factor;
+			result_data[res_data_id] = poolled_val * scale_factor;
 		}
 	}
 
@@ -651,17 +628,20 @@ namespace DeepLearning
 		result.resize(tensor_size);
 		result.fill_zero();
 
+		const auto pool_res_gradient_data = pool_res_gradient.begin();
+		const auto result_data = result.begin();
+
 		for (std::size_t res_data_id = 0; res_data_id < pool_res_gradient.size(); res_data_id++)
 		{
 			const auto result_offsets = ConvolutionUtils::data_id_to_index_3d(res_data_id, result_size);
 			const auto [tensor_offsets, kernel_start_offsets, kernel_stop_offsets] =
 				ConvolutionUtils::calc_kernel_loop_offsets(result_offsets, tensor_size, window_size, paddings, window_size);
 
-			auto value = pool_res_gradient._data[res_data_id] * scale_factor;
+			const auto value = pool_res_gradient_data[res_data_id] * scale_factor;
 			KERNEL_LOOP(kernel_start_offsets, kernel_stop_offsets, tensor_offsets,
 				//We assume that "pool windows" do not intersect (strides == wingow_size) and thus
 				//use direct assignment ("=") instead of accumulation ("+=") in the line below
-				result._data[coords_to_data_id(t_x, t_y, t_z)] = value;);
+				result_data[coords_to_data_id(t_x, t_y, t_z)] = value;);
 		}
 	}
 
@@ -703,7 +683,7 @@ namespace DeepLearning
 			throw std::exception("Index out of bounds");
 #endif // CHECK_BOUNDS
 
-		return RealMemHandleConst(_data + coords_to_data_id(layer_id, 0, 0), _row_dim*_col_dim);
+		return RealMemHandleConst(begin() + coords_to_data_id(layer_id, 0, 0), _row_dim * _col_dim);
 	}
 
 	RealMemHandle Tensor::get_layer_handle(const std::size_t& layer_id)
@@ -713,7 +693,7 @@ namespace DeepLearning
 			throw std::exception("Index out of bounds");
 #endif // CHECK_BOUNDS
 
-		return RealMemHandle(_data + coords_to_data_id(layer_id, 0, 0), _row_dim * _col_dim);
+		return RealMemHandle(begin() + coords_to_data_id(layer_id, 0, 0), _row_dim * _col_dim);
 	}
 	
 	void Tensor::log_layer(const std::size_t& layer_id, const std::filesystem::path& filename) const

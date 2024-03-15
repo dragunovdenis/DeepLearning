@@ -39,19 +39,17 @@ namespace DeepLearning
 		std::size_t _dim{};
 
 		/// <summary>
-		/// Number of reserved elements
-		/// </summary>
-		std::size_t _capacity{};
-
-		/// <summary>
-		/// Frees the allocated memory
-		/// </summary>
-		void free();
-
-		/// <summary>
 		/// Assignment from another CUDA collection
 		/// </summary>
 		void assign(const BasicCudaCollection& source);
+
+	protected:
+
+		/// <summary>
+		/// Method to abandon resources (should be called when the resources are being "moved")
+		/// </summary>
+		void abandon_resources() override;
+
 	public:
 
 		using Base = BasicCudaCollection;
@@ -77,11 +75,6 @@ namespace DeepLearning
 		/// Size of the vector
 		/// </summary>
 		std::size_t size() const override;
-
-		/// <summary>
-		/// Returns number of allocated (reserved) elements (can be greater or equal to size)
-		/// </summary>
-		std::size_t capacity() const override;
 
 		/// <summary>
 		/// Returns size of the collection in a "unified" form
@@ -151,11 +144,6 @@ namespace DeepLearning
 			std::mt19937* seeder = nullptr);
 
 		/// <summary>
-		/// Destructor
-		/// </summary>
-		~CudaVector() override;
-
-		/// <summary>
 		/// Returns dimension of the vector
 		/// </summary>
 		std::size_t dim() const;
@@ -184,16 +172,6 @@ namespace DeepLearning
 		/// Inequality operator
 		/// </summary>
 		bool operator !=(const CudaVector& vect) const;
-
-		/// <summary>
-		/// Generates a vector filled with uniformly distributed pseudo random values
-		/// </summary>
-		static CudaVector random(const std::size_t dim, const Real range_begin, const Real range_end);
-
-		/// <summary>
-		/// Method to abandon resources (should be called when the resources are "moved")
-		/// </summary>
-		void abandon_resources() override;
 
 		/// <summary>
 		/// Logs the vector to a text file

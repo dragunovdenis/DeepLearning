@@ -30,11 +30,37 @@ namespace DeepLearning
 	/// </summary>
 	class BasicCudaCollection
 	{
-	protected:
 		/// <summary>
 		/// Elements of the matrix in the collection
 		/// </summary>
 		Real* _data{};
+
+		/// <summary>
+		/// Number of allocated items in the memory pointed by `_data`;
+		/// </summary>
+		std::size_t _capacity{};
+
+		/// <summary>
+		/// Frees memory pointed by `_data`.
+		/// </summary>
+		void free();
+
+	protected:
+
+		/// <summary>
+		/// Re-allocates memory pointed by `_data` if the given capacity exceeds the current one.
+		/// </summary>
+		void allocate(const std::size_t new_capacity);
+
+		/// <summary>
+		/// Abandons allocated resources (it is supposed to be used in the "move" scenario).
+		/// </summary>
+		virtual void abandon_resources();
+
+		/// <summary>
+		/// Takes over resources of the given collection.
+		/// </summary>
+		void take_over_resources(BasicCudaCollection&& collection);
 
 	public:
 		/// <summary>
@@ -84,11 +110,6 @@ namespace DeepLearning
 		/// 3d representation of the collection's size
 		/// </summary>
 		[[nodiscard]] virtual Index3d size_3d() const = 0;
-
-		/// <summary>
-		/// Returns number of pre-allocated elements ("capacity" can be greater than the size of collection)
-		/// </summary>
-		[[nodiscard]] virtual std::size_t capacity() const = 0;
 
 		/// <summary>
 		/// Pointer to the first element of the vector
@@ -179,11 +200,6 @@ namespace DeepLearning
 		[[nodiscard]] Real max_element() const;
 
 		/// <summary>
-		/// Method to abandon resources (should be called when the resources are "moved")
-		/// </summary>
-		virtual void abandon_resources() = 0;
-
-		/// <summary>
 		/// Converter to std::vector
 		/// </summary>
 		/// <returns></returns>
@@ -224,6 +240,6 @@ namespace DeepLearning
 		/// <summary>
 		/// Virtual destructor to ensure that resources of the descending classes are properly released
 		/// </summary>
-		virtual ~BasicCudaCollection() = default;
+		virtual ~BasicCudaCollection();
 	};
 }

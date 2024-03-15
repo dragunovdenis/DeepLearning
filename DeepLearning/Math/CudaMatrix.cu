@@ -26,27 +26,9 @@
 
 namespace DeepLearning
 {
-	void CudaMatrix::free()
-	{
-		if (_data != nullptr)
-		{
-			CudaUtils::cuda_free(_data);
-			_data = nullptr;
-		}
-
-		_row_dim = 0;
-		_col_dim = 0;
-		_capacity = 0;
-	}
-
 	std::size_t CudaMatrix::size() const
 	{
 		return _row_dim * _col_dim;
-	}
-
-	std::size_t CudaMatrix::capacity() const
-	{
-		return _capacity;
 	}
 
 	Index3d CudaMatrix::size_3d() const
@@ -65,13 +47,7 @@ namespace DeepLearning
 	void CudaMatrix::resize(const std::size_t& new_row_dim, const std::size_t& new_col_dim)
 	{
 		const auto new_size = new_row_dim * new_col_dim;
-		if (_capacity < new_size)
-		{
-			free();
-			_data = CudaUtils::cuda_allocate<Real>(new_size);
-			_capacity = new_size;
-		}
-
+		allocate(new_size);
 		_row_dim = new_row_dim;
 		_col_dim = new_col_dim;
 	}
@@ -138,32 +114,29 @@ namespace DeepLearning
 	CudaMatrix::CudaMatrix(const CudaMatrix& matr) :
 		CudaMatrix(matr.row_dim(), matr.col_dim(), false /*assign zero*/)
 	{
-		CudaUtils::cuda_copy_device2device(begin(), matr.begin(), size());
+		CudaUtils::cuda_copy_device2device(begin(), matr.begin(), CudaMatrix::size());
 	}
 
 	void CudaMatrix::abandon_resources()
 	{
-		_data = nullptr;
-		free();
+		Base::abandon_resources();
+		_col_dim = 0;
+		_row_dim = 0;
 	}
 
 	CudaMatrix::CudaMatrix(CudaMatrix&& matr) noexcept :
-		_row_dim(matr.row_dim()), _col_dim(matr.col_dim()), _capacity(matr._capacity)
+		_row_dim(matr.row_dim()), _col_dim(matr.col_dim())
 	{
-		_data = matr._data;
-		matr.abandon_resources();
+		take_over_resources(std::move(matr));
 	}
 
 	CudaMatrix& CudaMatrix::operator =(CudaMatrix&& matr) noexcept
 	{
 		if (this != &matr)
 		{
-			free();
 			_row_dim = matr._row_dim;
 			_col_dim = matr._col_dim;
-			_capacity = matr._capacity;
-			_data = matr._data;
-			matr.abandon_resources();
+			take_over_resources(std::move(matr));
 		}
 
 		return *this;
@@ -177,11 +150,6 @@ namespace DeepLearning
 		return *this;
 	}
 
-	CudaMatrix::~CudaMatrix()
-	{
-		free();
-	}
-
 	bool CudaMatrix::operator ==(const CudaMatrix& matr) const
 	{
 		const auto result = _row_dim == matr.row_dim() && _col_dim == matr.col_dim() &&
@@ -193,11 +161,6 @@ namespace DeepLearning
 	bool CudaMatrix::operator !=(const CudaMatrix& matr) const
 	{
 		return !(*this == matr);
-	}
-
-	CudaMatrix CudaMatrix::random(const std::size_t row_dim, const std::size_t col_dim, const Real range_begin, const Real range_end)
-	{
-		return CudaMatrix(row_dim, col_dim, range_begin, range_end);
 	}
 
 	CudaMatrix& CudaMatrix::operator +=(const CudaMatrix& mat)
@@ -343,8 +306,8 @@ namespace DeepLearning
 	/// <param name="row_dim">Number of rows in the input matrix</param>
 	/// <param name="col_dim">Number of columns in the input matrix (must coincide with the vector size)</param>
 	/// <param name="matr_data">Matrix operand</param>
-	/// <param name="vect_to_mul_data">Vector operand to multiply</param>
-	/// <param name="vect_to_add_data">Vector operand to add</param>
+	/// <param name="mul_vect_data">Vector operand to multiply</param>
+	/// <param name="add_vect_data">Vector operand to add</param>
 	/// <param name="result">Result of the matrix-vector multiplication</param>
 	__global__ void matrix_vector_multiply_add_kernel(const int row_dim, const int col_dim,
 		const Real* matr_data, const Real* mul_vect_data, const Real* add_vect_data, Real* result)
@@ -406,7 +369,7 @@ namespace DeepLearning
 
 		const auto blocks_cnt = CudaSetup::calc_blocks(_col_dim, CUDA_WARP_SIZE);
 		vector_matrix_multiply_kernel << <blocks_cnt, CUDA_WARP_SIZE, 0, cudaStreamPerThread >> >
-			(static_cast<int>(_row_dim), static_cast<int>(_col_dim), _data, vec.begin(), result.begin());
+			(static_cast<int>(_row_dim), static_cast<int>(_col_dim), begin(), vec.begin(), result.begin());
 		CUDA_SANITY_CHECK
 	}
 
@@ -449,7 +412,8 @@ namespace DeepLearning
 		out.resize({ 1ull, _col_dim, _row_dim });
 		const auto blocks_cnt = CudaSetup::calc_blocks(size());
 		const auto threads_per_block = CudaSetup::max_threads_per_block();
-		transpose_kernel << <blocks_cnt, threads_per_block, 0, cudaStreamPerThread >> > (static_cast<int>(_row_dim), static_cast<int>(_col_dim), _data, out._data);
+		transpose_kernel << <blocks_cnt, threads_per_block, 0, cudaStreamPerThread >> >
+		(static_cast<int>(_row_dim), static_cast<int>(_col_dim), begin(), out.begin());
 		CUDA_SANITY_CHECK
 	}
 

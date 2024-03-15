@@ -193,7 +193,7 @@ namespace DeepLearningTest
 			auto str = Utils::vector_to_str(vec);
 
 			//Assert
-			Assert::IsTrue(Utils::parse_vector<double>(str) == vec, L"Vectors are not the same");
+			Assert::IsTrue(Utils::parse_vector<Real>(str) == vec, L"Vectors are not the same");
 			Assert::IsTrue(str.empty(), L"Unexpected value of string after parsing");
 		}
 

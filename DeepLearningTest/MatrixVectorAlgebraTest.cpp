@@ -106,10 +106,10 @@ namespace DeepLearningTest
 
 				for (std::size_t col_id = 0; col_id < col_dim; col_id++)
 				{
-					reference += matrix(row_id, col_id) * vector(col_id);
+					reference += matrix(row_id, col_id) * vector[col_id];
 				}
 
-				const auto diff = std::abs(reference - product(row_id));
+				const auto diff = std::abs(reference - product[row_id]);
 				Logger::WriteMessage((std::string("Difference = ") +  Utils::to_string(diff) + "\n").c_str());
 				Assert::IsTrue(diff < 15*std::numeric_limits<Real>::epsilon(), L"Unexpectedly high difference");
 			}
@@ -133,10 +133,10 @@ namespace DeepLearningTest
 
 				for (std::size_t row_id = 0; row_id < row_dim; row_id++)
 				{
-					reference += matrix(row_id, col_id) * vector(row_id);
+					reference += matrix(row_id, col_id) * vector[row_id];
 				}
 
-				const auto diff = std::abs(reference - product(col_id));
+				const auto diff = std::abs(reference - product[col_id]);
 				Logger::WriteMessage((std::string("Difference = ") + std::to_string(diff) + "\n").c_str());
 				Assert::IsTrue(diff < std::numeric_limits<Real>::epsilon(), L"Unexpectedly high difference.");
 			}
@@ -337,7 +337,7 @@ namespace DeepLearningTest
 			{
 				for (std::size_t col_id = 0; col_id < col_dim; col_id++)
 				{
-					const auto diff = std::abs(result(row_id, col_id) - vec_col(row_id) * vec_row(col_id));
+					const auto diff = std::abs(result(row_id, col_id) - vec_col[row_id] * vec_row[col_id]);
 					Assert::IsTrue(diff <= 0, L"Too big deviation from expected value");
 				}
 			}
@@ -383,7 +383,7 @@ namespace DeepLearningTest
 
 			for (std::size_t item_id = 0; item_id < dim; item_id++)
 			{
-				const auto diff = std::abs(result1(item_id) - vector1(item_id) * vector2(item_id));
+				const auto diff = std::abs(result1[item_id] - vector1[item_id] * vector2[item_id]);
 				Assert::IsTrue(diff <= 0, L"Too big deviation from the expected value.");
 			}
 		}

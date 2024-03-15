@@ -29,11 +29,37 @@ namespace DeepLearning
 	/// </summary>
 	class BasicCollection
 	{
-	protected:
+		/// <summary>
+		/// Frees memory pointed by `_data`.
+		/// </summary>
+		void free();
+
 		/// <summary>
 		/// Pointer to the elements of collection
 		/// </summary>
 		Real* _data{};
+
+		/// <summary>
+		/// Number of allocated items in the memory pointed by `_data`;
+		/// </summary>
+		std::size_t _capacity{};
+
+	protected:
+
+		/// <summary>
+		/// Re-allocates memory pointed by `_data` if the given capacity exceeds the current one.
+		/// </summary>
+		void allocate(const std::size_t new_capacity);
+
+		/// <summary>
+		/// Abandons allocated resources (it is supposed to be used in the "move" scenario).
+		/// </summary>
+		virtual void abandon_resources();
+
+		/// <summary>
+		/// Takes over resources of the given collection.
+		/// </summary>
+		void take_over_resources(BasicCollection&& collection);
 
 	public:
 		/// <summary>
@@ -85,14 +111,9 @@ namespace DeepLearning
 		[[nodiscard]] virtual Index3d size_3d() const = 0;
 
 		/// <summary>
-		/// Returns number of preallocated elements ("capacity" can be greater than the size of collection)
-		/// </summary>
-		[[nodiscard]] virtual std::size_t capacity() const = 0;
-
-		/// <summary>
 		/// Pointer to the first element of the vector
 		/// </summary>
-		Real* begin();
+		[[nodiscard]] Real* begin();
 
 		/// <summary>
 		/// Pointer to the first element of the vector (constant version)
@@ -102,7 +123,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Pointer to the "behind last" element of the vector
 		/// </summary>
-		Real* end();
+		[[nodiscard]] Real* end();
 
 		/// <summary>
 		/// Pointer to the "behind last" element of the vector (constant version)
@@ -188,11 +209,6 @@ namespace DeepLearning
 		Real max_element(const std::function<bool(Real, Real)>& comparer = [](const auto& a, const auto& b) {return a < b; }) const;
 
 		/// <summary>
-		/// Method to abandon resources (should be called when the resources are "moved")
-		/// </summary>
-		virtual void abandon_resources() = 0;
-
-		/// <summary>
 		/// Converter to std::vector
 		/// </summary>
 		/// <returns></returns>
@@ -233,6 +249,6 @@ namespace DeepLearning
 		/// <summary>
 		/// Virtual destructor to ensure that resources of the descending classes are properly released
 		/// </summary>
-		virtual ~BasicCollection() = default;
+		virtual ~BasicCollection();
 	};
 }

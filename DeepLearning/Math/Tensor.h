@@ -48,21 +48,6 @@ namespace DeepLearning
 		std::size_t _col_dim{};
 
 		/// <summary>
-		/// Size of available preallocated memory 
-		/// </summary>
-		std::size_t _capacity{};
-
-		/// <summary>
-		/// Releases allocated resources
-		/// </summary>
-		void free();
-
-		/// <summary>
-		/// Method to abandon resources (should be called when the resources are "moved")
-		/// </summary>
-		void abandon_resources() override;
-
-		/// <summary>
 		/// Converts given triplet of integer coordinates to a single index that can be used to access "data" array
 		/// </summary>
 		std::size_t coords_to_data_id(const std::size_t layer_id, const std::size_t row_id, const std::size_t col_id) const;
@@ -76,6 +61,12 @@ namespace DeepLearning
 		/// Returns "true" if the given triplet of coordinates is valid to access "data" array
 		/// </summary>
 		bool check_bounds(const std::size_t layer_id, const std::size_t row_id, const std::size_t col_id) const;
+
+	protected:
+		/// <summary>
+		/// Method to abandon resources (should be called when the resources are being "moved")
+		/// </summary>
+		void abandon_resources() override;
 
 	public:
 
@@ -102,11 +93,6 @@ namespace DeepLearning
 		/// Return total number of elements in the tensor
 		/// </summary>
 		std::size_t size() const override;
-
-		/// <summary>
-		/// Returns number of pre-allocated elements ("capacity" can be greater than the size of collection)
-		/// </summary>
-		std::size_t capacity() const override;
 
 		/// <summary>
 		/// Custom "packing" method
@@ -198,11 +184,6 @@ namespace DeepLearning
 		/// Move assignment operator for tensor right-hand side operand
 		/// </summary>
 		Tensor& operator =(Tensor&& tensor) noexcept;
-
-		/// <summary>
-		/// Destructor
-		/// </summary>
-		~Tensor() override;
 
 		/// <summary>
 		/// Number of "layers"
