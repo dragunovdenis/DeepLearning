@@ -18,12 +18,10 @@
 #pragma once
 #include "../Math/Vector.h"
 #include "../Math/Matrix.h"
-#include "../Math/Tensor.h"
 #include "../Math/LinAlg3d.h"
 #include "ALayer.h"
 #include <vector>
 #include "../Math/ActivationFunction.h"
-#include "CummulativeGradient.h"
 #include <msgpack.hpp>
 #include "LayerTypeId.h"
 

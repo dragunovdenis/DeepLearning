@@ -22,9 +22,13 @@
 #include <random>
 #include <ranges>
 #include "AvxAcceleration.h"
+#include <atomic>
 
 namespace DeepLearning
 {
+	static std::atomic<unsigned int> instance_counter{ 0 };
+	static std::atomic<std::size_t> allocated_memory_counter{ 0 };
+
 	void BasicCollection::allocate(const std::size_t new_capacity)
 	{
 		if (_capacity < new_capacity)
@@ -32,6 +36,7 @@ namespace DeepLearning
 			free();
 			_data = static_cast<Real*>(std::malloc(new_capacity * sizeof(Real)));
 			_capacity = new_capacity;
+			allocated_memory_counter.fetch_add(_capacity);
 		}
 	}
 
@@ -41,6 +46,7 @@ namespace DeepLearning
 		{
 			std::free(_data);
 			_data = nullptr;
+			allocated_memory_counter.fetch_sub(_capacity);
 		}
 
 		_capacity = 0;
@@ -61,6 +67,32 @@ namespace DeepLearning
 		_data = collection._data;
 		_capacity = collection._capacity;
 		collection.abandon_resources();
+	}
+
+	BasicCollection::BasicCollection()
+	{
+		instance_counter.fetch_add(1);
+	}
+
+	BasicCollection::~BasicCollection()
+	{
+		free();
+		instance_counter.fetch_sub(1);
+	}
+
+	unsigned BasicCollection::get_total_instances_count()
+	{
+		return instance_counter;
+	}
+
+	std::size_t BasicCollection::get_total_allocated_memory()
+	{
+		return allocated_memory_counter * sizeof(Real);
+	}
+
+	std::size_t BasicCollection::get_allocated_memory() const
+	{
+		return _capacity * sizeof(Real);
 	}
 
 	void BasicCollection::add(const BasicCollection& collection)
@@ -253,10 +285,5 @@ namespace DeepLearning
 	bool BasicCollection::is_inf() const
 	{
 		return std::any_of(begin(), end(), [](const auto& x) { return std::isinf(x); });
-	}
-
-	BasicCollection::~BasicCollection()
-	{
-		free();
 	}
 }

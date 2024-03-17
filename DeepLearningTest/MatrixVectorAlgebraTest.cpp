@@ -16,10 +16,10 @@
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "CppUnitTest.h"
+#include <Math/Tensor.h>
 #include <Math/Matrix.h>
 #include <Math/Vector.h>
 #include <MsgPackUtils.h>
-#include <numeric>
 #include "Utilities.h"
 #include "StandardTestUtils.h"
 
@@ -423,6 +423,48 @@ namespace DeepLearningTest
 
 			// Assert
 			Assert::IsTrue(vec.max_abs() == 0, L"Vector is supposed to be zero");
+		}
+
+		/// <summary>
+		/// Asserts given number of alive instances of `BasicCollection` as
+		/// well as the given amount of memory allocated by those instances.
+		/// </summary>
+		static void check_alive_instances_and_allocated_memory(const unsigned int expected_alive_instances,
+			const std::size_t expected_allocated_memory)
+		{
+			Assert::AreEqual(expected_alive_instances, BasicCollection::get_total_instances_count(),
+				L"Unexpected number of alive instances");
+			Assert::AreEqual(expected_allocated_memory, BasicCollection::get_total_allocated_memory(),
+				L"Unexpected amount of allocated memory");
+		}
+
+		TEST_METHOD(BaseCollectionInstanceCounterTestTest)
+		{
+			check_alive_instances_and_allocated_memory(0, 0);
+			std::size_t expected_allocated_memory = 0;
+
+			{
+				const Vector vector(1234);
+				expected_allocated_memory += vector.get_allocated_memory();
+
+				{
+					const Matrix matrix(1340, 567);
+					expected_allocated_memory += matrix.get_allocated_memory();
+
+					{
+						const Tensor tensor(123, 456, 789);
+						expected_allocated_memory += tensor.get_allocated_memory();
+
+						check_alive_instances_and_allocated_memory(3, expected_allocated_memory);
+						expected_allocated_memory -= tensor.get_allocated_memory();
+					}
+					check_alive_instances_and_allocated_memory(2, expected_allocated_memory);
+					expected_allocated_memory -= matrix.get_allocated_memory();
+				}
+				check_alive_instances_and_allocated_memory(1, expected_allocated_memory);
+				expected_allocated_memory -= vector.get_allocated_memory();
+			}
+			check_alive_instances_and_allocated_memory(0, expected_allocated_memory);
 		}
 	};
 }

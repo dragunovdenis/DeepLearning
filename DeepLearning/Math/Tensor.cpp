@@ -673,7 +673,7 @@ namespace DeepLearning
 		std::size_t layer_dim, row_dim, col_dim;
 		msgpack::type::make_define_array(layer_dim, row_dim, col_dim, proxy).msgpack_unpack(msgpack_o);
 		resize(layer_dim, row_dim, col_dim);
-		std::copy(proxy.begin(), proxy.end(), begin());
+		std::ranges::copy(proxy, begin());
 	}
 
 	RealMemHandleConst Tensor::get_layer_handle(const std::size_t& layer_id) const

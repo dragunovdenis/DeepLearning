@@ -61,6 +61,11 @@ namespace DeepLearning
 		/// </summary>
 		void take_over_resources(BasicCollection&& collection);
 
+		/// <summary>
+		/// Default constructor.
+		/// </summary>
+		BasicCollection();
+
 	public:
 		/// <summary>
 		/// Reallocates memory of the collection to meet the given number of elements
@@ -250,5 +255,20 @@ namespace DeepLearning
 		/// Virtual destructor to ensure that resources of the descending classes are properly released
 		/// </summary>
 		virtual ~BasicCollection();
+
+		/// <summary>
+		/// Returns total number of instances of the class that are currently alive.
+		/// </summary>
+		static unsigned int get_total_instances_count();
+
+		/// <summary>
+		/// Returns total amount of memory allocated by all the alive instances of the class in bytes.
+		/// </summary>
+		static std::size_t get_total_allocated_memory();
+
+		/// <summary>
+		/// Returns memory (in bytes) allocated by the current instance.
+		/// </summary>
+		std::size_t get_allocated_memory() const;
 	};
 }

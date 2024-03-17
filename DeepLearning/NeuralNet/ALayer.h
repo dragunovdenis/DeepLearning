@@ -16,7 +16,6 @@
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #pragma once
-#include "../Math/Tensor.h"
 #include "CummulativeGradient.h"
 #include <filesystem>
 #include <string>
