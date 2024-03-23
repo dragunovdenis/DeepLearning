@@ -24,6 +24,8 @@
 #include <Utilities.h>
 #include <numbers>
 
+#include "StandardTestUtils.h"
+
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;
 
@@ -66,7 +68,7 @@ namespace DeepLearningTest
 		{
 			std::set<Real> set{};
 
-			const std::size_t iterations = 10000;
+			constexpr std::size_t iterations = 10000;
 
 			for (auto iter_id = 0; iter_id < iterations; iter_id++)
 			{
@@ -77,16 +79,17 @@ namespace DeepLearningTest
 
 			check_random_values(set);
 
-			//In principle, there is a very low probability that during those very few iterations that we did above
-			// we will get two identical random values. so we assert this
-			Assert::IsTrue(set.size() >= iterations * 2 - 0.0002* iterations, L"Too many identical values.");
+			constexpr auto coincidence_percentage = std::is_same_v<Real, double> ? 0.0001 : 0.001;
+
+			StandardTestUtils::LogAndAssertGreaterOrEqualTo("Number of distinct random values generated",
+				set.size(), static_cast<std::size_t>(iterations * 2 * (1 - coincidence_percentage)));
 		}
 
 		TEST_METHOD(RandomMatrix2x2Test)
 		{
 			std::set<Real> set{};
 
-			const std::size_t iterations = 10000;
+			constexpr std::size_t iterations = 10000;
 
 			for (auto iter_id = 0; iter_id < iterations; iter_id++)
 			{
@@ -99,9 +102,10 @@ namespace DeepLearningTest
 
 			check_random_values(set);
 
-			//In principle, there is a very low probability that during those very few iterations that we did above
-			// we will get two identical random values. So we assert this
-			Assert::IsTrue(set.size() >= iterations * 4 - 0.0002 * iterations, L"Too many identical values.");
+			constexpr auto coincidence_percentage = std::is_same_v<Real, double> ? 0.00005 : 0.0015;
+
+			StandardTestUtils::LogAndAssertGreaterOrEqualTo("Number of distinct random values generated",
+				set.size(), static_cast<std::size_t>(iterations * 4 * (1 - coincidence_percentage)));
 		}
 
 		/// <summary>

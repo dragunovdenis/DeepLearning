@@ -109,13 +109,13 @@ namespace DeepLearning
 	class AveragePool : public PoolOperator
 	{
 		std::size_t _items_count{};
-		Real _sum{};
+		double _sum{};
 	public:
 
 		/// <summary>
 		/// Constructor
 		/// </summary>
-		AveragePool(const Index3d& size) : PoolOperator(size) { reset(); }
+		AveragePool(const Index3d& size) : PoolOperator(size) { AveragePool::reset(); }
 
 		void add(const Index3d& id, const Real value) override;
 
@@ -140,7 +140,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Constructor
 		/// </summary>
-		MaxPool(const Index3d& size) : PoolOperator(size) { reset(); }
+		MaxPool(const Index3d& size) : PoolOperator(size) { MaxPool::reset(); }
 
 		void add(const Index3d& id, const Real value) override;
 
@@ -163,7 +163,7 @@ namespace DeepLearning
 		/// Constructor
 		/// </summary>
 		/// <param name="size"></param>
-		MinPool(const Index3d& size) : MaxPool(size) { reset(); }
+		MinPool(const Index3d& size) : MaxPool(size) { MinPool::reset(); }
 
 		void add(const Index3d& id, const Real value) override;
 
@@ -181,14 +181,14 @@ namespace DeepLearning
 	class KernelPool : public PoolOperator
 	{
 		const Tensor _kernel{};
-		Real _conv_result{};
+		double _conv_result{};
 	public:
 		/// <summary>
 		/// Constructor
 		/// </summary>
 		KernelPool(const Tensor& kernel) : PoolOperator(kernel.size_3d()), _kernel(kernel) 
 		{
-			reset();
+			KernelPool::reset();
 		}
 
 		void add(const Index3d& id, const Real value) override;

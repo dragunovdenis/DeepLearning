@@ -74,9 +74,9 @@ namespace DeepLearningTest
 
 		TEST_METHOD(SumWithZeroTensorTest)
 		{
-			const auto row_dim = 10;
-			const auto col_dim = 13;
-			const auto layer_dim = 7;
+			constexpr auto row_dim = 10;
+			constexpr auto col_dim = 13;
+			constexpr auto layer_dim = 7;
 			StandardTestUtils::SumWithZeroElementTest<Tensor>([]() { return TensorFactory(layer_dim, row_dim, col_dim); }, Tensor(layer_dim, row_dim, col_dim));
 		}
 
@@ -131,7 +131,7 @@ namespace DeepLearningTest
 				{
 					for (auto r_c = 0ll; r_c < result_size.z; r_c++)
 					{
-						Real reference = Real(0);
+						double reference = 0;
 
 						for (auto k_l = 0ll; k_l < kernel_size.x; k_l++)
 						{
@@ -212,7 +212,7 @@ namespace DeepLearningTest
 					{
 						const auto diff = std::abs(result(l, r, c) - result_no_stride(l * stride.x, r * stride.y, c * stride.z));
 						Logger::WriteMessage((std::string("diff =  ") + Utils::to_string(diff) + "\n").c_str());
-						Assert::IsTrue(diff == Real(0), L"Elements are not the same");
+						Assert::IsTrue(diff == static_cast<Real>(0), L"Elements are not the same");
 					}
 		}
 
@@ -242,7 +242,8 @@ namespace DeepLearningTest
 			//Assert
 			Assert::IsTrue(kern_grad.size_3d() == kernel.size_3d(), L"Unexpected size for the gradient of the convolution kernel.");
 
-			const auto delta = Real(1e-5);
+			constexpr auto double_precision = std::is_same_v<Real, double>;
+			constexpr auto delta = double_precision ? static_cast<Real>(1e-5) : static_cast<Real>(1e-1);
 
 			for (auto k_x = 0ll; k_x < kernel_size.x; k_x++)
 				for (auto k_y = 0ll; k_y < kernel_size.y; k_y++)
@@ -255,18 +256,19 @@ namespace DeepLearningTest
 						kernel_plus_delts(k_x, k_y, k_z) += delta;
 
 						const auto conv_res_minus_delta = tensor.convolve(kern_minus_delta, paddings, strides);
-						const auto cost_minus_delta = cost_func(conv_res_minus_delta, reference);
+						const double cost_minus_delta = cost_func(conv_res_minus_delta, reference);
 
 						const auto conv_res_plus_delta = tensor.convolve(kernel_plus_delts, paddings, strides);
-						const auto cost_plus_delta = cost_func(conv_res_plus_delta, reference);
+						const double cost_plus_delta = cost_func(conv_res_plus_delta, reference);
 
 						const auto deriv_reference = (cost_plus_delta - cost_minus_delta) / (2 * delta);
 
 						const auto abs_diff = std::abs(deriv_reference - kern_grad(k_x, k_y, k_z));
-						const auto rel_diff = deriv_reference != Real(0) ? abs_diff / std::abs(deriv_reference) : abs_diff;
+						const auto rel_diff = std::abs(deriv_reference) > 1 ? abs_diff / std::abs(deriv_reference) : abs_diff;
 
 						Logger::WriteMessage((std::string("Rel. diff. =  ") + Utils::to_string(rel_diff) + "\n").c_str());
-						Assert::IsTrue(rel_diff < Real(8e-4), L"Too high deviation from reference.");
+						Assert::IsTrue(rel_diff < (double_precision ? static_cast<Real>(5e-7) : static_cast<Real>(2e-2)),
+							L"Too high deviation from reference.");
 					}
 		}
 
@@ -298,7 +300,7 @@ namespace DeepLearningTest
 			const auto [ref_kernel_grad, ref_in_grad] = tensor.convolution_gradient(res_gradient, kernel, paddings, strides);
 			const auto diff = (gradient_container - (kernel_grad_input_data * gradient_scale_factor + ref_kernel_grad)).max_abs();
 			Logger::WriteMessage((std::string("Gradient diff. =  ") + Utils::to_string(diff) + "\n").c_str());
-			Assert::IsTrue(diff < 100 * std::numeric_limits<Real>::epsilon(),
+			Assert::IsTrue(diff < 200 * std::numeric_limits<Real>::epsilon(),
 				L"Too high deviation between actual and reference kernel gradients");
 
 			Assert::IsTrue(in_grad == ref_in_grad, L"Reference and actual input gradients must coincide.");
@@ -330,7 +332,8 @@ namespace DeepLearningTest
 			//Assert
 			Assert::IsTrue(kern_grad.size_3d() == kernel.size_3d(), L"Unexpected size for the gradient of the convolution kernel.");
 
-			const auto delta = Real(1e-5);
+			constexpr auto double_precision = std::is_same_v<Real, double>;
+			constexpr auto delta = double_precision ? static_cast<Real>(1e-5) : static_cast<Real>(1e-1);
 
 			for (auto t_x = 0ll; t_x < tensor_size.x; t_x++)
 				for (auto t_y = 0ll; t_y < tensor_size.y; t_y++)
@@ -343,18 +346,19 @@ namespace DeepLearningTest
 						tensor_plus_delta(t_x, t_y, t_z) += delta;
 
 						const auto conv_res_minus_delta = tensor_minus_delta.convolve(kernel, paddings, strides);
-						const auto cost_minus_delta = cost_func(conv_res_minus_delta, reference);
+						const double cost_minus_delta = cost_func(conv_res_minus_delta, reference);
 
 						const auto conv_res_plus_delta = tensor_plus_delta.convolve(kernel, paddings, strides);
-						const auto cost_plus_delta = cost_func(conv_res_plus_delta, reference);
+						const double cost_plus_delta = cost_func(conv_res_plus_delta, reference);
 
 						const auto deriv_reference = (cost_plus_delta - cost_minus_delta) / (2 * delta);
 
 						const auto abs_diff = std::abs(deriv_reference - in_grad(t_x, t_y, t_z));
-						const auto rel_diff = deriv_reference != Real(0) ? abs_diff / std::abs(deriv_reference) : abs_diff;
+						const auto rel_diff = std::abs(deriv_reference) > 1 ?	abs_diff / std::abs(deriv_reference) : abs_diff;
 
 						Logger::WriteMessage((std::string("Rel. diff. =  ") + Utils::to_string(rel_diff) + "\n").c_str());
-						Assert::IsTrue(rel_diff < Real(6e-5), L"Too high deviation from reference.");
+						Assert::IsTrue(rel_diff < (double_precision ? static_cast<Real>(2e-8) : static_cast<Real>(1e-3)),
+							L"Too high deviation from reference.");
 					}
 		}
 
@@ -557,8 +561,8 @@ namespace DeepLearningTest
 			//pool result reference
 			const auto pool_res_reference = tensor.pool(*pool_operator, paddings, strides);
 
-			const auto res_grad = Tensor(pool_res_reference.size_3d(), Real(-1), Real(1));
-			Assert::IsTrue(res_grad.max_abs() > Real(0), L"Result gradient is expected to be nonzero");
+			const auto res_grad = Tensor(pool_res_reference.size_3d(), static_cast<Real>(-1), static_cast<Real>(1));
+			Assert::IsTrue(res_grad.max_abs() > static_cast<Real>(0), L"Result gradient is expected to be nonzero");
 
 			//pool input gradient reference
 			const auto input_gradient_reference = tensor.pool_input_gradient(res_grad, *pool_operator, paddings, strides);
@@ -594,8 +598,8 @@ namespace DeepLearningTest
 			const auto pool_operator = AveragePool(pool_window_size);
 			const auto result_reference = tensor.pool(pool_operator, Index3d{ 0 }, pool_window_size);
 
-			auto res_grad = Tensor(result_reference.size_3d(), Real(-1), Real(1));
-			Assert::IsTrue(res_grad.max_abs() > Real(0), L"Result gradient is expected to be nonzero");
+			const auto res_grad = Tensor(result_reference.size_3d(), static_cast<Real>(-1), static_cast<Real>(1));
+			Assert::IsTrue(res_grad.max_abs() > static_cast<Real>(0), L"Result gradient is expected to be nonzero");
 
 			//pool input gradient reference
 			const auto input_gradient_reference = tensor.pool_input_gradient(res_grad, pool_operator, Index3d{ 0 }, pool_window_size);

@@ -52,13 +52,13 @@ namespace DeepLearning
 			throw std::exception("No items to pool from");
 #endif // DEBUG
 
-		return _sum / _items_count;
+		return static_cast<Real>(_sum / _items_count);
 	}
 
 	void AveragePool::reset()
 	{
 		_items_count = 0ull;
-		_sum = Real(0);
+		_sum = static_cast<Real>(0);
 	}
 
 	Real AveragePool::pool_deriv(const Index3d& id) const
@@ -68,7 +68,7 @@ namespace DeepLearning
 			throw std::exception("No items to pool from");
 #endif // DEBUG
 
-		return Real(1) / _items_count;
+		return static_cast<Real>(1) / _items_count;
 	}
 
 	std::shared_ptr<PoolOperator> AveragePool::clone() const
@@ -99,9 +99,9 @@ namespace DeepLearning
 	Real MaxPool::pool_deriv(const Index3d& id) const
 	{
 		if (id == _max_val_id)
-			return Real(1);
+			return static_cast<Real>(1);
 
-		return Real(0);
+		return static_cast<Real>(0);
 	}
 
 	std::shared_ptr<PoolOperator> MaxPool::clone() const
@@ -137,12 +137,12 @@ namespace DeepLearning
 
 	Real KernelPool::pool() const
 	{
-		return _conv_result;
+		return static_cast<Real>(_conv_result);
 	}
 
 	void KernelPool::reset()
 	{
-		_conv_result = Real(0);
+		_conv_result = static_cast<Real>(0);
 	}
 
 	Real KernelPool::pool_deriv(const Index3d& id) const
@@ -171,10 +171,11 @@ namespace DeepLearning
 	{
 		const auto str_normalized = Utils::normalize_string(str);
 
-		for (unsigned int id = (unsigned int)PoolTypeId::MAX; id <= (unsigned int)PoolTypeId::AVERAGE; id++)
+		for (unsigned int id = static_cast<unsigned int>(PoolTypeId::MAX);
+			id <= static_cast<unsigned int>(PoolTypeId::AVERAGE); id++)
 		{
-			if (to_string((PoolTypeId)id) == str_normalized)
-				return (PoolTypeId)id;
+			if (to_string(static_cast<PoolTypeId>(id)) == str_normalized)
+				return static_cast<PoolTypeId>(id);
 		}
 
 		return PoolTypeId::UNKNOWN;

@@ -35,12 +35,12 @@ namespace DeepLearning
 		/// <summary>
 		/// Cost function value
 		/// </summary>
-		double Cost{};
+		Real Cost{};
 
 		/// <summary>
 		/// Ratio of the correct answers to all the answers
 		/// </summary>
-		double CorrectAnswers{};
+		Real CorrectAnswers{};
 
 		/// <summary>
 		/// Compound addition operator

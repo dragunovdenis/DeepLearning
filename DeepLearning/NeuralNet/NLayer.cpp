@@ -32,7 +32,7 @@ namespace DeepLearning
 		if (standard_init_for_weights)
 		{
 			_weights = typename D::matrix_t(out_dim, in_dim, false);
-			_weights.standard_random_fill(Real(1) / std::sqrt(in_dim), ran_gen_ptr);
+			_weights.standard_random_fill(static_cast<Real>(1) / static_cast<Real>(std::sqrt(in_dim)), ran_gen_ptr);
 		}
 		else
 			_weights = typename D::matrix_t(out_dim, in_dim, rand_low, rand_high, ran_gen_ptr);

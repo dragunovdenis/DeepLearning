@@ -20,6 +20,7 @@
 #include "Math/Optimization/NelderMeadOptimizer.h"
 #include "Image8Bit.h"
 #include "MsgPackUtils.h"
+#include "StandardTestUtils.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;
@@ -144,7 +145,7 @@ namespace DeepLearningTest
 			optimizer.set_min_simplex_size(epsilon);
 
 			//Act
-			optimizer.optimize(cost_func, 1.1, init_point, false, true
+			optimizer.optimize(cost_func, static_cast<Real>(1.1), init_point, false, true
 			/*, get_diagnostics_func(domain_min_pt, domain_max_point, "D:\\Temp\\Amoeba")*/);
 
 			//Assert
@@ -152,8 +153,10 @@ namespace DeepLearningTest
 			const auto point_diff = (min_point - expected_min_point).max_abs();
 			const auto min_value = optimizer.get_min_value();
 			const auto value_diff = std::abs(min_value - expected_min_value);
-			Assert::IsTrue(point_diff < tol_pt, L"Unexpected point of minimum");
-			Assert::IsTrue(value_diff < tol_value, L"Unexpected minimum value");
+			StandardTestUtils::LogAndAssertLessOrEqualTo(
+				"Difference in the position of minimum point found", point_diff, tol_pt);
+			StandardTestUtils::LogAndAssertLessOrEqualTo(
+				"Difference in the minimum value found", value_diff, tol_value);
 		}
 
 		TEST_METHOD(BealeFunctionMinimizationTest)
@@ -161,13 +164,17 @@ namespace DeepLearningTest
 			//Arrange
 			const NelderMeadOptimizer<2>::CostFunc cost_func = [](const VectorNdReal<2>& v)
 			{
-				return Utils::sqr(1.5 - v[0] + v[0] * v[1]) +
-					Utils::sqr(2.25 - v[0] + v[0] * v[1] * v[1]) +
-					Utils::sqr(2.625 - v[0] + v[0] * v[1] * v[1] * v[1]);
+				return Utils::sqr(static_cast<Real>(1.5) - v[0] + v[0] * v[1]) +
+					Utils::sqr(static_cast<Real>(2.25) - v[0] + v[0] * v[1] * v[1]) +
+					Utils::sqr(static_cast<Real>(2.625) - v[0] + v[0] * v[1] * v[1] * v[1]);
 			};
 
 			Run2dOptimizationTest(cost_func,
-				{ -4.5, -4.5 }, { 4.5, 4.5 }, { -3.8, 3.8 }, { 3.0, 0.5 }, 0.0);
+				{ static_cast<Real>(-4.5), static_cast<Real>(-4.5)},
+				{ static_cast<Real>(4.5), static_cast<Real>(4.5)},
+				{ static_cast<Real>(-3.8), static_cast<Real>(3.8)},
+				{ static_cast<Real>(3.0), static_cast<Real>(0.5)},
+				static_cast<Real>(0.0));
 		}
 
 		TEST_METHOD(BoothFunctionMinimizationTest)
@@ -193,9 +200,16 @@ namespace DeepLearningTest
 					(18 - 32 * v[0] + 12 * v[0] * v[0] + 48 * v[1] - 36 * v[0] * v[1] + 27 * v[1] * v[1]));
 			};
 
+			constexpr auto double_pres_calc = std::is_same_v<Real, double>;
+
 			Run2dOptimizationTest(cost_func,
-				{ -2, -3 }, { 2, 2 }, { -1.5, -2.5 }, 
-				{ 0, -1.0 }, 3.0, 1e-6, 1e-11);
+				{ static_cast<Real>(-2), static_cast<Real>(-3) }, 
+				{ static_cast<Real>(2), static_cast<Real>(2) }, 
+				{ static_cast<Real>(-1.5), static_cast<Real>(-2.5) },
+				{ static_cast<Real>(0), static_cast<Real>(-1.0) },
+				static_cast<Real>(3.0),
+				double_pres_calc ? static_cast<Real>(1e-6) : static_cast<Real>(6e-5),
+				double_pres_calc ? static_cast<Real>(1e-11) : static_cast<Real>(5e-5));
 		}
 
 		/// <summary>
@@ -268,7 +282,7 @@ namespace DeepLearningTest
 			//Arrange
 			constexpr auto N = 7;
 			NelderMeadOptimizer<N> optimizer;
-			optimizer.set_min_simplex_size(0.1);
+			optimizer.set_min_simplex_size(static_cast<Real>(0.1));
 			//Do some optimization so that the component has a nontrivial state
 			optimizer.optimize(get_Rosenbrock_func<N>(), 1, VectorNdReal<N>(0));
 

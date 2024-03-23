@@ -37,7 +37,7 @@ namespace DeepLearningTest
 		/// </summary>
 		static Real sigmoid(const Real& x)
 		{
-			return Real(1) / (Real(1) + std::exp(-x));
+			return static_cast<Real>(1) / (static_cast<Real>(1) + std::exp(-x));
 		}
 
 		/// <summary>
@@ -46,14 +46,14 @@ namespace DeepLearningTest
 		static Real sigmoid_deriv(const Real& x)
 		{
 			const auto exp_x = std::exp(-x);
-			const auto denominator = (Real(1) + exp_x);
+			const auto denominator = (static_cast<Real>(1) + exp_x);
 			return exp_x / (denominator * denominator);
 		}
 
 		TEST_METHOD(SigmoidFunctionTest)
 		{
 			//Arrange
-			const auto dim = 10;
+			constexpr auto dim = 10;
 			const auto vector = Vector(dim, -1, 1);
 
 			//Act
@@ -74,7 +74,7 @@ namespace DeepLearningTest
 		TEST_METHOD(SigmoidFunctionCudaTest)
 		{
 			//Arrange
-			const auto dim = 10000;
+			constexpr auto dim = 10000;
 			const auto vector = CudaVector(dim, -1, 1);
 
 			//Act
@@ -92,7 +92,7 @@ namespace DeepLearningTest
 		TEST_METHOD(SigmoidFunctionAndDerivativeTest)
 		{
 			//Arrange
-			const auto dim = 10;
+			constexpr auto dim = 10;
 			const auto vector = Vector(dim, -1, 1);
 
 			//Act
@@ -119,7 +119,7 @@ namespace DeepLearningTest
 		TEST_METHOD(SigmoidFunctionAndDerivativeCudaTest)
 		{
 			//Arrange
-			const auto dim = 10;
+			constexpr auto dim = 10;
 			const auto vector = CudaVector(dim, -1, 1);
 			const auto out_grad = CudaVector(dim, -1, 1);
 			Assert::IsTrue(vector.max_abs() > 0 && out_grad.max_abs() > 0, L"Vectors are supposed to be nonzero");
@@ -145,19 +145,19 @@ namespace DeepLearningTest
 		/// <summary>
 		/// "Reference" implementation of "soft-max' function
 		/// </summary>
-		Vector soft_max_reference(const Vector& vec)
+		Vector soft_max_reference(const Vector& vec) const
 		{
 			Vector exponents(vec.size());
 
-			std::transform(vec.begin(), vec.end(), exponents.begin(), [](const auto& x) { return std::exp(x); });
-			const auto sum_of_exponents = std::accumulate(exponents.begin(), exponents.end(), Real(0));
-			return exponents * (Real(1) / sum_of_exponents);
+			std::ranges::transform(vec, exponents.begin(), [](const auto& x) { return std::exp(x); });
+			const auto sum_of_exponents = std::accumulate(exponents.begin(), exponents.end(), static_cast<Real>(0));
+			return exponents * (static_cast<Real>(1) / sum_of_exponents);
 		}
 
 		TEST_METHOD(SoftMaxFunctionTest)
 		{
 			//Arrange
-			const auto dim = 10;
+			constexpr auto dim = 10;
 			const SoftMaxActivationFunction<Vector> soft_max_activation_func;
 			const auto vec = Vector(dim, -1, 1);
 			Assert::IsTrue(vec.max_abs() > 0, L"Vector is supposed to be nonzero");
@@ -174,7 +174,7 @@ namespace DeepLearningTest
 		TEST_METHOD(SoftMaxFunctionCudaTest)
 		{
 			//Arrange
-			const auto dim = 10;
+			constexpr auto dim = 10;
 			const auto vec = CudaVector(dim, -1, 1);
 			Assert::IsTrue(vec.max_abs() > 0, L"Vector is supposed to be nonzero");
 
@@ -190,7 +190,7 @@ namespace DeepLearningTest
 		TEST_METHOD(SoftMaxFunctionAndDerivativeTest)
 		{
 			//Arrange
-			const auto dim = 10;
+			constexpr auto dim = 10;
 			const SoftMaxActivationFunction<Vector> soft_max_activation_func;
 			const auto quadratic_cost_func = CostFunction<Vector>(CostFunctionId::SQUARED_ERROR);
 			const auto input = Vector(dim, -1, 1);
@@ -207,7 +207,9 @@ namespace DeepLearningTest
 			const auto diff = (soft_max_result - soft_max_reference_result).max_abs();
 			Assert::IsTrue(diff < std::numeric_limits<Real>::epsilon(), L"Too high deviation between the actual and expected values");
 
-			const auto delta = Real(1e-5);
+			constexpr auto double_precision = std::is_same_v<Real, double>;
+			constexpr auto delta = double_precision ? 1e-5 : static_cast<Real>(1e-2);
+			constexpr auto diff_threshold = double_precision ? 7e-11 : static_cast<Real>(3e-5);
 			for (auto element_id = 0ull; element_id < input.size(); element_id++)
 			{
 				auto input_plus_delta = input;
@@ -222,15 +224,14 @@ namespace DeepLearningTest
 
 				const auto deriv_diff = std::abs(deriv_numeric - activation_input_gradient[element_id]);
 
-				Logger::WriteMessage((std::string("Derivative difference = ") + Utils::to_string(deriv_diff) + "\n").c_str());
-				Assert::IsTrue(deriv_diff < 7e-11, L"Too high deviation between the actual and expected values");
+				StandardTestUtils::LogAndAssertLessOrEqualTo("Derivative difference", deriv_diff, diff_threshold);
 			}
 		}
 
 		TEST_METHOD(SoftMaxFunctionAndDerivativeCudaTest)
 		{
 			//Arrange
-			const auto dim = 10;
+			constexpr auto dim = 10;
 			const auto input = CudaVector(dim, -1, 1);
 			const auto out_grad = CudaVector(dim, -1, 1);
 			Assert::IsTrue(input.max_abs() > 0 && out_grad.max_abs() > 0, L"Vectors are supposed to be nonzero");

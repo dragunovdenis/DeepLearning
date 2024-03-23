@@ -66,7 +66,7 @@ namespace DeepLearning
 		template <class T>
 		void cuda_copy(T* dest, const T* src, const std::size_t& size, const cudaMemcpyKind& copy_kind)
 		{
-			gpuErrchk(cudaMemcpyAsync(dest, src, size * sizeof(Real), copy_kind, cudaStreamPerThread));
+			gpuErrchk(cudaMemcpyAsync(dest, src, size * sizeof(T), copy_kind, cudaStreamPerThread));
 		}
 
 		/// <summary>

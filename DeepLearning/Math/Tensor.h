@@ -385,9 +385,9 @@ namespace DeepLearning
 		/// of the pooling to the flattened indices of input elements that have been pooled.
 		/// The mapping allows to simplify a back-propagation procedure.
 		/// </summary>
-		/// <param name="window">Operation window size</param>
+		/// <param name="window_size">Operation window size</param>
 		/// <param name="max">If "true" the method implements "max pulling" otherwise -- "min pulling";</param>
-		std::tuple<Tensor, std::vector<std::size_t>> min_max_pool(const Index3d& window_size, const bool max) const;
+		std::tuple<Tensor, std::vector<int>> min_max_pool(const Index3d& window_size, const bool max) const;
 
 		/// <summary>
 		/// Min-max specialized version of pool algorithm, which is more optimal than the "pool" method above with the corresponding pool-operator.
@@ -396,12 +396,12 @@ namespace DeepLearning
 		/// of the pooling to the flattened indices of input elements that have been pooled.
 		/// The mapping allows to simplify a back-propagation procedure.
 		/// </summary>
-		/// <param name="window">Operation window size</param>
+		/// <param name="window_size">Operation window size</param>
 		/// <param name="max">If "true" the method implements "max pulling" otherwise -- "min pulling";</param>
 		/// <param name="result">Place-holder for the pool result</param>
 		/// <param name="index_map">Place-holder for the output-to-input index mapping (used to calculate gradient)</param>
 		template <bool EVAL_MAP>
-		void min_max_pool(const Index3d& window_size, const bool max, Tensor& result, std::vector<std::size_t>& index_map) const;
+		void min_max_pool(const Index3d& window_size, const bool max, Tensor& result, std::vector<int>& index_map) const;
 
 		/// <summary>
 		/// Min-max specialized version of pool algorithm, which is more optimal than the "pool" method above with the corresponding pool-operator.
@@ -420,7 +420,7 @@ namespace DeepLearning
 		/// </summary>
 		/// <param name="pool_res_gradient">Gradient of the function F with respect to the min/max 2d pool output tensor O: dF/dO</param>
 		/// <param name="out_to_in_mapping">Min/max pool output to input flattened index mapping (see the output of min_max_pool_2d)</param>
-		Tensor min_max_pool_input_gradient(const Tensor& pool_res_gradient, const std::vector<std::size_t>& out_to_in_mapping) const;
+		Tensor min_max_pool_input_gradient(const Tensor& pool_res_gradient, const std::vector<int>& out_to_in_mapping) const;
 
 		/// <summary>
 		/// Calculates gradient of some function F with respect to the min/max 2d pool input tensor I: dF/dI
@@ -428,7 +428,7 @@ namespace DeepLearning
 		/// <param name="pool_res_gradient">Gradient of the function F with respect to the min/max 2d pool output tensor O: dF/dO</param>
 		/// <param name="out_to_in_mapping">Min/max pool output to input flattened index mapping (see the output of min_max_pool_2d)</param>
 		/// <param name="result">Place-holder for the result</param>
-		void min_max_pool_input_gradient(const Tensor& pool_res_gradient, const std::vector<std::size_t>& out_to_in_mapping, Tensor& result) const;
+		void min_max_pool_input_gradient(const Tensor& pool_res_gradient, const std::vector<int>& out_to_in_mapping, Tensor& result) const;
 
 		/// <summary>
 		/// Specialized version of the pool algorithms that pools a scaled sum of the tensor elements in the given window;

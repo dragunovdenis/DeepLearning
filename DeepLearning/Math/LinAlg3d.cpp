@@ -23,7 +23,9 @@ namespace DeepLearning
 	template <class T>
 	Vector3d<T> Vector3d<T>::random(const T& min, const T& max)
 	{
-		return { T(Utils::get_random(min, max)), T(Utils::get_random(min, max)), T(Utils::get_random(min, max)) };
+		return { T(Utils::get_random(static_cast<Real>(min), static_cast<Real>(max))),
+			T(Utils::get_random(static_cast<Real>(min), static_cast<Real>(max))),
+			T(Utils::get_random(static_cast<Real>(min), static_cast<Real>(max))) };
 	}
 
 	template <class T>

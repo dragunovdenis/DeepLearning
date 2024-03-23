@@ -17,7 +17,6 @@
 
 #include "CppUnitTest.h"
 #include <Math/Dual.h>
-#include <functional>
 #include <Utilities.h>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -27,14 +26,16 @@ namespace DeepLearningTest
 {
 	TEST_CLASS(AutomaticDifferentiationTest)
 	{
+		static constexpr bool _double_precision = std::is_same_v<Real, double>;
+
 		/// <summary>
 		/// A general method to perform test of automatic differentiation of functions of one variable
 		/// </summary>
 		template <class Func, class R>
-		static void RunOneVariableDifferentiationTest(const Func& one_var_function, const R& arg, const R& diff_rolerance)
+		static void RunOneVariableDifferentiationTest(const Func& one_var_function, const R& arg, const R& diff_tolerance)
 		{
 			//Arrange
-			const R arg_step = R(1e-5);
+			constexpr R arg_step = _double_precision ? R(1e-5) : R(1e-2);
 			const auto deriv_numeric = (one_var_function(arg + arg_step) - one_var_function(arg - arg_step)) / (R(2) * arg_step);
 
 			//Act
@@ -45,7 +46,7 @@ namespace DeepLearningTest
 			//Assert
 			const auto diff = std::abs(deriv_numeric - deriv_automatic);
 			Logger::WriteMessage((std::string("Difference = ") + Utils::to_string(diff) + "\n").c_str());
-			Assert::IsTrue(diff < diff_rolerance, L"too high deviation from reference");
+			Assert::IsTrue(diff < diff_tolerance, L"too high deviation from reference");
 		}
 
 		/// <summary>
@@ -82,8 +83,9 @@ namespace DeepLearningTest
 			const auto arg = Utils::get_random(-1, 1);
 			RunOneVariableDifferentiationTest(
 				[](const auto& x) { 
-					return x * x * x * x * Real(5) - 3 * x * x * x + x / Real(7.8) * x + Real(1.5) * x - 2; 
-				}, arg, Real(3e-9));
+					return x * x * x * x * static_cast<Real>(5) -
+						3 * x * x * x + x / static_cast<Real>(7.8) * x + static_cast<Real>(1.5) * x - 2; 
+				}, arg, _double_precision ? static_cast<Real>(3e-9) : static_cast<Real>(3e-3));
 		}
 
 		TEST_METHOD(SingleVarRationalFunctionsTest)
@@ -91,8 +93,9 @@ namespace DeepLearningTest
 			const auto arg = Utils::get_random(-1, 1);
 			RunOneVariableDifferentiationTest(
 				[](const auto& x) {
-					return (x * x * x * x * Real(5) - 3 * x * x * x + x / Real(7.8) * x + Real(1.5) * x - 2)/(x*x + 4*x + 4);
-				}, arg, Real(2e-8));
+					return (x * x * x * x * static_cast<Real>(5) -
+						3 * x * x * x + x / static_cast<Real>(7.8) * x + static_cast<Real>(1.5) * x - 2)/(x*x + 4*x + 4);
+				}, arg, _double_precision ? static_cast<Real>(2e-8) : static_cast<Real>(2e-2));
 		}
 
 		TEST_METHOD(SingleVarTrigonometricFunctionsTest)
@@ -101,7 +104,7 @@ namespace DeepLearningTest
 			RunOneVariableDifferentiationTest(
 				[](const auto& x) {
 					return sin(2*x + 3)*cos(3-3*x*x) * x - cos(3 - 3 * x * x * x)/(x * x + 1) + 2;
-				}, arg, Real(9e-9));
+				}, arg, _double_precision ? static_cast<Real>(9e-9) : static_cast<Real>(1e-2));
 		}
 
 		TEST_METHOD(SingleVarLogarithmicFunctionsTest)
@@ -110,7 +113,7 @@ namespace DeepLearningTest
 			RunOneVariableDifferentiationTest(
 				[](const auto& x) {
 					return log(x * x + 1) + 2;
-				}, arg, Real(1e-10));
+				}, arg, _double_precision ? static_cast<Real>(1e-10) : static_cast<Real>(7e-5));
 		}
 
 		TEST_METHOD(SingleVarExponentFunctionsTest)
@@ -119,7 +122,7 @@ namespace DeepLearningTest
 			RunOneVariableDifferentiationTest(
 				[](const auto& x) {
 					return exp(x * x - 1) + 2;
-				}, arg, Real(4e-10));
+				}, arg, _double_precision ? static_cast<Real>(4e-10) : static_cast<Real>(6e-4));
 		}
 
 		TEST_METHOD(SingleVarSquareRootFunctionsTest)
@@ -128,7 +131,7 @@ namespace DeepLearningTest
 			RunOneVariableDifferentiationTest(
 				[](const auto& x) {
 					return sqrt(x * x + 4 * x + 4) + 2;
-				}, arg, Real(1e-10));
+				}, arg, _double_precision ? static_cast<Real>(1e-10) : static_cast<Real>(5e-5));
 		}
 
 		TEST_METHOD(SingleVarHyperbolicFunctionsTest)
@@ -137,7 +140,7 @@ namespace DeepLearningTest
 			RunOneVariableDifferentiationTest(
 				[](const auto& x) {
 					return sinh(x * x + 2*x + 1) + cosh(-x*x) + tanh(1 + x) + 2;
-				}, arg, Real(4.1e-8));
+				}, arg, _double_precision ? static_cast<Real>(4.1e-8) : static_cast<Real>(4e-2));
 		}
 
 		TEST_METHOD(TwoVarGeneralFunctionsTest)
@@ -146,9 +149,9 @@ namespace DeepLearningTest
 			const auto arg2 = Utils::get_random(-1, 1);
 			RunTwoVariablesDifferentiationTest(
 				[](const auto& x, const auto& y) {
-					return x * x * x * x * Real(5) + 2 * y * y - 3 * x * x * y - 2 + sin(x + 2 * y) +
+					return x * x * x * x * static_cast<Real>(5) + 2 * y * y - 3 * x * x * y - 2 + sin(x + 2 * y) +
 						cos(x * y) + exp(y / 2 + x / 2) + log(1 + x * x + y * y) + sqrt(cosh((x + y) / 10)) + sinh(x + y) / (1 + tanh(x * y)); 
-				}, arg1, arg2, Real(3e-9));
+				}, arg1, arg2, _double_precision ? static_cast<Real>(3e-9) : static_cast<Real>(3e-2));
 		}
 	};
 }

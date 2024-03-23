@@ -48,8 +48,8 @@ namespace DeepLearningTest
 			const auto min_value_count = *std::ranges::min_element(values_counter);
 			const auto max_value_count = *std::ranges::max_element(values_counter);
 
-			LogReal("Minimal number of registered samples", min_value_count);
-			LogReal("Maximal number of registered samples", max_value_count);
+			Log("Minimal number of registered samples", min_value_count);
+			Log("Maximal number of registered samples", max_value_count);
 
 			Assert::IsTrue(min_value_count >= samples_per_value * 0.85, L"Too few values registered.");
 			Assert::IsTrue(max_value_count <= samples_per_value * 1.15, L"Too many values registered.");

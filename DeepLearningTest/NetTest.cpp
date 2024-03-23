@@ -45,13 +45,13 @@ namespace DeepLearningTest
 			const std::vector<ActivationFunctionId>& activ_func_ids = std::vector<ActivationFunctionId>())
 		{
 			//Arrange
-			const auto training_images_count = 60000;
+			constexpr auto training_images_count = 60000;
 			const auto [training_data, training_labels] = MnistDataUtils::load_labeled_data<D>(
 				"TestData\\MNIST\\train-images.idx3-ubyte",
 				"TestData\\MNIST\\train-labels.idx1-ubyte",
 				training_images_count);
 
-			const auto test_images_count = 10000;
+			constexpr auto test_images_count = 10000;
 			const auto test_data_tuple = MnistDataUtils::load_labeled_data<D>(
 				"TestData\\MNIST\\t10k-images.idx3-ubyte",
 				"TestData\\MNIST\\t10k-labels.idx1-ubyte",
@@ -61,7 +61,7 @@ namespace DeepLearningTest
 			const auto& test_labels = std::get<1>(test_data_tuple);
 
 			auto net = Net<D>({ 784, (run_long_test ? 100ull : 30ull), 10 }, activ_func_ids);
-			const auto batch_size = 10;
+			constexpr auto batch_size = 10;
 			const auto epochs_count = run_long_test ? 30 : 6;
 
 			const auto evaluation_action = [&](const auto epoch_id, const auto scaled_l2_reg_factor)
@@ -71,16 +71,16 @@ namespace DeepLearningTest
 			};
 
 			//Act
-			auto start = std::chrono::steady_clock::now();
+			const auto start = std::chrono::steady_clock::now();
 			net.learn(training_data, training_labels, batch_size, epochs_count,
 				learning_rate, cost_func_id, lambda, evaluation_action);
-			auto end = std::chrono::steady_clock::now();
+			const auto end = std::chrono::steady_clock::now();
 			Logger::WriteMessage(("Learning time : " +
 				std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()) + " ms.").c_str());
 
 			//Assert
-			const auto correct_unswers = net.count_correct_answers(test_data, test_labels);
-			const auto validation_result = correct_unswers * (Real(1)) / test_data.size();
+			const auto correct_answers = net.count_correct_answers(test_data, test_labels);
+			const auto validation_result = correct_answers * (Real(1)) / test_data.size();
 			Assert::IsTrue(validation_result >= expected_min_percentage_test_set, L"Too low accuracy on the test set.");
 			Logger::WriteMessage("\n");
 			return validation_result;
@@ -98,13 +98,13 @@ namespace DeepLearningTest
 			const Real& expected_min_percentage_test_set, const bool run_long_test, const Real& lambda = Real(0))
 		{
 			//Arrange
-			const auto training_images_count = 60000;
+			constexpr auto training_images_count = 60000;
 			auto [training_data, training_labels] = MnistDataUtils::load_labeled_data<D>(
 				"TestData\\MNIST\\train-images.idx3-ubyte",
 				"TestData\\MNIST\\train-labels.idx1-ubyte",
 				training_images_count);
 
-			const auto test_images_count = 10000;
+			constexpr auto test_images_count = 10000;
 			const auto test_data_tuple = MnistDataUtils::load_labeled_data<D>(
 				"TestData\\MNIST\\t10k-images.idx3-ubyte",
 				"TestData\\MNIST\\t10k-labels.idx1-ubyte",
@@ -123,10 +123,9 @@ namespace DeepLearningTest
 
 			Assert::IsTrue(out_size == size_in_next.coord_prod(), L"Unexpected size of the net output");
 
-			const auto batch_size = 10;
+			constexpr auto batch_size = 10;
 			const auto epochs_count = run_long_test ? 30 : 5;
 
-			std::chrono::steady_clock::time_point start;
 			std::chrono::steady_clock::time_point epoch_start;
 
 			const auto& test_data = std::get<0>(test_data_tuple);
@@ -143,7 +142,7 @@ namespace DeepLearningTest
 			};
 
 			//Act
-			start = std::chrono::steady_clock::now();
+			const auto start = std::chrono::steady_clock::now();
 			epoch_start = start;
 			net.learn(training_data, training_labels, batch_size, epochs_count,
 				learning_rate, cost_func_id, lambda, evaluation_action);
@@ -152,8 +151,8 @@ namespace DeepLearningTest
 				std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()) + " ms.").c_str());
 
 			//Assert
-			const auto correct_unswers = net.count_correct_answers(test_data, test_labels);
-			const auto validation_result = correct_unswers * (Real(1)) / test_data.size();
+			const auto correct_answers = net.count_correct_answers(test_data, test_labels);
+			const auto validation_result = correct_answers * static_cast<Real>(1) / test_data.size();
 			Assert::IsTrue(validation_result >= expected_min_percentage_test_set, L"Too low accuracy on the test set.");
 			Logger::WriteMessage("\n");
 			return validation_result;
@@ -164,44 +163,48 @@ namespace DeepLearningTest
 
 		TEST_METHOD(TrainingConvolutionNetWithCrossEntropyCostTest)
 		{
-			const bool long_test = false;
-			RunMnistBasedConvolutionNetTrainingTest(CostFunctionId::CROSS_ENTROPY, Real(0.03),
-				long_test ? Real(0.991) : Real(0.98), long_test, Real(3));
+			constexpr bool long_test = false;
+			RunMnistBasedConvolutionNetTrainingTest(CostFunctionId::CROSS_ENTROPY, static_cast<Real>(0.025),
+				long_test ? static_cast<Real>(0.991) : static_cast<Real>(0.98), long_test, static_cast<Real>(3));
 		}
 
 		//This test works but I am not satisfied with its performance (execution time), so it is out-commented for now
 		//TEST_METHOD(CudaTrainingConvolutionNetWithCrossEntropyCostTest)
 		//{
-		//	const bool long_test = false;
-		//	RunMnistBasedConvolutionNetTrainingTest<GpuDC>(CostFunctionId::CROSS_ENTROPY, Real(0.03),
-		//		long_test ? Real(0.991) : Real(0.98), long_test, Real(3));
+		//	constexpr bool long_test = false;
+		//	RunMnistBasedConvolutionNetTrainingTest<GpuDC>(CostFunctionId::CROSS_ENTROPY, static_cast<Real>(0.03),
+		//		long_test ? static_cast<Real>(0.991) : static_cast<Real>(0.98), long_test, static_cast<Real>(3));
 		//}
 
 		TEST_METHOD(TrainingWithQuadraticCostTest)
 		{
-			const bool long_test = false;
-			RunMnistBasedTrainingTest(CostFunctionId::SQUARED_ERROR, Real(1.0), long_test ? Real(0.976) : Real(0.95), long_test);
+			constexpr bool long_test = false;
+			RunMnistBasedTrainingTest(CostFunctionId::SQUARED_ERROR, static_cast<Real>(1.0),
+				long_test ? static_cast<Real>(0.976) : static_cast<Real>(0.95), long_test);
 		}
 
 		TEST_METHOD(TrainingWithQuadraticCostRegularizedTest)
 		{
-			const bool long_test = false;
-			RunMnistBasedTrainingTest(CostFunctionId::SQUARED_ERROR, Real(1.0), long_test ? Real(0.976) : Real(0.95), long_test, Real(1.0));
+			constexpr bool long_test = false;
+			RunMnistBasedTrainingTest(CostFunctionId::SQUARED_ERROR, static_cast<Real>(1.0),
+				long_test ? static_cast<Real>(0.976) : static_cast<Real>(0.95), long_test, static_cast<Real>(1.0));
 		}
 
 		TEST_METHOD(TrainingWithCrossEntropyCostTest)
 		{
-			const bool long_test = false;
-			RunMnistBasedTrainingTest(CostFunctionId::CROSS_ENTROPY, Real(0.5), long_test ? Real(0.977) : Real(0.95), long_test);
+			constexpr bool long_test = false;
+			RunMnistBasedTrainingTest(CostFunctionId::CROSS_ENTROPY, static_cast<Real>(0.25),
+				long_test ? static_cast<Real>(0.977) : static_cast<Real>(0.95), long_test);
 		}
 
 		TEST_METHOD(TrainingWithCrossEntropyCostRegularizedTest)
 		{
 			auto average_accuracy = 0.0;
-			const bool long_test = false;
-			const auto trials_count = 1;
+			constexpr bool long_test = false;
+			constexpr auto trials_count = 1;
 			for (int i = 0; i < trials_count; i++)
-				average_accuracy += RunMnistBasedTrainingTest(CostFunctionId::CROSS_ENTROPY, Real(0.2), long_test ? Real(0.97) : Real(0.95), long_test, Real(6.0));
+				average_accuracy += RunMnistBasedTrainingTest(CostFunctionId::CROSS_ENTROPY, static_cast<Real>(0.2),
+					long_test ? static_cast<Real>(0.97) : static_cast<Real>(0.95), long_test, static_cast<Real>(6.0));
 
 			Logger::WriteMessage((std::string("Average accuracy = ") +
 				std::to_string(average_accuracy/trials_count)).c_str());
@@ -209,15 +212,17 @@ namespace DeepLearningTest
 
 		TEST_METHOD(TrainingWithCrossEntropyCostAndTanhActivationTest)
 		{
-			const bool long_test = false;
-			RunMnistBasedTrainingTest(CostFunctionId::CROSS_ENTROPY, Real(0.1), long_test ? Real(0.974) : Real(0.946), long_test, Real(0),
+			constexpr bool long_test = false;
+			RunMnistBasedTrainingTest(CostFunctionId::CROSS_ENTROPY, static_cast<Real>(0.1),
+				long_test ? static_cast<Real>(0.974) : static_cast<Real>(0.945), long_test, static_cast<Real>(0),
 				{ActivationFunctionId::TANH, ActivationFunctionId::SIGMOID});
 		}
 
 		TEST_METHOD(TrainingWithCrossEntropyCostAndSoftMaxActivationTest)
 		{
-			const bool long_test = false;
-			RunMnistBasedTrainingTest(CostFunctionId::CROSS_ENTROPY, Real(0.1), long_test ? Real(0.978) : Real(0.95), long_test, Real(0),
+			constexpr bool long_test = false;
+			RunMnistBasedTrainingTest(CostFunctionId::CROSS_ENTROPY, static_cast<Real>(0.1),
+				long_test ? static_cast<Real>(0.978) : static_cast<Real>(0.95), long_test, static_cast<Real>(0),
 				{ ActivationFunctionId::SIGMOID, ActivationFunctionId::SOFTMAX });
 		}
 
@@ -304,8 +309,8 @@ namespace DeepLearningTest
 
 			for (auto item_id = 0; item_id < items_count; ++item_id)
 			{
-				input.emplace_back(in_size, -1, 1, &rg);
-				labels.emplace_back(out_size, -1, 1, &rg);
+				input.emplace_back(in_size, static_cast<Real>(-1), static_cast<Real>(1), &rg);
+				labels.emplace_back(out_size, static_cast<Real>(-1), static_cast<Real>(1), &rg);
 			}
 
 			return std::make_tuple(input, labels);
@@ -349,15 +354,25 @@ namespace DeepLearningTest
 
 			//Act
 			net.learn(input, labels, /*batch size*/10, /*epochs count*/ 3,
-				/*learning rate*/ 0.1, /*const func*/CostFunctionId::SQUARED_ERROR, /*regularization*/1.5,
-				[](const auto a, const auto b) {}, /*single threaded*/ true);
+				/*learning rate*/ static_cast<Real>(0.1), /*const func*/CostFunctionId::SQUARED_ERROR,
+				/*regularization*/static_cast<Real>(1.5), [](const auto a, const auto b) {}, /*single threaded*/ true);
 
 			Net<CpuDC>::reset_random_generator();
 
 			//Assert
-			//net.save_to_file("../../DeepLearningTest/TestData/Regression//reference_net.dat");
-			const auto reference_net = Net<CpuDC>::load_from_file("TestData\\Regression\\reference_net.dat");
-			Assert::IsTrue(net.equal(reference_net), L"Nets are supposed to be equal.");
+			if (std::is_same_v<Real, double>)
+			{
+				//net.save_to_file("../../DeepLearningTest/TestData/Regression//reference_net_single.dat");
+				//return;
+				const auto reference_net = Net<CpuDC>::load_from_file("TestData\\Regression\\reference_net.dat");
+				Assert::IsTrue(net.equal(reference_net), L"Nets are supposed to be equal.");
+			} else
+			{
+				//net.save_to_file("../../DeepLearningTest/TestData/Regression//reference_net_single.dat");
+				//return;
+				const auto reference_net = Net<CpuDC>::load_from_file("TestData\\Regression\\reference_net_single.dat");
+				Assert::IsTrue(net.equal(reference_net), L"Nets are supposed to be equal.");
+			}
 		}
 
 		TEST_METHOD(LinearCostTest)

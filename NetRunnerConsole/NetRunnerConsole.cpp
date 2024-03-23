@@ -38,7 +38,7 @@ int main(int argc, char** argv)
 	auto script_arg = TCLAP::ValueArg<std::string>("s", "script", "Full file path to a script to instantiate a neural network", true, "", "string");
 	cmd.add(script_arg);
 
-	auto rate_arg = TCLAP::ValueArg<Real>("r", "rate", "Learning rate for the network", false, 0.1, "double");
+	auto rate_arg = TCLAP::ValueArg<Real>("r", "rate", "Learning rate for the network", false, static_cast<Real>(0.1), "double");
 	cmd.add(rate_arg);
 
 	auto minibatch_arg = TCLAP::ValueArg<int>("m", "minibatch", "Number of items in a mini-batch", false, 10, "integer");

@@ -22,5 +22,9 @@
 
 namespace DeepLearning
 {
+#ifdef USE_SINGLE_PRECISION
+	using Real = float;
+#else
 	using Real = double;
+#endif
 }

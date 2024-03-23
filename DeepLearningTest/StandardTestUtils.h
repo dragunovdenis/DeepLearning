@@ -318,7 +318,7 @@ namespace DeepLearningTest::StandardTestUtils
 	template <class T>
 	T mixed_arithmetic_function(const T& v1, const T& v2, const T& v3)
 	{
-		return (0.5 * v1 + v1 * 3.4 - 5.1 * v3) * 0.75;
+		return (static_cast<Real>(0.5) * v1 + v2 * static_cast<Real>(3.4) - static_cast<Real>(5.1) * v3) * static_cast<Real>(0.75);
 	}
 
 	/// <summary>
@@ -393,18 +393,32 @@ namespace DeepLearningTest::StandardTestUtils
 	/// <summary>
 	/// Logs given real value together with the given message in a single line
 	/// </summary>
-	inline void LogReal(const std::string& message, const Real& value)
+	template <class T>
+	void Log(const std::string& message, const T& value)
 	{
 		Logger::WriteMessage((message + " = " + Utils::to_string(value) + "\n").c_str());
 	}
 
 	/// <summary>
 	/// Logs given real value together with the given message in a single line
+	/// and asserts that it is lesser or equal to the given threshold.
 	/// </summary>
-	inline void LogRealAndAssertLessOrEqualTo(const std::string& message, const Real& value, const Real& upper_threshold)
+	template <class T>
+	void LogAndAssertLessOrEqualTo(const std::string& message, const T& value, const T& upper_threshold)
 	{
-		LogReal(message, value);
+		Log(message, value);
 		Assert::IsTrue(value <= upper_threshold, CA2W((message + ": " + std::string("Upper threshold has been exceeded.")).c_str()));
+	}
+
+	/// <summary>
+	/// Logs given real value together with the given message in a single line
+	/// and asserts that it is greater or equal to the given threshold.
+	/// </summary>
+	template <class T>
+	void LogAndAssertGreaterOrEqualTo(const std::string& message, const T& value, const T& lower_threshold)
+	{
+		Log(message, value);
+		Assert::IsTrue(value >= lower_threshold, CA2W((message + ": " + std::string("Lower threshold has been exceeded.")).c_str()));
 	}
 
 	/// <summary>
@@ -443,7 +457,7 @@ namespace DeepLearningTest::StandardTestUtils
 			const auto percentage_of_ones_on_range = ones_on_range / chunk_size;
 
 			const auto percentage_diff = std::abs(percentage_of_ones_on_range - percentage_of_ones_expected);
-			LogRealAndAssertLessOrEqualTo("Actual percentage of 1s ", percentage_diff, 0.05);
+			LogAndAssertLessOrEqualTo("Actual percentage of 1s ", percentage_diff, static_cast<Real>(0.05));
 		}
 
 		//Corner case

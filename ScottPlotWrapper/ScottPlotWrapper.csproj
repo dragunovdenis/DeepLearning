@@ -6,11 +6,21 @@
     <Product>ScottPlotWrapper</Product>
     <Copyright>Copyright ©  2022</Copyright>
     <OutputPath>bin\$(Configuration)\</OutputPath>
+    <Configurations>Debug;Release;ReleaseSingle;DebugSingle;IntelCompiler2022Single</Configurations>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugType>full</DebugType>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugSingle|AnyCPU'">
+    <DebugType>full</DebugType>
+  </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='IntelCompiler2022Single|AnyCPU'">
+    <DebugType>pdbonly</DebugType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseSingle|AnyCPU'">
     <DebugType>pdbonly</DebugType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'IntelCompiler2022|AnyCPU'">

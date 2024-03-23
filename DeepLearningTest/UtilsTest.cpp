@@ -187,7 +187,7 @@ namespace DeepLearningTest
 		TEST_METHOD(RealVectorToStringTest)
 		{
 			//Arrange
-			const std::vector<Real> vec = { 3.235, 1.45, -13.45, -0.34 };
+			const std::vector<Real> vec = { static_cast<Real>(3.235), static_cast<Real>(1.45), static_cast<Real>(- 13.45), static_cast<Real>(- 0.34)};
 
 			//Act
 			auto str = Utils::vector_to_str(vec);

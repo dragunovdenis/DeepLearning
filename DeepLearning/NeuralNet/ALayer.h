@@ -121,7 +121,7 @@ namespace DeepLearning
 			/// <summary>
 			/// Place holder for index mappings
 			/// </summary>
-			typename D::template index_array_t<std::size_t> IndexMapping{};
+			typename D::template index_array_t<int> IndexMapping{};
 		};
 
 		/// <summary>

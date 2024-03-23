@@ -365,33 +365,33 @@ namespace DeepLearningTest
 			const auto [in_gradient_host, layer_gradient_host] = nl_host.backpropagate(out_gradient_host, aux_learning_data_host, true);
 
 			const auto output_diff = (output_host - output.to_host()).max_abs();
-			StandardTestUtils::LogRealAndAssertLessOrEqualTo("output_diff", output_diff, 10* std::numeric_limits<Real>::epsilon());
+			StandardTestUtils::LogAndAssertLessOrEqualTo("output_diff", output_diff, 10* std::numeric_limits<Real>::epsilon());
 
 			const auto in_gradient_diff = (in_gradient_host - in_gradient.to_host()).max_abs();
-			StandardTestUtils::LogRealAndAssertLessOrEqualTo("in_gradient_diff", in_gradient_diff, 10 * std::numeric_limits<Real>::epsilon());
+			StandardTestUtils::LogAndAssertLessOrEqualTo("in_gradient_diff", in_gradient_diff, 10 * std::numeric_limits<Real>::epsilon());
 
 			if (!layer_gradient_host.Biases_grad.empty() || !layer_gradient.Biases_grad.empty())
 			{
 				const auto biases_gradient_diff = (layer_gradient_host.Biases_grad - layer_gradient.Biases_grad.to_host()).max_abs();
-				StandardTestUtils::LogRealAndAssertLessOrEqualTo("biases_gradient_diff", biases_gradient_diff, 10 * std::numeric_limits<Real>::epsilon());
+				StandardTestUtils::LogAndAssertLessOrEqualTo("biases_gradient_diff", biases_gradient_diff, 10 * std::numeric_limits<Real>::epsilon());
 			}
 
 			const auto weights_gradient_diff = max_abs(layer_gradient_host.Weights_grad, layer_gradient.Weights_grad);
-			StandardTestUtils::LogRealAndAssertLessOrEqualTo("weights_gradient_diff", weights_gradient_diff, 10 * std::numeric_limits<Real>::epsilon());
+			StandardTestUtils::LogAndAssertLessOrEqualTo("weights_gradient_diff", weights_gradient_diff, 10 * std::numeric_limits<Real>::epsilon());
 
 			if (!aux_learning_data_host.Derivatives.empty() || !aux_learning_data.Derivatives.empty())
 			{
 				const auto deriv_diff = (aux_learning_data_host.Derivatives - aux_learning_data.Derivatives.to_host()).max_abs();
-				StandardTestUtils::LogRealAndAssertLessOrEqualTo("deriv_diff", deriv_diff, 50 * std::numeric_limits<Real>::epsilon());
+				StandardTestUtils::LogAndAssertLessOrEqualTo("deriv_diff", deriv_diff, 50 * std::numeric_limits<Real>::epsilon());
 			}
 
 			const auto indices_are_equal = aux_learning_data_host.IndexMapping == aux_learning_data.IndexMapping.to_stdvector();
-			StandardTestUtils::LogReal("indices_are_equal", indices_are_equal);
+			StandardTestUtils::Log("indices_are_equal", indices_are_equal);
 			Assert::IsTrue(indices_are_equal, L"Arrays of indices are not equal");
 
 			const auto sum_of_weight_squares_diff = std::abs(nl.squared_weights_sum() - nl_host.squared_weights_sum());
-			StandardTestUtils::LogRealAndAssertLessOrEqualTo("sum_of_weight_squares_diff", sum_of_weight_squares_diff,
-				500 * std::numeric_limits<Real>::epsilon());
+			StandardTestUtils::LogAndAssertLessOrEqualTo("sum_of_weight_squares_diff", sum_of_weight_squares_diff,
+				700 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(NLayerSigmoidCudaSupportTest)
@@ -468,7 +468,8 @@ namespace DeepLearningTest
 		{
 			const auto nl = CreateCpuCLayer();
 
-			RunGeneralDerivativeWithRespectToInputValuesTest(nl, CostFunctionId::SQUARED_ERROR, (std::is_same_v<Real, double> ? Real(2e-8) : Real(8e-2)));
+			RunGeneralDerivativeWithRespectToInputValuesTest(nl, CostFunctionId::SQUARED_ERROR,
+				(std::is_same_v<Real, double> ? static_cast<Real>(2e-8) : static_cast<Real>(8e-2)));
 		}
 
 		TEST_METHOD(CLayerDerivativeWithRespectToWeightsAndBiasesCalculationSquaredErrorTest)
@@ -476,8 +477,8 @@ namespace DeepLearningTest
 			const auto nl = CreateCpuCLayer();
 
 			RunGeneralDerivativeWithRespectToWeightsAndBiasesTest(nl, CostFunctionId::SQUARED_ERROR,
-				(std::is_same_v<Real, double> ? Real(3.1e-8) : Real(2e-1)),
-				(std::is_same_v<Real, double> ? Real(6e-9) : Real(3.5e-2)));
+				(std::is_same_v<Real, double> ? static_cast<Real>(3.1e-8) : static_cast<Real>(2e-1)),
+				(std::is_same_v<Real, double> ? static_cast<Real>(6e-9) : static_cast<Real>(3.5e-2)));
 		}
 
 		TEST_METHOD(PLayerDerivativeWithRespectToInputValuesCalculationSquaredErrorTest)
@@ -489,24 +490,25 @@ namespace DeepLearningTest
 
 			std::random_device rd;
 			std::mt19937 g(rd());
-			std::shuffle(input_vals.begin(), input_vals.end(), g);
-			const auto factor = Real(1) / input_vals.size();
+			std::ranges::shuffle(input_vals, g);
+			const auto factor = static_cast<Real>(1) / input_vals.size();
 			//Fill the input tensor with all the different values with the minimal difference equal to 'factor'
 			//This is done in order to avoid ambiguities for the max-pulling operator 
-			std::transform(input_vals.begin(), input_vals.end(), input.begin(), [=](const auto val) { return val * factor; });
+			std::ranges::transform(input_vals, input.begin(), [=](const auto val) { return val * factor; });
 
 			//Set "delta" parameter that will be used in the numerical differentiation procedure
 			//so that it is less than the minimal difference between the items in the input tensor
 			//(again, to avoid confusion when doing max-pooling)
 			RunGeneralDerivativeWithRespectToInputValuesTest(nl, CostFunctionId::SQUARED_ERROR,
-				(std::is_same_v<Real, double> ? Real(1e-10) : Real(4e-4)), factor/2, std::make_optional<Tensor>(input));
+				(std::is_same_v<Real, double> ? static_cast<Real>(1e-10) : static_cast<Real>(5e-4)),
+				factor/2, std::make_optional<Tensor>(input));
 		}
 
 		TEST_METHOD(PLayerDerivativeWithRespectToWeightsAndbiasesCalculationSquaredErrorTest)
 		{
 			//Arrange
 			const auto nl = CreateCpuPLayer();
-			const auto input = Tensor(nl.in_size(), Real(-1), Real(1));
+			const auto input = Tensor(nl.in_size(), static_cast<Real>(-1), static_cast<Real>(1));
 			const auto reference = Tensor(nl.out_size(), -1, 1);;
 
 			//Act

@@ -4,11 +4,23 @@
     <LocalDebuggerDebuggerType>Mixed</LocalDebuggerDebuggerType>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugSingle|x64'">
+    <LocalDebuggerDebuggerType>Mixed</LocalDebuggerDebuggerType>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LocalDebuggerDebuggerType>Mixed</LocalDebuggerDebuggerType>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseSingle|x64'">
+    <LocalDebuggerDebuggerType>Mixed</LocalDebuggerDebuggerType>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='IntelCompiler2022|x64'">
+    <LocalDebuggerDebuggerType>Mixed</LocalDebuggerDebuggerType>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='IntelCompiler2022Single|x64'">
     <LocalDebuggerDebuggerType>Mixed</LocalDebuggerDebuggerType>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>

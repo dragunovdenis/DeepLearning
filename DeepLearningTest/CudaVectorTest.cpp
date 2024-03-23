@@ -32,7 +32,7 @@ namespace DeepLearningTest
 		{
 			//Arrange
 			const auto dim = 10000;
-			const auto sigma = Utils::get_random(0.1, 10);
+			const auto sigma = Utils::get_random(static_cast<Real>(0.1), static_cast<Real>(10));
 			auto vector = CudaVector(dim);
 
 			//Act
@@ -45,8 +45,8 @@ namespace DeepLearningTest
 				[mean](const auto& x) { return (x - mean) * (x - mean); })/dim);
 			const auto sigma_diff = std::abs(sigma - sigma_estimated)/ sigma;
 
-			StandardTestUtils::LogReal("Mean", mean);
-			StandardTestUtils::LogReal("sigma_diff", sigma_diff);
+			StandardTestUtils::Log("Mean", mean);
+			StandardTestUtils::Log("sigma_diff", sigma_diff);
 			Assert::IsTrue(std::abs(mean) < 0.35, L"Unexpectedly high deviation of the \"mean\" value from the reference");
 			Assert::IsTrue(std::abs(sigma_diff) < 0.02, L"Unexpectedly high deviation of the \"sigma\" value from the reference");
 		}

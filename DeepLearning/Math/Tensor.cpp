@@ -313,12 +313,12 @@ namespace DeepLearning
 			const auto [tensor_offsets, kernel_start_offsets, kernel_stop_offsets] =
 				ConvolutionUtils::calc_kernel_loop_offsets(result_offsets, tensor_size, kernel_size, paddings, strides);
 
-			Real part_res = static_cast<Real>(0);
+			double part_res = 0;
 
 			KERNEL_LOOP(kernel_start_offsets, kernel_stop_offsets, tensor_offsets,
 				part_res += data[coords_to_data_id(t_x, t_y, t_z)] * kernel(k_x, k_y, k_z);)
 
-			result_handle[res_data_id] = part_res;
+			result_handle[res_data_id] = static_cast<Real>(part_res);
 		}
 
 		return result_size;
@@ -500,22 +500,22 @@ namespace DeepLearning
 		return pool_input_gradient(pool_res_grad.get_handle(), pool_operator, paddings, strides);
 	}
 
-	std::tuple<Tensor, std::vector<std::size_t>> Tensor::min_max_pool(const Index3d& window_size, const bool max) const
+	std::tuple<Tensor, std::vector<int>> Tensor::min_max_pool(const Index3d& window_size, const bool max) const
 	{
 		Tensor result;
-		std::vector<std::size_t> index_map;
+		std::vector<int> index_map;
 		min_max_pool<true>(window_size, max, result, index_map);
 		return std::make_tuple(std::move(result), std::move(index_map));
 	}
 
 	void Tensor::min_max_pool(const Index3d& window_size, const bool max, Tensor& result) const
 	{
-		std::vector<std::size_t> index_map;
+		std::vector<int> index_map;
 		min_max_pool<false>(window_size, max, result, index_map);
 	}
 
 	template <bool EVAL_MAP>
-	void Tensor::min_max_pool(const Index3d& window_size, const bool max, Tensor& result, std::vector<std::size_t>& index_map) const
+	void Tensor::min_max_pool(const Index3d& window_size, const bool max, Tensor& result, std::vector<int>& index_map) const
 	{
 		const auto paddings = Index3d{ 0 };
 		const auto tensor_size = size_3d();
@@ -542,9 +542,9 @@ namespace DeepLearning
 				ConvolutionUtils::calc_kernel_loop_offsets(result_offsets, tensor_size, window_size, paddings, window_size);
 
 			auto poolled_val = init_val;
-			auto poolled_id = 0ull;
+			auto poolled_id = -1;
 			KERNEL_LOOP(kernel_start_offsets, kernel_stop_offsets, tensor_offsets,
-				const auto tensor_data_id = coords_to_data_id(t_x, t_y, t_z);
+				const auto tensor_data_id = static_cast<int>(coords_to_data_id(t_x, t_y, t_z));
 				const auto & current_val = data[tensor_data_id];
 				if (comparer(poolled_val, current_val))
 				{
@@ -559,10 +559,10 @@ namespace DeepLearning
 		}
 	}
 
-	template void Tensor::min_max_pool<true>(const Index3d& window_size, const bool max, Tensor& result, std::vector<std::size_t>& index_map) const;
-	template void Tensor::min_max_pool<false>(const Index3d& window_size, const bool max, Tensor& result, std::vector<std::size_t>& index_map) const;
+	template void Tensor::min_max_pool<true>(const Index3d& window_size, const bool max, Tensor& result, std::vector<int>& index_map) const;
+	template void Tensor::min_max_pool<false>(const Index3d& window_size, const bool max, Tensor& result, std::vector<int>& index_map) const;
 
-	void Tensor::min_max_pool_input_gradient(const Tensor& pool_res_gradient, const std::vector<std::size_t>& out_to_in_mapping, Tensor& result) const
+	void Tensor::min_max_pool_input_gradient(const Tensor& pool_res_gradient, const std::vector<int>& out_to_in_mapping, Tensor& result) const
 	{
 		if (pool_res_gradient.size() != out_to_in_mapping.size())
 			throw std::exception("Inconsistent input");
@@ -577,7 +577,7 @@ namespace DeepLearning
 			result_data[*map_ptr] = *grad_ptr;
 	}
 
-	Tensor Tensor::min_max_pool_input_gradient(const Tensor& pool_res_gradient, const std::vector<std::size_t>& out_to_in_mapping) const
+	Tensor Tensor::min_max_pool_input_gradient(const Tensor& pool_res_gradient, const std::vector<int>& out_to_in_mapping) const
 	{
 	    Tensor result;
 		min_max_pool_input_gradient(pool_res_gradient, out_to_in_mapping, result);

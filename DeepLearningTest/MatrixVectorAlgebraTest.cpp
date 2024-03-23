@@ -155,7 +155,7 @@ namespace DeepLearningTest
 
 			//Assert
 			const auto diff = (vector * matrix - matrix_transposed * vector).max_abs();
-			StandardTestUtils::LogRealAndAssertLessOrEqualTo("Difference", diff, 10 * std::numeric_limits<Real>::epsilon());
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference", diff, 10 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(VectorPackingTest)

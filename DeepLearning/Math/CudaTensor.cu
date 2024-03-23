@@ -661,19 +661,19 @@ namespace DeepLearning
 
 	void CudaTensor::average_pool_input_gradient(const CudaTensor& pool_res_gradient, const Index3d& window_size, CudaTensor& result) const
 	{
-		scale_pool_input_gradient(pool_res_gradient, window_size, Real(1) / window_size.coord_prod(), result);
+		scale_pool_input_gradient(pool_res_gradient, window_size, static_cast<Real>(1) / window_size.coord_prod(), result);
 	}
 
 	CudaTensor CudaTensor::average_pool_input_gradient(const CudaTensor& pool_res_gradient, const Index3d& window_size) const
 	{
 		CudaTensor result;
-		scale_pool_input_gradient(pool_res_gradient, window_size, Real(1) / window_size.coord_prod(), result);
+		scale_pool_input_gradient(pool_res_gradient, window_size, static_cast<Real>(1) / window_size.coord_prod(), result);
 		return result;
 	}
 
 	template <bool MAX, bool EVAL_MAP>
 	__global__ void min_max_pull_kernel(const Real* __restrict__ tensor, const Index3d tensor_size,
-		const Index3d window_size, Real* __restrict__ result, const Index3d result_size, std::size_t* out_to_in_map)
+		const Index3d window_size, Real* __restrict__ result, const Index3d result_size, int* out_to_in_map)
 	{
 		const auto res_flatten_id = threadIdx.x + blockIdx.x * blockDim.x;
 		const auto res_flatten_size = result_size.coord_prod();
@@ -683,7 +683,8 @@ namespace DeepLearning
 
 		const auto result_offsets = ConvolutionUtils::data_id_to_index_3d(res_flatten_id, result_size);
 		const auto [tensor_offsets, kernel_start_offsets, kernel_stop_offsets] =
-			ConvolutionUtils::calc_kernel_loop_offsets(result_offsets, tensor_size, window_size, {0,0,0}, window_size);
+			ConvolutionUtils::calc_kernel_loop_offsets(result_offsets,
+				tensor_size, window_size, {0,0,0}, window_size);
 
 		auto poolled_val = MAX ? -std::numeric_limits<Real>::max() : std::numeric_limits<Real>::max();
 		auto poolled_id = -1;
@@ -702,22 +703,22 @@ namespace DeepLearning
 			result[res_flatten_id] = poolled_val;
 	}
 
-	std::tuple<CudaTensor, CudaArray<std::size_t>> CudaTensor::min_max_pool(const Index3d& window_size, const bool max) const
+	std::tuple<CudaTensor, CudaArray<int>> CudaTensor::min_max_pool(const Index3d& window_size, const bool max) const
 	{
 		CudaTensor result;
-		CudaArray<std::size_t> index_map;
+		CudaArray<int> index_map;
 		min_max_pool<true>(window_size, max, result, index_map);
 		return std::make_tuple(std::move(result), std::move(index_map));
 	}
 
 	void CudaTensor::min_max_pool(const Index3d& window_size, const bool max, CudaTensor& result) const
 	{
-		CudaArray<std::size_t> index_map;
+		CudaArray<int> index_map;
 		min_max_pool<false>(window_size, max, result, index_map);
 	}
 
 	template <bool EVAL_MAP>
-	void CudaTensor::min_max_pool(const Index3d& window_size, const bool max, CudaTensor& result, CudaArray<std::size_t>& index_map) const
+	void CudaTensor::min_max_pool(const Index3d& window_size, const bool max, CudaTensor& result, CudaArray<int>& index_map) const
 	{
 		const auto paddings = Index3d{ 0 };
 		const auto tensor_size = size_3d();
@@ -740,10 +741,10 @@ namespace DeepLearning
 		CUDA_SANITY_CHECK
 	}
 
-	template void CudaTensor::min_max_pool<true>(const Index3d& window_size, const bool max, CudaTensor& result, CudaArray<std::size_t>& index_map) const;
-	template void CudaTensor::min_max_pool<false>(const Index3d& window_size, const bool max, CudaTensor& result, CudaArray<std::size_t>& index_map) const;
+	template void CudaTensor::min_max_pool<true>(const Index3d& window_size, const bool max, CudaTensor& result, CudaArray<int>& index_map) const;
+	template void CudaTensor::min_max_pool<false>(const Index3d& window_size, const bool max, CudaTensor& result, CudaArray<int>& index_map) const;
 
-	void CudaTensor::min_max_pool_input_gradient(const CudaTensor& pool_res_gradient, const CudaArray<std::size_t>& out_to_in_mapping, CudaTensor& result) const
+	void CudaTensor::min_max_pool_input_gradient(const CudaTensor& pool_res_gradient, const CudaArray<int>& out_to_in_mapping, CudaTensor& result) const
 	{
 		if (pool_res_gradient.size() != out_to_in_mapping.size())
 			throw std::exception("Inconsistent input");
@@ -755,7 +756,7 @@ namespace DeepLearning
 		CUDA_SANITY_CHECK
 	}
 
-	CudaTensor CudaTensor::min_max_pool_input_gradient(const CudaTensor& pool_res_gradient, const CudaArray<std::size_t>& out_to_in_mapping) const
+	CudaTensor CudaTensor::min_max_pool_input_gradient(const CudaTensor& pool_res_gradient, const CudaArray<int>& out_to_in_mapping) const
 	{
 		CudaTensor result;
 		min_max_pool_input_gradient(pool_res_gradient, out_to_in_mapping, result);
