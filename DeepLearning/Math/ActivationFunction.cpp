@@ -34,7 +34,6 @@ namespace DeepLearning
 		void evaluate_in_place(BasicCollection& collection, const ActivationFunctionId id)
 		{
 			const auto func = make<std::function<Real(Real)>>(id);
-
 			std::ranges::transform(collection, collection.begin(), [&](const auto& x) { return  func(x); });
 		}
 
@@ -43,7 +42,7 @@ namespace DeepLearning
 			const auto func_ = make<std::function<dual<Real>(dual<Real>)>>(id);
 			for (std::size_t item_id = 0; item_id < collection_func.size(); item_id++)
 			{
-				const auto res = func_({ collection_func.begin()[item_id], Real(1) });
+				const auto res = func_({ collection_func.begin()[item_id], static_cast<Real>(1) });
 				collection_func.begin()[item_id] = res.Real();
 				collection_deriv.begin()[item_id] = res.Dual()[0];
 			}
@@ -57,13 +56,68 @@ namespace DeepLearning
 
 		void evaluate_softmax_input_grad(const BasicCollection& input_exp, const BasicCollection& out_grad, BasicCollection& result)
 		{
-			const auto one_over_denominator = Real(1) / input_exp.sum();
-			result.resize(input_exp.size_3d());
+			const auto one_over_denominator = static_cast<Real>(1) / input_exp.sum();
 			std::transform(input_exp.begin(), input_exp.end(), out_grad.begin(), result.begin(),
 				[one_over_denominator](const auto& x, const auto& y) { return x * y * one_over_denominator; });
 			const auto temp_sum = result.sum() * one_over_denominator;
 			std::transform(result.begin(), result.end(), input_exp.begin(), result.begin(),
 				[temp_sum](const auto& x, const auto& a) { return x - a * temp_sum; });
+		}
+
+		void relu_in_place(BasicCollection& collection)
+		{
+			std::ranges::transform(collection, collection.begin(), [](const auto& x) { return  x > 0 ? x : 0; });
+		}
+
+		void relu_in_place(BasicCollection& collection_func, BasicCollection& collection_deriv)
+		{
+			const auto func_ptr = collection_func.begin();
+			const auto deriv_ptr = collection_deriv.begin();
+
+			for (std::size_t item_id = 0; item_id < collection_func.size(); ++item_id)
+			{
+				const auto x = func_ptr[item_id];
+				func_ptr[item_id] = x > 0 ? x : 0;
+				deriv_ptr[item_id] = static_cast<Real>(x > 0 ? 1 : 0);
+			}
+		}
+
+		void sigmoid_in_place(BasicCollection& collection)
+		{
+			std::ranges::transform(collection, collection.begin(), 
+				[](const auto& x) { return  1 / (1 + std::exp(-x)); });
+		}
+
+		void sigmoid_in_place(BasicCollection& collection_func, BasicCollection& collection_deriv)
+		{
+			const auto func_ptr = collection_func.begin();
+			const auto deriv_ptr = collection_deriv.begin();
+
+			for (std::size_t item_id = 0; item_id < collection_func.size(); ++item_id)
+			{
+				const auto value = 1 / (1 + std::exp(-func_ptr[item_id]));
+				func_ptr[item_id] = value;
+				deriv_ptr[item_id] = value * (1 - value);
+			}
+		}
+
+		void tanh_in_place(BasicCollection& collection)
+		{
+			std::ranges::transform(collection, collection.begin(),
+				[](const auto& x) { return  std::tanh(x); });
+		}
+
+		void tanh_in_place(BasicCollection& collection_func, BasicCollection& collection_deriv)
+		{
+			const auto func_ptr = collection_func.begin();
+			const auto deriv_ptr = collection_deriv.begin();
+
+			for (std::size_t item_id = 0; item_id < collection_func.size(); ++item_id)
+			{
+				const auto value = std::tanh(func_ptr[item_id]);
+				func_ptr[item_id] = value;
+				deriv_ptr[item_id] = 1 - value * value;
+			}
 		}
 	}
 
@@ -77,14 +131,6 @@ namespace DeepLearning
 	}
 
 	template <class T>
-	T ActivationFunction<T>::operator ()(const T& input) const
-	{
-		auto result = input;
-		func_in_place(result);
-		return result;
-	}
-
-	template <class T>
 	void ActivationFunction<T>::func_and_aux_in_place(T& in_out, T& aux) const
 	{
 		aux.resize(in_out.size_3d());
@@ -92,72 +138,24 @@ namespace DeepLearning
 	}
 
 	template <class T>
-	std::tuple<T, T> ActivationFunction<T>::func_and_aux(const T& input) const
-	{
-		auto func = input;
-		T deriv;
-		func_and_aux_in_place(func, deriv);
-		return std::make_tuple(std::move(func), std::move(deriv));
-	}
-
-	template <class T>
-	T ActivationFunction<T>::calc_input_gradient(const typename T::Base& out_grad, const T& aux_data) const
-	{
-		T result(aux_data.size_3d());
-		calc_input_gradient(out_grad, aux_data, result);
-		return result;
-	}
-
-	template <class T>
-	void ActivationFunction<T>::calc_input_gradient(const typename T::Base& out_grad, const T& aux_data, T& result) const
-	{
-		result.hadamard_prod(aux_data, out_grad);
-	}
-
-	template <class T>
 	void SoftMaxActivationFunction<T>::func_in_place(T& in_out) const
 	{
 		ActivationFunctionHelper::normalize_and_evaluate_exponent_in_place(in_out);
-		const auto factor = Real(1) / in_out.sum();
+		const auto factor = static_cast<Real>(1) / in_out.sum();
 		in_out.mul(factor);
-	}
-
-	template <class T>
-	T SoftMaxActivationFunction<T>::operator ()(const T& input) const
-	{
-		auto result = input;
-		func_in_place(result);
-		return result;
 	}
 
 	template <class T>
 	void SoftMaxActivationFunction<T>::func_and_aux_in_place(T& in_out, T& aux) const
 	{
 		ActivationFunctionHelper::normalize_and_evaluate_exponent_in_place(in_out);
-		const auto factor = Real(1) / in_out.sum();
+		const auto factor = static_cast<Real>(1) / in_out.sum();
 		aux = in_out;
 		in_out.mul(factor);
 	}
 
 	template <class T>
-	std::tuple<T, T> SoftMaxActivationFunction<T>::func_and_aux(const T& input) const
-	{
-		T aux_data;
-		auto result = input;
-		func_and_aux_in_place(result, aux_data);
-		return std::make_tuple(std::move(result), std::move(aux_data));
-	}
-
-	template <class T>
-	T SoftMaxActivationFunction<T>::calc_input_gradient(const typename T::Base& out_grad, const T& aux_data) const
-	{
-		T result;
-		calc_input_gradient(out_grad, aux_data, result);
-		return result;
-	}
-
-	template <class T>
-	void SoftMaxActivationFunction<T>::calc_input_gradient(const typename T::Base& out_grad, const T& aux_data, T& result) const
+	void SoftMaxActivationFunction<T>::calc_in_grad(const typename T::Base& out_grad, const T& aux_data, T& result) const
 	{
 		if (out_grad.size() != aux_data.size())
 			throw std::exception("Inconsistent input data");
@@ -166,19 +164,101 @@ namespace DeepLearning
 	}
 
 	template <class T>
-	ActivationWrapper<T>::ActivationWrapper(const ActivationFunctionId id)
+	T AFunction<T>::operator()(const T& input) const
 	{
-		if (id == ActivationFunctionId::SOFTMAX)
-		{
-			_func = std::make_unique<SoftMaxActivationFunction<T>>();
-		} else
-			_func =  std::make_unique<ActivationFunction<T>>(id);
+		auto result = input;
+		func_in_place(result);
+		return result;
 	}
+
+	template <class T>
+	std::tuple<T, T> AFunction<T>::func_and_aux(const T& input) const
+	{
+		auto func = input;
+		T deriv;
+		func_and_aux_in_place(func, deriv);
+		return std::make_tuple(std::move(func), std::move(deriv));
+	}
+
+	template <class T>
+	T AFunction<T>::get_in_grad(const typename T::Base& out_grad, const T& aux_data) const
+	{
+		T result(aux_data.size_3d());
+		calc_in_grad(out_grad, aux_data, result);
+		return result;
+	}
+
+	template <class T>
+	void AFunction<T>::calc_in_grad(const typename T::Base& out_grad, const T& aux_data, T& out) const
+	{
+		out.hadamard_prod(aux_data, out_grad);
+	}
+
+	template <class T>
+	ActivationWrapper<T>::ActivationWrapper(const ActivationFunctionId id) : _func{ construct(id) }
+	{}
 
 	template <class T>
 	const AFunction<T>& ActivationWrapper<T>::operator()() const
 	{
 		return *_func;
+	}
+
+	template <class T>
+	std::shared_ptr<AFunction<T>> ActivationWrapper<T>::construct(const ActivationFunctionId id)
+	{
+		switch (id)
+		{
+		case ActivationFunctionId::SIGMOID:
+			return std::make_shared<SigmoidActivationFunction<T>>();
+		case ActivationFunctionId::RELU:
+			return std::make_shared<ReLuActivationFunction<T>>();
+		case ActivationFunctionId::SOFTMAX:
+			return std::make_shared<SoftMaxActivationFunction<T>>();
+		case ActivationFunctionId::TANH:
+			return std::make_shared<TanhActivationFunction<T>>();
+		default:
+			return std::make_shared<ActivationFunction<T>>(id);
+		}
+	}
+
+	template <class T>
+	void ReLuActivationFunction<T>::func_in_place(T& in_out) const
+	{
+		ActivationFunctionHelper::relu_in_place(in_out);
+	}
+
+	template <class T>
+	void ReLuActivationFunction<T>::func_and_aux_in_place(T& in_out, T& aux) const
+	{
+		aux.resize(in_out.size_3d());
+		ActivationFunctionHelper::relu_in_place(in_out, aux);
+	}
+
+	template <class T>
+	void SigmoidActivationFunction<T>::func_in_place(T& in_out) const
+	{
+		ActivationFunctionHelper::sigmoid_in_place(in_out);
+	}
+
+	template <class T>
+	void SigmoidActivationFunction<T>::func_and_aux_in_place(T& in_out, T& aux) const
+	{
+		aux.resize(in_out.size_3d());
+		ActivationFunctionHelper::sigmoid_in_place(in_out, aux);
+	}
+
+	template <class T>
+	void TanhActivationFunction<T>::func_in_place(T& in_out) const
+	{
+		ActivationFunctionHelper::tanh_in_place(in_out);
+	}
+
+	template <class T>
+	void TanhActivationFunction<T>::func_and_aux_in_place(T& in_out, T& aux) const
+	{
+		aux.resize(in_out.size_3d());
+		ActivationFunctionHelper::tanh_in_place(in_out, aux);
 	}
 
 	std::string to_string(const ActivationFunctionId& activation_type_id)
@@ -190,6 +270,7 @@ namespace DeepLearning
 		case ActivationFunctionId::RELU: return "RELU";
 		case ActivationFunctionId::SOFTMAX: return "SOFTMAX";
 		case ActivationFunctionId::LINEAR: return "LINEAR";
+		case ActivationFunctionId::UNKNOWN: return "UNKNOWN";
 		default:
 			throw std::exception("Unknown activation ID");
 		}
@@ -209,24 +290,22 @@ namespace DeepLearning
 		return ActivationFunctionId::UNKNOWN;
 	}
 
-	template class ActivationFunction<Vector>;
-	template class ActivationFunction<CudaVector>;
-	template class ActivationFunction<Matrix>;
-	template class ActivationFunction<CudaMatrix>;
-	template class ActivationFunction<Tensor>;
-	template class ActivationFunction<CudaTensor>;
+	namespace
+	{
+#define INSTANTIATE(CLASS)                \
+		template class CLASS<Vector>;     \
+		template class CLASS<CudaVector>; \
+		template class CLASS<Matrix>;     \
+		template class CLASS<CudaMatrix>; \
+		template class CLASS<Tensor>;     \
+		template class CLASS<CudaTensor>;
+	}
 
-	template class SoftMaxActivationFunction<Vector>;
-	template class SoftMaxActivationFunction<CudaVector>;
-	template class SoftMaxActivationFunction<Matrix>;
-	template class SoftMaxActivationFunction<CudaMatrix>;
-	template class SoftMaxActivationFunction<Tensor>;
-	template class SoftMaxActivationFunction<CudaTensor>;
-
-	template class ActivationWrapper<Vector>;
-	template class ActivationWrapper<CudaVector>;
-	template class ActivationWrapper<Matrix>;
-	template class ActivationWrapper<CudaMatrix>;
-	template class ActivationWrapper<Tensor>;
-	template class ActivationWrapper<CudaTensor>;
+	INSTANTIATE(AFunction)
+	INSTANTIATE(ActivationFunction)
+	INSTANTIATE(SoftMaxActivationFunction)
+	INSTANTIATE(ReLuActivationFunction)
+	INSTANTIATE(TanhActivationFunction)
+	INSTANTIATE(SigmoidActivationFunction)
+	INSTANTIATE(ActivationWrapper)
 }

@@ -18,6 +18,7 @@
 #include "PLayer.h"
 #include "../Math/ConvolutionUtils.h"
 #include "../Utilities.h"
+#include <nlohmann/json.hpp>
 
 namespace DeepLearning
 {
@@ -31,35 +32,66 @@ namespace DeepLearning
 	}
 
 	template <class D>
+	void PLayer<D>::msgpack_unpack(msgpack::object const& msgpack_o)
+	{
+		try
+		{
+			auto msg_pack_version = 0;
+			msgpack::type::make_define_array(msg_pack_version, MSGPACK_BASE(ALayer<D>),
+				_in_size, _pool_window_size, _strides, _pool_operator_id).msgpack_unpack(msgpack_o);
+		}
+		catch (...)
+		{
+			// to preserve backward compatibility
+			Real keep_rate = -1;
+			msgpack::type::make_define_array(keep_rate, _in_size, _pool_window_size, 
+				_strides, _pool_operator_id).msgpack_unpack(msgpack_o);
+			this->set_keep_rate(keep_rate);
+		}
+	}
+
+	template <class D>
 	PLayer<D>::PLayer(const Index3d& in_size, const Index2d& pool_window_size,
 		const PoolTypeId pool_operator_id, const Real keep_rate) : ALayer<D>(keep_rate)
 	{
 		initialize(in_size, pool_window_size, pool_operator_id);
 	}
 
+	namespace {
+		const char* json_in_size_id = "InSize";
+		const char* json_pool_window_size_id = "FilterSize";
+		const char* json_pool_operator_id = "PoolOperator";
+	}
+
 	template <class D>
-	PLayer<D>::PLayer(const std::string& str) : ALayer<D>(str)
+	PLayer<D>::PLayer(const std::string& str, const Index3d& default_in_size) : ALayer<D>(str)
 	{
-		auto str_norm = Utils::normalize_string(str);
+		const auto json = nlohmann::json::parse(str);
 
-		Index3d temp_3d;
-		if (!Utils::try_extract_vector(str_norm, temp_3d))
-			throw std::exception("Can't parse input dimensions of PLayer");
+		const auto in_size = json.contains(json_in_size_id) ?
+			Utils::extract_vector<Index3d>(json[json_in_size_id].get<std::string>()) : default_in_size;
 
-		const auto in_size = temp_3d;
+		const auto pool_window_size = json.contains(json_pool_window_size_id) ?
+			Utils::extract_vector<Index2d>(json[json_pool_window_size_id].get<std::string>()) :
+			throw std::exception("Can't parse window size of PLayer");
 
-		Index2d temp_2d;
-		if (!Utils::try_extract_vector(str_norm, temp_2d))
-			throw std::exception("Can't parse input dimensions of PLayer");
-
-		const auto pool_window_size = temp_2d;
-
-		const auto pool_operator_id = parse_pool_type(Utils::extract_word(str_norm));
-
-		if (pool_operator_id == PoolTypeId::UNKNOWN)
-			throw std::exception("Failed to parse pool operator type");
+		const auto pool_operator_id = json.contains(json_pool_operator_id) ?
+			parse_pool_type(json[json_pool_operator_id].get<std::string>()) :
+			throw std::exception("Can't parse operator type of PLayer");
 
 		initialize(in_size, pool_window_size, pool_operator_id);
+	}
+
+	template <class D>
+	std::string PLayer<D>::to_script() const
+	{
+		nlohmann::json json = nlohmann::json::parse(ALayer<D>::to_script());
+
+		json[json_in_size_id] = _in_size.to_string();
+		json[json_pool_window_size_id] = _pool_window_size.yz().to_string();
+		json[json_pool_operator_id] = DeepLearning::to_string(_pool_operator_id);
+
+		return json.dump();
 	}
 
 	template <class D>
@@ -179,9 +211,7 @@ namespace DeepLearning
 	template <class D>
 	std::string PLayer<D>::to_string() const
 	{
-		return DeepLearning::to_string(PLayer::ID()) + "; Input size: " + in_size().to_string() +
-			"; Out size: " + out_size().to_string() + "; Filter size: " + weight_tensor_size().to_string() +
-			"; Pool type: " + DeepLearning::to_string(_pool_operator_id) + ";" + ALayer<D>::to_string();
+		return DeepLearning::to_string(PLayer::ID()) + "; " + to_script();
 	}
 
 	template <class D>
@@ -199,13 +229,6 @@ namespace DeepLearning
 	bool PLayer<D>::equal(const ALayer<D>& layer) const
 	{
 		return equal_hyperparams(layer); // no other parameters to check for equality
-	}
-
-	template <class D>
-	std::string PLayer<D>::to_script() const
-	{
-		return _in_size.to_string() + _pool_window_size.yz().to_string()+ ";" +
-			DeepLearning::to_string(_pool_operator_id) + ";" + ALayer<D>::to_script();
 	}
 
 	template <class D>

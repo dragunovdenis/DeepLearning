@@ -1,6 +1,6 @@
-CONV;{1, 28, 28}{5, 5};20;RELU;{0, 0, 0}{1, 1, 1}
-PULL;{}{2, 2};MAX
-CONV;{}{5, 5};40;RELU;{0, 0, 0}{1, 1, 1}
-PULL;{}{2, 2};MAX
-FULL;{}{1, 1, 100};RELU
-FULL;{}{1, 1, 10};SOFTMAX
+CONV {"Activation":"RELU","FilterSize":"{5, 5}","FiltersCount":20,"InSize":"{1, 28, 28}","Paddings":"{0, 0, 0}","Strides":"{1, 1, 1}"}
+PULL {"FilterSize":"{2, 2}","PoolOperator":"MAX"}
+CONV {"Activation":"RELU","FilterSize":"{5, 5}","FiltersCount":40,"Paddings":"{0, 0, 0}","Strides":"{1, 1, 1}"}
+PULL {"FilterSize":"{2, 2}","PoolOperator":"MAX"}
+FULL {"Activation":"RELU","OutSize":"{1, 1, 100}"}
+FULL {"Activation":"SOFTMAX","OutSize":"{1, 1, 10}"}

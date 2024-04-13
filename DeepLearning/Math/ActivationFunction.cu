@@ -40,7 +40,7 @@ namespace DeepLearning::ActivationFunctionHelper
 		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread), collection_func.begin(), collection_func.end(),
 			thrust::make_zip_iterator(thrust::make_tuple(collection_func.begin(), collection_deriv.begin())),
 			[id] __device__(const auto & x) {
-			const auto res = make<nvstd::function<dual<Real>(dual<Real>)>>(id)({ x , Real(1)});
+			const auto res = make<nvstd::function<dual<Real>(dual<Real>)>>(id)({ x , static_cast<Real>(1)});
 			return thrust::make_tuple(res.Real(), res.Dual()[0]);
 		});
 	}
@@ -55,9 +55,8 @@ namespace DeepLearning::ActivationFunctionHelper
 
 	void evaluate_softmax_input_grad(const BasicCudaCollection& input_exp, const BasicCudaCollection& out_grad, BasicCudaCollection& result)
 	{
-		const auto one_over_denominator = Real(1) / input_exp.sum();
+		const auto one_over_denominator = static_cast<Real>(1) / input_exp.sum();
 
-		result.resize(input_exp.size_3d());
 		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread),
 			input_exp.begin(), input_exp.end(), out_grad.begin(), result.begin(),
 			[one_over_denominator] __device__ (const auto& x, const auto& y) { return x * y * one_over_denominator; });
@@ -65,5 +64,64 @@ namespace DeepLearning::ActivationFunctionHelper
 		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread),
 			result.begin(), result.end(), input_exp.begin(), result.begin(),
 			[temp_sum] __device__ (const auto& x, const auto& a) { return x - a * temp_sum; });
+	}
+
+	void relu_in_place(BasicCudaCollection& collection)
+	{
+		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread),
+			collection.begin(), collection.end(), collection.begin(),
+			[] __device__(const auto & x) {
+			return x > 0 ? x : 0;
+		});
+	}
+
+	void relu_in_place(BasicCudaCollection& collection_func, BasicCudaCollection& collection_deriv)
+	{
+		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread), collection_func.begin(), collection_func.end(),
+			thrust::make_zip_iterator(thrust::make_tuple(collection_func.begin(), collection_deriv.begin())),
+			[] __device__ (const auto & x) {
+			
+			return x > 0 ? thrust::make_tuple(x, 1) : thrust::make_tuple(0, 0);
+		});
+	}
+
+	void sigmoid_in_place(BasicCudaCollection& collection)
+	{
+		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread),
+			collection.begin(), collection.end(), collection.begin(),
+			[] __device__(const auto & x) {
+			return 1/(1 + std::exp(-x));
+		});
+	}
+
+	void sigmoid_in_place(BasicCudaCollection& collection_func, BasicCudaCollection& collection_deriv)
+	{
+		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread), collection_func.begin(), collection_func.end(),
+			thrust::make_zip_iterator(thrust::make_tuple(collection_func.begin(), collection_deriv.begin())),
+			[] __device__(const auto & x) {
+
+			const auto value = 1/(1 + std::exp(-x));
+			return thrust::make_tuple(value, value * (1 - value));
+		});
+	}
+
+	void tanh_in_place(BasicCudaCollection& collection)
+	{
+		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread),
+			collection.begin(), collection.end(), collection.begin(),
+			[] __device__(const auto & x) {
+			return std::tanh(x);
+		});
+	}
+
+	void tanh_in_place(BasicCudaCollection& collection_func, BasicCudaCollection& collection_deriv)
+	{
+		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread), collection_func.begin(), collection_func.end(),
+			thrust::make_zip_iterator(thrust::make_tuple(collection_func.begin(), collection_deriv.begin())),
+			[] __device__(const auto & x) {
+
+			const auto value = std::tanh(x);
+			return thrust::make_tuple(value, 1 - value * value);
+		});
 	}
 }

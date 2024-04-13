@@ -50,6 +50,16 @@ namespace DeepLearning::Func
     }
 
     /// <summary>
+    /// Derivative of the sigmoid function
+    /// </summary>
+    template <class T>
+    CUDA_CALLABLE T sigmoid_deriv(const T& x)
+    {
+        const auto sig = sigmoid(x);
+        return sig * (T(1) - sig);
+    }
+
+    /// <summary>
     /// An analogous of the Python's nan_to_num() function
     /// </summary>
     template <class R>

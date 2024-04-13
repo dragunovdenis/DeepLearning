@@ -43,6 +43,14 @@ namespace DeepLearning
 		/// </summary>
 		T z{};
 
+		/// <summary>
+		/// Zero vector.
+		/// </summary>
+		static constexpr Vector3d zero()
+		{
+			return { T(0), T(0), T(0) };
+		}
+
 		MSGPACK_DEFINE(x, y, z);
 
 		/// <summary>

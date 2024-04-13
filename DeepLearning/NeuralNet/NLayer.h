@@ -21,7 +21,6 @@
 #include "../Math/LinAlg3d.h"
 #include "ALayer.h"
 #include <vector>
-#include "../Math/ActivationFunction.h"
 #include <msgpack.hpp>
 #include "LayerTypeId.h"
 
@@ -50,21 +49,18 @@ namespace DeepLearning
 		typename D::matrix_t _weights{};
 
 		/// <summary>
-		/// Activation function id
-		/// </summary>
-		ActivationFunctionId _func_id = ActivationFunctionId::UNKNOWN;
-
-		/// <summary>
 		/// Initializes the layer according to the given set of parameters
 		/// </summary>
 		/// <param name="in_dim">Input dimension of the later</param>
 		/// <param name="out_dim">Output dimension of the later</param>
-		/// <param name="func_id">Identifier of the activation function of the layer</param>
 		/// <param name="rand_low">Lower boundary for the random initialization of weight and biases</param>
 		/// <param name="rand_high">Higher boundary for the random initialization of weights and biases</param>
 		/// <param name="standard_init_for_weights">Applies "special" random initialization for the weights if "true"</param>
-		void initialize(const std::size_t in_dim, const std::size_t out_dim, ActivationFunctionId func_id,
+		void initialize(const std::size_t in_dim, const std::size_t out_dim,
 			const Real rand_low, const Real rand_high, const bool standard_init_for_weights);
+
+		int _msg_pack_version = 1;
+
 	public:
 
 		/// <summary>
@@ -72,7 +68,19 @@ namespace DeepLearning
 		/// </summary>
 		static LayerTypeId ID() { return LayerTypeId::FULL; }
 
-		MSGPACK_DEFINE(this->_keep_rate, _biases, _weights, _func_id);
+		/// <summary>
+		/// Custom "unpacking" method
+		/// </summary>
+		void msgpack_unpack(msgpack::object const& msgpack_o);
+
+		/// <summary>
+		/// Custom "packing" method
+		/// </summary>
+		template <typename Packer>
+		void msgpack_pack(Packer& msgpack_pk) const
+		{
+			msgpack::type::make_define_array(_msg_pack_version, MSGPACK_BASE(ALayer<D>), _biases, _weights).msgpack_pack(msgpack_pk);
+		}
 
 		/// <summary>
 		/// Dimensionality of the layer's input
@@ -98,13 +106,13 @@ namespace DeepLearning
 		/// Constructor with random weights and biases
 		/// </summary>
 		NLayer(const std::size_t in_dim, const std::size_t out_dim, ActivationFunctionId func_id = ActivationFunctionId::SIGMOID,
-			const Real rand_low = Real(-1), const Real rand_high = Real(1), const bool standard_init_for_weights = false,
-			const Real keep_rate = Real(1.0));
+			const Real rand_low = static_cast<Real>(-1), const Real rand_high = static_cast<Real>(1), const bool standard_init_for_weights = false,
+			const Real keep_rate = static_cast<Real>(1.0));
 
 		/// <summary>
 		/// Constructor to instantiate layer from the given string of certain format
 		/// </summary>
-		NLayer(const std::string& str);
+		NLayer(const std::string& str, const Index3d& default_in_size = Index3d::zero());
 
 		/// <summary>
 		/// See the summary to the corresponding method in the base class

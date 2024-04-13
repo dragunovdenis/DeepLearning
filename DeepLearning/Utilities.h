@@ -283,6 +283,12 @@ namespace DeepLearning::Utils
     std::vector<V> extract_vectors(const std::string& str);
 
     /// <summary>
+    /// Parses given string and extracts a vector of type V from it. Throws an exception if parsing fails.
+    /// </summary>
+    template <class V>
+    V extract_vector(const std::string& str);
+
+    /// <summary>
     /// Transforms given collection to string
     /// </summary>
     /// <param name="collection">The collection</param>

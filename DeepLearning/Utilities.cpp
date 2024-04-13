@@ -239,6 +239,17 @@ namespace DeepLearning::Utils
     }
 
     template <class V>
+    V extract_vector(const std::string& str)
+    {
+        auto str_copy = str;
+        V result;
+        if (!try_extract_vector(str_copy, result))
+            throw std::exception("Failed to parse a vector");
+
+        return result;
+    }
+
+    template <class V>
     std::string to_string(const std::vector<V>& collection, const char delim)
     {
         std::string result = "";
@@ -359,6 +370,11 @@ namespace DeepLearning::Utils
     template std::vector<Vector2d<Real>> extract_vectors(const std::string& str);
     template std::vector<Index3d> extract_vectors(const std::string& str);
     template std::vector<Index2d> extract_vectors(const std::string& str);
+
+    template Vector3d<Real> extract_vector(const std::string& str);
+    template Vector2d<Real> extract_vector(const std::string& str);
+    template Index3d extract_vector(const std::string& str);
+    template Index2d extract_vector(const std::string& str);
 
     template std::string to_string(const std::vector<Vector3d<Real>>& collection, const char delim);
     template std::string to_string(const std::vector<Vector2d<Real>>& collection, const char delim);

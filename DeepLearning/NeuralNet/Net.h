@@ -276,12 +276,12 @@ namespace DeepLearning
 		/// </summary>
 		/// <typeparam name="L">Later type</typeparam>
 		/// <typeparam name="...Types">Types of arguments required by a constructor of type "L"</typeparam>
-		/// <param name="...args">Actual arguments required by a constructor of type "L"</param>
+		/// <param name="args">Actual arguments required by a constructor of type "L"</param>
 		/// <returns>Output size of the appended layer</returns>
 		template <template<class> class L, class... Types>
 		Index3d append_layer(Types&&... args)
 		{
-			_layers.push_back(LayerHandle<D>::template make<L<D>>(std::forward<Types>(args)...));
+			_layers.emplace_back(LayerHandle<D>::template make<L<D>>(std::forward<Types>(args)...));
 			return _layers.rbegin()->layer().out_size();
 		}
 

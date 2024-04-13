@@ -65,36 +65,30 @@ namespace DeepLearning
 		const auto layer_scripts = Utils::split_by_char(script, '\n');
 
 		Index3d prev_layer_out_size = { -1, -1, -1 };
-		for (const auto& sub_script : layer_scripts)
+		for (auto sub_script : layer_scripts)
 		{
-			auto script_normalized = Utils::normalize_string(sub_script);
-			const auto layer_type_id = parse_layer_type(Utils::extract_word(script_normalized));
+			const auto layer_type_id = parse_layer_type(Utils::extract_word(sub_script));
 
 			if (layer_type_id == LayerTypeId::UNKNOWN)
 				throw std::exception("Unknown layer type");
 
-			if (prev_layer_out_size.x >= 0)
-			{
-				Index3d in_size;
-				if (Utils::try_extract_vector(script_normalized, in_size))
-				{
-					if ((layer_type_id != LayerTypeId::FULL && prev_layer_out_size != in_size) ||
-						(layer_type_id == LayerTypeId::FULL && prev_layer_out_size.coord_prod() != in_size.coord_prod()))
-						throw std::exception((std::string("Inconsistent input/output dimensions : ") + script_normalized).c_str());
-				}
-
-				//This covers also a situation when script omits input size of the layer so that
-				//it is deduced from the output size of the previous layer
-				script_normalized = prev_layer_out_size.to_string() + script_normalized;
-			}
-
 			switch (layer_type_id)
 			{
-			case LayerTypeId::CONVOLUTION: append_layer<CLayer>(script_normalized); break;
-			case LayerTypeId::FULL: append_layer<NLayer>(script_normalized); break;
-			case LayerTypeId::PULL: append_layer<PLayer>(script_normalized); break;
-			default:
-				throw std::exception("Unexpected identifier of the layer type");
+				case LayerTypeId::CONVOLUTION: append_layer<CLayer>(sub_script, prev_layer_out_size); break;
+				case LayerTypeId::FULL: append_layer<NLayer>(sub_script, prev_layer_out_size); break;
+				case LayerTypeId::PULL: append_layer<PLayer>(sub_script, prev_layer_out_size); break;
+				default:
+					throw std::exception("Unexpected identifier of the layer type");
+			}
+
+			// sanity checks
+			if (prev_layer_out_size.coord_prod() >= 0)
+			{
+				const auto in_size = _layers.rbegin()->layer().in_size();
+
+				if ((layer_type_id != LayerTypeId::FULL && prev_layer_out_size != in_size) ||
+					(layer_type_id == LayerTypeId::FULL && prev_layer_out_size.coord_prod() != in_size.coord_prod()))
+					throw std::exception((std::string("Inconsistent input/output dimensions : ") + sub_script).c_str());
 			}
 
 			prev_layer_out_size = _layers.rbegin()->layer().out_size();
@@ -498,7 +492,7 @@ namespace DeepLearning
 		std::string result;
 
 		for (const auto& layer_handel : _layers)
-			result +=  DeepLearning::to_string(layer_handel.layer().get_type_id()) + ";" + layer_handel.layer().to_script() + '\n';
+			result +=  DeepLearning::to_string(layer_handel.layer().get_type_id()) + " " + layer_handel.layer().to_script() + '\n';
 
 		return result;
 	}

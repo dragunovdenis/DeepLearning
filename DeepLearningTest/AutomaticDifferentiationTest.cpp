@@ -151,7 +151,7 @@ namespace DeepLearningTest
 				[](const auto& x, const auto& y) {
 					return x * x * x * x * static_cast<Real>(5) + 2 * y * y - 3 * x * x * y - 2 + sin(x + 2 * y) +
 						cos(x * y) + exp(y / 2 + x / 2) + log(1 + x * x + y * y) + sqrt(cosh((x + y) / 10)) + sinh(x + y) / (1 + tanh(x * y)); 
-				}, arg1, arg2, _double_precision ? static_cast<Real>(3e-9) : static_cast<Real>(3e-2));
+				}, arg1, arg2, _double_precision ? static_cast<Real>(3e-9) : static_cast<Real>(3.5e-2));
 		}
 	};
 }

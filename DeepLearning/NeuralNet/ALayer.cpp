@@ -17,14 +17,10 @@
 
 #include "ALayer.h"
 #include "../Utilities.h"
+#include <nlohmann/json.hpp>
 
 namespace DeepLearning
 {
-	/// <summary>
-	///	Tag used in the script representation of the layer to denote its "one minus drop-out rate" value
-	/// </summary>
-	const std::string KeepTag = "KEEP";
-
 	template <class D>
 	void ALayer<D>::SetUpDropoutMask() const
 	{
@@ -58,8 +54,10 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	ALayer<D>::ALayer(const Real keep_rate) : _keep_rate(keep_rate)
-	{}
+	ALayer<D>::ALayer(const Real keep_rate, const ActivationFunctionId func_id) : _keep_rate(keep_rate)
+	{
+		set_func_id(func_id);
+	}
 
 	namespace
 	{
@@ -73,30 +71,80 @@ namespace DeepLearning
 	}
 
 	template <class D>
+	const AFunction<typename D::tensor_t>& ALayer<D>::get_func() const
+	{
+		return *_func;
+	}
+
+	template <class D>
+	void ALayer<D>::set_func_id(const ActivationFunctionId func_id)
+	{
+		_func_id = func_id;
+		if (_func_id != ActivationFunctionId::UNKNOWN)
+			_func = ActivationWrapper<typename D::tensor_t >::construct(_func_id);
+		else
+			_func.reset();
+	}
+
+	template <class D>
+	void ALayer<D>::set_keep_rate(const Real keep_rate)
+	{
+		_keep_rate = keep_rate;
+	}
+
+	template <class D>
+	void ALayer<D>::msgpack_unpack(msgpack::object const& msgpack_o)
+	{
+		ActivationFunctionId func_id;
+		auto msg_pack_version = 0;
+		msgpack::type::make_define_array(msg_pack_version, _keep_rate, func_id).msgpack_unpack(msgpack_o);
+		set_func_id(func_id);
+	}
+
+	template <class D>
 	Real ALayer<D>::get_keep_rate() const
 	{
 		return _keep_rate;
 	}
 
+	namespace {
+		const char* json_keep_id = "Keep";
+		const char* json_activation_id = "Activation";
+	}
+
 	template <class D>
 	ALayer<D>::ALayer(const std::string& script)
 	{
-		auto script_normalized = Utils::normalize_string(script);
-		const auto dropout_block_start = script_normalized.find(KeepTag);
+		const auto json = nlohmann::json::parse(script);
 
-		if (dropout_block_start == std::string::npos)
-			_keep_rate = DefaultKeepRate;
+		if (json.contains(json_keep_id))
+			_keep_rate = json[json_keep_id].get<Real>();
 		else
+			_keep_rate = DefaultKeepRate;
+
+		if (json.contains(json_activation_id))
 		{
-			_keep_rate = Utils::str_to_float<Real>(
-				Utils::extract_word(script_normalized, dropout_block_start + KeepTag.size()));
+			const auto func_id = parse_activation_type(json[json_activation_id].get<std::string>());
+			set_func_id(func_id);
 		}
+		else
+			set_func_id(ActivationFunctionId::UNKNOWN);
 	}
+
+	template <class D>
+	std::string ALayer<D>::to_script() const
+	{
+		nlohmann::json json;
+		json[json_keep_id] = _keep_rate;
+		json[json_activation_id] = DeepLearning::to_string(_func_id);
+
+		return json.dump();
+	};
 
 	template <class D>
 	bool ALayer<D>::equal_hyperparams(const ALayer<D>& layer) const
 	{
-		return _keep_rate == layer._keep_rate;
+		return _keep_rate == layer._keep_rate && _func_id == layer._func_id;
 	}
 
 	template <class D>
@@ -112,15 +160,9 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	std::string ALayer<D>::to_script() const
-	{
-		return KeepTag + " " + Utils::float_to_str_exact(_keep_rate) + ";";
-	};
-
-	template <class D>
 	std::string ALayer<D>::to_string() const
 	{
-		return KeepTag + ": " + Utils::to_string(_keep_rate) + ";";
+		return to_script();
 	}
 
 	template class ALayer<CpuDC>;

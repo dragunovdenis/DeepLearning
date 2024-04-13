@@ -23,6 +23,8 @@
 #include <Utilities.h>
 #include <numeric>
 #include "StandardTestUtils.h"
+#include "Math/CudaTensor.cuh"
+#include "Math/Tensor.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;
@@ -32,24 +34,6 @@ namespace DeepLearningTest
 	TEST_CLASS(ActivationFunctionTest)
 	{
 	public:
-		/// <summary>
-		/// Sigmoid function
-		/// </summary>
-		static Real sigmoid(const Real& x)
-		{
-			return static_cast<Real>(1) / (static_cast<Real>(1) + std::exp(-x));
-		}
-
-		/// <summary>
-		/// Derivative of the sigmoid function
-		/// </summary>
-		static Real sigmoid_deriv(const Real& x)
-		{
-			const auto exp_x = std::exp(-x);
-			const auto denominator = (static_cast<Real>(1) + exp_x);
-			return exp_x / (denominator * denominator);
-		}
-
 		TEST_METHOD(SigmoidFunctionTest)
 		{
 			//Arrange
@@ -64,7 +48,7 @@ namespace DeepLearningTest
 
 			for (std::size_t item_id = 0; item_id < vector.dim(); item_id++)
 			{
-				const auto diff = std::abs(result[item_id] - sigmoid(vector[item_id]));
+				const auto diff = std::abs(result[item_id] - Func::sigmoid(vector[item_id]));
 				Logger::WriteMessage((std::string("Difference = ") + std::to_string(diff) + "\n").c_str());
 				Assert::IsTrue(diff < std::numeric_limits<Real>::epsilon(),
 					L"Unexpectedly high deviation from the reference value.");
@@ -109,7 +93,7 @@ namespace DeepLearningTest
 
 			for (std::size_t item_id = 0; item_id < vector.dim(); item_id++)
 			{
-				const auto deriv_diff = std::abs(result_deriv[item_id] - sigmoid_deriv(vector[item_id]));
+				const auto deriv_diff = std::abs(result_deriv[item_id] - Func::sigmoid_deriv(vector[item_id]));
 				Logger::WriteMessage((std::string("Derivative difference = ") + std::to_string(deriv_diff) + "\n").c_str());
 				Assert::IsTrue(deriv_diff < std::numeric_limits<Real>::epsilon(),
 					L"Unexpectedly high deviation from the derivative reference value.");
@@ -127,12 +111,12 @@ namespace DeepLearningTest
 			//Act
 			const auto function = ActivationFunction<CudaVector>(ActivationFunctionId::SIGMOID);
 			const auto [result, result_aux] = function.func_and_aux(vector);
-			const auto result_gradient = function.calc_input_gradient(out_grad, result_aux);
+			const auto result_gradient = function.get_in_grad(out_grad, result_aux);
 
 			//Assert
 			const auto function_host = ActivationFunction<Vector>(ActivationFunctionId::SIGMOID);
 			const auto [result_host, result_aux_host] = function_host.func_and_aux(vector.to_host());
-			const auto result_gradient_host = function_host.calc_input_gradient(out_grad.to_host(), result_aux.to_host());
+			const auto result_gradient_host = function_host.get_in_grad(out_grad.to_host(), result_aux.to_host());
 
 			Assert::IsTrue((result_host - result.to_host()).max_abs() < 10 * std::numeric_limits<Real>::epsilon(), 
 				L"Result: too high deviation from reference");
@@ -200,7 +184,7 @@ namespace DeepLearningTest
 			//Act
 			const auto [soft_max_result, aux_data] = soft_max_activation_func.func_and_aux(input);
 			const auto [cost, gradient] = quadratic_cost_func.func_and_deriv(soft_max_result, reference);
-			const auto activation_input_gradient = soft_max_activation_func.calc_input_gradient(gradient, aux_data);
+			const auto activation_input_gradient = soft_max_activation_func.get_in_grad(gradient, aux_data);
 
 			//Assert
 			const auto soft_max_reference_result = soft_max_reference(input);
@@ -238,15 +222,70 @@ namespace DeepLearningTest
 
 			//Act
 			const auto [soft_max_result, aux_data] = SoftMaxActivationFunction<CudaVector>().func_and_aux(input);
-			const auto activation_input_gradient = SoftMaxActivationFunction<CudaVector>().calc_input_gradient(out_grad, aux_data);
+			const auto activation_input_gradient = SoftMaxActivationFunction<CudaVector>().get_in_grad(out_grad, aux_data);
 
 			//Assert
 			const auto [soft_max_result_host, aux_data_host] = SoftMaxActivationFunction<Vector>().func_and_aux(input.to_host());
-			const auto activation_input_gradient_host = SoftMaxActivationFunction<Vector>().calc_input_gradient(out_grad.to_host(), aux_data.to_host());
+			const auto activation_input_gradient_host = SoftMaxActivationFunction<Vector>().get_in_grad(out_grad.to_host(), aux_data.to_host());
 			const auto diff_func = (soft_max_result.to_host() - soft_max_result_host).max_abs();
 			const auto diff_grad = (activation_input_gradient.to_host() - activation_input_gradient_host).max_abs();
 			Assert::IsTrue(diff_func < std::numeric_limits<Real>::epsilon(), L"Too high deviation between the actual and expected values (function)");
 			Assert::IsTrue(diff_grad < std::numeric_limits<Real>::epsilon(), L"Too high deviation between the actual and expected values (gradient)");
+		}
+
+		/// <summary>
+		/// Runs comparison test between the given function and an instance of
+		/// `ActivationFunction` constructed from the given function identifier.
+		/// </summary>
+		template <class T>
+		static void run_optimized_vs_general_activation_func_test(const AFunction<T>& func, const ActivationFunctionId& func_id)
+		{
+			// Arrange
+			const ActivationFunction<T> reference_func(func_id);
+			const T input(Index3d{ 10, 20, 23 }, -1, 1);
+			Assert::IsTrue(input.max_abs() > 0, L"Input vector is supposed to be nonzero");
+
+			// Act
+			const auto [value_0, derivative] = func.func_and_aux(input);
+			const auto value_1 = func(input);
+
+			// Assert
+			Assert::IsTrue(value_0 == value_1, L"Value vectors produced by the same function must coincide");
+			const auto [value_reference, derivative_reference] = reference_func.func_and_aux(input);
+			const auto value_diff = (value_0 - value_reference).max_abs();
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Value difference", value_diff, 10 * std::numeric_limits<Real>::epsilon());
+			const auto derivative_diff = (derivative - derivative_reference).max_abs();
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Derivative difference", derivative_diff, 10 * std::numeric_limits<Real>::epsilon());
+		}
+
+		TEST_METHOD(ReLuOptimizedVsGeneralTest)
+		{
+			run_optimized_vs_general_activation_func_test(ReLuActivationFunction<Tensor>(), ActivationFunctionId::RELU);
+		}
+
+		TEST_METHOD(SigmoidOptimizedVsGeneralTest)
+		{
+			run_optimized_vs_general_activation_func_test(SigmoidActivationFunction<Tensor>(), ActivationFunctionId::SIGMOID);
+		}
+
+		TEST_METHOD(TanhOptimizedVsGeneralTest)
+		{
+			run_optimized_vs_general_activation_func_test(TanhActivationFunction<Tensor>(), ActivationFunctionId::TANH);
+		}
+
+		TEST_METHOD(ReLuOptimizedVsGeneralCudaTest)
+		{
+			run_optimized_vs_general_activation_func_test(ReLuActivationFunction<CudaTensor>(), ActivationFunctionId::RELU);
+		}
+
+		TEST_METHOD(SigmoidOptimizedVsGeneralCudaTest)
+		{
+			run_optimized_vs_general_activation_func_test(SigmoidActivationFunction<CudaTensor>(), ActivationFunctionId::SIGMOID);
+		}
+
+		TEST_METHOD(TanhOptimizedVsGeneralCudaTest)
+		{
+			run_optimized_vs_general_activation_func_test(TanhActivationFunction<CudaTensor>(), ActivationFunctionId::TANH);
 		}
 	};
 }

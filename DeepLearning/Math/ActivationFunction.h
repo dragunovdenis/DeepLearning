@@ -60,7 +60,7 @@ namespace DeepLearning
 		/// <summary>
 		/// The function
 		/// </summary>
-		virtual T operator ()(const T& input) const = 0;
+		T operator ()(const T& input) const;
 
 		/// <summary>
 		/// Calculates functional value for all the elements of the given input collection in place
@@ -72,7 +72,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Calculates function and auxiliary data needed to calculate gradient with respect to the input
 		/// </summary>
-		virtual std::tuple<T, T> func_and_aux(const T& input) const = 0;
+		std::tuple<T, T> func_and_aux(const T& input) const;
 
 		/// <summary>
 		/// Calculates function and auxiliary data needed to calculate gradient with respect to the input
@@ -88,7 +88,7 @@ namespace DeepLearning
 		/// </summary>
 		/// <param name="out_grad">Gradient with respect to the function's output</param>
 		/// <param name="aux_data">Auxiliary data calculated by function "func_and_aux"</param>
-		virtual T calc_input_gradient(const typename T::Base& out_grad, const T& aux_data) const = 0;
+		T get_in_grad(const typename T::Base& out_grad, const T& aux_data) const;
 
 		/// <summary>
 		/// Calculates gradient with respect to the function's input 
@@ -96,7 +96,7 @@ namespace DeepLearning
 		/// <param name="out_grad">Gradient with respect to the function's output</param>
 		/// <param name="aux_data">Auxiliary data calculated by function "func_and_aux"</param>
 		/// <param name="out">Place-holder for the result of calculation</param>
-		virtual void calc_input_gradient(const typename T::Base& out_grad, const T& aux_data, T& out) const = 0;
+		virtual void calc_in_grad(const typename T::Base& out_grad, const T& aux_data, T& out) const;
 
 		/// <summary>
 		/// Virtual destructor to ensure proper releasing of the resources of descending classes
@@ -110,7 +110,7 @@ namespace DeepLearning
 	template <class T>
 	class ActivationWrapper
 	{
-		std::unique_ptr<AFunction<T>> _func{};
+		std::shared_ptr<AFunction<T>> _func{};
 	public:
 		/// <summary>
 		/// Constructor
@@ -121,6 +121,11 @@ namespace DeepLearning
 		/// Operator to access the reference to "wrapped" function
 		/// </summary>
 		const AFunction<T>& operator()() const;
+
+		/// <summary>
+		/// Factory method.
+		/// </summary>
+		static std::shared_ptr<AFunction<T>> construct(const ActivationFunctionId id);
 	};
 
 	/// <summary>
@@ -194,6 +199,72 @@ namespace DeepLearning
 		/// <param name="result">Placeholder for the calculated gradient. Should be allocated by the caller
 		/// Must be initialized with a copy of "input_exp" by the caller</param>
 		void evaluate_softmax_input_grad(const BasicCudaCollection& input_exp, const BasicCudaCollection& out_grad, BasicCudaCollection& result);
+
+		/// <summary>
+		/// Evaluates ReLu function at each value of the given collection "in-place".
+		/// </summary>
+		void relu_in_place(BasicCudaCollection& collection);
+
+		/// <summary>
+		/// Evaluates ReLu function and its derivative at each value of the given collection
+		/// "in-place" (the derivative is stored in the other given collection-container).
+		/// </summary>
+		void relu_in_place(BasicCudaCollection& collection_func, BasicCudaCollection& collection_deriv);
+
+		/// <summary>
+		/// Evaluates ReLu function at each value of the given collection "in-place".
+		/// </summary>
+		void relu_in_place(BasicCollection& collection);
+
+		/// <summary>
+		/// Evaluates Sigmoid function and its derivative at each value of the given collection
+		/// "in-place" (the derivative is stored in the other given collection-container).
+		/// </summary>
+		void relu_in_place(BasicCollection& collection_func, BasicCollection& collection_deriv);
+
+		/// <summary>
+		/// Evaluates Sigmoid function at each value of the given collection "in-place".
+		/// </summary>
+		void sigmoid_in_place(BasicCudaCollection& collection);
+
+		/// <summary>
+		/// Evaluates Sigmoid function and its derivative at each value of the given collection
+		/// "in-place" (the derivative is stored in the other given collection-container).
+		/// </summary>
+		void sigmoid_in_place(BasicCudaCollection& collection_func, BasicCudaCollection& collection_deriv);
+
+		/// <summary>
+		/// Evaluates Sigmoid function at each value of the given collection "in-place".
+		/// </summary>
+		void sigmoid_in_place(BasicCollection& collection);
+
+		/// <summary>
+		/// Evaluates Sigmoid function and its derivative at each value of the given collection
+		/// "in-place" (the derivative is stored in the other given collection-container).
+		/// </summary>
+		void sigmoid_in_place(BasicCollection& collection_func, BasicCollection& collection_deriv);
+
+		/// <summary>
+		/// Evaluates Tanh function at each value of the given collection "in-place".
+		/// </summary>
+		void tanh_in_place(BasicCudaCollection& collection);
+
+		/// <summary>
+		/// Evaluates Tanh function and its derivative at each value of the given collection
+		/// "in-place" (the derivative is stored in the other given collection-container).
+		/// </summary>
+		void tanh_in_place(BasicCudaCollection& collection_func, BasicCudaCollection& collection_deriv);
+
+		/// <summary>
+		/// Evaluates Tanh function at each value of the given collection "in-place".
+		/// </summary>
+		void tanh_in_place(BasicCollection& collection);
+
+		/// <summary>
+		/// Evaluates Tanh function and its derivative at each value of the given collection
+		/// "in-place" (the derivative is stored in the other given collection-container).
+		/// </summary>
+		void tanh_in_place(BasicCollection& collection_func, BasicCollection& collection_deriv);
 	}
 
 	/// <summary>
@@ -211,40 +282,18 @@ namespace DeepLearning
 		ActivationFunction(const ActivationFunctionId id);
 
 		/// <summary>
-		/// The function
-		/// </summary>
-		T operator ()(const T& input) const override;
-
-		/// <summary>
 		/// See the summary of the corresponding method in the base class
 		/// </summary>
 		void func_in_place(T& in_out) const override;
 
 		/// <summary>
-		/// Calculates function and auxiliary data needed to calculate gradient with respect to the input
-		/// </summary>
-		std::tuple<T, T> func_and_aux(const T& input) const override;
-
-		/// <summary>
 		/// See the summary of the corresponding method in the base class
 		/// </summary>
 		void func_and_aux_in_place(T& in_out, T& aux) const override;
-
-		/// <summary>
-		/// Calculates gradient with respect to the function's input 
-		/// </summary>
-		/// <param name="out_grad">Gradient with respect to the function's output</param>
-		/// <param name="aux_data">Auxiliary data calculated by function "func_and_aux"</param>
-		T calc_input_gradient(const typename T::Base& out_grad, const T& aux_data) const override;
-
-		/// <summary>
-		/// See the summary of the corresponding method in the base class
-		/// </summary>
-		void calc_input_gradient(const typename T::Base& out_grad, const T& aux_data, T& result) const override;
 	};
 
 	/// <summary>
-	/// Sort-max activation function
+	/// Soft-max activation function
 	/// </summary>
 	template <class T>
 	class SoftMaxActivationFunction : public AFunction<T>
@@ -257,19 +306,9 @@ namespace DeepLearning
 		SoftMaxActivationFunction() = default;
 
 		/// <summary>
-		/// The function
-		/// </summary>
-		T operator ()(const T& input) const override;
-
-		/// <summary>
 		/// See the summary of the corresponding method in the base class
 		/// </summary>
 		void func_in_place(T& in_out) const override;
-
-		/// <summary>
-		/// Calculates function and auxiliary data needed to calculate gradient with respect to the input
-		/// </summary>
-		std::tuple<T, T> func_and_aux(const T& input) const override;
 
 		/// <summary>
 		/// See the summary of the corresponding method in the base class
@@ -277,16 +316,81 @@ namespace DeepLearning
 		void func_and_aux_in_place(T& in_out, T& aux) const override;
 
 		/// <summary>
-		/// Calculates gradient with respect to the function's input 
+		/// See the summary of the corresponding method in the base class
 		/// </summary>
-		/// <param name="out_grad">Gradient with respect to the function's output</param>
-		/// <param name="aux_data">Auxiliary data calculated by function "func_and_aux"</param>
-		T calc_input_gradient(const typename T::Base& out_grad, const T& aux_data) const override;
+		void calc_in_grad(const typename T::Base& out_grad, const T& aux_data, T& result) const override;
+	};
+
+	/// <summary>
+	/// ReLu activation function
+	/// </summary>
+	template <class T>
+	class ReLuActivationFunction : public AFunction<T>
+	{
+	public:
+
+		/// <summary>
+		/// Default constructor
+		/// </summary>
+		ReLuActivationFunction() = default;
 
 		/// <summary>
 		/// See the summary of the corresponding method in the base class
 		/// </summary>
-		void calc_input_gradient(const typename T::Base& out_grad, const T& aux_data, T& result) const override;
+		void func_in_place(T& in_out) const override;
+
+		/// <summary>
+		/// See the summary of the corresponding method in the base class
+		/// </summary>
+		void func_and_aux_in_place(T& in_out, T& aux) const override;
+	};
+
+	/// <summary>
+	/// Sigmoid activation function
+	/// </summary>
+	template <class T>
+	class SigmoidActivationFunction : public AFunction<T>
+	{
+	public:
+
+		/// <summary>
+		/// Default constructor
+		/// </summary>
+		SigmoidActivationFunction() = default;
+
+		/// <summary>
+		/// See the summary of the corresponding method in the base class
+		/// </summary>
+		void func_in_place(T& in_out) const override;
+
+		/// <summary>
+		/// See the summary of the corresponding method in the base class
+		/// </summary>
+		void func_and_aux_in_place(T& in_out, T& aux) const override;
+	};
+
+	/// <summary>
+	/// "Tangent hyperbolic" activation function
+	/// </summary>
+	template <class T>
+	class TanhActivationFunction : public AFunction<T>
+	{
+	public:
+
+		/// <summary>
+		/// Default constructor
+		/// </summary>
+		TanhActivationFunction() = default;
+
+		/// <summary>
+		/// See the summary of the corresponding method in the base class
+		/// </summary>
+		void func_in_place(T& in_out) const override;
+
+		/// <summary>
+		/// See the summary of the corresponding method in the base class
+		/// </summary>
+		void func_and_aux_in_place(T& in_out, T& aux) const override;
 	};
 }
 

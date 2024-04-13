@@ -22,6 +22,7 @@
 #include "LayerTypeId.h"
 #include "DataContext.h"
 #include "LayerGradient.h"
+#include "../Math/ActivationFunction.h"
 
 namespace DeepLearning
 {
@@ -47,6 +48,16 @@ namespace DeepLearning
 		/// </summary>
 		static constexpr Real DefaultKeepRate = static_cast<Real>(1);
 
+		std::shared_ptr<AFunction<typename D::tensor_t>> _func{};
+		ActivationFunctionId _func_id = ActivationFunctionId::UNKNOWN;
+
+		int _msg_pack_version = 1;
+
+		/// <summary>
+		/// One minus dropout rate
+		/// </summary>
+		Real _keep_rate = DefaultKeepRate;
+
 	protected:
 
 		/// <summary>
@@ -55,11 +66,35 @@ namespace DeepLearning
 		static std::mt19937& ran_gen();
 
 		/// <summary>
-		/// One minus dropout rate
+		/// Returns constant reference to the activation function
 		/// </summary>
-		Real _keep_rate = DefaultKeepRate;
+		const AFunction<typename D::tensor_t>& get_func() const;
+
+		/// <summary>
+		/// Method to set id of the activation function. Instantiates the corresponding function.
+		/// </summary>
+		void set_func_id(const ActivationFunctionId func_id);
+
+		/// <summary>
+		/// Sets the value of "keep rate".
+		/// </summary>
+		void set_keep_rate(const Real keep_rate);
 
 	public:
+
+		/// <summary>
+		/// Custom "unpacking" method
+		/// </summary>
+		void msgpack_unpack(msgpack::object const& msgpack_o);
+
+		/// <summary>
+		/// Custom "packing" method
+		/// </summary>
+		template <typename Packer>
+		void msgpack_pack(Packer& msgpack_pk) const
+		{
+			msgpack::type::make_define_array(_msg_pack_version, _keep_rate, _func_id).msgpack_pack(msgpack_pk);
+		}
 
 		/// <summary>
 		/// Getter for the "keep rate" property
@@ -71,7 +106,8 @@ namespace DeepLearning
 		/// </summary>
 		/// <param name="keep_rate">One minus "dropout" rate, is supposed to be in (0, 1]. Keep rate "1.0" means that
 		/// no dropout will be used</param>
-		ALayer(const Real keep_rate);
+		/// <param name="func_id">ID of the activation function</param>
+		ALayer(const Real keep_rate, const ActivationFunctionId func_id = ActivationFunctionId::UNKNOWN);
 
 		/// <summary>
 		/// Default constructor

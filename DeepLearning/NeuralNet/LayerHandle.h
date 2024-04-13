@@ -16,7 +16,6 @@
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #pragma once
-#include <msgpack.hpp>
 #include <memory>
 #include "ALayer.h"
 #include "NLayer.h"

@@ -45,6 +45,8 @@ namespace DeepLearning
 		/// <param name="pool_operator_id">Identifier of the pooling operation to be used by the layer</param>
 		void initialize(const Index3d& in_size, const Index2d& pool_window_size, const PoolTypeId pool_operator_id);
 
+		int _msg_pack_version = 1;
+
 	public:
 
 		/// <summary>
@@ -52,7 +54,22 @@ namespace DeepLearning
 		/// </summary>
 		static LayerTypeId ID() { return LayerTypeId::PULL; }
 
-		MSGPACK_DEFINE(this->_keep_rate, _in_size, _pool_window_size, _strides, _pool_operator_id);
+		//MSGPACK_DEFINE(this->_keep_rate, _in_size, _pool_window_size, _strides, _pool_operator_id);
+
+		/// <summary>
+		/// Custom "unpacking" method
+		/// </summary>
+		void msgpack_unpack(msgpack::object const& msgpack_o);
+
+		/// <summary>
+		/// Custom "packing" method
+		/// </summary>
+		template <typename Packer>
+		void msgpack_pack(Packer& msgpack_pk) const
+		{
+			msgpack::type::make_define_array(_msg_pack_version, MSGPACK_BASE(ALayer<D>),
+				_in_size, _pool_window_size, _strides, _pool_operator_id).msgpack_pack(msgpack_pk);
+		}
 
 		/// <summary>
 		/// Default constructor
@@ -73,7 +90,7 @@ namespace DeepLearning
 		/// Constructor to instantiate layer from the given string of certain format
 		/// </summary>
 		/// <param name="str"></param>
-		PLayer(const std::string& str);
+		PLayer(const std::string& str, const Index3d& default_in_size = Index3d::zero());
 
 		/// <summary>
 		/// Size of the layer's input

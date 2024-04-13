@@ -17,7 +17,6 @@
 
 #pragma once
 #include "ALayer.h"
-#include "../Math/ActivationFunction.h"
 #include "../Math/Tensor.h"
 #include "../Math/LinAlg2d.h"
 #include <vector>
@@ -36,19 +35,11 @@ namespace DeepLearning
 		Index3d _weight_tensor_size{};
 		Index3d _paddings{};
 		Index3d _strides{};
-		ActivationFunctionId _func_id = ActivationFunctionId::UNKNOWN;
 
 		//Declare "friends" to be able to switch between the data contexts
 		//(see 'to_host()' and 'to_device()' methods)
 		friend class CLayer<CpuDC>;
 		friend class CLayer<GpuDC>;
-
-		/// <summary>
-		/// Copies all the field from the source to destination instance accept those that might
-		/// require "host-to-device" or "device-to-host" copy operations
-		/// </summary>
-		template <class D1, class D2>
-		static void partial_copy(const CLayer<D1>& src, CLayer<D2>& dest);
 
 		/// <summary>
 		/// Biases
@@ -66,11 +57,13 @@ namespace DeepLearning
 		/// <param name="in_size">Input size of the layer</param>
 		/// <param name="filter_window_size">2d window size of a single filter</param>
 		/// <param name="filters_count">Number of filters (that defines number of output channels)</param>
-		/// <param name="func_id">Identifier of an activation function to use</param>
 		/// <param name="paddings">Zero paddings to be applied to the input tensor when running convolution with the filters</param>
 		/// <param name="strides">Stride used in the convolution</param>
 		void initialize(const Index3d& in_size, const Index2d& filter_window_size,
-			const std::size_t& filters_count, const ActivationFunctionId func_id, const Index3d& paddings, const Index3d& strides);
+			const std::size_t& filters_count, const Index3d& paddings, const Index3d& strides);
+
+		int _msg_pack_version = 1;
+
 	public:
 
 		/// <summary>
@@ -78,7 +71,21 @@ namespace DeepLearning
 		/// </summary>
 		static LayerTypeId ID() { return LayerTypeId::CONVOLUTION; }
 
-		MSGPACK_DEFINE(this->_keep_rate, _in_size, _weight_tensor_size, _paddings, _strides, _func_id, _biases, _filters);
+		/// <summary>
+		/// Custom "unpacking" method
+		/// </summary>
+		void msgpack_unpack(msgpack::object const& msgpack_o);
+
+		/// <summary>
+		/// Custom "packing" method
+		/// </summary>
+		template <typename Packer>
+		void msgpack_pack(Packer& msgpack_pk) const
+		{
+			msgpack::type::make_define_array(_msg_pack_version, MSGPACK_BASE(ALayer<D>),
+				_in_size, _weight_tensor_size, _paddings, _strides, _biases, _filters).msgpack_pack(msgpack_pk);
+		}
+
 
 		/// <summary>
 		/// See description in the base class
@@ -117,7 +124,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Constructor to instantiate layer from the given string of certain format
 		/// </summary>
-		CLayer(const std::string& str);
+		CLayer(const std::string& str, const Index3d& default_in_size = Index3d::zero());
 
 		/// <summary>
 		/// See description in the base class

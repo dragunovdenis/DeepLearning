@@ -19,11 +19,12 @@
 #include "../Math/ActivationFunction.h"
 #include <exception>
 #include "../Utilities.h"
+#include <nlohmann/json.hpp>
 
 namespace DeepLearning
 {
 	template <class D>
-	void NLayer<D>::initialize(const std::size_t in_dim, const std::size_t out_dim, ActivationFunctionId func_id,
+	void NLayer<D>::initialize(const std::size_t in_dim, const std::size_t out_dim,
 		const Real rand_low, const Real rand_high, const bool standard_init_for_weights)
 	{
 		auto ran_gen_ptr = &ALayer<D>::ran_gen();
@@ -36,41 +37,62 @@ namespace DeepLearning
 		}
 		else
 			_weights = typename D::matrix_t(out_dim, in_dim, rand_low, rand_high, ran_gen_ptr);
-
-		_func_id = func_id;
 	}
 
 	template<class D>
 	NLayer<D>::NLayer(const std::size_t in_dim, const std::size_t out_dim, ActivationFunctionId func_id,
-		const Real rand_low, const Real rand_high, const bool standard_init_for_weights, const Real keep_rate) : ALayer<D>(keep_rate)
+		const Real rand_low, const Real rand_high, const bool standard_init_for_weights, const Real keep_rate) : ALayer<D>(keep_rate, func_id)
 	{
-		initialize(in_dim, out_dim, func_id, rand_low, rand_high, standard_init_for_weights);
+		initialize(in_dim, out_dim, rand_low, rand_high, standard_init_for_weights);
+	}
+
+	namespace {
+		const char* json_in_size_id = "InSize";
+		const char* json_out_size_id = "OutSize";
 	}
 
 	template <class D>
-	NLayer<D>::NLayer(const std::string& str) : ALayer<D>(str)
+	NLayer<D>::NLayer(const std::string& str, const Index3d& default_in_size) : ALayer<D>(str)
 	{
-		auto str_norm = Utils::normalize_string(str);
+		const auto json = nlohmann::json::parse(str);
 
-		Index3d temp;
-		if (!Utils::try_extract_vector(str_norm, temp))
-			throw std::exception("Can't parse input dimensions of NLayer");
+		const auto in_size = json.contains(json_in_size_id) ?
+			Utils::extract_vector<Index3d>(json[json_in_size_id].get<std::string>()).coord_prod() :
+			default_in_size.coord_prod();
 
-		const auto in_dim = temp.coord_prod();
-
-		if (!Utils::try_extract_vector(str_norm, temp))
+		const auto out_size = json.contains(json_out_size_id) ?
+			Utils::extract_vector<Index3d>(json[json_out_size_id].get<std::string>()).coord_prod() :
 			throw std::exception("Can't parse output dimensions of NLayer");
 
-		if (temp.x != 1ll || temp.y != 1ll || temp.z <= 0ll)
-			throw std::exception("Invalid output dimensions of NLayer");
+		initialize(in_size, out_size, static_cast<Real>(-1), static_cast<Real>(1), true);
+	}
 
-		const auto out_dim = temp.z;
+	template <class D>
+	std::string NLayer<D>::to_script() const
+	{
+		nlohmann::json json = nlohmann::json::parse(ALayer<D>::to_script());;
+		json[json_in_size_id] = in_size().to_string();
+		json[json_out_size_id] = out_size().to_string();
 
-		const auto func_id = parse_activation_type(Utils::extract_word(str_norm));
-		if (func_id == ActivationFunctionId::UNKNOWN)
-			throw std::exception("Failed to parse activation function type of NLayer");
+		return json.dump();
+	}
 
-		initialize(in_dim, out_dim, func_id, Real(-1), Real(1), true);
+	template <class D>
+	void NLayer<D>::msgpack_unpack(msgpack::object const& msgpack_o)
+	{
+		try
+		{
+			auto msg_pack_version = 0;
+			msgpack::type::make_define_array(msg_pack_version, MSGPACK_BASE(ALayer<D>), _biases, _weights).msgpack_unpack(msgpack_o);
+		} catch (...)
+		{
+			// to preserve backward compatibility
+			Real keep_rate = - 1;
+			auto func_id = ActivationFunctionId::UNKNOWN;
+			msgpack::type::make_define_array(keep_rate, _biases, _weights, func_id).msgpack_unpack(msgpack_o);
+			this->set_keep_rate(keep_rate);
+			this->set_func_id(func_id);
+		}
 	}
 
 	template <class D>
@@ -94,17 +116,15 @@ namespace DeepLearning
 	template <class D>
 	void NLayer<D>::act(const typename D::tensor_t& input, typename D::tensor_t& output, typename ALayer<D>::AuxLearningData* const aux_learning_data_ptr) const
 	{
-		const auto function = ActivationWrapper<typename D::tensor_t>(_func_id);
-
 		output.resize(out_size());
 		_weights.mul_add(input, _biases, output);
 
 		if (aux_learning_data_ptr)
 		{
 			aux_learning_data_ptr->Input = input;
-			function().func_and_aux_in_place(output, aux_learning_data_ptr->Derivatives);
+			this->get_func().func_and_aux_in_place(output, aux_learning_data_ptr->Derivatives);
 		} else
-			function().func_in_place(output);
+			this->get_func().func_in_place(output);
 	}
 
 	template <class D>
@@ -128,8 +148,7 @@ namespace DeepLearning
 		auto& pure_bias_grad = nontrivial_scaling ? bias_shared.
 			get_resized(layer_grad.Biases_grad.size_3d()) : layer_grad.Biases_grad;
 
-		const auto function = ActivationWrapper<typename D::tensor_t>(_func_id);
-		function().calc_input_gradient(deltas, aux_learning_data.Derivatives, pure_bias_grad);
+		this->get_func().calc_in_grad(deltas, aux_learning_data.Derivatives, pure_bias_grad);
 
 		if (nontrivial_scaling)
 		{
@@ -200,8 +219,7 @@ namespace DeepLearning
 	template <class D>
 	std::string NLayer<D>::to_string() const
 	{
-		return DeepLearning::to_string(NLayer::ID()) + "; Input size: " + in_size().to_string() + "; Out size: " + out_size().to_string() + 
-			"; Activation: " + DeepLearning::to_string(_func_id) +";" + ALayer<D>::to_string();
+		return DeepLearning::to_string(NLayer::ID()) + "; " + to_script();
 	}
 
 	template <class D>
@@ -209,7 +227,7 @@ namespace DeepLearning
 	{
 		const auto other_nlayer_ptr = dynamic_cast<const NLayer*>(&layer);
 		return other_nlayer_ptr != nullptr && ALayer<D>::equal_hyperparams(layer)
-		&& in_size() == layer.in_size() && out_size() == layer.out_size() && _func_id == other_nlayer_ptr->_func_id;
+		&& in_size() == layer.in_size() && out_size() == layer.out_size();
 	}
 
 	template <class D>
@@ -221,13 +239,6 @@ namespace DeepLearning
 		//no need to check if the casted value is null because the check is done in the "hyperparams" function
 		const auto other_nlayer_ptr = dynamic_cast<const NLayer*>(&layer); 
 		return other_nlayer_ptr->_weights == _weights && other_nlayer_ptr->_biases == _biases;
-	}
-
-	template <class D>
-	std::string NLayer<D>::to_script() const
-	{
-		return in_size().to_string() + out_size().to_string() + ";" +
-			DeepLearning::to_string(_func_id) + ";" + ALayer<D>::to_script();
 	}
 
 	template <class D>
@@ -251,11 +262,10 @@ namespace DeepLearning
 	template <>
 	NLayer<CpuDC> NLayer<GpuDC>::to_host() const
 	{
-		NLayer<CpuDC> result;
+		NLayer<CpuDC> result(to_script());
 
 		result._biases = _biases.to_host();
 		result._weights = _weights.to_host();
-		result._func_id = _func_id;
 
 		return result;
 	}
@@ -269,11 +279,10 @@ namespace DeepLearning
 	template<>
 	NLayer<GpuDC> NLayer<CpuDC>::to_device() const
 	{
-		NLayer<GpuDC> result;
+		NLayer<GpuDC> result(to_script());
 
 		result._biases.assign(_biases);
 		result._weights.assign(_weights);
-		result._func_id = _func_id;
 
 		return result;
 	}
