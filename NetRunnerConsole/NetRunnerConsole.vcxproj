@@ -135,7 +135,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>cudart_static.lib;bin\$(Platform)\$(Configuration)\ManagedToUnmanagedBridge.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>cudart.lib;bin\$(Platform)\$(Configuration)\ManagedToUnmanagedBridge.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
@@ -166,7 +166,7 @@ copy /Y "..\$(Platform)\$(Configuration)\ScottPlotWrapper.dll" "bin\$(Platform)\
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>cudart_static.lib;bin\$(Platform)\$(Configuration)\ManagedToUnmanagedBridge.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>cudart.lib;bin\$(Platform)\$(Configuration)\ManagedToUnmanagedBridge.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
@@ -195,6 +195,7 @@ copy /Y "..\$(Platform)\$(Configuration)\ScottPlotWrapper.dll" "bin\$(Platform)\
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>..\DeepLearning;$(SolutionDir)\packages\tclap.1.2.1\build\native\include\tclap;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -229,6 +230,7 @@ copy /Y "..\$(Platform)\$(Configuration)\ScottPlotWrapper.dll" "bin\$(Platform)\
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>..\DeepLearning;$(SolutionDir)\packages\tclap.1.2.1\build\native\include\tclap;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -263,6 +265,7 @@ copy /Y "..\$(Platform)\$(Configuration)\ScottPlotWrapper.dll" "bin\$(Platform)\
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>..\DeepLearning;$(SolutionDir)\packages\tclap.1.2.1\build\native\include\tclap;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -297,6 +300,7 @@ copy /Y "..\$(Platform)\$(Configuration)\ScottPlotWrapper.dll" "bin\$(Platform)\
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>..\DeepLearning;$(SolutionDir)\packages\tclap.1.2.1\build\native\include\tclap;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

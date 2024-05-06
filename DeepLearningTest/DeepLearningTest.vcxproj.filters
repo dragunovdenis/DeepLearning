@@ -99,6 +99,9 @@
     <None Include="TestData\Regression\reference_net.dat">
       <Filter>TestData\Regression</Filter>
     </None>
+    <None Include="TestData\Regression\reference_net_single.dat">
+      <Filter>TestData\Regression</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="StandardTestUtils.h">
