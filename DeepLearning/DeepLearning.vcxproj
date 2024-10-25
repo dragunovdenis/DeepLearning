@@ -76,7 +76,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
-    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 11.7.props" />
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 12.6.props" />
   </ImportGroup>
   <ImportGroup Label="Shared">
   </ImportGroup>
@@ -381,7 +381,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="$(SolutionDir)\packages\msgpack-c-cpp-3.1.1-winsoft666.1.0.0.2\build\native\msgpack-c-cpp-3.1.1-winsoft666.targets" Condition="Exists('$(SolutionDir)\packages\msgpack-c-cpp-3.1.1-winsoft666.1.0.0.2\build\native\msgpack-c-cpp-3.1.1-winsoft666.targets')" />
-    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 11.7.targets" />
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 12.6.targets" />
     <Import Project="$(SolutionDir)\packages\nlohmann.json.3.11.2\build\native\nlohmann.json.targets" Condition="Exists('$(SolutionDir)\packages\nlohmann.json.3.11.2\build\native\nlohmann.json.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

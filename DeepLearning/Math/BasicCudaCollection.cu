@@ -176,7 +176,7 @@ namespace DeepLearning
 	Real BasicCudaCollection::sum_of_squares() const
 	{
 		const auto result = thrust::transform_reduce(thrust::cuda::par.on(cudaStreamPerThread), begin(), end(),
-			[]__device__(const auto & x) { return x * x; }, static_cast<Real>(0), thrust::plus<Real>());
+			[]__host__ __device__(const Real & x) { return x * x; }, static_cast<Real>(0), thrust::plus<Real>());
 		CUDA_SANITY_CHECK
 		return result;
 	}

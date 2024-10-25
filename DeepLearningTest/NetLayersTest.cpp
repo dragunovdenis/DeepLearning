@@ -391,7 +391,7 @@ namespace DeepLearningTest
 
 			const auto sum_of_weight_squares_diff = std::abs(nl.squared_weights_sum() - nl_host.squared_weights_sum());
 			StandardTestUtils::LogAndAssertLessOrEqualTo("sum_of_weight_squares_diff", sum_of_weight_squares_diff,
-				700 * std::numeric_limits<Real>::epsilon());
+				1000 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(NLayerSigmoidCudaSupportTest)

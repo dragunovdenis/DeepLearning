@@ -16,6 +16,7 @@
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "CudaSetup.h"
+#include <exception>
 
 namespace DeepLearning
 {
@@ -26,6 +27,19 @@ namespace DeepLearning
 	/// in a hard-to-diagnose bugs
 	/// </summary>
 	thread_local CudaSetup CudaSetup::_instance = CudaSetup();
+
+	/// <summary>
+	/// Returns ID of the current CUDA device in the current thread.
+	/// </summary>
+	int get_current_device()
+	{
+		int result;
+
+		if (cudaGetDevice(&result) != cudaSuccess)
+			throw std::exception("Can't get current CUDA device");
+
+		return result;
+	}
 
 	CudaSetup::CudaSetup()
 	{
@@ -58,7 +72,7 @@ namespace DeepLearning
 			}
 		}
 
-		if (device_best_score_id >= 0)
+		if (device_best_score_id >= 0 && get_current_device() != device_best_score_id)
 			cudaSetDevice(device_best_score_id);
 	}
 
