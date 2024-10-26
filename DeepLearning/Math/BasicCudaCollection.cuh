@@ -20,6 +20,7 @@
 #include <random>
 #include "../defs.h"
 #include <vector>
+#include "CostFunctionHelperCuda.cuh"
 #include "../Memory/MemHandle.h"
 #include "LinAlg3d.h"
 
@@ -63,6 +64,9 @@ namespace DeepLearning
 		void take_over_resources(BasicCudaCollection&& collection);
 
 	public:
+
+		using CostFuncHelper = CostFunctionHelperCuda;
+
 		/// <summary>
 		/// Reallocates memory of the collection to meet the given number of elements
 		/// (if the current "capacity" is lower than the given "new" size)

@@ -58,6 +58,12 @@
     <Filter Include="Header Files\Math\Optimization">
       <UniqueIdentifier>{5d66a378-2377-41fd-abe1-0faab0dac4a8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Math\CostFunction">
+      <UniqueIdentifier>{6f6b990e-6a24-4879-afa3-9e3ef1fce0d0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Math\CostFunction">
+      <UniqueIdentifier>{01edde00-fbb7-4c9e-8cf4-4c25cd0c85b9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="defs.h">
@@ -97,9 +103,6 @@
       <Filter>Header Files\NeuralNet</Filter>
     </ClInclude>
     <ClInclude Include="Math\DiffFunc.h">
-      <Filter>Header Files\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\CostFunction.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
     <ClInclude Include="NeuralNet\Net.h">
@@ -204,6 +207,24 @@
     <ClInclude Include="RandomGenerator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Math\CostFunctionHelperCuda.cuh">
+      <Filter>Header Files\Math\CUDA</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\CostFunction.h">
+      <Filter>Header Files\Math\CostFunction</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\CostFunctionFactory.h">
+      <Filter>Header Files\Math\CostFunction</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\CostFunctionHelper.h">
+      <Filter>Header Files\Math\CostFunction</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\CostFunctionId.h">
+      <Filter>Header Files\Math\CostFunction</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\CostFunction.inl">
+      <Filter>Header Files\Math\CostFunction</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Matrix.cpp">
@@ -231,9 +252,6 @@
       <Filter>Source Files\NeuralNet</Filter>
     </ClCompile>
     <ClCompile Include="Math\DiffFunc.cpp">
-      <Filter>Source Files\Math</Filter>
-    </ClCompile>
-    <ClCompile Include="Math\CostFunction.cpp">
       <Filter>Source Files\Math</Filter>
     </ClCompile>
     <ClCompile Include="NeuralNet\Net.cpp">
@@ -299,6 +317,12 @@
     <ClCompile Include="RandomGenerator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Math\CostFunctionId.cpp">
+      <Filter>Source Files\Math\CostFunction</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\CostFunctionHelper.cpp">
+      <Filter>Source Files\Math\CostFunction</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -322,7 +346,7 @@
     <CudaCompile Include="Math\ActivationFunction.cu">
       <Filter>Source Files\Math\CUDA</Filter>
     </CudaCompile>
-    <CudaCompile Include="Math\CostFunction.cu">
+    <CudaCompile Include="Math\CostFunctionHelperCuda.cu">
       <Filter>Source Files\Math\CUDA</Filter>
     </CudaCompile>
   </ItemGroup>

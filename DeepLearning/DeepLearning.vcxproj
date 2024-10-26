@@ -296,7 +296,11 @@
     <ClInclude Include="Math\BasicCudaCollection.cuh" />
     <ClInclude Include="Math\CollectionArithmetics.h" />
     <ClInclude Include="Math\ConvolutionUtils.h" />
+    <ClInclude Include="Math\CostFunctionHelperCuda.cuh" />
     <ClInclude Include="Math\CostFunction.h" />
+    <ClInclude Include="Math\CostFunctionFactory.h" />
+    <ClInclude Include="Math\CostFunctionHelper.h" />
+    <ClInclude Include="Math\CostFunctionId.h" />
     <ClInclude Include="Math\CudaArray.cuh" />
     <ClInclude Include="Math\CudaMatrix.cuh" />
     <ClInclude Include="Math\CudaTensor.cuh" />
@@ -338,8 +342,10 @@
     <ClCompile Include="Math\AvxAcceleration.cpp" />
     <ClCompile Include="Math\BasicCollection.cpp" />
     <ClCompile Include="Math\ConvolutionUtils.cpp" />
-    <ClCompile Include="Math\CostFunction.cpp" />
+    <ClInclude Include="Math\CostFunction.inl" />
     <ClInclude Include="Math\CudaSetup.h" />
+    <ClCompile Include="Math\CostFunctionHelper.cpp" />
+    <ClCompile Include="Math\CostFunctionId.cpp" />
     <ClCompile Include="Math\CudaSetup.cpp" />
     <ClCompile Include="Math\LinAlg2d.cpp" />
     <ClCompile Include="Math\LinAlg3d.cpp" />
@@ -372,7 +378,7 @@
   <ItemGroup>
     <CudaCompile Include="Math\ActivationFunction.cu" />
     <CudaCompile Include="Math\BasicCudaCollection.cu" />
-    <CudaCompile Include="Math\CostFunction.cu" />
+    <CudaCompile Include="Math\CostFunctionHelperCuda.cu" />
     <CudaCompile Include="Math\CudaMatrix.cu" />
     <CudaCompile Include="Math\CudaTensor.cu" />
     <CudaCompile Include="Math\CudaUtils.cu" />

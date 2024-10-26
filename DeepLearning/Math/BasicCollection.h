@@ -19,6 +19,7 @@
 #include "../defs.h"
 #include <functional>
 #include <random>
+#include "CostFunctionHelper.h"
 #include "../Memory/MemHandle.h"
 #include "LinAlg3d.h"
 
@@ -67,6 +68,9 @@ namespace DeepLearning
 		BasicCollection();
 
 	public:
+
+		using CostFuncHelper = CostFunctionHelper;
+
 		/// <summary>
 		/// Reallocates memory of the collection to meet the given number of elements
 		/// (if the current "capacity" is lower than the given "new" size)

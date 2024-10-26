@@ -15,31 +15,32 @@
 //OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#include "CostFunction.h"
+#include "CostFunctionHelperCuda.cuh"
 #include "BasicCudaCollection.cuh"
-#include "thrust/transform_reduce.h"
+#include "thrust/reduce.h"
 #include <thrust/execution_policy.h>
 #include <thrust/functional.h>
 #include <nvfunctional>
 #include "CudaVector.cuh"
+#include "CostFunctionFactory.h"
 
-namespace DeepLearning::CostFunctionHelper
+namespace DeepLearning
 {
-	Real evaluate_cost(const BasicCudaCollection& output, const BasicCudaCollection& reference, const CostFunctionId id)
+	Real CostFunctionHelperCuda::evaluate_cost(const BasicCudaCollection& output, const BasicCudaCollection& reference, const CostFunctionId id)
 	{
 		thread_local CudaVector temp;
 		temp.resize(output.size());
 
 		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread), output.begin(), output.end(), reference.begin(), temp.begin(),
 			[id] __device__(const auto&x, const auto& y) {
-			const auto func = CostFunctionHelper::make<nvstd::function<Real(Real, Real)>>(id);
+			const auto func = CostFunctionFactory::make<nvstd::function<Real(Real, Real)>>(id);
 			return func(x, y);
 		});
 
 		return thrust::reduce(thrust::cuda::par.on(cudaStreamPerThread), temp.begin(), temp.end(), static_cast<Real>(0), thrust::plus<Real>());
 	}
 
-	Real evaluate_cost_and_gradient(BasicCudaCollection& output, const BasicCudaCollection& reference, const CostFunctionId id)
+	Real CostFunctionHelperCuda::evaluate_cost_and_gradient(BasicCudaCollection& output, const BasicCudaCollection& reference, const CostFunctionId id)
 	{
 		//TODO: think about more efficient solution (although this method is not supposed to be used in the training of a neural network)
 		const auto func_val = evaluate_cost(output, reference, id);
@@ -48,11 +49,11 @@ namespace DeepLearning::CostFunctionHelper
 		return func_val;
 	}
 
-	void evaluate_gradient(BasicCudaCollection& output, const BasicCudaCollection& reference, const CostFunctionId id)
+	void CostFunctionHelperCuda::evaluate_gradient(BasicCudaCollection& output, const BasicCudaCollection& reference, const CostFunctionId id)
 	{
 		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread), output.begin(), output.end(), reference.begin(), output.begin(),
 			[id] __device__(const auto & x, const auto & ref) {
-			const auto func = CostFunctionHelper::make<nvstd::function<dual<Real>(dual<Real>, Real)>>(id);
+			const auto func = CostFunctionFactory::make<nvstd::function<dual<Real>(dual<Real>, Real)>>(id);
 			return  func({ x, static_cast<Real>(1) }, ref).Dual()[0];
 		});
 	}

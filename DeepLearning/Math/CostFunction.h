@@ -17,118 +17,10 @@
 
 #pragma once
 
-#include "../CudaBridge.h"
-#include "BasicCollection.h"
-#include "Functions.h"
+#include "CostFunctionId.h"
 
 namespace DeepLearning
 {
-	class BasicCudaCollection;
-
-	/// <summary>
-	/// Identifiers of different cost functions
-	/// </summary>
-	enum class CostFunctionId : unsigned int
-	{
-		UNKNOWN = 0,
-		SQUARED_ERROR = 1,
-		CROSS_ENTROPY = 2,
-		LINEAR = 3,
-	};
-
-	/// <summary>
-	/// Returns string representation of the given cost function type identifier
-	/// </summary>
-	std::string to_string(const CostFunctionId& cost_type_id);
-
-	/// <summary>
-	/// Parses given string to the cost function identifier
-	/// </summary>
-	CostFunctionId parse_cost_type(const std::string& str);
-
-	/// <summary>
-	/// Helper methods used for activation function evaluation
-	/// </summary>
-	namespace CostFunctionHelper
-	{
-		/// <summary>
-		/// Factory method to instantiate cost functions by their identifiers
-		/// </summary>
-		template <class F>
-		CUDA_CALLABLE F make(const CostFunctionId id)
-		{
-			switch (id)
-			{
-			case CostFunctionId::SQUARED_ERROR: return [](const auto& x, const auto& ref)
-				{
-					const auto diff = x - ref;
-					return Real(0.5) * diff * diff;
-				};
-			case CostFunctionId::CROSS_ENTROPY:return [](const auto& x, const auto& ref)
-				{
-					if (ref <= Real(0))
-						return Func::nan_to_num(-log(Real(1) - x));
-
-					if (ref >= Real(1))
-						return Func::nan_to_num(-log(x));
-
-					return Func::nan_to_num(-(ref * log(x) + (Real(1) - ref) * log(Real(1) - x)));
-				};
-			case CostFunctionId::LINEAR:return [](const auto& x, const auto& ref)
-			{
-				return x;
-			};
-			default: return [](const auto& x, const auto& ref) { return decltype(x)(std::numeric_limits<Real>::signaling_NaN()); };
-			}
-		}
-
-		/// <summary>
-		/// Evaluates the given cost function (represented with its identifier) for the given "output" and "reference" collections
-		/// </summary>
-		Real evaluate_cost(const BasicCollection& output, const BasicCollection& reference, const CostFunctionId id);
-
-		/// <summary>
-		/// Evaluates the given cost function (represented with its identifier) for the given "output" and "reference" collections and
-		/// calculates gradient of the cost function with respect to the elements of the "output" collection
-		/// </summary>
-		/// <param name="output">Output of a neural network in training; used to store the calculated gradient of the cost function</param>
-		/// <param name="reference">Reference vector for the given output</param>
-		/// <param name="id">Identifier of the cost function</param>
-		Real evaluate_cost_and_gradient(BasicCollection& output, const BasicCollection& reference, const CostFunctionId id);
-
-		/// <summary>
-		/// Evaluates gradient of the given cost function (represented with its identifier) for the given "output" and "reference" collections 
-		/// with respect to the elements of the "output" collection
-		/// </summary>
-		/// <param name="output">Output of a neural network in training; used to store the calculated gradient of the cost function</param>
-		/// <param name="reference">Reference vector for the given output</param>
-		/// <param name="id">Identifier of the cost function</param>
-		void evaluate_gradient(BasicCollection& output, const BasicCollection& reference, const CostFunctionId id);
-
-		/// <summary>
-		/// Evaluates the given cost function (represented with its identifier) for the given "output" and "reference" collections
-		/// </summary>
-		Real evaluate_cost(const BasicCudaCollection& output, const BasicCudaCollection& reference, const CostFunctionId id);
-
-		/// <summary>
-		/// Evaluates the given cost function (represented with its identifier) for the given "output" and "reference" collections and
-		/// calculates gradient of the cost function with respect to the elements of the "output" collection
-		/// </summary>
-		/// <param name="output">Output of a neural network in training; used to store the calculated gradient of the cost function</param>
-		/// <param name="reference">Reference vector for the given output</param>
-		/// <param name="id">Identifier of the cost function</param>
-		Real evaluate_cost_and_gradient(BasicCudaCollection& output, const BasicCudaCollection& reference, const CostFunctionId id);
-
-		/// <summary>
-		/// Evaluates gradient of the given cost function (represented with its identifier) for the given "output" and "reference" collections 
-		/// with respect to the elements of the "output" collection
-		/// </summary>
-		/// <param name="output">Output of a neural network in training; used to store the calculated gradient of the cost function</param>
-		/// <param name="reference">Reference vector for the given output</param>
-		/// <param name="id">Identifier of the cost function</param>
-		void evaluate_gradient(BasicCudaCollection& output, const BasicCudaCollection& reference, const CostFunctionId id);
-	}
-
 	/// <summary>
 	/// Representation of the cost function that is used in the neural networks learning process
 	/// </summary>
@@ -173,3 +65,5 @@ namespace DeepLearning
 		void deriv_in_place(T& output_deriv, const T& reference) const;
 	};
 }
+
+#include "CostFunction.inl"
