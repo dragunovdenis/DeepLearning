@@ -21,6 +21,7 @@
 #include "../defs.h"
 #include <vector>
 #include "CostFunctionHelperCuda.cuh"
+#include "ActivationFunctionHelperCuda.cuh"
 #include "../Memory/MemHandle.h"
 #include "LinAlg3d.h"
 
@@ -65,7 +66,8 @@ namespace DeepLearning
 
 	public:
 
-		using CostFuncHelper = CostFunctionHelperCuda;
+		using CostHelper = CostFunctionHelperCuda;
+		using ActivationHelper = ActivationFunctionHelperCuda;
 
 		/// <summary>
 		/// Reallocates memory of the collection to meet the given number of elements

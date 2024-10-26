@@ -291,6 +291,10 @@
     <ClInclude Include="ImageProcessing\ImageUtils.h" />
     <ClInclude Include="IndexIterator.h" />
     <ClInclude Include="Math\ActivationFunction.h" />
+    <ClInclude Include="Math\ActivationFunctionFactory.h" />
+    <ClInclude Include="Math\ActivationFunctionHelperCuda.cuh" />
+    <ClInclude Include="Math\ActivationFunctionHelper.h" />
+    <ClInclude Include="Math\ActivationFunctionId.h" />
     <ClInclude Include="Math\AvxAcceleration.h" />
     <ClInclude Include="Math\BasicCollection.h" />
     <ClInclude Include="Math\BasicCudaCollection.cuh" />
@@ -338,7 +342,9 @@
     <ClCompile Include="Diagnostics\Logging.cpp" />
     <ClCompile Include="Image8Bit.cpp" />
     <ClCompile Include="ImageProcessing\ImageUtils.cpp" />
-    <ClCompile Include="Math\ActivationFunction.cpp" />
+    <ClInclude Include="Math\ActivationFunction.inl" />
+    <ClCompile Include="Math\ActivationFunctionHelper.cpp" />
+    <ClCompile Include="Math\ActivationFunctionId.cpp" />
     <ClCompile Include="Math\AvxAcceleration.cpp" />
     <ClCompile Include="Math\BasicCollection.cpp" />
     <ClCompile Include="Math\ConvolutionUtils.cpp" />
@@ -376,7 +382,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="Math\ActivationFunction.cu" />
+    <CudaCompile Include="Math\ActivationFunctionHelperCuda.cu" />
     <CudaCompile Include="Math\BasicCudaCollection.cu" />
     <CudaCompile Include="Math\CostFunctionHelperCuda.cu" />
     <CudaCompile Include="Math\CudaMatrix.cu" />

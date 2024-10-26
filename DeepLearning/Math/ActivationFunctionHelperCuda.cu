@@ -1,4 +1,4 @@
-//Copyright (c) 2022 Denys Dragunov, dragunovdenis@gmail.com
+//Copyright (c) 2024 Denys Dragunov, dragunovdenis@gmail.com
 //Permission is hereby granted, free of charge, to any person obtaining a copy
 //of this software and associated documentation files(the "Software"), to deal
 //in the Software without restriction, including without limitation the rights
@@ -15,37 +15,37 @@
 //OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#include "ActivationFunction.h"
+#include "ActivationFunctionHelperCuda.cuh"
 #include "BasicCudaCollection.cuh"
 #include <nvfunctional>
 #include "thrust/transform.h"
 #include <thrust/execution_policy.h>
 #include <thrust/iterator/zip_iterator.h>
 #include <thrust/tuple.h>
-#include <thrust/extrema.h>
+#include "ActivationFunctionFactory.h"
 
-namespace DeepLearning::ActivationFunctionHelper
+namespace DeepLearning
 {
-	void evaluate_in_place(BasicCudaCollection& collection, const ActivationFunctionId id)
+	void ActivationFunctionHelperCuda::evaluate_in_place(BasicCudaCollection& collection, const ActivationFunctionId id)
 	{
 		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread),
 			collection.begin(), collection.end(), collection.begin(),
 			[id] __device__ (const auto& x) {
-			return make<nvstd::function<Real(Real)>>(id)(x);
+			return ActivationFunctionFactory::make<nvstd::function<Real(Real)>>(id)(x);
 		});
 	}
 
-	void evaluate_in_place(BasicCudaCollection& collection_func, BasicCudaCollection& collection_deriv, const ActivationFunctionId id)
+	void ActivationFunctionHelperCuda::evaluate_in_place(BasicCudaCollection& collection_func, BasicCudaCollection& collection_deriv, const ActivationFunctionId id)
 	{
 		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread), collection_func.begin(), collection_func.end(),
 			thrust::make_zip_iterator(thrust::make_tuple(collection_func.begin(), collection_deriv.begin())),
 			[id] __device__(const auto & x) {
-			const auto res = make<nvstd::function<dual<Real>(dual<Real>)>>(id)({ x , static_cast<Real>(1)});
+			const auto res = ActivationFunctionFactory::make<nvstd::function<dual<Real>(dual<Real>)>>(id)({ x , static_cast<Real>(1)});
 			return thrust::make_tuple(res.Real(), res.Dual()[0]);
 		});
 	}
 
-	void normalize_and_evaluate_exponent_in_place(BasicCudaCollection& collection)
+	void ActivationFunctionHelperCuda::normalize_and_evaluate_exponent_in_place(BasicCudaCollection& collection)
 	{
 		const auto max_val = collection.max_element();
 		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread),
@@ -53,7 +53,7 @@ namespace DeepLearning::ActivationFunctionHelper
 			[max_val] __device__ (const auto& x) { return std::exp(x - max_val); });
 	}
 
-	void evaluate_softmax_input_grad(const BasicCudaCollection& input_exp, const BasicCudaCollection& out_grad, BasicCudaCollection& result)
+	void ActivationFunctionHelperCuda::evaluate_softmax_input_grad(const BasicCudaCollection& input_exp, const BasicCudaCollection& out_grad, BasicCudaCollection& result)
 	{
 		const auto one_over_denominator = static_cast<Real>(1) / input_exp.sum();
 
@@ -66,7 +66,7 @@ namespace DeepLearning::ActivationFunctionHelper
 			[temp_sum] __device__ (const auto& x, const auto& a) { return x - a * temp_sum; });
 	}
 
-	void relu_in_place(BasicCudaCollection& collection)
+	void ActivationFunctionHelperCuda::relu_in_place(BasicCudaCollection& collection)
 	{
 		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread),
 			collection.begin(), collection.end(), collection.begin(),
@@ -75,7 +75,7 @@ namespace DeepLearning::ActivationFunctionHelper
 		});
 	}
 
-	void relu_in_place(BasicCudaCollection& collection_func, BasicCudaCollection& collection_deriv)
+	void ActivationFunctionHelperCuda::relu_in_place(BasicCudaCollection& collection_func, BasicCudaCollection& collection_deriv)
 	{
 		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread), collection_func.begin(), collection_func.end(),
 			thrust::make_zip_iterator(thrust::make_tuple(collection_func.begin(), collection_deriv.begin())),
@@ -85,7 +85,7 @@ namespace DeepLearning::ActivationFunctionHelper
 		});
 	}
 
-	void sigmoid_in_place(BasicCudaCollection& collection)
+	void ActivationFunctionHelperCuda::sigmoid_in_place(BasicCudaCollection& collection)
 	{
 		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread),
 			collection.begin(), collection.end(), collection.begin(),
@@ -94,7 +94,7 @@ namespace DeepLearning::ActivationFunctionHelper
 		});
 	}
 
-	void sigmoid_in_place(BasicCudaCollection& collection_func, BasicCudaCollection& collection_deriv)
+	void ActivationFunctionHelperCuda::sigmoid_in_place(BasicCudaCollection& collection_func, BasicCudaCollection& collection_deriv)
 	{
 		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread), collection_func.begin(), collection_func.end(),
 			thrust::make_zip_iterator(thrust::make_tuple(collection_func.begin(), collection_deriv.begin())),
@@ -105,7 +105,7 @@ namespace DeepLearning::ActivationFunctionHelper
 		});
 	}
 
-	void tanh_in_place(BasicCudaCollection& collection)
+	void ActivationFunctionHelperCuda::tanh_in_place(BasicCudaCollection& collection)
 	{
 		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread),
 			collection.begin(), collection.end(), collection.begin(),
@@ -114,7 +114,7 @@ namespace DeepLearning::ActivationFunctionHelper
 		});
 	}
 
-	void tanh_in_place(BasicCudaCollection& collection_func, BasicCudaCollection& collection_deriv)
+	void ActivationFunctionHelperCuda::tanh_in_place(BasicCudaCollection& collection_func, BasicCudaCollection& collection_deriv)
 	{
 		thrust::transform(thrust::cuda::par.on(cudaStreamPerThread), collection_func.begin(), collection_func.end(),
 			thrust::make_zip_iterator(thrust::make_tuple(collection_func.begin(), collection_deriv.begin())),

@@ -24,6 +24,7 @@
 #include <numeric>
 #include "StandardTestUtils.h"
 #include "Math/CudaTensor.cuh"
+#include "Math/Functions.h"
 #include "Math/Tensor.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;

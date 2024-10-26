@@ -64,6 +64,12 @@
     <Filter Include="Source Files\Math\CostFunction">
       <UniqueIdentifier>{01edde00-fbb7-4c9e-8cf4-4c25cd0c85b9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Math\ActivationFunction">
+      <UniqueIdentifier>{3e3e7e51-e6f4-4bc5-bffe-0b3093f687b1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Math\ActivationFunction">
+      <UniqueIdentifier>{5ddcbe88-e08f-4fa2-b92f-00fd0ff57377}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="defs.h">
@@ -82,9 +88,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Math\Dual.h">
-      <Filter>Header Files\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\ActivationFunction.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
     <ClInclude Include="NeuralNet\NLayer.h">
@@ -225,15 +228,30 @@
     <ClInclude Include="Math\CostFunction.inl">
       <Filter>Header Files\Math\CostFunction</Filter>
     </ClInclude>
+    <ClInclude Include="Math\ActivationFunctionHelperCuda.cuh">
+      <Filter>Header Files\Math\CUDA</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\ActivationFunction.h">
+      <Filter>Header Files\Math\ActivationFunction</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\ActivationFunction.inl">
+      <Filter>Header Files\Math\ActivationFunction</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\ActivationFunctionFactory.h">
+      <Filter>Header Files\Math\ActivationFunction</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\ActivationFunctionHelper.h">
+      <Filter>Header Files\Math\ActivationFunction</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\ActivationFunctionId.h">
+      <Filter>Header Files\Math\ActivationFunction</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Matrix.cpp">
       <Filter>Source Files\Math</Filter>
     </ClCompile>
     <ClCompile Include="Math\Vector.cpp">
-      <Filter>Source Files\Math</Filter>
-    </ClCompile>
-    <ClCompile Include="Math\ActivationFunction.cpp">
       <Filter>Source Files\Math</Filter>
     </ClCompile>
     <ClCompile Include="NeuralNet\NLayer.cpp">
@@ -323,6 +341,12 @@
     <ClCompile Include="Math\CostFunctionHelper.cpp">
       <Filter>Source Files\Math\CostFunction</Filter>
     </ClCompile>
+    <ClCompile Include="Math\ActivationFunctionHelper.cpp">
+      <Filter>Source Files\Math\ActivationFunction</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\ActivationFunctionId.cpp">
+      <Filter>Source Files\Math\ActivationFunction</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -343,7 +367,7 @@
     <CudaCompile Include="Math\CudaTensor.cu">
       <Filter>Source Files\Math\CUDA</Filter>
     </CudaCompile>
-    <CudaCompile Include="Math\ActivationFunction.cu">
+    <CudaCompile Include="Math\ActivationFunctionHelperCuda.cu">
       <Filter>Source Files\Math\CUDA</Filter>
     </CudaCompile>
     <CudaCompile Include="Math\CostFunctionHelperCuda.cu">

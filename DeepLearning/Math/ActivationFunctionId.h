@@ -1,0 +1,44 @@
+//Copyright (c) 2024 Denys Dragunov, dragunovdenis@gmail.com
+//Permission is hereby granted, free of charge, to any person obtaining a copy
+//of this software and associated documentation files(the "Software"), to deal
+//in the Software without restriction, including without limitation the rights
+//to use, copy, modify, merge, publish, distribute, sublicense, and /or sell
+//copies of the Software, and to permit persons to whom the Software is furnished
+//to do so, subject to the following conditions :
+
+//The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+//THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+//INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+//PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+//HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+//OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+//SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+#pragma once
+#include <string>
+
+namespace DeepLearning
+{
+	/// <summary>
+	/// Identifiers of different activation functions
+	/// </summary>
+	enum class ActivationFunctionId : unsigned int {
+		UNKNOWN = 0,
+		SIGMOID = 1, //Sigmoid activation function
+		TANH = 2, //Hyperbolic tangent activation function
+		RELU = 3, // rectified linear activation (unit)
+		SOFTMAX = 4,//soft-max function
+		LINEAR = 5, // a(x) = x
+	};
+
+	/// <summary>
+	/// Returns string representation of the given activation function type identifier
+	/// </summary>
+	std::string to_string(const ActivationFunctionId& activation_type_id);
+
+	/// <summary>
+	/// Parses given string to the activation function identifier
+	/// </summary>
+	ActivationFunctionId parse_activation_type(const std::string& str);
+}

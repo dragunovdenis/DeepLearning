@@ -30,7 +30,7 @@ namespace DeepLearning
 		if (output.size() != reference.size())
 			throw std::exception("Incompatible input");
 
-		return T::CostFuncHelper::evaluate_cost(output, reference, _id);
+		return T::CostHelper::evaluate_cost(output, reference, _id);
 	}
 
 	template <class T>
@@ -40,14 +40,14 @@ namespace DeepLearning
 			throw std::exception("Incompatible input");
 
 		auto deriv = output;
-		const auto func_val = T::CostFuncHelper::evaluate_cost_and_gradient(deriv, reference, _id);
+		const auto func_val = T::CostHelper::evaluate_cost_and_gradient(deriv, reference, _id);
 		return std::make_tuple(func_val, std::move(deriv));
 	}
 
 	template <class T>
 	void CostFunction<T>::deriv_in_place(T& output_deriv, const T& reference) const
 	{
-		T::CostFuncHelper::evaluate_gradient(output_deriv, reference, _id);
+		T::CostHelper::evaluate_gradient(output_deriv, reference, _id);
 	}
 
 	template <class T>

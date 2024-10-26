@@ -20,6 +20,7 @@
 #include <functional>
 #include <random>
 #include "CostFunctionHelper.h"
+#include "ActivationFunctionHelper.h"
 #include "../Memory/MemHandle.h"
 #include "LinAlg3d.h"
 
@@ -69,7 +70,8 @@ namespace DeepLearning
 
 	public:
 
-		using CostFuncHelper = CostFunctionHelper;
+		using CostHelper = CostFunctionHelper;
+		using ActivationHelper = ActivationFunctionHelper;
 
 		/// <summary>
 		/// Reallocates memory of the collection to meet the given number of elements
