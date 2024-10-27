@@ -15,7 +15,7 @@
 //OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#include "LayerHandle.h"
+#pragma once
 
 namespace DeepLearning
 {
@@ -92,7 +92,4 @@ namespace DeepLearning
 
 		return *_layer_ptr;
 	}
-
-	template class LayerHandle<CpuDC>;
-	template class LayerHandle<GpuDC>;
 }

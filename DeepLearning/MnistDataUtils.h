@@ -27,6 +27,13 @@ namespace DeepLearning
 	/// </summary>
 	class MnistDataUtils
 	{
+		/// <summary>
+		/// Auxiliary function that downloads data within the "CPU" data context.
+		/// </summary>
+		static std::tuple<std::vector<typename CpuDC::tensor_t>, std::vector<typename CpuDC::tensor_t>> load_labeled_data_host(
+			const std::filesystem::path& data_path, const std::filesystem::path& labels_path,
+			const std::size_t expected_items_count, const Real& max_value, const std::vector<Vector3d<Real>>& transformations);
+
 	public:
 		/// <summary>
 		/// Reads MNIST images from a file on disk following the protocol:
@@ -86,4 +93,27 @@ namespace DeepLearning
 			const std::size_t expected_items_count, const Real& max_value = Real(1),
 			const std::vector<Vector3d<Real>>& transformations = std::vector<Vector3d<Real>>());
 	};
+}
+
+namespace DeepLearning
+{
+	template<class D>
+	std::tuple<std::vector<typename D::tensor_t>, std::vector<typename D::tensor_t>> MnistDataUtils::load_labeled_data(
+		const std::filesystem::path& data_path, const std::filesystem::path& labels_path,
+		const std::size_t expected_items_count, const Real& max_value, const std::vector<Vector3d<Real>>& transformations)
+	{
+		auto from_host = [](const std::vector<CpuDC::tensor_t>& data)
+			{
+				std::vector<typename D::tensor_t> result;
+
+				std::ranges::transform(data, std::back_inserter(result),
+					[](const auto& x) { return D::from_host(x); });
+
+				return result;
+			};
+
+		const auto [images_scaled, labels] = load_labeled_data_host(data_path, labels_path,
+			expected_items_count, max_value, transformations);
+		return std::make_tuple(from_host(images_scaled), from_host(labels));
+	}
 }

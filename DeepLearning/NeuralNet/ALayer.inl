@@ -15,7 +15,8 @@
 //OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#include "ALayer.h"
+#pragma once
+
 #include "../Utilities.h"
 #include <nlohmann/json.hpp>
 
@@ -59,15 +60,11 @@ namespace DeepLearning
 		set_func_id(func_id);
 	}
 
-	namespace
-	{
-		thread_local std::mt19937 _ran_gen{ std::random_device{}() };
-	}
-
 	template <class D>
 	std::mt19937& ALayer<D>::ran_gen()
 	{
-		return _ran_gen;
+		thread_local std::mt19937 ran_gen{ std::random_device{}() };
+		return ran_gen;
 	}
 
 	template <class D>
@@ -107,24 +104,19 @@ namespace DeepLearning
 		return _keep_rate;
 	}
 
-	namespace {
-		const char* json_keep_id = "Keep";
-		const char* json_activation_id = "Activation";
-	}
-
 	template <class D>
 	ALayer<D>::ALayer(const std::string& script)
 	{
 		const auto json = nlohmann::json::parse(script);
 
-		if (json.contains(json_keep_id))
-			_keep_rate = json[json_keep_id].get<Real>();
+		if (json.contains(json_keep_id()))
+			_keep_rate = json[json_keep_id()].template get<Real>();
 		else
 			_keep_rate = DefaultKeepRate;
 
-		if (json.contains(json_activation_id))
+		if (json.contains(json_activation_id()))
 		{
-			const auto func_id = parse_activation_type(json[json_activation_id].get<std::string>());
+			const auto func_id = parse_activation_type(json[json_activation_id()].template get<std::string>());
 			set_func_id(func_id);
 		}
 		else
@@ -135,8 +127,8 @@ namespace DeepLearning
 	std::string ALayer<D>::to_script() const
 	{
 		nlohmann::json json;
-		json[json_keep_id] = _keep_rate;
-		json[json_activation_id] = DeepLearning::to_string(_func_id);
+		json[json_keep_id()] = _keep_rate;
+		json[json_activation_id()] = DeepLearning::to_string(_func_id);
 
 		return json.dump();
 	};
@@ -164,7 +156,4 @@ namespace DeepLearning
 	{
 		return to_script();
 	}
-
-	template class ALayer<CpuDC>;
-	template class ALayer<GpuDC>;
 }

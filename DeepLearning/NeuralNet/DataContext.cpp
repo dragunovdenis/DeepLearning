@@ -1,4 +1,4 @@
-//Copyright (c) 2022 Denys Dragunov, dragunovdenis@gmail.com
+//Copyright (c) 2024 Denys Dragunov, dragunovdenis@gmail.com
 //Permission is hereby granted, free of charge, to any person obtaining a copy
 //of this software and associated documentation files(the "Software"), to deal
 //in the Software without restriction, including without limitation the rights
@@ -15,33 +15,37 @@
 //OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#include "LayerTypeId.h"
-#include "../Utilities.h"
+#include "DataContext.h"
 
 namespace DeepLearning
 {
-	std::string to_string(const LayerTypeId& layer_type_id)
+	CpuDC::vector_t CpuDC::to_host(const vector_t& source)
 	{
-		switch (layer_type_id)
-		{
-		case LayerTypeId::CONVOLUTION: return "CONV";
-		case LayerTypeId::FULL: return "FULL";
-		case LayerTypeId::PULL: return "PULL";
-		default:
-			return "UNKNOWN";
-		}
+		return source;
 	}
 
-	LayerTypeId parse_layer_type(const std::string& str)
+	CpuDC::matrix_t CpuDC::to_host(const matrix_t& source)
 	{
-		const auto str_normalized = Utils::normalize_string(str);
+		return source;
+	}
 
-		for (unsigned int id = static_cast<unsigned int>(LayerTypeId::FULL); id <= static_cast<unsigned int>(LayerTypeId::PULL); id++)
-		{
-			if (to_string(static_cast<LayerTypeId>(id)) == str_normalized)
-				return static_cast<LayerTypeId>(id);
-		}
+	CpuDC::tensor_t CpuDC::to_host(const tensor_t& source)
+	{
+		return source;
+	}
 
-		return LayerTypeId::UNKNOWN;
+	CpuDC::vector_t CpuDC::from_host(const vector_t& source)
+	{
+		return source;
+	}
+
+	CpuDC::matrix_t CpuDC::from_host(const matrix_t& source)
+	{
+		return source;
+	}
+
+	CpuDC::tensor_t CpuDC::from_host(const tensor_t& source)
+	{
+		return source;
 	}
 }

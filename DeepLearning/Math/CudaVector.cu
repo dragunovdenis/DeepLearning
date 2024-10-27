@@ -107,6 +107,11 @@ namespace DeepLearning
 		uniform_random_fill(range_begin, range_end, seeder);
 	}
 
+	CudaVector::CudaVector(const Vector& source)
+	{
+		assign(source);
+	}
+
 	CudaVector::CudaVector(CudaVector&& vec) noexcept : _dim(vec._dim)
 	{
 		take_over_resources(std::move(vec));

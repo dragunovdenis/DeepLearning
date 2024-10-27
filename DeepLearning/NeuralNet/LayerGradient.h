@@ -111,3 +111,4 @@ namespace DeepLearning
 	LayerGradient<D> operator -(const LayerGradient<D>& lg, const LayerGradient<D>& lg1);
 }
 
+#include "LayerGradient.inl"

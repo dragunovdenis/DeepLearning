@@ -154,6 +154,11 @@ namespace DeepLearning
 		CudaMatrix(CudaMatrix&& matr) noexcept;
 
 		/// <summary>
+		/// Constructor.
+		/// </summary>
+		CudaMatrix(const Matrix& source);
+
+		/// <summary>
 		/// Multiplication by a vector from the right
 		/// </summary>
 		CudaVector friend operator *(const CudaMatrix& matr, const BasicCudaCollection& vec);

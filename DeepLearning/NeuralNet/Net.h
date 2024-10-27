@@ -21,6 +21,7 @@
 #include "NLayer.h"
 #include "../Math/ActivationFunction.h"
 #include "../Math/CostFunction.h"
+#include "CostsAndCorrectAnswers.h"
 #include "LayerHandle.h"
 #include <msgpack.hpp>
 #include <filesystem>
@@ -28,37 +29,42 @@
 namespace DeepLearning
 {
 	/// <summary>
-	/// Data structure to hold results of cost function evaluation as well as the number of correct answers on some set of labeled data
-	/// </summary>
-	struct CostAndCorrectAnswers
-	{
-		/// <summary>
-		/// Cost function value
-		/// </summary>
-		Real Cost{};
-
-		/// <summary>
-		/// Ratio of the correct answers to all the answers
-		/// </summary>
-		Real CorrectAnswers{};
-
-		/// <summary>
-		/// Compound addition operator
-		/// </summary>
-		CostAndCorrectAnswers& operator += (const CostAndCorrectAnswers& item);
-	};
-
-	/// <summary>
-	/// Addition operator
-	/// </summary>
-	CostAndCorrectAnswers operator +(const CostAndCorrectAnswers& item1, const CostAndCorrectAnswers& item2);
-
-	/// <summary>
 	/// Class representing a neural network consisting of neural layers
 	/// </summary>
 	template <class D = CpuDC>
 	class Net
 	{
+		/// <summary>
+		/// Returns reference to a random number generator.
+		/// </summary>
+		static std::mt19937& ran_gen();
+
+		/// <summary>
+		/// Applies random permutation to the given collection of indices
+		/// </summary>
+		static void apply_random_permutation(std::vector<std::size_t>& indices, std::mt19937 rnd_gen);
+
+		/// <summary>
+		/// Returns collection containing "elements_count" integer
+		/// indices starting from "0" all the way to "elements_count - 1"
+		/// </summary>
+		static std::vector<std::size_t> get_indices(const std::size_t elements_count);
+
+		/// <summary>
+		/// Returns collection of the gradient collectors that is "compatible" with the given collection of neural layers
+		/// </summary>
+		static std::vector<CumulativeGradient<D>> init_gradient_collectors(const std::vector<LayerHandle<D>>& layers);
+
+		/// <summary>
+		/// Resets all the collectors in the given collection
+		/// </summary>
+		static void reset_gradient_collectors(std::vector<CumulativeGradient<D>>& collectors);
+
+		/// <summary>
+		/// Allocates gradient container for multi-thread computations
+		/// </summary>
+		static void allocate_per_thread(const Net<D>& net, std::vector<std::vector<LayerGradient<D>>>& per_thread_gradient_container);
+
 		/// <summary>
 		/// Layers of neurons
 		/// </summary>
@@ -384,3 +390,5 @@ namespace DeepLearning
 		static Net<D> load_from_file(const std::filesystem::path& file_name);
 	};
 }
+
+#include "Net.inl"

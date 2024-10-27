@@ -15,11 +15,12 @@
 //OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#include "Net.h"
+#pragma once
+
 #include <numeric>
 #include <algorithm>
 #include <exception>
-#include "CummulativeGradient.h"
+#include "CumulativeGradient.h"
 #include <thread>
 #include <ppl.h>
 #include "../IndexIterator.h"
@@ -31,11 +32,6 @@
 
 namespace DeepLearning
 {
-	namespace
-	{
-		thread_local std::mt19937 _ran_gen{ std::random_device{}() };
-	}
-
 	template <class D>
 	Net<D>::Net(const std::vector<std::size_t>& layer_dimensions, const std::vector<ActivationFunctionId>& activ_func_ids)
 	{
@@ -134,19 +130,14 @@ namespace DeepLearning
 		return context.value_cache.Out;
 	}
 
-	/// <summary>
-	/// Applies random permutation to the given collection of indices
-	/// </summary>
-	void apply_random_permutation(std::vector<std::size_t>& indices, std::mt19937 ran_gen)
+	template <class D>
+	void Net<D>::apply_random_permutation(std::vector<std::size_t>& indices, std::mt19937 rnd_gen)
 	{
-		std::ranges::shuffle(indices, ran_gen);
+		std::ranges::shuffle(indices, rnd_gen);
 	}
 
-	/// <summary>
-	/// Returns collection containing "elements_count" integer
-	/// indices starting from "0" all the way to "elements_count - 1"
-	/// </summary>
-	std::vector<std::size_t> get_indices(const std::size_t elements_count)
+	template <class D>
+	std::vector<std::size_t> Net<D>::get_indices(const std::size_t elements_count)
 	{
 		std::vector<std::size_t> result(elements_count);
 		std::iota(result.begin(), result.end(), 0);
@@ -158,9 +149,9 @@ namespace DeepLearning
 	/// Returns collection of the gradient collectors that is "compatible" with the given collection of neural layers
 	/// </summary>
 	template <class D>
-	std::vector<CummulativeGradient<D>> init_gradient_collectors(const std::vector<LayerHandle<D>>& layers)
+	std::vector<CumulativeGradient<D>> Net<D>::init_gradient_collectors(const std::vector<LayerHandle<D>>& layers)
 	{
-		std::vector<CummulativeGradient<D>> result;
+		std::vector<CumulativeGradient<D>> result;
 
 		for (std::size_t layer_id = 0; layer_id < layers.size(); layer_id++)
 		{
@@ -175,7 +166,7 @@ namespace DeepLearning
 	/// Resets all the collectors in the given collection
 	/// </summary>
 	template <class D>
-	void reset_gradient_collectors(std::vector<CummulativeGradient<D>>& collectors)
+	void Net<D>::reset_gradient_collectors(std::vector<CumulativeGradient<D>>& collectors)
 	{
 		for (std::size_t collector_id = 0; collector_id < collectors.size(); collector_id++)
 			collectors[collector_id].reset();
@@ -185,7 +176,7 @@ namespace DeepLearning
 	/// Allocates gradient container for multi-thread computations
 	/// </summary>
 	template <class D>
-	void allocate_per_thread(const Net<D>& net, std::vector<std::vector<LayerGradient<D>>>& per_thread_gradient_container)
+	void Net<D>::allocate_per_thread(const Net<D>& net, std::vector<std::vector<LayerGradient<D>>>& per_thread_gradient_container)
 	{
 		for (auto& thread_container : per_thread_gradient_container)
 			net.allocate(thread_container, /*fill_zeros*/ false);
@@ -226,7 +217,7 @@ namespace DeepLearning
 
 		for (std::size_t epoch_id = 0; epoch_id < epochs_count; ++epoch_id)
 		{
-			apply_random_permutation(data_index_mapping, _ran_gen);
+			apply_random_permutation(data_index_mapping, ran_gen());
 
 			std::size_t batch_start_elem_id = 0;
 			while (batch_start_elem_id < training_items.size())
@@ -369,6 +360,13 @@ namespace DeepLearning
 		const Real learning_rate, const CostFunctionId& cost_func_id, const Real& lambda)
 	{
 		update(std::get<0>(calc_gradient_and_value(training_item, target_value, cost_func_id)), learning_rate, lambda);
+	}
+
+	template <class D>
+	std::mt19937& Net<D>::ran_gen()
+	{
+		thread_local std::mt19937 ran_gen{ std::random_device{}() };
+		return ran_gen;
 	}
 
 	template <class D>
@@ -587,14 +585,14 @@ namespace DeepLearning
 	template <class D>
 	void Net<D>::reset_random_generator(const unsigned seed)
 	{
-		_ran_gen.seed(seed);
+		ran_gen().seed(seed);
 		ALayer<D>::reset_random_generator(seed);
 	}
 
 	template <class D>
 	void Net<D>::reset_random_generator()
 	{
-		_ran_gen.seed(std::random_device{}());
+		ran_gen().seed(std::random_device{}());
 		ALayer<D>::reset_random_generator();
 	}
 
@@ -608,22 +606,5 @@ namespace DeepLearning
 	Net<D> Net<D>::load_from_file(const std::filesystem::path& file_name)
 	{
 		return MsgPack::load_from_file<Net<D>>(file_name);
-	}
-
-	template class Net<CpuDC>;
-	template class Net<GpuDC>;
-
-	CostAndCorrectAnswers& CostAndCorrectAnswers::operator += (const CostAndCorrectAnswers& item)
-	{
-		Cost += item.Cost;
-		CorrectAnswers += item.CorrectAnswers;
-
-		return *this;
-	}
-
-	CostAndCorrectAnswers operator +(const CostAndCorrectAnswers& item1, const CostAndCorrectAnswers& item2)
-	{
-		auto result = item1;
-		return result += item2;
 	}
 }

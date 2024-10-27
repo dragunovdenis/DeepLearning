@@ -15,8 +15,8 @@
 //OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#include "NLayer.h"
-#include "../Math/ActivationFunction.h"
+#pragma once
+
 #include <exception>
 #include "../Utilities.h"
 #include <nlohmann/json.hpp>
@@ -46,35 +46,50 @@ namespace DeepLearning
 		initialize(in_dim, out_dim, rand_low, rand_high, standard_init_for_weights);
 	}
 
-	namespace {
-		const char* json_in_size_id = "InSize";
-		const char* json_out_size_id = "OutSize";
-	}
-
 	template <class D>
 	NLayer<D>::NLayer(const std::string& str, const Index3d& default_in_size) : ALayer<D>(str)
 	{
 		const auto json = nlohmann::json::parse(str);
 
-		const auto in_size = json.contains(json_in_size_id) ?
-			Utils::extract_vector<Index3d>(json[json_in_size_id].get<std::string>()).coord_prod() :
+		const auto in_size = json.contains(json_in_size_id()) ?
+			Utils::extract_vector<Index3d>(json[json_in_size_id()].template get<std::string>()).coord_prod() :
 			default_in_size.coord_prod();
 
-		const auto out_size = json.contains(json_out_size_id) ?
-			Utils::extract_vector<Index3d>(json[json_out_size_id].get<std::string>()).coord_prod() :
+		const auto out_size = json.contains(json_out_size_id()) ?
+			Utils::extract_vector<Index3d>(json[json_out_size_id()].template get<std::string>()).coord_prod() :
 			throw std::exception("Can't parse output dimensions of NLayer");
 
 		initialize(in_size, out_size, static_cast<Real>(-1), static_cast<Real>(1), true);
 	}
 
 	template <class D>
+	template <class D1>
+	NLayer<D>::NLayer(const NLayer<D1>& source) : NLayer(source.to_script())
+	{
+		_biases = D::from_host(D1::to_host(source.biases()));
+		_weights = D::from_host(D1::to_host(source.weights()));
+	}
+
+	template <class D>
 	std::string NLayer<D>::to_script() const
 	{
 		nlohmann::json json = nlohmann::json::parse(ALayer<D>::to_script());;
-		json[json_in_size_id] = in_size().to_string();
-		json[json_out_size_id] = out_size().to_string();
+		json[json_in_size_id()] = in_size().to_string();
+		json[json_out_size_id()] = out_size().to_string();
 
 		return json.dump();
+	}
+
+	template <class D>
+	const typename D::vector_t& NLayer<D>::biases() const
+	{
+		return _biases;
+	}
+
+	template <class D>
+	const typename D::matrix_t& NLayer<D>::weights() const
+	{
+		return _weights;
 	}
 
 	template <class D>
@@ -253,38 +268,14 @@ namespace DeepLearning
 		return _weights.sum_of_squares();
 	}
 
-	template <>
-	NLayer<CpuDC> NLayer<CpuDC>::to_host() const
+	template <class D>
+	template <class D1>
+	NLayer<D1> NLayer<D>::convert() const
 	{
-		return *this;
-	}
+		if (std::is_same_v<D1, D>)
+			return *this;
 
-	template <>
-	NLayer<CpuDC> NLayer<GpuDC>::to_host() const
-	{
-		NLayer<CpuDC> result(to_script());
-
-		result._biases = _biases.to_host();
-		result._weights = _weights.to_host();
-
-		return result;
-	}
-
-	template<>
-	NLayer<GpuDC> NLayer<GpuDC>::to_device() const
-	{
-		return *this;
-	}
-
-	template<>
-	NLayer<GpuDC> NLayer<CpuDC>::to_device() const
-	{
-		NLayer<GpuDC> result(to_script());
-
-		result._biases.assign(_biases);
-		result._weights.assign(_weights);
-
-		return result;
+		return NLayer<D1>(*this);
 	}
 
 	template <class D>
@@ -293,7 +284,4 @@ namespace DeepLearning
 		_weights.fill_zero();
 		_biases.fill_zero();
 	}
-
-	template class NLayer<CpuDC>;
-	template class NLayer<GpuDC>;
 }

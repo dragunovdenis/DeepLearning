@@ -144,6 +144,11 @@ namespace DeepLearning
 			std::mt19937* seeder = nullptr);
 
 		/// <summary>
+		/// Constructor.
+		/// </summary>
+		CudaVector(const Vector& source);
+
+		/// <summary>
 		/// Returns dimension of the vector
 		/// </summary>
 		std::size_t dim() const;

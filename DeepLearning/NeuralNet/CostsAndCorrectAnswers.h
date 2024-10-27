@@ -1,4 +1,4 @@
-//Copyright (c) 2022 Denys Dragunov, dragunovdenis@gmail.com
+//Copyright (c) 2024 Denys Dragunov, dragunovdenis@gmail.com
 //Permission is hereby granted, free of charge, to any person obtaining a copy
 //of this software and associated documentation files(the "Software"), to deal
 //in the Software without restriction, including without limitation the rights
@@ -15,33 +15,34 @@
 //OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#include "LayerTypeId.h"
-#include "../Utilities.h"
+#pragma once
+#include "../defs.h"
 
 namespace DeepLearning
 {
-	std::string to_string(const LayerTypeId& layer_type_id)
+	/// <summary>
+	/// Data structure to hold results of cost function evaluation as well as the number of correct answers on some set of labeled data
+	/// </summary>
+	struct CostAndCorrectAnswers
 	{
-		switch (layer_type_id)
-		{
-		case LayerTypeId::CONVOLUTION: return "CONV";
-		case LayerTypeId::FULL: return "FULL";
-		case LayerTypeId::PULL: return "PULL";
-		default:
-			return "UNKNOWN";
-		}
-	}
+		/// <summary>
+		/// Cost function value
+		/// </summary>
+		Real Cost{};
 
-	LayerTypeId parse_layer_type(const std::string& str)
-	{
-		const auto str_normalized = Utils::normalize_string(str);
+		/// <summary>
+		/// Ratio of the correct answers to all the answers
+		/// </summary>
+		Real CorrectAnswers{};
 
-		for (unsigned int id = static_cast<unsigned int>(LayerTypeId::FULL); id <= static_cast<unsigned int>(LayerTypeId::PULL); id++)
-		{
-			if (to_string(static_cast<LayerTypeId>(id)) == str_normalized)
-				return static_cast<LayerTypeId>(id);
-		}
+		/// <summary>
+		/// Compound addition operator
+		/// </summary>
+		CostAndCorrectAnswers& operator += (const CostAndCorrectAnswers& item);
+	};
 
-		return LayerTypeId::UNKNOWN;
-	}
+	/// <summary>
+	/// Addition operator
+	/// </summary>
+	CostAndCorrectAnswers operator +(const CostAndCorrectAnswers& item1, const CostAndCorrectAnswers& item2);
 }

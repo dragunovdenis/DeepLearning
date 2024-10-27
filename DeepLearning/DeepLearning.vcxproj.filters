@@ -70,6 +70,12 @@
     <Filter Include="Source Files\Math\ActivationFunction">
       <UniqueIdentifier>{5ddcbe88-e08f-4fa2-b92f-00fd0ff57377}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\NeuralNet\CUDA">
+      <UniqueIdentifier>{628a6d45-8a68-4731-8bc5-8a840501add5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\NeuralNet\CUDA">
+      <UniqueIdentifier>{d5e6d32d-826f-42e8-ad09-c67bc8d36f47}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="defs.h">
@@ -102,7 +108,7 @@
     <ClInclude Include="ThirdParty\BitmapUtils.h">
       <Filter>Header Files\ThirdParty</Filter>
     </ClInclude>
-    <ClInclude Include="NeuralNet\CummulativeGradient.h">
+    <ClInclude Include="NeuralNet\CumulativeGradient.h">
       <Filter>Header Files\NeuralNet</Filter>
     </ClInclude>
     <ClInclude Include="Math\DiffFunc.h">
@@ -246,6 +252,36 @@
     <ClInclude Include="Math\ActivationFunctionId.h">
       <Filter>Header Files\Math\ActivationFunction</Filter>
     </ClInclude>
+    <ClInclude Include="NeuralNet\LayerGradient.inl">
+      <Filter>Header Files\NeuralNet</Filter>
+    </ClInclude>
+    <ClInclude Include="NeuralNet\LayerHandle.inl">
+      <Filter>Header Files\NeuralNet</Filter>
+    </ClInclude>
+    <ClInclude Include="NeuralNet\CumulativeGradient.inl">
+      <Filter>Header Files\NeuralNet</Filter>
+    </ClInclude>
+    <ClInclude Include="NeuralNet\ALayer.inl">
+      <Filter>Header Files\NeuralNet</Filter>
+    </ClInclude>
+    <ClInclude Include="NeuralNet\CLayer.inl">
+      <Filter>Header Files\NeuralNet</Filter>
+    </ClInclude>
+    <ClInclude Include="NeuralNet\NLayer.inl">
+      <Filter>Header Files\NeuralNet</Filter>
+    </ClInclude>
+    <ClInclude Include="NeuralNet\PLayer.inl">
+      <Filter>Header Files\NeuralNet</Filter>
+    </ClInclude>
+    <ClInclude Include="NeuralNet\Net.inl">
+      <Filter>Header Files\NeuralNet</Filter>
+    </ClInclude>
+    <ClInclude Include="NeuralNet\CostsAndCorrectAnswers.h">
+      <Filter>Header Files\NeuralNet</Filter>
+    </ClInclude>
+    <ClInclude Include="NeuralNet\DataContextCuda.h">
+      <Filter>Header Files\NeuralNet\CUDA</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Matrix.cpp">
@@ -253,9 +289,6 @@
     </ClCompile>
     <ClCompile Include="Math\Vector.cpp">
       <Filter>Source Files\Math</Filter>
-    </ClCompile>
-    <ClCompile Include="NeuralNet\NLayer.cpp">
-      <Filter>Source Files\NeuralNet</Filter>
     </ClCompile>
     <ClCompile Include="Image8Bit.cpp">
       <Filter>Source Files</Filter>
@@ -266,14 +299,8 @@
     <ClCompile Include="ThirdParty\BitmapUtils.cpp">
       <Filter>Source Files\ThirdParty</Filter>
     </ClCompile>
-    <ClCompile Include="NeuralNet\CummulativeGradient.cpp">
-      <Filter>Source Files\NeuralNet</Filter>
-    </ClCompile>
     <ClCompile Include="Math\DiffFunc.cpp">
       <Filter>Source Files\Math</Filter>
-    </ClCompile>
-    <ClCompile Include="NeuralNet\Net.cpp">
-      <Filter>Source Files\NeuralNet</Filter>
     </ClCompile>
     <ClCompile Include="Math\AvxAcceleration.cpp">
       <Filter>Source Files\Math</Filter>
@@ -293,15 +320,6 @@
     <ClCompile Include="Math\PoolOperator.cpp">
       <Filter>Source Files\Math</Filter>
     </ClCompile>
-    <ClCompile Include="NeuralNet\LayerHandle.cpp">
-      <Filter>Source Files\NeuralNet</Filter>
-    </ClCompile>
-    <ClCompile Include="NeuralNet\CLayer.cpp">
-      <Filter>Source Files\NeuralNet</Filter>
-    </ClCompile>
-    <ClCompile Include="NeuralNet\PLayer.cpp">
-      <Filter>Source Files\NeuralNet</Filter>
-    </ClCompile>
     <ClCompile Include="Diagnostics\Logging.cpp">
       <Filter>Source Files\Diagnostics</Filter>
     </ClCompile>
@@ -316,12 +334,6 @@
     </ClCompile>
     <ClCompile Include="ThreadPool.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="NeuralNet\ALayer.cpp">
-      <Filter>Source Files\NeuralNet</Filter>
-    </ClCompile>
-    <ClCompile Include="NeuralNet\LayerGradient.cpp">
-      <Filter>Source Files\NeuralNet</Filter>
     </ClCompile>
     <ClCompile Include="StopWatch.cpp">
       <Filter>Source Files</Filter>
@@ -346,6 +358,15 @@
     </ClCompile>
     <ClCompile Include="Math\ActivationFunctionId.cpp">
       <Filter>Source Files\Math\ActivationFunction</Filter>
+    </ClCompile>
+    <ClCompile Include="NeuralNet\CostAndCorrectAnswers.cpp">
+      <Filter>Source Files\NeuralNet</Filter>
+    </ClCompile>
+    <ClCompile Include="NeuralNet\DataContext.cpp">
+      <Filter>Source Files\NeuralNet</Filter>
+    </ClCompile>
+    <ClCompile Include="NeuralNet\DataContextCuda.cpp">
+      <Filter>Source Files\NeuralNet\CUDA</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

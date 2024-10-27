@@ -20,9 +20,9 @@
 #include "../Math/Matrix.h"
 #include "../Math/LinAlg3d.h"
 #include "ALayer.h"
-#include <vector>
 #include <msgpack.hpp>
 #include "LayerTypeId.h"
+#include "DataContext.h"
 
 namespace DeepLearning
 {
@@ -33,10 +33,6 @@ namespace DeepLearning
 	class NLayer : public ALayer<D>
 	{
 	private:
-		//Declare "friends" to be able to switch between the data contexts
-		//(see 'to_host()' and 'to_device()' methods)
-		friend class NLayer<CpuDC>;
-		friend class NLayer<GpuDC>;
 
 		/// <summary>
 		/// Vector of bias coefficients of size _out_dim;
@@ -61,7 +57,23 @@ namespace DeepLearning
 
 		int _msg_pack_version = 1;
 
+		/// <summary>
+		/// Json keys.
+		/// </summary>
+		static constexpr auto json_in_size_id() { return "InSize"; };
+		static constexpr auto json_out_size_id() { return "OutSize"; };
+
 	public:
+
+		/// <summary>
+		/// Read-only access to the collection of biases.
+		/// </summary>
+		const typename D::vector_t& biases() const;
+
+		/// <summary>
+		/// Read-only access to the collection of weights.
+		/// </summary>
+		const typename D::matrix_t& weights() const;
 
 		/// <summary>
 		/// Layer type identifier
@@ -113,6 +125,12 @@ namespace DeepLearning
 		/// Constructor to instantiate layer from the given string of certain format
 		/// </summary>
 		NLayer(const std::string& str, const Index3d& default_in_size = Index3d::zero());
+
+		/// <summary>
+		/// Constructor.
+		/// </summary>
+		template <class D1>
+		NLayer(const NLayer<D1>& source);
 
 		/// <summary>
 		/// See the summary to the corresponding method in the base class
@@ -184,14 +202,10 @@ namespace DeepLearning
 		Real squared_weights_sum() const override;
 
 		/// <summary>
-		/// Converts the given instance to the one working within the "cpu data context"
+		/// Converters the current instance to an instance within the given data context.
 		/// </summary>
-		NLayer<CpuDC> to_host() const;
-
-		/// <summary>
-		/// Converts the given instance to the one working within the "gpu data context" (CUDA "device" memory)
-		/// </summary>
-		NLayer<GpuDC> to_device() const;
+		template <class D1>
+		NLayer<D1> convert() const;
 
 		/// <summary>
 		/// Sets all the "trainable" parameters (weights and biases) to zero
@@ -199,3 +213,5 @@ namespace DeepLearning
 		void reset() override;
 	};
 }
+
+#include "NLayer.inl"

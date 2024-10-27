@@ -24,6 +24,7 @@
 #include <MsgPackUtils.h>
 #include <chrono>
 #include "Utilities.h"
+#include "NeuralNet/DataContextCuda.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;
@@ -229,14 +230,14 @@ namespace DeepLearningTest
 		//This test works but I am not satisfied with its performance (execution time), so it is out-commented for now
 		//TEST_METHOD(CudaTrainingWithCrossEntropyCostAndSoftMaxActivationTest)
 		//{
-		//	const bool long_test = false;
+		//	constexpr bool long_test = false;
 		//	RunMnistBasedTrainingTest<GpuDC>(CostFunctionId::CROSS_ENTROPY, Real(0.1), long_test ? Real(0.978) : Real(0.95), long_test, Real(0),
 		//		{ ActivationFunctionId::SIGMOID, ActivationFunctionId::SOFTMAX });
 		//}
 
 		TEST_METHOD(TrainingWithCrossEntropyCostAndReluActivationTest)
 		{
-			const bool long_test = false;
+			constexpr bool long_test = false;
 			RunMnistBasedTrainingTest(CostFunctionId::CROSS_ENTROPY, Real(0.075), long_test ? Real(0.977) : Real(0.95), long_test, Real(0),
 				{ ActivationFunctionId::RELU, ActivationFunctionId::SIGMOID });
 		}
@@ -524,4 +525,9 @@ namespace DeepLearningTest
 				+ std::to_string(occupied_memory) + " byte(-s) of memory.\n").c_str());
 		}
 	};
+
+	/// <summary>
+	/// Instantiate template with the GPU data context to ensure that it is compilable.
+	/// </summary>
+	template class DeepLearning::Net<GpuDC>;
 }

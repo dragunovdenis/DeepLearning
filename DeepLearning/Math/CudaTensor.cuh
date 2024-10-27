@@ -181,6 +181,11 @@ namespace DeepLearning
 			std::mt19937* seeder = nullptr);
 
 		/// <summary>
+		/// Constructor.
+		/// </summary>
+		CudaTensor(const Tensor& source);
+
+		/// <summary>
 		/// Assignment operator
 		/// </summary>
 		CudaTensor& operator =(const CudaTensor& tensor);

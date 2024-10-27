@@ -15,7 +15,8 @@
 //OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#include "CLayer.h"
+#pragma once
+
 #include <algorithm>
 #include <numeric>
 #include "../Diagnostics/Logging.h"
@@ -55,37 +56,39 @@ namespace DeepLearning
 		initialize(in_size, filter_window_size, filters_count, paddings, strides);
 	}
 
-	namespace {
-		const char* json_in_size_id = "InSize";
-		const char* json_filter_window_size_id = "FilterSize";
-		const char* json_filters_count_id = "FiltersCount";
-		const char* json_paddings_id = "Paddings";
-		const char* json_strides_id = "Strides";
-	}
-
 	template <class D>
 	CLayer<D>::CLayer(const std::string& str, const Index3d& default_in_size) : ALayer<D>(str)
 	{
 		const auto json = nlohmann::json::parse(str);
 
-		const auto in_size = json.contains(json_in_size_id) ?
-			Utils::extract_vector<Index3d>(json[json_in_size_id].get<std::string>()) : default_in_size;
+		const auto in_size = json.contains(json_in_size_id()) ?
+			Utils::extract_vector<Index3d>(json[json_in_size_id()].template get<std::string>()) : default_in_size;
 
-		const auto filter_window_size = json.contains(json_filter_window_size_id) ?
-			Utils::extract_vector<Index2d>(json[json_filter_window_size_id].get<std::string>()) :
+		const auto filter_window_size = json.contains(json_filter_window_size_id()) ?
+			Utils::extract_vector<Index2d>(json[json_filter_window_size_id()].template get<std::string>()) :
 			throw std::exception("Can't parse filter window size of CLayer");
 
-		const auto filters_count = json.contains(json_filters_count_id) ?
-			json[json_filters_count_id].get<std::size_t>() :
+		const auto filters_count = json.contains(json_filters_count_id()) ?
+			json[json_filters_count_id()].template get<std::size_t>() :
 			throw std::exception("Can't parse number of filters of CLayer");
 
-		const auto paddings = json.contains(json_paddings_id) ?
-			Utils::extract_vector<Index3d>(json[json_paddings_id].get<std::string>()) : Index3d{ 0, 0, 0 };
+		const auto paddings = json.contains(json_paddings_id()) ?
+			Utils::extract_vector<Index3d>(json[json_paddings_id()].template get<std::string>()) : Index3d{0, 0, 0};
 
-		const auto strides = json.contains(json_strides_id) ?
-			Utils::extract_vector<Index3d>(json[json_strides_id].get<std::string>()) : Index3d{ 0, 0, 0 };
+		const auto strides = json.contains(json_strides_id()) ?
+			Utils::extract_vector<Index3d>(json[json_strides_id()].template get<std::string>()) : Index3d{0, 0, 0};
 
 		initialize(in_size, filter_window_size, filters_count, paddings, strides);
+	}
+
+	template <class D>
+	template <class D1>
+	CLayer<D>::CLayer(const CLayer<D1>& source) : CLayer(source.to_script())
+	{
+		_biases = D::from_host(D1::to_host(source.biases()));
+		const auto& source_filters = source.filters();
+		std::ranges::transform(source_filters, _filters.begin(),
+			[](const auto& x) { return D::from_host(D1::to_host(x)); });
 	}
 
 	template <class D>
@@ -93,11 +96,11 @@ namespace DeepLearning
 	{
 		nlohmann::json json = nlohmann::json::parse(ALayer<D>::to_script());
 
-		json[json_in_size_id] = in_size().to_string();
-		json[json_filter_window_size_id] = weight_tensor_size().yz().to_string();
-		json[json_filters_count_id] = out_size().x;
-		json[json_paddings_id] = _paddings.to_string();
-		json[json_strides_id] = _strides.to_string();
+		json[json_in_size_id()] = in_size().to_string();
+		json[json_filter_window_size_id()] = weight_tensor_size().yz().to_string();
+		json[json_filters_count_id()] = out_size().x;
+		json[json_paddings_id()] = _paddings.to_string();
+		json[json_strides_id()] = _strides.to_string();
 
 		return json.dump();
 	}
@@ -216,6 +219,18 @@ namespace DeepLearning
 	}
 
 	template <class D>
+	const typename D::tensor_t& CLayer<D>::biases() const
+	{
+		return _biases;
+	}
+
+	template <class D>
+	const std::vector<typename D::tensor_t>& CLayer<D>::filters() const
+	{
+		return _filters;
+	}
+
+	template <class D>
 	void CLayer<D>::msgpack_unpack(msgpack::object const& msgpack_o)
 	{
 		try
@@ -315,42 +330,14 @@ namespace DeepLearning
 			[](const auto& sum, const auto& filter) { return sum + filter.sum_of_squares(); });
 	}
 
-	template <>
-	CLayer<CpuDC> CLayer<CpuDC>::to_host() const
+	template <class D>
+	template <class D1>
+	CLayer<D1> CLayer<D>::convert() const
 	{
-		return *this;
-	}
+		if (std::is_same_v<D1, D>)
+			return *this;
 
-	template <>
-	CLayer<CpuDC> CLayer<GpuDC>::to_host() const
-	{
-		CLayer<CpuDC> result(to_script());
-		result._biases = _biases.to_host();
-		std::ranges::transform(_filters, result._filters.begin(), [](const auto& x) { return x.to_host(); });
-
-		return result;
-	}
-
-	template <>
-	CLayer<GpuDC> CLayer<GpuDC>::to_device() const
-	{
-		return *this;
-	}
-
-	template <>
-	CLayer<GpuDC> CLayer<CpuDC>::to_device() const
-	{
-		CLayer<GpuDC> result(to_script());
-		result._biases.assign(_biases);
-		std::ranges::transform(_filters, result._filters.begin(),
-		                       [](const auto& x) 
-		                       {
-			                       GpuDC::tensor_t result;
-			                       result.assign(x);
-			                       return result; 
-		                       });
-
-		return result;
+		return CLayer<D1>(*this);
 	}
 
 	template <class D>
@@ -362,7 +349,4 @@ namespace DeepLearning
 
 		_biases.fill_zero();
 	}
-
-	template class CLayer<CpuDC>;
-	template class CLayer<GpuDC>;
 }

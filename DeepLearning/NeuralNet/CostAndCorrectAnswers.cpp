@@ -1,4 +1,4 @@
-//Copyright (c) 2022 Denys Dragunov, dragunovdenis@gmail.com
+//Copyright (c) 2024 Denys Dragunov, dragunovdenis@gmail.com
 //Permission is hereby granted, free of charge, to any person obtaining a copy
 //of this software and associated documentation files(the "Software"), to deal
 //in the Software without restriction, including without limitation the rights
@@ -15,33 +15,21 @@
 //OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#include "LayerTypeId.h"
-#include "../Utilities.h"
+#include "CostsAndCorrectAnswers.h"
 
 namespace DeepLearning
 {
-	std::string to_string(const LayerTypeId& layer_type_id)
+	CostAndCorrectAnswers& CostAndCorrectAnswers::operator += (const CostAndCorrectAnswers& item)
 	{
-		switch (layer_type_id)
-		{
-		case LayerTypeId::CONVOLUTION: return "CONV";
-		case LayerTypeId::FULL: return "FULL";
-		case LayerTypeId::PULL: return "PULL";
-		default:
-			return "UNKNOWN";
-		}
+		Cost += item.Cost;
+		CorrectAnswers += item.CorrectAnswers;
+
+		return *this;
 	}
 
-	LayerTypeId parse_layer_type(const std::string& str)
+	CostAndCorrectAnswers operator +(const CostAndCorrectAnswers& item1, const CostAndCorrectAnswers& item2)
 	{
-		const auto str_normalized = Utils::normalize_string(str);
-
-		for (unsigned int id = static_cast<unsigned int>(LayerTypeId::FULL); id <= static_cast<unsigned int>(LayerTypeId::PULL); id++)
-		{
-			if (to_string(static_cast<LayerTypeId>(id)) == str_normalized)
-				return static_cast<LayerTypeId>(id);
-		}
-
-		return LayerTypeId::UNKNOWN;
+		auto result = item1;
+		return result += item2;
 	}
 }

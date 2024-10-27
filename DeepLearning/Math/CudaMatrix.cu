@@ -130,6 +130,11 @@ namespace DeepLearning
 		take_over_resources(std::move(matr));
 	}
 
+	CudaMatrix::CudaMatrix(const Matrix& source)
+	{
+		assign(source);
+	}
+
 	CudaMatrix& CudaMatrix::operator =(CudaMatrix&& matr) noexcept
 	{
 		if (this != &matr)

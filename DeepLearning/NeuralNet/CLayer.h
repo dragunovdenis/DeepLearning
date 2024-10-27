@@ -17,8 +17,8 @@
 
 #pragma once
 #include "ALayer.h"
-#include "../Math/Tensor.h"
 #include "../Math/LinAlg2d.h"
+#include "DataContext.h"
 #include <vector>
 #include <msgpack.hpp>
 #include "LayerTypeId.h"
@@ -35,11 +35,6 @@ namespace DeepLearning
 		Index3d _weight_tensor_size{};
 		Index3d _paddings{};
 		Index3d _strides{};
-
-		//Declare "friends" to be able to switch between the data contexts
-		//(see 'to_host()' and 'to_device()' methods)
-		friend class CLayer<CpuDC>;
-		friend class CLayer<GpuDC>;
 
 		/// <summary>
 		/// Biases
@@ -64,7 +59,26 @@ namespace DeepLearning
 
 		int _msg_pack_version = 1;
 
+		/// <summary>
+		/// Json keys.
+		/// </summary>
+		static constexpr auto json_in_size_id() {	return "InSize"; };
+		static constexpr auto json_filter_window_size_id() { return "FilterSize"; };
+		static constexpr auto json_filters_count_id() { return "FiltersCount"; };
+		static constexpr auto json_paddings_id() { return "Paddings"; };
+		static constexpr auto json_strides_id() { return "Strides"; };
+
 	public:
+
+		/// <summary>
+		/// Read-only access to the collection of biases.
+		/// </summary>
+		const typename D::tensor_t& biases() const;
+
+		/// <summary>
+		/// Read-only access to the collection of filters.
+		/// </summary>
+		const std::vector<typename D::tensor_t>& filters() const;
 
 		/// <summary>
 		/// Layer type identifier
@@ -125,6 +139,12 @@ namespace DeepLearning
 		/// Constructor to instantiate layer from the given string of certain format
 		/// </summary>
 		CLayer(const std::string& str, const Index3d& default_in_size = Index3d::zero());
+
+		/// <summary>
+		/// Constructor.
+		/// </summary>
+		template <class D1>
+		CLayer(const CLayer<D1>& source);
 
 		/// <summary>
 		/// See description in the base class
@@ -196,14 +216,10 @@ namespace DeepLearning
 		Real squared_weights_sum() const override;
 
 		/// <summary>
-		/// Converts the given instance to the one working within the "cpu data context"
+		/// Converters the current instance to an instance within the given data context.
 		/// </summary>
-		CLayer<CpuDC> to_host() const;
-
-		/// <summary>
-		/// Converts the given instance to the one working within the "gpu data context" (CUDA "device" memory)
-		/// </summary>
-		CLayer<GpuDC> to_device() const;
+		template <class D1>
+		CLayer<D1> convert() const;
 
 		/// <summary>
 		/// Sets all the "trainable" parameters (weights and biases) to zero
@@ -212,3 +228,5 @@ namespace DeepLearning
 	};
 
 }
+
+#include "CLayer.inl"

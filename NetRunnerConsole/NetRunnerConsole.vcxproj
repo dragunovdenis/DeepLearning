@@ -354,6 +354,7 @@ copy /Y "..\$(Platform)\$(Configuration)\ScottPlotWrapper.dll" "bin\$(Platform)\
     <Import Project="$(SolutionDir)\packages\tclap.1.2.1\build\native\tclap.targets" Condition="Exists('$(SolutionDir)\packages\tclap.1.2.1\build\native\tclap.targets')" />
     <Import Project="$(SolutionDir)\packages\msgpack-c-cpp-3.1.1-winsoft666.1.0.0.2\build\native\msgpack-c-cpp-3.1.1-winsoft666.targets" Condition="Exists('$(SolutionDir)\packages\msgpack-c-cpp-3.1.1-winsoft666.1.0.0.2\build\native\msgpack-c-cpp-3.1.1-winsoft666.targets')" />
     <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 12.6.targets" />
+    <Import Project="..\packages\nlohmann.json.3.11.2\build\native\nlohmann.json.targets" Condition="Exists('..\packages\nlohmann.json.3.11.2\build\native\nlohmann.json.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
@@ -361,5 +362,6 @@ copy /Y "..\$(Platform)\$(Configuration)\ScottPlotWrapper.dll" "bin\$(Platform)\
     </PropertyGroup>
     <Error Condition="!Exists('$(SolutionDir)\packages\tclap.1.2.1\build\native\tclap.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\packages\tclap.1.2.1\build\native\tclap.targets'))" />
     <Error Condition="!Exists('$(SolutionDir)\packages\msgpack-c-cpp-3.1.1-winsoft666.1.0.0.2\build\native\msgpack-c-cpp-3.1.1-winsoft666.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\packages\msgpack-c-cpp-3.1.1-winsoft666.1.0.0.2\build\native\msgpack-c-cpp-3.1.1-winsoft666.targets'))" />
+    <Error Condition="!Exists('..\packages\nlohmann.json.3.11.2\build\native\nlohmann.json.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\nlohmann.json.3.11.2\build\native\nlohmann.json.targets'))" />
   </Target>
 </Project>

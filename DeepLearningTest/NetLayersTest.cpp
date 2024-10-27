@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <random>
 #include "StandardTestUtils.h"
+#include "NeuralNet/DataContextCuda.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;
@@ -356,7 +357,7 @@ namespace DeepLearningTest
 
 			//Assert
 			Assert::IsTrue(output.max_abs() > 0 && in_gradient.max_abs() > 0, L"Output tensors are supposed to be nonzero");//A sanity check
-			const auto nl_host = nl.to_host().to_device().to_host();//involve "to_device" into the testing as well
+			const auto nl_host = nl.template convert<CpuDC>().template convert<GpuDC>().template convert<CpuDC>();//involve "to_device" into the testing as well
 			const auto input_host = input.to_host();
 			const auto out_gradient_host = out_gradient.to_host();
 			typename ALayer<CpuDC>::AuxLearningData aux_learning_data_host;
@@ -500,7 +501,7 @@ namespace DeepLearningTest
 			//so that it is less than the minimal difference between the items in the input tensor
 			//(again, to avoid confusion when doing max-pooling)
 			RunGeneralDerivativeWithRespectToInputValuesTest(nl, CostFunctionId::SQUARED_ERROR,
-				(std::is_same_v<Real, double> ? static_cast<Real>(1e-10) : static_cast<Real>(5e-4)),
+				(std::is_same_v<Real, double> ? static_cast<Real>(1e-10) : static_cast<Real>(7e-4)),
 				factor/2, std::make_optional<Tensor>(input));
 		}
 

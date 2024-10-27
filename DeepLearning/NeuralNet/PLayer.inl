@@ -15,7 +15,8 @@
 //OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#include "PLayer.h"
+#pragma once
+
 #include "../Math/ConvolutionUtils.h"
 #include "../Utilities.h"
 #include <nlohmann/json.hpp>
@@ -81,6 +82,11 @@ namespace DeepLearning
 
 		initialize(in_size, pool_window_size, pool_operator_id);
 	}
+
+	template <class D>
+	template <class D1>
+	PLayer<D>::PLayer(const PLayer<D1>& source) : PLayer(source.to_script())
+	{}
 
 	template <class D>
 	std::string PLayer<D>::to_script() const
@@ -203,9 +209,9 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	CummulativeGradient<D> PLayer<D>::init_cumulative_gradient() const
+	CumulativeGradient<D> PLayer<D>::init_cumulative_gradient() const
 	{
-		return CummulativeGradient<D>(0, 0);
+		return CumulativeGradient<D>(0, 0);
 	}
 
 	template <class D>
@@ -243,22 +249,14 @@ namespace DeepLearning
 		return Real(0);
 	}
 
-	template <>
-	PLayer<CpuDC> PLayer<CpuDC>::to_host() const
+	template <class D>
+	template <class D1>
+	PLayer<D1> PLayer<D>::convert() const
 	{
-		return *this;
-	}
+		if (std::is_same_v<D1, D>)
+			return *this;
 
-	template <>
-	PLayer<CpuDC> PLayer<GpuDC>::to_host() const
-	{
-		return PLayer<CpuDC>(_in_size, _pool_window_size.yz(), _pool_operator_id);
-	}
-
-	template <>
-	PLayer<GpuDC> PLayer<GpuDC>::to_device() const
-	{
-		return *this;
+		return PLayer<D1>(*this);
 	}
 
 	template <class D>
@@ -266,13 +264,4 @@ namespace DeepLearning
 	{
 		//no "trainable" parameters so nothing to reset
 	}
-
-	template <>
-	PLayer<GpuDC> PLayer<CpuDC>::to_device() const
-	{
-		return PLayer<GpuDC>(_in_size, _pool_window_size.yz(), _pool_operator_id);
-	}
-
-	template class PLayer<CpuDC>;
-	template class PLayer<GpuDC>;
 }

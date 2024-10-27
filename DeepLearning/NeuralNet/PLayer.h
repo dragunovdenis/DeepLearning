@@ -22,6 +22,7 @@
 #include <msgpack.hpp>
 #include "LayerTypeId.h"
 #include "../Math/LinAlg2d.h"
+#include "DataContext.h"
 
 namespace DeepLearning
 {
@@ -93,6 +94,12 @@ namespace DeepLearning
 		PLayer(const std::string& str, const Index3d& default_in_size = Index3d::zero());
 
 		/// <summary>
+		/// Constructor.
+		/// </summary>
+		template <class D1>
+		PLayer(const PLayer<D1>& source);
+
+		/// <summary>
 		/// Size of the layer's input
 		/// </summary>
 		Index3d in_size() const override;
@@ -144,7 +151,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Returns zero initialized instance of cumulative gradient suitable for the current instance of the layer
 		/// </summary>
-		CummulativeGradient<D> init_cumulative_gradient() const override;
+		CumulativeGradient<D> init_cumulative_gradient() const override;
 
 		/// <summary>
 		/// See description in the base class
@@ -183,14 +190,10 @@ namespace DeepLearning
 		Real squared_weights_sum() const override;
 
 		/// <summary>
-		/// Converts the given instance to the one working within the "cpu data context"
+		/// Converters the current instance to an instance within the given data context.
 		/// </summary>
-		PLayer<CpuDC> to_host() const;
-
-		/// <summary>
-		/// Converts the given instance to the one working within the "gpu data context" (CUDA "device" memory)
-		/// </summary>
-		PLayer<GpuDC> to_device() const;
+		template <class D1>
+		PLayer<D1> convert() const;
 
 		/// <summary>
 		/// Sets all the "trainable" parameters (weights and biases) to zero
@@ -198,3 +201,5 @@ namespace DeepLearning
 		void reset() override;
 	};
 }
+
+#include "PLayer.inl"

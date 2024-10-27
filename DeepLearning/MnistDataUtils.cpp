@@ -27,14 +27,12 @@ namespace DeepLearning
 	/// </summary>
 	int reverseInt(int i)
 	{
-		unsigned char c1, c2, c3, c4;
+		unsigned char c1 = i & 255;
+		unsigned char c2 = (i >> 8) & 255;
+		unsigned char c3 = (i >> 16) & 255;
+		unsigned char c4 = (i >> 24) & 255;
 
-		c1 = i & 255;
-		c2 = (i >> 8) & 255;
-		c3 = (i >> 16) & 255;
-		c4 = (i >> 24) & 255;
-
-		return ((int)c1 << 24) + ((int)c2 << 16) + ((int)c3 << 8) + c4;
+		return (static_cast<int>(c1) << 24) + (static_cast<int>(c2) << 16) + (static_cast<int>(c3) << 8) + c4;
 	}
 
 	std::vector<Image8Bit> MnistDataUtils::read_images(const std::filesystem::path& path,
@@ -53,8 +51,8 @@ namespace DeepLearning
 		const int length = static_cast<int>(file.tellg());
 		file.seekg(0, file.beg);
 
-		const int image_height = 28;
-		const int image_width = 28;
+		constexpr int image_height = 28;
+		constexpr int image_width = 28;
 
 		if (length != 16/*size of the expected headed in bytes*/ +
 			image_height * image_width * expected_image_count)
@@ -114,7 +112,7 @@ namespace DeepLearning
 			throw std::exception("Unexpected number of labels in the file.");
 
 		//The header is over
-		std::vector<Tensor> result(expected_label_count, Tensor(1, 1, 10));
+		std::vector result(expected_label_count, Tensor(1, 1, 10));
 
 		unsigned char u_byte;
 		for (std::size_t label_id = 0; label_id < expected_label_count; label_id++)
@@ -123,7 +121,7 @@ namespace DeepLearning
 			if (u_byte > 9)
 				throw std::exception("Unexpected label value.");
 
-			result[label_id](0, 0, u_byte) = Real(1);
+			result[label_id](0, 0, u_byte) = static_cast<Real>(1);
 		}
 
 		return result;
@@ -137,7 +135,7 @@ namespace DeepLearning
 		std::vector<Tensor> result(images.begin(), images.end());
 
 		const auto image_size = result.begin()->size();
-		if (!std::all_of(result.begin(), result.end(), [=](const auto& im) { return im.size() == image_size; }))
+		if (!std::ranges::all_of(result, [=](const auto& im) { return im.size() == image_size; }))
 			throw std::exception("Images are supposed to be of same size");
 
 		const auto scale_factor = max_value / 256;
@@ -152,26 +150,12 @@ namespace DeepLearning
 		return result;
 	}
 
-	/// <summary>
-	/// Converts given "host" collection to "device" collection
-	/// </summary>
-	std::vector<CudaTensor> to_device(const std::vector<Tensor>& data)
-	{
-		std::vector<CudaTensor> result(data.size());
-
-		for (auto data_id = 0ull; data_id < data.size(); data_id++)
-			result[data_id].assign(data[data_id]);
-
-		return result;
-	}
-
-	template<>
-	std::tuple<std::vector<typename CpuDC::tensor_t>, std::vector<typename CpuDC::tensor_t>> MnistDataUtils::load_labeled_data<CpuDC>(
+	std::tuple<std::vector<typename CpuDC::tensor_t>, std::vector<typename CpuDC::tensor_t>> MnistDataUtils::load_labeled_data_host(
 		const std::filesystem::path& data_path, const std::filesystem::path& labels_path,
 		const std::size_t expected_items_count, const Real& max_value, const std::vector<Vector3d<Real>>& transformations)
 	{
-		const auto images = MnistDataUtils::read_images(data_path, expected_items_count);
-		const auto labels = MnistDataUtils::read_labels(labels_path, expected_items_count);
+		const auto images = read_images(data_path, expected_items_count);
+		const auto labels = read_labels(labels_path, expected_items_count);
 
 		if (transformations.empty())
 		{
@@ -184,35 +168,25 @@ namespace DeepLearning
 		auto labels_total = std::vector<Tensor>((transformations_count + 1) * labels.size());
 
 		//copy the original images and labels
-		std::copy(images.begin(), images.end(), images_total.begin());
-		std::copy(labels.begin(), labels.end(), labels_total.begin());
+		std::ranges::copy(images, images_total.begin());
+		std::ranges::copy(labels, labels_total.begin());
 
 		const auto original_images_count = images.size();
 		auto offset = original_images_count;
 		for (auto transform_id = 0ull; transform_id < transformations_count; ++transform_id)
 		{
 			const auto& transform = transformations[transform_id];
-			std::transform(images.begin(), images.end(), images_total.begin() + offset, [&transform](const auto& image)
-				{
-					return ImageUtils::transform(image, transform.x, transform.yz());
-				});
+			std::ranges::transform(images, images_total.begin() + offset, [&transform](const auto& image)
+			{
+				return ImageUtils::transform(image, transform.x, transform.yz());
+			});
 
-			std::copy(labels.begin(), labels.end(), labels_total.begin() + offset);
+			std::ranges::copy(labels, labels_total.begin() + offset);
 
 			offset += original_images_count;
 		}
 		const auto images_total_scaled = scale_images(images_total, max_value);
 
 		return std::make_tuple(images_total_scaled, labels_total);
-	}
-
-	template<>
-	std::tuple<std::vector<typename GpuDC::tensor_t>, std::vector<typename GpuDC::tensor_t>> MnistDataUtils::load_labeled_data<GpuDC>(
-		const std::filesystem::path& data_path, const std::filesystem::path& labels_path,
-		const std::size_t expected_items_count, const Real& max_value, const std::vector<Vector3d<Real>>& transformations)
-	{
-		const auto [images_scaled, labels] = MnistDataUtils::load_labeled_data<CpuDC>(data_path, labels_path,
-			expected_items_count, max_value, transformations);
-		return std::make_tuple(to_device(images_scaled), to_device(labels));
 	}
 }

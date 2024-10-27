@@ -16,11 +16,11 @@
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #pragma once
-#include "CummulativeGradient.h"
+#include "CumulativeGradient.h"
 #include <filesystem>
+#include <random>
 #include <string>
 #include "LayerTypeId.h"
-#include "DataContext.h"
 #include "LayerGradient.h"
 #include "../Math/ActivationFunction.h"
 
@@ -57,6 +57,12 @@ namespace DeepLearning
 		/// One minus dropout rate
 		/// </summary>
 		Real _keep_rate = DefaultKeepRate;
+
+		/// <summary>
+		/// Json keys
+		/// </summary>
+		static constexpr auto json_keep_id() { return "Keep"; };
+		static constexpr auto json_activation_id() { return "Activation"; };
 
 	protected:
 
@@ -240,9 +246,9 @@ namespace DeepLearning
 		/// <summary>
 		/// Returns zero initialized instance of cumulative gradient suitable for the current instance of the layer
 		/// </summary>
-		[[nodiscard]] virtual CummulativeGradient<D> init_cumulative_gradient() const
+		[[nodiscard]] virtual CumulativeGradient<D> init_cumulative_gradient() const
 		{
-			return CummulativeGradient<D>(weight_tensor_size(), out_size());
+			return CumulativeGradient<D>(weight_tensor_size(), out_size());
 		}
 
 		/// <summary>
@@ -303,3 +309,5 @@ namespace DeepLearning
 		static void reset_random_generator();
 	};
 }
+
+#include "ALayer.inl"

@@ -17,9 +17,8 @@
 
 #pragma once
 
-#include "../Math/Tensor.h"
-#include <vector>
 #include "LayerGradient.h"
+#include "../Math/LinAlg3d.h"
 
 namespace DeepLearning
 {
@@ -31,7 +30,7 @@ namespace DeepLearning
 	/// particular input and then calculate the average on demand
 	/// </summary>
 	template <class D>
-	class CummulativeGradient
+	class CumulativeGradient
 	{
 		/// <summary>
 		///	The gradient
@@ -51,7 +50,7 @@ namespace DeepLearning
 		/// <param name="weight_tensor_size">Size of a single weight kernel (filter).
 		/// Number of filters (channels) can be derived from the number of layers (channels) in the tensor of biases</param>
 		/// <param name="bias_tensor_size">Size of the tensor of biases</param>
-		CummulativeGradient(const Index3d& weight_tensor_size, const Index3d& bias_tensor_size);
+		CumulativeGradient(const Index3d& weight_tensor_size, const Index3d& bias_tensor_size);
 
 		/// <summary>
 		/// Adds given gradients to the corresponding "sum" structures
@@ -61,7 +60,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Calculates and returns the "average" gradient with respect to layer weights and biases
 		/// </summary>
-		LayerGradient<D> calc_average_gradient(const Real scale_factor = Real(1)) const;
+		LayerGradient<D> calc_average_gradient(const Real scale_factor = static_cast<Real>(1)) const;
 
 		/// <summary>
 		/// Returns reference to the accumulated gradient (sum of all added gradients)
@@ -79,3 +78,5 @@ namespace DeepLearning
 		void reset();
 	};
 }
+
+#include "CumulativeGradient.inl"

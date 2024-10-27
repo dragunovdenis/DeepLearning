@@ -15,8 +15,7 @@
 //OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#include "LayerGradient.h"
-#include "DataContext.h"
+#pragma once
 #include "../Math/CollectionArithmetics.h"
 
 namespace DeepLearning
@@ -48,9 +47,6 @@ namespace DeepLearning
 		return result += lg1;
 	}
 
-	template LayerGradient<CpuDC> operator +(const LayerGradient<CpuDC>& lg, const LayerGradient<CpuDC>& lg1);
-	template LayerGradient<GpuDC> operator +(const LayerGradient<GpuDC>& lg, const LayerGradient<GpuDC>& lg1);
-
 	template <class D>
 	LayerGradient<D>& LayerGradient<D>::operator -=(const LayerGradient& lg)
 	{
@@ -65,9 +61,6 @@ namespace DeepLearning
 		auto result = lg;
 		return result -= lg1;
 	}
-
-	template  LayerGradient<CpuDC> operator -(const LayerGradient<CpuDC>& lg, const LayerGradient<CpuDC>& lg1);
-	template  LayerGradient<GpuDC> operator -(const LayerGradient<GpuDC>& lg, const LayerGradient<GpuDC>& lg1);
 
 	template <class D>
 	LayerGradient<D>& LayerGradient<D>::operator *=(const Real& scalar)
@@ -84,17 +77,11 @@ namespace DeepLearning
 		return result *= scalar;
 	}
 
-	template LayerGradient<CpuDC> operator *(const LayerGradient<CpuDC>& lg, const Real& scalar);
-	template LayerGradient<GpuDC> operator *(const LayerGradient<GpuDC>& lg, const Real& scalar);
-
 	template <class D>
 	LayerGradient<D> operator *(const Real& scalar, const LayerGradient<D>& lg)
 	{
 		return lg * scalar;
 	}
-
-	template LayerGradient<CpuDC> operator *(const Real& scalar, const LayerGradient<CpuDC>& lg);
-	template LayerGradient<GpuDC> operator *(const Real& scalar, const LayerGradient<GpuDC>& lg);
 
 	template <class D>
 	Real LayerGradient<D>::max_abs() const
@@ -148,7 +135,4 @@ namespace DeepLearning
 
 		return *this;
 	}
-
-	template struct LayerGradient<CpuDC>;
-	template struct LayerGradient<GpuDC>;
 }

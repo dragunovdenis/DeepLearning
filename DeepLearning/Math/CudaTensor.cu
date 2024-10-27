@@ -139,6 +139,11 @@ namespace DeepLearning
 		CudaTensor(size.x, size.y, size.z, range_begin, range_end, seeder)
 	{}
 
+	CudaTensor::CudaTensor(const Tensor& source)
+	{
+		assign(source);
+	}
+
 	CudaTensor& CudaTensor::operator =(const CudaTensor& tensor)
 	{
 		if (this != &tensor)
