@@ -17,8 +17,8 @@
 
 #include "CppUnitTest.h"
 #include "StandardTestUtils.h"
-#include "NeuralNet/LayerGradient.h"
-#include "NeuralNet/DataContext.h"
+#include <NeuralNet/LayerGradient.h>
+#include <NeuralNet/DataContext.h>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;

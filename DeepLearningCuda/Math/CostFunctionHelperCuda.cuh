@@ -16,8 +16,8 @@
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #pragma once
-#include "CostFunctionId.h"
-#include "../defs.h"
+#include <Math/CostFunctionId.h>
+#include <defs.h>
 
 /// <summary>
 	/// Helper methods used for activation function evaluation

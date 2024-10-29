@@ -20,7 +20,7 @@
 #include "../Math/CudaMatrix.cuh"
 #include "../Math/CudaTensor.cuh"
 #include "../Math/CudaArray.cuh"
-#include "DataContext.h"
+#include <NeuralNet/DataContext.h>
 
 namespace DeepLearning
 {

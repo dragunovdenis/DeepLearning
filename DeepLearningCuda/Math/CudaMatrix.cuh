@@ -17,11 +17,11 @@
 
 #pragma once
 
-#include "../defs.h"
+#include <defs.h>
 #include <filesystem>
 #include "BasicCudaCollection.cuh"
-#include "Matrix.h"
-#include "LinAlg3d.h"
+#include <Math/Matrix.h>
+#include <Math/LinAlg3d.h>
 
 namespace DeepLearning
 {

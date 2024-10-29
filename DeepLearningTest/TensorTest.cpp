@@ -19,10 +19,10 @@
 #include <Math/Tensor.h>
 #include "Math/CostFunction.h"
 #include <MsgPackUtils.h>
-#include "Utilities.h"
+#include <Utilities.h>
 #include "StandardTestUtils.h"
-#include "Math/ConvolutionUtils.h"
-#include "Math/PoolOperator.h"
+#include <Math/ConvolutionUtils.h>
+#include <Math/PoolOperator.h>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;

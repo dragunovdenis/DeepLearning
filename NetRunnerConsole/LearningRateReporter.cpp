@@ -20,7 +20,7 @@
 #include <exception>
 #include <Utilities.h>
 #include <numeric>
-#include "../ManagedToUnmanagedBridge/ManagedToUnmanagedBridge.h"
+#include <ManagedToUnmanagedBridge.h>
 
 namespace NetRunnerConsole
 {

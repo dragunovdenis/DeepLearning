@@ -16,7 +16,7 @@
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #pragma once
-#include "ActivationFunctionId.h"
+#include <Math/ActivationFunctionId.h>
 
 namespace DeepLearning
 {

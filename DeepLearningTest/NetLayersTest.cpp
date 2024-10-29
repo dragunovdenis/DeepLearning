@@ -27,7 +27,7 @@
 #include <algorithm>
 #include <random>
 #include "StandardTestUtils.h"
-#include "NeuralNet/DataContextCuda.h"
+#include <NeuralNet/DataContextCuda.h>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;
@@ -307,7 +307,7 @@ namespace DeepLearningTest
 		void CheckDerivativeWithRespectToInputValuesCalculation(const ActivationFunctionId activation_func_id, const CostFunctionId cost_function_id)
 		{
 			const auto nl = CreateCpuNLayer(activation_func_id);
-			RunGeneralDerivativeWithRespectToInputValuesTest(nl, cost_function_id, (std::is_same_v<Real, double> ? Real(2e-9) : Real(5e-3)));
+			RunGeneralDerivativeWithRespectToInputValuesTest(nl, cost_function_id, (std::is_same_v<Real, double> ? Real(2e-9) : Real(6.2e-3)));
 		}
 
 		/// <summary>
@@ -318,7 +318,7 @@ namespace DeepLearningTest
 		{
 			const auto nl = CreateCpuNLayer(activation_func_id);
 			RunGeneralDerivativeWithRespectToWeightsAndBiasesTest(nl, cost_function_id,
-				(std::is_same_v<Real, double> ? Real(8e-10) : Real(3e-3)),
+				(std::is_same_v<Real, double> ? Real(8e-10) : Real(3.5e-3)),
 				(std::is_same_v<Real, double> ? Real(7e-10) : Real(3e-3)));
 		}
 

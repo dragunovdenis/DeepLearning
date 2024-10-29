@@ -18,12 +18,12 @@
 #pragma once
 
 #include <random>
-#include "../defs.h"
+#include <defs.h>
 #include <vector>
 #include "CostFunctionHelperCuda.cuh"
 #include "ActivationFunctionHelperCuda.cuh"
-#include "../Memory/MemHandle.h"
-#include "LinAlg3d.h"
+#include <Memory/MemHandle.h>
+#include <Math/LinAlg3d.h>
 
 namespace DeepLearning
 {

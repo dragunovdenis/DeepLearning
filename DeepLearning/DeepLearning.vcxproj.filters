@@ -49,12 +49,6 @@
     <Filter Include="Source Files\Diagnostics">
       <UniqueIdentifier>{a62ec974-f938-40ca-ae9f-c6debe1cb211}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Math\CUDA">
-      <UniqueIdentifier>{4421ce5d-6827-4b30-b785-e3b472d3c8a5}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Math\CUDA">
-      <UniqueIdentifier>{e577e042-1adc-4f4f-9d18-bc8df40aef25}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Math\Optimization">
       <UniqueIdentifier>{5d66a378-2377-41fd-abe1-0faab0dac4a8}</UniqueIdentifier>
     </Filter>
@@ -69,12 +63,6 @@
     </Filter>
     <Filter Include="Source Files\Math\ActivationFunction">
       <UniqueIdentifier>{5ddcbe88-e08f-4fa2-b92f-00fd0ff57377}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\NeuralNet\CUDA">
-      <UniqueIdentifier>{628a6d45-8a68-4731-8bc5-8a840501add5}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\NeuralNet\CUDA">
-      <UniqueIdentifier>{d5e6d32d-826f-42e8-ad09-c67bc8d36f47}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -162,29 +150,8 @@
     <ClInclude Include="NeuralNet\LayerTypeId.h">
       <Filter>Header Files\NeuralNet</Filter>
     </ClInclude>
-    <ClInclude Include="Math\BasicCudaCollection.cuh">
-      <Filter>Header Files\Math\CUDA</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\CudaSetup.h">
-      <Filter>Header Files\Math\CUDA</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\CudaVector.cuh">
-      <Filter>Header Files\Math\CUDA</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\CudaUtils.cuh">
-      <Filter>Header Files\Math\CUDA</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\CudaMatrix.cuh">
-      <Filter>Header Files\Math\CUDA</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\CudaTensor.cuh">
-      <Filter>Header Files\Math\CUDA</Filter>
-    </ClInclude>
     <ClInclude Include="Math\ConvolutionUtils.h">
       <Filter>Header Files\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\CudaArray.cuh">
-      <Filter>Header Files\Math\CUDA</Filter>
     </ClInclude>
     <ClInclude Include="NeuralNet\DataContext.h">
       <Filter>Header Files\NeuralNet</Filter>
@@ -216,9 +183,6 @@
     <ClInclude Include="RandomGenerator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Math\CostFunctionHelperCuda.cuh">
-      <Filter>Header Files\Math\CUDA</Filter>
-    </ClInclude>
     <ClInclude Include="Math\CostFunction.h">
       <Filter>Header Files\Math\CostFunction</Filter>
     </ClInclude>
@@ -233,9 +197,6 @@
     </ClInclude>
     <ClInclude Include="Math\CostFunction.inl">
       <Filter>Header Files\Math\CostFunction</Filter>
-    </ClInclude>
-    <ClInclude Include="Math\ActivationFunctionHelperCuda.cuh">
-      <Filter>Header Files\Math\CUDA</Filter>
     </ClInclude>
     <ClInclude Include="Math\ActivationFunction.h">
       <Filter>Header Files\Math\ActivationFunction</Filter>
@@ -278,9 +239,6 @@
     </ClInclude>
     <ClInclude Include="NeuralNet\CostsAndCorrectAnswers.h">
       <Filter>Header Files\NeuralNet</Filter>
-    </ClInclude>
-    <ClInclude Include="NeuralNet\DataContextCuda.h">
-      <Filter>Header Files\NeuralNet\CUDA</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -326,9 +284,6 @@
     <ClCompile Include="NeuralNet\LayerTypeId.cpp">
       <Filter>Source Files\NeuralNet</Filter>
     </ClCompile>
-    <ClCompile Include="Math\CudaSetup.cpp">
-      <Filter>Source Files\Math\CUDA</Filter>
-    </ClCompile>
     <ClCompile Include="Math\ConvolutionUtils.cpp">
       <Filter>Source Files\Math</Filter>
     </ClCompile>
@@ -365,34 +320,8 @@
     <ClCompile Include="NeuralNet\DataContext.cpp">
       <Filter>Source Files\NeuralNet</Filter>
     </ClCompile>
-    <ClCompile Include="NeuralNet\DataContextCuda.cpp">
-      <Filter>Source Files\NeuralNet\CUDA</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <CudaCompile Include="Math\BasicCudaCollection.cu">
-      <Filter>Source Files\Math\CUDA</Filter>
-    </CudaCompile>
-    <CudaCompile Include="Math\CudaVector.cu">
-      <Filter>Source Files\Math\CUDA</Filter>
-    </CudaCompile>
-    <CudaCompile Include="Math\CudaUtils.cu">
-      <Filter>Source Files\Math\CUDA</Filter>
-    </CudaCompile>
-    <CudaCompile Include="Math\CudaMatrix.cu">
-      <Filter>Source Files\Math\CUDA</Filter>
-    </CudaCompile>
-    <CudaCompile Include="Math\CudaTensor.cu">
-      <Filter>Source Files\Math\CUDA</Filter>
-    </CudaCompile>
-    <CudaCompile Include="Math\ActivationFunctionHelperCuda.cu">
-      <Filter>Source Files\Math\CUDA</Filter>
-    </CudaCompile>
-    <CudaCompile Include="Math\CostFunctionHelperCuda.cu">
-      <Filter>Source Files\Math\CUDA</Filter>
-    </CudaCompile>
   </ItemGroup>
 </Project>

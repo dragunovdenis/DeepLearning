@@ -22,7 +22,7 @@
 #include <thrust/functional.h>
 #include <nvfunctional>
 #include "CudaVector.cuh"
-#include "CostFunctionFactory.h"
+#include <Math/CostFunctionFactory.h>
 
 namespace DeepLearning
 {

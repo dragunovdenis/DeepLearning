@@ -19,8 +19,7 @@
 
 #include <cstddef>
 #include <vector>
-#include "CudaUtils.cuh"
-#include "cuda_runtime.h"
+#include "CudaUtils.h"
 
 namespace DeepLearning
 {

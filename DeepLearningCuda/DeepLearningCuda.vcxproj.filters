@@ -1,0 +1,89 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{0e00598e-7f34-4dae-ae22-0241afb4345e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{11dbd373-4d03-4d3b-b898-d079076e02c4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Math">
+      <UniqueIdentifier>{ada7501d-d336-4bc1-90a8-b0385f6e5f0b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Math">
+      <UniqueIdentifier>{91d26762-dd64-434a-8efb-0e579647205f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\NeuralNet">
+      <UniqueIdentifier>{b96048e6-28de-477f-9ab4-65ffc9a21b41}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\NeuralNet">
+      <UniqueIdentifier>{f4792d1e-fb7b-4f53-89df-1508f0969a70}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Math\ActivationFunctionHelperCuda.cuh">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\BasicCudaCollection.cuh">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\CostFunctionHelperCuda.cuh">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\CudaArray.cuh">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\CudaMatrix.cuh">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\CudaSetup.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\CudaTensor.cuh">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\CudaUtils.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\CudaVector.cuh">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="NeuralNet\DataContextCuda.h">
+      <Filter>Header Files\NeuralNet</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="Math\ActivationFunctionHelperCuda.cu">
+      <Filter>Source Files\Math</Filter>
+    </CudaCompile>
+    <CudaCompile Include="Math\BasicCudaCollection.cu">
+      <Filter>Source Files\Math</Filter>
+    </CudaCompile>
+    <CudaCompile Include="Math\CostFunctionHelperCuda.cu">
+      <Filter>Source Files\Math</Filter>
+    </CudaCompile>
+    <CudaCompile Include="Math\CudaMatrix.cu">
+      <Filter>Source Files\Math</Filter>
+    </CudaCompile>
+    <CudaCompile Include="Math\CudaTensor.cu">
+      <Filter>Source Files\Math</Filter>
+    </CudaCompile>
+    <CudaCompile Include="Math\CudaVector.cu">
+      <Filter>Source Files\Math</Filter>
+    </CudaCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Math\CudaSetup.cpp">
+      <Filter>Source Files\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="NeuralNet\DataContextCuda.cpp">
+      <Filter>Source Files\NeuralNet</Filter>
+    </ClCompile>
+    <ClCompile Include="Math\CudaUtils.cpp">
+      <Filter>Source Files\Math</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+</Project>

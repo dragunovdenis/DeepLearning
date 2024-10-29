@@ -17,7 +17,7 @@
 
 #include <numeric>
 #include "CppUnitTest.h"
-#include "RandomGenerator.h"
+#include <RandomGenerator.h>
 #include "StandardTestUtils.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;

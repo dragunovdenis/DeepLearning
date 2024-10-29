@@ -17,7 +17,6 @@
 
 #pragma once
 
-#include "../defs.h"
 #include <cuda_runtime.h>
 
 

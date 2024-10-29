@@ -19,14 +19,14 @@
 #include "CudaMatrix.cuh"
 #include "CudaTensor.cuh"
 #include <cuda_runtime.h>
-#include "CudaUtils.cuh"
+#include "CudaUtils.h"
 #include "device_launch_parameters.h"
 #include <thrust/execution_policy.h>
 #include <thrust/equal.h>
 #include <thrust/scatter.h>
-#include "ConvolutionUtils.h"
+#include <Math/ConvolutionUtils.h>
 #include "CudaSetup.h"
-#include "Functions.h"
+#include <Math/Functions.h>
 
 namespace DeepLearning
 {

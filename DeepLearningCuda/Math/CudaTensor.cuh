@@ -16,13 +16,13 @@
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #pragma once
-#include "../defs.h"
+#include <defs.h>
 #include <msgpack.hpp>
 #include "BasicCudaCollection.cuh"
 #include "CudaArray.cuh"
 #include <filesystem>
-#include "LinAlg3d.h"
-#include "Tensor.h"
+#include <Math/LinAlg3d.h>
+#include <Math/Tensor.h>
 
 namespace DeepLearning
 {

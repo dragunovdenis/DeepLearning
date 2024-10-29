@@ -17,7 +17,7 @@
 
 #include <regex>
 #include "CppUnitTest.h"
-#include "Utilities.h"
+#include <Utilities.h>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;

@@ -24,7 +24,6 @@
 #include <Utilities.h>
 #include "StandardTestUtils.h"
 #include <string>
-#include <chrono>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;

@@ -17,9 +17,9 @@
 
 #include "CppUnitTest.h"
 #include <Utilities.h>
-#include "Math/Optimization/NelderMeadOptimizer.h"
-#include "Image8Bit.h"
-#include "MsgPackUtils.h"
+#include <Math/Optimization/NelderMeadOptimizer.h>
+#include <Image8Bit.h>
+#include <MsgPackUtils.h>
 #include "StandardTestUtils.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;

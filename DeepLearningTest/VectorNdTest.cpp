@@ -17,7 +17,7 @@
 
 #include "CppUnitTest.h"
 #include "StandardTestUtils.h"
-#include "Math/VectorNd.h"
+#include <Math/VectorNd.h>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;

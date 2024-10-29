@@ -13,6 +13,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ScottPlotWrapper", "ScottPl
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ManagedToUnmanagedBridge", "ManagedToUnmanagedBridge\ManagedToUnmanagedBridge.vcxproj", "{445B1409-72A9-4EB0-B1E8-CBD0B94D2066}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DeepLearningCuda", "DeepLearningCuda\DeepLearningCuda.vcxproj", "{A216774E-2F53-4FE0-83AE-55D190135AF3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -135,6 +137,28 @@ Global
 		{445B1409-72A9-4EB0-B1E8-CBD0B94D2066}.ReleaseSingle|x64.Build.0 = ReleaseSingle|x64
 		{445B1409-72A9-4EB0-B1E8-CBD0B94D2066}.ReleaseSingle|x86.ActiveCfg = ReleaseSingle|x64
 		{445B1409-72A9-4EB0-B1E8-CBD0B94D2066}.ReleaseSingle|x86.Build.0 = ReleaseSingle|x64
+		{A216774E-2F53-4FE0-83AE-55D190135AF3}.Debug|x64.ActiveCfg = Debug|x64
+		{A216774E-2F53-4FE0-83AE-55D190135AF3}.Debug|x64.Build.0 = Debug|x64
+		{A216774E-2F53-4FE0-83AE-55D190135AF3}.Debug|x86.ActiveCfg = Debug|x64
+		{A216774E-2F53-4FE0-83AE-55D190135AF3}.Debug|x86.Build.0 = Debug|x64
+		{A216774E-2F53-4FE0-83AE-55D190135AF3}.DebugSingle|x64.ActiveCfg = DebugSingle|x64
+		{A216774E-2F53-4FE0-83AE-55D190135AF3}.DebugSingle|x64.Build.0 = DebugSingle|x64
+		{A216774E-2F53-4FE0-83AE-55D190135AF3}.DebugSingle|x86.ActiveCfg = Debug|x64
+		{A216774E-2F53-4FE0-83AE-55D190135AF3}.DebugSingle|x86.Build.0 = Debug|x64
+		{A216774E-2F53-4FE0-83AE-55D190135AF3}.IntelCompiler2022|x64.ActiveCfg = IntelCompiler2022|x64
+		{A216774E-2F53-4FE0-83AE-55D190135AF3}.IntelCompiler2022|x86.ActiveCfg = Debug|x64
+		{A216774E-2F53-4FE0-83AE-55D190135AF3}.IntelCompiler2022|x86.Build.0 = Debug|x64
+		{A216774E-2F53-4FE0-83AE-55D190135AF3}.IntelCompiler2022Single|x64.ActiveCfg = IntelCompiler2022Single|x64
+		{A216774E-2F53-4FE0-83AE-55D190135AF3}.IntelCompiler2022Single|x86.ActiveCfg = Debug|x64
+		{A216774E-2F53-4FE0-83AE-55D190135AF3}.IntelCompiler2022Single|x86.Build.0 = Debug|x64
+		{A216774E-2F53-4FE0-83AE-55D190135AF3}.Release|x64.ActiveCfg = Release|x64
+		{A216774E-2F53-4FE0-83AE-55D190135AF3}.Release|x64.Build.0 = Release|x64
+		{A216774E-2F53-4FE0-83AE-55D190135AF3}.Release|x86.ActiveCfg = Release|x64
+		{A216774E-2F53-4FE0-83AE-55D190135AF3}.Release|x86.Build.0 = Release|x64
+		{A216774E-2F53-4FE0-83AE-55D190135AF3}.ReleaseSingle|x64.ActiveCfg = ReleaseSingle|x64
+		{A216774E-2F53-4FE0-83AE-55D190135AF3}.ReleaseSingle|x64.Build.0 = ReleaseSingle|x64
+		{A216774E-2F53-4FE0-83AE-55D190135AF3}.ReleaseSingle|x86.ActiveCfg = Release|x64
+		{A216774E-2F53-4FE0-83AE-55D190135AF3}.ReleaseSingle|x86.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -17,7 +17,7 @@
 
 #include "CppUnitTest.h"
 #include "StandardTestUtils.h"
-#include "Math/LinAlg3d.h"
+#include <Math/LinAlg3d.h>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;

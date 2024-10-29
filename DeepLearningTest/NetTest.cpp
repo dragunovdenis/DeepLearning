@@ -23,8 +23,8 @@
 #include <filesystem>
 #include <MsgPackUtils.h>
 #include <chrono>
-#include "Utilities.h"
-#include "NeuralNet/DataContextCuda.h"
+#include <Utilities.h>
+#include <NeuralNet/DataContextCuda.h>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;

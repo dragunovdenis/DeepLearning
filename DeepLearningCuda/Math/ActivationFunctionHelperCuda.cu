@@ -22,7 +22,7 @@
 #include <thrust/execution_policy.h>
 #include <thrust/iterator/zip_iterator.h>
 #include <thrust/tuple.h>
-#include "ActivationFunctionFactory.h"
+#include <Math/ActivationFunctionFactory.h>
 
 namespace DeepLearning
 {

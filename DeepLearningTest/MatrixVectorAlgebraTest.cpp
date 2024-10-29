@@ -20,7 +20,7 @@
 #include <Math/Matrix.h>
 #include <Math/Vector.h>
 #include <MsgPackUtils.h>
-#include "Utilities.h"
+#include <Utilities.h>
 #include "StandardTestUtils.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;

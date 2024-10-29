@@ -29,10 +29,10 @@
 #include <thrust/random/normal_distribution.h>
 #include <thrust/random.h>
 #include <thrust/logical.h>
-#include "CudaUtils.cuh"
+#include "CudaUtils.h"
 #include <exception>
 #include <random>
-#include "../Utilities.h"
+#include <Utilities.h>
 
 namespace DeepLearning
 {

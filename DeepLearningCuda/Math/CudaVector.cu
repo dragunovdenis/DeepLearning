@@ -17,7 +17,7 @@
 
 #include "CudaVector.cuh"
 #include <cuda_runtime.h>
-#include "CudaUtils.cuh"
+#include "CudaUtils.h"
 #include <thrust/execution_policy.h>
 #include <thrust/equal.h>
 #include <thrust/sort.h>

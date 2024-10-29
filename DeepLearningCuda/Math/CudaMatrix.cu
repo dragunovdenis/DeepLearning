@@ -18,7 +18,7 @@
 #include "CudaMatrix.cuh"
 #include "CudaTensor.cuh"
 #include "CudaVector.cuh"
-#include "CudaUtils.cuh"
+#include "CudaUtils.h"
 #include "device_launch_parameters.h"
 #include <thrust/execution_policy.h>
 #include <thrust/equal.h>

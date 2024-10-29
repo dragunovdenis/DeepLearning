@@ -23,7 +23,6 @@
 #include <algorithm>
 #include <Utilities.h>
 #include <numbers>
-
 #include "StandardTestUtils.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
