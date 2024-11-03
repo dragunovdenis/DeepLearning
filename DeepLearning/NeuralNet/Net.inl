@@ -131,9 +131,9 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	void Net<D>::apply_random_permutation(std::vector<std::size_t>& indices, std::mt19937 rnd_gen)
+	void Net<D>::apply_random_permutation(std::vector<std::size_t>& indices)
 	{
-		std::ranges::shuffle(indices, rnd_gen);
+		std::ranges::shuffle(indices, ran_gen());
 	}
 
 	template <class D>
@@ -217,7 +217,7 @@ namespace DeepLearning
 
 		for (std::size_t epoch_id = 0; epoch_id < epochs_count; ++epoch_id)
 		{
-			apply_random_permutation(data_index_mapping, ran_gen());
+			apply_random_permutation(data_index_mapping);
 
 			std::size_t batch_start_elem_id = 0;
 			while (batch_start_elem_id < training_items.size())

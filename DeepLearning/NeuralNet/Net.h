@@ -42,7 +42,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Applies random permutation to the given collection of indices
 		/// </summary>
-		static void apply_random_permutation(std::vector<std::size_t>& indices, std::mt19937 rnd_gen);
+		static void apply_random_permutation(std::vector<std::size_t>& indices);
 
 		/// <summary>
 		/// Returns collection containing "elements_count" integer

@@ -115,12 +115,12 @@ namespace DeepLearningTest
 			const auto in_data_size = training_data.begin()->size_3d();
 			const auto out_size = training_labels.begin()->size_3d().coord_prod();
 			auto size_in_next = in_data_size;
-			size_in_next = net.append_layer<CLayer>(size_in_next, Index2d{ 5 }, run_long_test ? 20 : 5, ActivationFunctionId::RELU);
-			size_in_next = net.append_layer<PLayer>(size_in_next, Index2d{ 2 }, PoolTypeId::MAX);
-			size_in_next = net.append_layer<CLayer>(size_in_next, Index2d{ 5 }, run_long_test ? 40 : 10, ActivationFunctionId::RELU);
-			size_in_next = net.append_layer<PLayer>(size_in_next, Index2d{ 2 }, PoolTypeId::MAX);
-			size_in_next = net.append_layer<NLayer>(size_in_next.coord_prod(), 100, ActivationFunctionId::RELU, Real(-1), Real(1), true);
-			size_in_next = net.append_layer<NLayer>(size_in_next.coord_prod(), out_size, ActivationFunctionId::SOFTMAX, Real(-1), Real(1), true);
+			size_in_next = net.template append_layer<CLayer>(size_in_next, Index2d{ 5 }, run_long_test ? 20 : 5, ActivationFunctionId::RELU);
+			size_in_next = net.template append_layer<PLayer>(size_in_next, Index2d{ 2 }, PoolTypeId::MAX);
+			size_in_next = net.template append_layer<CLayer>(size_in_next, Index2d{ 5 }, run_long_test ? 40 : 10, ActivationFunctionId::RELU);
+			size_in_next = net.template append_layer<PLayer>(size_in_next, Index2d{ 2 }, PoolTypeId::MAX);
+			size_in_next = net.template append_layer<NLayer>(size_in_next.coord_prod(), 100, ActivationFunctionId::RELU, Real(-1), Real(1), true);
+			size_in_next = net.template append_layer<NLayer>(size_in_next.coord_prod(), out_size, ActivationFunctionId::SOFTMAX, Real(-1), Real(1), true);
 
 			Assert::IsTrue(out_size == size_in_next.coord_prod(), L"Unexpected size of the net output");
 
