@@ -277,6 +277,8 @@
     <ClInclude Include="Memory\MemHandle.h" />
     <ClInclude Include="MnistDataUtils.h" />
     <ClInclude Include="MsgPackUtils.h" />
+    <ClInclude Include="NeuralNet\InOutData.h" />
+    <ClInclude Include="NeuralNet\LayerProcData.h" />
     <ClInclude Include="NeuralNet\CLayer.h" />
     <ClInclude Include="NeuralNet\CostsAndCorrectAnswers.h" />
     <ClInclude Include="NeuralNet\CumulativeGradient.h" />

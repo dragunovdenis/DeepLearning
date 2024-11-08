@@ -240,6 +240,12 @@
     <ClInclude Include="NeuralNet\CostsAndCorrectAnswers.h">
       <Filter>Header Files\NeuralNet</Filter>
     </ClInclude>
+    <ClInclude Include="NeuralNet\LayerProcData.h">
+      <Filter>Header Files\NeuralNet</Filter>
+    </ClInclude>
+    <ClInclude Include="NeuralNet\InOutData.h">
+      <Filter>Header Files\NeuralNet</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Matrix.cpp">

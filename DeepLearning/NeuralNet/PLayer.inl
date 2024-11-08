@@ -119,41 +119,32 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	void PLayer<D>::act(const typename D::tensor_t& input, typename D::tensor_t& output, typename ALayer<D>::AuxLearningData* const aux_learning_data_ptr) const
+	void PLayer<D>::act(typename D::tensor_t& output, ILayerProcData<D>& processing_data, const bool store_backprop_data) const
 	{
-		if (input.size_3d() != in_size())
+		if (processing_data.input().size_3d() != in_size())
 			throw std::exception("Unexpected size of the input tensor");
 
-		if (aux_learning_data_ptr)
+		if (store_backprop_data)
 		{
-			aux_learning_data_ptr->Input = input;
-			aux_learning_data_ptr->Derivatives.resize(Index3d(0));
+			processing_data.Derivatives.resize(Index3d(0));
 		}
 
 		if (_pool_operator_id == PoolTypeId::MIN || _pool_operator_id == PoolTypeId::MAX)
 		{
-			if (aux_learning_data_ptr)
-				input.template min_max_pool<true>(_pool_window_size, _pool_operator_id == PoolTypeId::MAX, output, aux_learning_data_ptr->IndexMapping);
+			if (store_backprop_data)
+				processing_data.input().template min_max_pool<true>(_pool_window_size,
+					_pool_operator_id == PoolTypeId::MAX, output, processing_data.IndexMapping);
 			else
-				input.min_max_pool(_pool_window_size, _pool_operator_id == PoolTypeId::MAX, output);
+				processing_data.input().min_max_pool(_pool_window_size, _pool_operator_id == PoolTypeId::MAX, output);
 		}
 		else if (_pool_operator_id == PoolTypeId::AVERAGE)
-			input.average_pool(_pool_window_size, output);
+			processing_data.input().average_pool(_pool_window_size, output);
 		else 
 			throw std::exception("Unsupported pool type");
 	}
 
 	template <class D>
-	typename D::tensor_t PLayer<D>::act(const typename D::tensor_t& input, typename ALayer<D>::AuxLearningData* const aux_learning_data_ptr) const
-	{
-		typename D::tensor_t result;
-		act(input, result, aux_learning_data_ptr);
-
-		return std::move(result);
-	}
-
-	template <class D>
-	void PLayer<D>::backpropagate(const typename D::tensor_t& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
+	void PLayer<D>::backpropagate(const typename D::tensor_t& deltas, const LayerProcData<D>& processing_data,
 		typename D::tensor_t& input_grad, LayerGradient<D>& layer_grad, const bool evaluate_input_gradient,
 		const Real gradient_scale_factor) const
 	{
@@ -168,17 +159,17 @@ namespace DeepLearning
 
 		if (_pool_operator_id == PoolTypeId::MIN || _pool_operator_id == PoolTypeId::MAX)
 		{
-			if (aux_learning_data.IndexMapping.size() != out_size().coord_prod())
+			if (processing_data.IndexMapping.size() != out_size().coord_prod())
 				throw std::exception("Invalid index mapping");
 
-			aux_learning_data.Input.min_max_pool_input_gradient(deltas, aux_learning_data.IndexMapping, input_grad);
+			processing_data.Input.min_max_pool_input_gradient(deltas, processing_data.IndexMapping, input_grad);
 			return;
 		}
 
 		if (_pool_operator_id != PoolTypeId::AVERAGE)
 			throw std::exception("Unsupported pool type");
 
-		aux_learning_data.Input.average_pool_input_gradient(deltas, _pool_window_size, input_grad);
+		processing_data.Input.average_pool_input_gradient(deltas, _pool_window_size, input_grad);
 	}
 
 	template <class D>
@@ -190,13 +181,13 @@ namespace DeepLearning
 
 	template <class D>
 	std::tuple<typename D::tensor_t, LayerGradient<D>> PLayer<D>::backpropagate(
-		const typename D::tensor_t& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
+		const typename D::tensor_t& deltas, const LayerProcData<D>& processing_data,
 		const bool evaluate_input_gradient) const
 	{
 		typename D::tensor_t input_grad;
 		LayerGradient<D> layer_grad;
 		allocate(layer_grad, /*fill zeros*/ false);
-		backpropagate(deltas, aux_learning_data, input_grad, layer_grad, evaluate_input_gradient);
+		backpropagate(deltas, processing_data, input_grad, layer_grad, evaluate_input_gradient);
 		return std::make_tuple(std::move(input_grad), std::move(layer_grad));
 	}
 

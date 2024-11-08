@@ -25,6 +25,7 @@
 #include "LayerHandle.h"
 #include <msgpack.hpp>
 #include <filesystem>
+#include "InOutData.h"
 
 namespace DeepLearning
 {
@@ -75,30 +76,6 @@ namespace DeepLearning
 		/// </summary>
 		Real squared_weights_sum() const;
 
-		/// <summary>
-		/// Auxiliary data structure used for more efficient memory usage when evaluating networs
-		/// </summary>
-		struct InOutData
-		{
-			/// <summary>
-			/// Input for a layer
-			/// </summary>
-			typename D::tensor_t In{};
-
-			/// <summary>
-			/// Output of a layer
-			/// </summary>
-			typename D::tensor_t Out{};
-
-			/// <summary>
-			/// Swaps input ans output fields
-			/// </summary>
-			void swap()
-			{
-				std::swap(In, Out);
-			}
-		};
-
 	public:
 		/// <summary>
 		/// Data structure that represents auxiliary resources needed to do inferring/training of the neural net 
@@ -109,12 +86,17 @@ namespace DeepLearning
 			/// <summary>
 			/// Auxiliary resources used in the calculation of the neural net's gradient 
 			/// </summary>
-			std::vector<typename ALayer<D>::AuxLearningData> gradient_cache;
+			std::vector<LayerProcData<D>> gradient_cache;
 			
 			/// <summary>
 			/// Auxiliary resources used in the calculation of the neural net's value 
 			/// </summary>
-			InOutData value_cache;
+			InOutData<D> value_cache;
+
+			/// <summary>
+			/// Constructor allocating resources for the given number of layers
+			/// </summary>
+			Context(const std::size_t layers_count):gradient_cache(layers_count){}
 
 		public:
 			/// <summary>
@@ -126,11 +108,6 @@ namespace DeepLearning
 			/// Default constructor
 			/// </summary>
 			Context() = default;
-
-			/// <summary>
-			/// Constructor allocating resources for the given number of layers
-			/// </summary>
-			Context(const std::size_t layers_count):gradient_cache(layers_count){}
 		};
 
 		MSGPACK_DEFINE(_layers);
@@ -179,14 +156,34 @@ namespace DeepLearning
 		typename D::tensor_t act(const typename D::tensor_t& input) const;
 
 		/// <summary>
-		/// Evaluates network at the given input
+		/// Evaluates network at the given input. The result is returned through <param name="context"/>.
 		/// </summary>
 		/// <param name="input">Input tensor</param>
 		/// <param name="context">Computation context (memory that can be allocated once and then re-used in many computations).
-		/// Context as such is not thread-safe</param>
+		/// The context as such is not thread-safe</param>
 		/// <param name="calc_gradient_cache">If "true", gradient cache will be calculated during the method invocation and stored to the context.
 		/// The memory for the gradient cache should be allocated by the caller.</param>
 		void act(const typename D::tensor_t& input, Context& context, const bool calc_gradient_cache) const;
+
+		/// <summary>
+		/// Evaluates network at the given input. This version do not do any
+		/// extra calculations that might be needed during the backpropagation phase.
+		/// The result is returned through <param name="context"/>.
+		/// </summary>
+		/// <param name="input">Input tensor</param>
+		/// <param name="context">Computation context (memory that can be allocated once and then re-used in many computations).
+		/// The context is not thread-safe</param>
+		void act(const typename D::tensor_t& input, Context& context) const;
+
+		/// <summary>
+		/// Evaluates network at the given input. This version updates <param name="context"/>
+		/// with extra data needed to do a subsequent backpropagation pass.
+		/// The result is returned through <param name="context"/>.
+		/// </summary>
+		/// <param name="input">Input tensor</param>
+		/// <param name="context">Computation context (memory that can be allocated once and then re-used in many computations).
+		/// The context is not thread-safe</param>
+		void act_bpg(const typename D::tensor_t& input, Context& context) const;
 
 		/// <summary>
 		/// A method that performs training of the neural net based on the given input data with references

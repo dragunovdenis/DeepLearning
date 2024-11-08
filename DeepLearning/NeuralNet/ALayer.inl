@@ -55,6 +55,22 @@ namespace DeepLearning
 	}
 
 	template <class D>
+	typename D::tensor_t ALayer<D>::act(const typename D::tensor_t& input) const
+	{
+		thread_local LayerProcData<D> data{};
+		data.Input = input;
+		return act(data, false);
+	}
+
+	template <class D>
+	typename D::tensor_t ALayer<D>::act(ILayerProcData<D>& processing_data, const bool store_backprop_data) const
+	{
+		typename D::tensor_t result;
+		act(result, processing_data, store_backprop_data);
+		return std::move(result);
+	}
+
+	template <class D>
 	ALayer<D>::ALayer(const Real keep_rate, const ActivationFunctionId func_id) : _keep_rate(keep_rate)
 	{
 		set_func_id(func_id);

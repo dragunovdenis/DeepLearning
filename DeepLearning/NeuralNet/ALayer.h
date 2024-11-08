@@ -23,6 +23,7 @@
 #include "LayerTypeId.h"
 #include "LayerGradient.h"
 #include "../Math/ActivationFunction.h"
+#include "LayerProcData.h"
 
 namespace DeepLearning
 {
@@ -146,27 +147,6 @@ namespace DeepLearning
 		void ApplyDropout(typename D::tensor_t& input, const bool trainingMode) const;
 
 		/// <summary>
-		/// Auxiliary data to perform learning on a level of single convolution layer
-		/// </summary>
-		struct AuxLearningData
-		{
-			/// <summary>
-			/// Container to store input of a convolution layer
-			/// </summary>
-			typename D::tensor_t Input{};
-
-			/// <summary>
-			/// Container to store derivatives of the activation function
-			/// </summary>
-			typename D::tensor_t Derivatives{};
-
-			/// <summary>
-			/// Place holder for index mappings
-			/// </summary>
-			typename D::template index_array_t<int> IndexMapping{};
-		};
-
-		/// <summary>
 		/// Size of the layer's input
 		/// </summary>
 		virtual Index3d in_size() const = 0;
@@ -182,26 +162,38 @@ namespace DeepLearning
 		virtual Index3d weight_tensor_size() const = 0;
 
 		/// <summary>
-		/// Makes a forward pass for the given input and outputs the result of the layer
+		/// Makes a forward pass for the given input and outputs the result of the layer.
 		/// </summary>
-		/// <param name="input">Input "signal"</param>
-		/// <param name="aux_learning_data_ptr">Pointer to the auxiliary data structure that should be provided during the training (learning) process</param>
-		/// <returns>Output signal</returns>
-		virtual typename D::tensor_t act(const typename D::tensor_t& input, AuxLearningData* const aux_learning_data_ptr = nullptr) const = 0;
+		/// <param name="input">Input tensor.</param>
+		/// <returns>Output signal.</returns>
+		typename D::tensor_t act(const typename D::tensor_t& input) const;
+
+		/// <summary>
+		/// Makes a forward pass for the given input and outputs the result of the layer.
+		/// </summary>
+		/// <param name="processing_data">Contains input data for the layer and provides
+		/// storage for intermediate calculations that later can be used in the backpropagation phaser.
+		/// <param name="store_backprop_data">If "true" indicates that the layer should store intermediate
+		/// calculations into <param name="processing_data"/> so that they can be used during the
+		/// backpropagation phase.</param>
+		/// <returns>Output signal.</returns>
+		typename D::tensor_t act(ILayerProcData<D>& processing_data, const bool store_backprop_data) const;
 
 		/// <summary>
 		/// Makes a forward pass for the given input and places the result to the given ("output") container
 		/// </summary>
-		/// <param name="input">Input "signal"</param>
-		/// <param name="output">Place-holder for the result</param>
-		/// <param name="aux_learning_data_ptr">Pointer to the auxiliary data structure that should be provided during the training (learning) process</param>
-		virtual void act(const typename D::tensor_t& input, typename D::tensor_t& output, AuxLearningData* const aux_learning_data_ptr = nullptr) const = 0;
+		/// <param name="output">Place-holder for the result.</param>
+		/// <param name="processing_data">Contains input data for the layer and provides
+		/// storage for data that later can be used during the backpropagation phase.</param>
+		/// <param name="store_backprop_data">If "true" indicates that the layer should store intermediate
+		/// calculations into <param name="processing_data"/> so that they can be used during the backpropagation phase.</param>
+		virtual void act(typename D::tensor_t& output, ILayerProcData<D>& processing_data, const bool store_backprop_data) const = 0;
 
 		/// <summary>
-		/// Performs the back-propagation
+		/// Performs the back-propagation.
 		/// </summary>
 		/// <param name="deltas">Derivatives of the cost function with respect to the output of the current layer</param>
-		/// <param name="aux_learning_data">Auxiliary learning data that should be obtained from the corresponding
+		/// <param name="processing_data">Contains auxiliary data that should be obtained from the corresponding
 		/// "forward" pass (see method "act") </param>
 		/// <param name="evaluate_input_gradient">Determines whether the gradient with respect to the
 		/// input data (the first item of the output tuple) will be actually evaluated.
@@ -209,14 +201,14 @@ namespace DeepLearning
 		/// <returns>Derivatives of the cost function with respect to the output of the previous neural layer
 		/// (or input of the current neural layer, which is the same) as well as the derivatives of the cost function
 		/// with respect to the weight and biases of the current layer</returns>
-		virtual std::tuple<typename D::tensor_t, LayerGradient<D>> backpropagate(const typename D::tensor_t& deltas, const AuxLearningData& aux_learning_data,
-			const bool evaluate_input_gradient = true) const = 0;
+		virtual std::tuple<typename D::tensor_t, LayerGradient<D>> backpropagate(const typename D::tensor_t& deltas,
+			const LayerProcData<D>& processing_data, const bool evaluate_input_gradient = true) const = 0;
 
 		/// <summary>
 		/// Performs the back-propagation
 		/// </summary>
 		/// <param name="deltas">Derivatives of the cost function with respect to the output of the current layer</param>
-		/// <param name="aux_learning_data">Auxiliary learning data that should be obtained from the corresponding
+		/// <param name="processing_data">Contains auxiliary data that should be obtained from the corresponding
 		/// "forward" pass (see method "act") </param>
 		/// <param name="input_grad">Place-holder for the gradient with respect to the input data</param>
 		/// <param name="layer_grad">Place-holder for the gradient with respect to the parameters of the layer itself</param>
@@ -225,7 +217,7 @@ namespace DeepLearning
 		/// The evaluation is redundant for the very first layer of the net</param>
 		/// <param name="gradient_scale_factor">Scale factor to be applied to the content of
 		/// `kernel_grad` before adding the gradient value to it.</param>
-		virtual void backpropagate(const typename D::tensor_t& deltas, const AuxLearningData& aux_learning_data,
+		virtual void backpropagate(const typename D::tensor_t& deltas, const LayerProcData<D>& processing_data,
 			typename D::tensor_t& input_grad, LayerGradient<D>& layer_grad,
 			const bool evaluate_input_gradient = true, const Real gradient_scale_factor = static_cast<Real>(0)) const = 0;
 

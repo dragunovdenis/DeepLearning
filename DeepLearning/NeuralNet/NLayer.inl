@@ -129,29 +129,20 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	void NLayer<D>::act(const typename D::tensor_t& input, typename D::tensor_t& output, typename ALayer<D>::AuxLearningData* const aux_learning_data_ptr) const
+	void NLayer<D>::act(typename D::tensor_t& output, ILayerProcData<D>& processing_data, const bool store_backprop_data) const
 	{
 		output.resize(out_size());
-		_weights.mul_add(input, _biases, output);
+		_weights.mul_add(processing_data.input(), _biases, output);
 
-		if (aux_learning_data_ptr)
+		if (store_backprop_data)
 		{
-			aux_learning_data_ptr->Input = input;
-			this->get_func().func_and_aux_in_place(output, aux_learning_data_ptr->Derivatives);
+			this->get_func().func_and_aux_in_place(output, processing_data.Derivatives);
 		} else
 			this->get_func().func_in_place(output);
 	}
 
 	template <class D>
-	typename D::tensor_t NLayer<D>::act(const typename D::tensor_t& input, typename ALayer<D>::AuxLearningData* const aux_learning_data_ptr) const
-	{
-		typename D::tensor_t result;
-		act(input, result, aux_learning_data_ptr);
-		return result;
-	}
-
-	template <class D>
-	void NLayer<D>::backpropagate(const typename D::tensor_t& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
+	void NLayer<D>::backpropagate(const typename D::tensor_t& deltas, const LayerProcData<D>& processing_data,
 		typename D::tensor_t& input_grad, LayerGradient<D>& layer_grad, const bool evaluate_input_gradient,
 		const Real gradient_scale_factor) const
 	{
@@ -163,20 +154,20 @@ namespace DeepLearning
 		auto& pure_bias_grad = nontrivial_scaling ? bias_shared.
 			get_resized(layer_grad.Biases_grad.size_3d()) : layer_grad.Biases_grad;
 
-		this->get_func().calc_in_grad(deltas, aux_learning_data.Derivatives, pure_bias_grad);
+		this->get_func().calc_in_grad(deltas, processing_data.Derivatives, pure_bias_grad);
 
 		if (nontrivial_scaling)
 		{
 			layer_grad.Biases_grad.scale_and_add(pure_bias_grad, gradient_scale_factor);
-			scale_and_add_vector_col_times_vector_row(pure_bias_grad, aux_learning_data.Input,
+			scale_and_add_vector_col_times_vector_row(pure_bias_grad, processing_data.Input,
 				layer_grad.Weights_grad[0], gradient_scale_factor);
 		} else
-			vector_col_times_vector_row(pure_bias_grad, aux_learning_data.Input, layer_grad.Weights_grad[0]);
+			vector_col_times_vector_row(pure_bias_grad, processing_data.Input, layer_grad.Weights_grad[0]);
 
 		if (!evaluate_input_gradient) return;
 
 		_weights.transpose_mul(pure_bias_grad, input_grad);
-		input_grad.reshape(aux_learning_data.Input.size_3d()); //Reshape, because inside this layer, we work with a "flattened" data,
+		input_grad.reshape(processing_data.Input.size_3d()); //Reshape, because inside this layer, we work with a "flattened" data,
 															   //whereas previous layer might expect data of certain shape
 	}
 
@@ -196,12 +187,12 @@ namespace DeepLearning
 
 	template <class D>
 	std::tuple<typename D::tensor_t, LayerGradient<D>> NLayer<D>::backpropagate(const typename D::tensor_t& deltas,
-		const typename ALayer<D>::AuxLearningData& aux_learning_data, const bool evaluate_input_gradient) const
+		const LayerProcData<D>& processing_data, const bool evaluate_input_gradient) const
 	{
 		typename D::tensor_t input_grad;
 		LayerGradient<D> layer_grad;
 		allocate(layer_grad, /*fill zeros*/false);
-		backpropagate(deltas, aux_learning_data, input_grad, layer_grad, evaluate_input_gradient);
+		backpropagate(deltas, processing_data, input_grad, layer_grad, evaluate_input_gradient);
 		return std::make_tuple(std::move(input_grad), std::move(layer_grad));
 	}
 

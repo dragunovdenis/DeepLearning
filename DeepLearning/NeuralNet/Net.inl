@@ -106,28 +106,51 @@ namespace DeepLearning
 	template <class D>
 	void Net<D>::act(const typename D::tensor_t& input, Context& context, const bool calc_gradient_cache) const
 	{
-		if (calc_gradient_cache && context.gradient_cache.size() != _layers.size())
+		if (calc_gradient_cache)
+		{
+			act_bpg(input, context);
+		} else
+			act(input, context);
+	}
+
+	template <class D>
+	void Net<D>::act_bpg(const typename D::tensor_t& input, Context& context) const
+	{
+		if (context.gradient_cache.size() != _layers.size())
 			throw std::exception("Invalid auxiliary data.");
 
+		context.gradient_cache[0].Input = input;
+		for (auto layer_id = 0ull; layer_id < _layers.size(); layer_id++)
+		{
+			_layers[layer_id].layer().ApplyDropout(context.gradient_cache[layer_id].Input, true);
+			const auto layer_id_next = layer_id + 1;
+			_layers[layer_id].layer().act(layer_id_next < _layers.size() ?
+				context.gradient_cache[layer_id_next].Input : context.value_cache.out(),
+				context.gradient_cache[layer_id], true);
+		}
+	}
+
+	template <class D>
+	void Net<D>::act(const typename D::tensor_t& input, Context& context) const
+	{
 		auto& eval_data = context.value_cache;
 
-		eval_data.Out = input;
+		eval_data.out() = input;
 		for (auto layer_id = 0ull; layer_id < _layers.size(); layer_id++)
 		{
 			eval_data.swap();
-			_layers[layer_id].layer().ApplyDropout(eval_data.In, calc_gradient_cache);
-			_layers[layer_id].layer().act(eval_data.In, eval_data.Out,
-				calc_gradient_cache ? &context.gradient_cache[layer_id] : nullptr);
+			_layers[layer_id].layer().ApplyDropout(eval_data.in(), false);
+			_layers[layer_id].layer().act(eval_data.out(), eval_data.in_data(), false);
 		}
 	}
 
 	template <class D>
 	typename D::tensor_t Net<D>::act(const typename D::tensor_t& input) const
 	{
-		Context context;
-		act(input, context, false);
+		thread_local Context context;
+		act(input, context);
 
-		return context.value_cache.Out;
+		return context.value_cache.out();
 	}
 
 	template <class D>
@@ -254,18 +277,18 @@ namespace DeepLearning
 								const auto input_item_id = data_index_mapping[elem_id];
 								const auto& input = training_items[input_item_id];
 								const auto& reference = reference_items[input_item_id];
-								act(input, context, true);
-								cost_function.deriv_in_place(e_data.Out, reference);
+								act_bpg(input, context);
+								cost_function.deriv_in_place(e_data.out(), reference);
 
 								//Back-propagate through all the layers
 								for (long long layer_id = _layers.size() - 1; layer_id >= 0; --layer_id)
 								{
 									e_data.swap();
-									_layers[layer_id].layer().backpropagate(e_data.In, aux_data[layer_id],
-										e_data.Out, back_prop_out[layer_id], layer_id != 0);
+									_layers[layer_id].layer().backpropagate(e_data.in(), aux_data[layer_id],
+										e_data.out(), back_prop_out[layer_id], layer_id != 0);
 
 									if (layer_id != 0)
-										_layers[layer_id].layer().ApplyDropout(e_data.Out, true);
+										_layers[layer_id].layer().ApplyDropout(e_data.out(), true);
 								}
 
 								std::lock_guard guard(mutex);
@@ -325,19 +348,19 @@ namespace DeepLearning
 		auto& aux_data = context.gradient_cache;
 
 		//Forward move
-		act(item, context, true);
-		out_value = e_data.Out;
-		cost_function.deriv_in_place(e_data.Out, target_value);
+		act_bpg(item, context);
+		out_value = e_data.out();
+		cost_function.deriv_in_place(e_data.out(), target_value);
 
 		//Back-propagate through all the layers
 		for (long long layer_id = _layers.size() - 1; layer_id >= 0; --layer_id)
 		{
 			e_data.swap();
-			_layers[layer_id].layer().backpropagate(e_data.In, aux_data[layer_id],
-				e_data.Out, out_gradient[layer_id], layer_id != 0, gradient_scale_factor);
+			_layers[layer_id].layer().backpropagate(e_data.in(), aux_data[layer_id],
+				e_data.out(), out_gradient[layer_id], layer_id != 0, gradient_scale_factor);
 
 			if (layer_id != 0)
-				_layers[layer_id].layer().ApplyDropout(e_data.Out, true);
+				_layers[layer_id].layer().ApplyDropout(e_data.out(), true);
 		}
 
 		//Dispose auxiliary data structures created to do the "drop-out" regularization
@@ -372,14 +395,14 @@ namespace DeepLearning
 	template <class D>
 	Real Net<D>::squared_weights_sum() const
 	{
-		return std::accumulate(_layers.begin(), _layers.end(), Real(0),
+		return std::accumulate(_layers.begin(), _layers.end(), static_cast<Real>(0),
 			[](const auto& sum, const auto& layer_handle) { return sum + layer_handle.layer().squared_weights_sum(); });
 	}
 
 	template <class D>
 	const typename D::tensor_t& Net<D>::Context::get_out() const
 	{
-		return value_cache.Out;
+		return value_cache.out();
 	}
 
 	template <class D>
@@ -397,7 +420,7 @@ namespace DeepLearning
 				auto result = init_val;
 				const auto start_id = *start_iter;
 				const auto end_id = *end_iter;
-				for (auto i = start_id; i < end_id; i++)
+				for (auto i = start_id; i < end_id; ++i)
 				{
 					const auto trial_label = act(test_input[i]);
 					result.Cost += cost_function(trial_label, reference_output[i]);
@@ -429,7 +452,7 @@ namespace DeepLearning
 				auto result = init_val;
 				const auto start_id = *start_iter;
 				const auto end_id = *end_iter;
-				for (auto test_item_id = start_id; test_item_id < end_id; test_item_id++)
+				for (auto test_item_id = start_id; test_item_id < end_id; ++test_item_id)
 				{
 					const auto& test_item = test_input[test_item_id];
 					const auto ref_answer = labels[test_item_id].max_element_id();
@@ -437,7 +460,7 @@ namespace DeepLearning
 					const auto trial_answer = trial_label.max_element_id();
 
 					if (trial_answer == ref_answer)
-						result++;
+						++result;
 				}
 				return result;
 			}, std::plus<int>());

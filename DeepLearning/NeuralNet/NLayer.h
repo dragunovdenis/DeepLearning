@@ -132,26 +132,23 @@ namespace DeepLearning
 		template <class D1>
 		NLayer(const NLayer<D1>& source);
 
-		/// <summary>
-		/// See the summary to the corresponding method in the base class
-		/// </summary>
-		typename D::tensor_t act(const typename D::tensor_t& input, typename ALayer<D>::AuxLearningData* const aux_learning_data_ptr = nullptr) const override;
+		using ALayer<D>::act;
 
 		/// <summary>
 		/// See the summary to the corresponding method in the base class
 		/// </summary>
-		void act(const typename D::tensor_t& input, typename D::tensor_t& output, typename ALayer<D>::AuxLearningData* const aux_learning_data_ptr = nullptr) const override;
+		void act(typename D::tensor_t& output, ILayerProcData<D>& processing_data, const bool store_backprop_data) const override;
 
 		/// <summary>
 		/// See the summary to the corresponding method in the base class
 		/// </summary>
-		std::tuple<typename D::tensor_t, LayerGradient<D>> backpropagate(const typename D::tensor_t& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
-			const bool evaluate_input_gradient = true) const override;
+		std::tuple<typename D::tensor_t, LayerGradient<D>> backpropagate(const typename D::tensor_t& deltas,
+			const LayerProcData<D>& processing_data, const bool evaluate_input_gradient = true) const override;
 
 		/// <summary>
 		/// See the summary to the corresponding method in the base class
 		/// </summary>
-		void backpropagate(const typename D::tensor_t& deltas, const typename ALayer<D>::AuxLearningData& aux_learning_data,
+		void backpropagate(const typename D::tensor_t& deltas, const LayerProcData<D>& processing_data,
 			typename D::tensor_t& input_grad, LayerGradient<D>& layer_grad,
 			const bool evaluate_input_gradient = true, const Real gradient_scale_factor = static_cast<Real>(0)) const override;
 
