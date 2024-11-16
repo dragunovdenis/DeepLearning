@@ -129,20 +129,20 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	void NLayer<D>::act(typename D::tensor_t& output, ILayerProcData<D>& processing_data, const bool store_backprop_data) const
+	void NLayer<D>::act(const typename D::tensor_t& input, typename D::tensor_t& output, LayerTraceData<D>* const trace_data) const
 	{
 		output.resize(out_size());
-		_weights.mul_add(processing_data.input(), _biases, output);
+		_weights.mul_add(input, _biases, output);
 
-		if (store_backprop_data)
+		if (trace_data)
 		{
-			this->get_func().func_and_aux_in_place(output, processing_data.Derivatives);
+			this->get_func().func_and_aux_in_place(output, trace_data->Derivatives);
 		} else
 			this->get_func().func_in_place(output);
 	}
 
 	template <class D>
-	void NLayer<D>::backpropagate(const typename D::tensor_t& deltas, const LayerProcData<D>& processing_data,
+	void NLayer<D>::backpropagate(const typename D::tensor_t& deltas, const LayerData<D>& processing_data,
 		typename D::tensor_t& input_grad, LayerGradient<D>& layer_grad, const bool evaluate_input_gradient,
 		const Real gradient_scale_factor) const
 	{
@@ -154,7 +154,7 @@ namespace DeepLearning
 		auto& pure_bias_grad = nontrivial_scaling ? bias_shared.
 			get_resized(layer_grad.Biases_grad.size_3d()) : layer_grad.Biases_grad;
 
-		this->get_func().calc_in_grad(deltas, processing_data.Derivatives, pure_bias_grad);
+		this->get_func().calc_in_grad(deltas, processing_data.Trace.Derivatives, pure_bias_grad);
 
 		if (nontrivial_scaling)
 		{
@@ -183,17 +183,6 @@ namespace DeepLearning
 			gradient_container.Biases_grad.fill_zero();
 			gradient_container.Weights_grad[0].fill_zero();
 		}
-	}
-
-	template <class D>
-	std::tuple<typename D::tensor_t, LayerGradient<D>> NLayer<D>::backpropagate(const typename D::tensor_t& deltas,
-		const LayerProcData<D>& processing_data, const bool evaluate_input_gradient) const
-	{
-		typename D::tensor_t input_grad;
-		LayerGradient<D> layer_grad;
-		allocate(layer_grad, /*fill zeros*/false);
-		backpropagate(deltas, processing_data, input_grad, layer_grad, evaluate_input_gradient);
-		return std::make_tuple(std::move(input_grad), std::move(layer_grad));
 	}
 
 	template <class D>

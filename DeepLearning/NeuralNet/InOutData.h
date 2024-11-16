@@ -16,7 +16,7 @@
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #pragma once
-#include "LayerProcData.h"
+#include "DataContext.h"
 
 namespace DeepLearning
 {
@@ -27,7 +27,7 @@ namespace DeepLearning
 	struct InOutData
 	{
 	private:
-		LayerProcData<D> _data[2];
+		typename D::tensor_t _data[2];
 		int _id = 0;
 
 		/// <summary>
@@ -43,14 +43,6 @@ namespace DeepLearning
 		/// </summary>
 		typename D::tensor_t& in()
 		{
-			return _data[_id].Input;
-		}
-
-		/// <summary>
-		/// Current processing data for a layer.
-		/// </summary>
-		LayerProcData<D>& in_data()
-		{
 			return _data[_id];
 		}
 
@@ -59,7 +51,7 @@ namespace DeepLearning
 		/// </summary>
 		typename D::tensor_t& out()
 		{
-			return _data[next_id()].Input;
+			return _data[next_id()];
 		}
 
 		/// <summary>
@@ -67,7 +59,7 @@ namespace DeepLearning
 		/// </summary>
 		const typename D::tensor_t& out() const
 		{
-			return _data[next_id()].Input;
+			return _data[next_id()];
 		}
 
 		/// <summary>

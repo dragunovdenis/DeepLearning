@@ -133,8 +133,9 @@ namespace DeepLearningTest
 			const auto reference = Tensor(nl.out_size(), -1, 1);;
 
 			const auto cost_func = CostFunction<Tensor>(cost_function_id);
-			auto layer_data = LayerProcData<CpuDC>(input);
-			const auto [value, cost_gradient] = cost_func.func_and_deriv(nl.act(layer_data, true), reference);
+			auto layer_data = LayerData<CpuDC>(input);
+			const auto [value, cost_gradient] = cost_func.func_and_deriv(nl.
+				act(layer_data.Input, &layer_data.Trace), reference);
 			const auto [input_grad_result, layer_grad_result] = nl.backpropagate(cost_gradient, layer_data);
 
 			//Assert
@@ -179,8 +180,9 @@ namespace DeepLearningTest
 			const auto cost_func = CostFunction<Tensor>(cost_function_id);
 
 			//Act
-			auto layer_data = LayerProcData<CpuDC>(input);
-			const auto [value, cost_gradient] = cost_func.func_and_deriv(nl.act(layer_data, true), reference);
+			auto layer_data = LayerData<CpuDC>(input);
+			const auto [value, cost_gradient] = cost_func.func_and_deriv(nl.
+				act(layer_data.Input, &layer_data.Trace), reference);
 			const auto [input_grad_result, layer_grad_result] = nl.backpropagate(cost_gradient, layer_data);
 			const auto wight_grad = layer_grad_result.Weights_grad;
 			const auto bias_grad = layer_grad_result.Biases_grad;
@@ -272,7 +274,7 @@ namespace DeepLearningTest
 		{
 			const typename D::tensor_t input(nl.in_size(), static_cast<Real>(-1), static_cast<Real>(1));
 			typename D::tensor_t input_grad_result(nl.in_size(), /*fill zeros*/ true);
-			auto layer_data = LayerProcData<D>(input);
+			auto layer_data = LayerData<D>(input);
 			LayerGradient<D> gradient_container;
 			nl.allocate(gradient_container, /*fill zeros*/ false);
 
@@ -284,7 +286,7 @@ namespace DeepLearningTest
 			const auto gradient_scale_factor = Utils::get_random(-1, 1);
 
 			//Act
-			const auto output = nl.act(layer_data, true);
+			const auto output = nl.act(layer_data.Input, &layer_data.Trace);
 			nl.backpropagate(output, layer_data, input_grad_result, gradient_container,
 				/*evaluate_input_gradient*/ true, gradient_scale_factor);
 
@@ -348,11 +350,11 @@ namespace DeepLearningTest
 			const auto nl = layer_factory();
 			const auto input = CudaTensor(nl.in_size(), -1, 1);
 			const auto out_gradient = CudaTensor(nl.out_size(), -1, 1);
-			LayerProcData<GpuDC> layer_data(input);
+			LayerData<GpuDC> layer_data(input);
 			Assert::IsTrue(input.max_abs() > 0 && out_gradient.max_abs() > 0, L"Input tensors are supposed to be nonzero");
 
 			//Act
-			const auto output = nl.act(layer_data, true);
+			const auto output = nl.act(layer_data.Input, &layer_data.Trace);
 			const auto [in_gradient, layer_gradient] = nl.backpropagate(out_gradient, layer_data, true);
 
 			//Assert
@@ -360,9 +362,9 @@ namespace DeepLearningTest
 			const auto nl_host = nl.template convert<CpuDC>().template convert<GpuDC>().template convert<CpuDC>();//involve "to_device" into the testing as well
 			const auto input_host = input.to_host();
 			const auto out_gradient_host = out_gradient.to_host();
-			LayerProcData<CpuDC> layer_data_host(input_host);
+			LayerData<CpuDC> layer_data_host(input_host);
 
-			const auto output_host = nl_host.act(layer_data_host, true);
+			const auto output_host = nl_host.act(layer_data_host.Input, &layer_data_host.Trace);
 			const auto [in_gradient_host, layer_gradient_host] = nl_host.backpropagate(out_gradient_host, layer_data_host, true);
 
 			const auto output_diff = (output_host - output.to_host()).max_abs();
@@ -380,13 +382,16 @@ namespace DeepLearningTest
 			const auto weights_gradient_diff = max_abs(layer_gradient_host.Weights_grad, layer_gradient.Weights_grad);
 			StandardTestUtils::LogAndAssertLessOrEqualTo("weights_gradient_diff", weights_gradient_diff, 10 * std::numeric_limits<Real>::epsilon());
 
-			if (!layer_data_host.Derivatives.empty() || !layer_data.Derivatives.empty())
+			const auto& layer_trace = layer_data.Trace;
+			const auto& layer_trace_host = layer_data_host.Trace;
+
+			if (!layer_trace_host.Derivatives.empty() || !layer_trace.Derivatives.empty())
 			{
-				const auto deriv_diff = (layer_data_host.Derivatives - layer_data.Derivatives.to_host()).max_abs();
+				const auto deriv_diff = (layer_trace_host.Derivatives - layer_trace.Derivatives.to_host()).max_abs();
 				StandardTestUtils::LogAndAssertLessOrEqualTo("deriv_diff", deriv_diff, 50 * std::numeric_limits<Real>::epsilon());
 			}
 
-			const auto indices_are_equal = layer_data_host.IndexMapping == layer_data.IndexMapping.to_stdvector();
+			const auto indices_are_equal = layer_trace_host.IndexMapping == layer_trace.IndexMapping.to_stdvector();
 			StandardTestUtils::Log("indices_are_equal", indices_are_equal);
 			Assert::IsTrue(indices_are_equal, L"Arrays of indices are not equal");
 
@@ -514,8 +519,9 @@ namespace DeepLearningTest
 
 			//Act
 			const auto cost_func = CostFunction<Tensor>(CostFunctionId::SQUARED_ERROR);
-			auto layer_data = LayerProcData<CpuDC>(input);
-			const auto [value, cost_gradient] = cost_func.func_and_deriv(nl.act(layer_data, true), reference);
+			auto layer_data = LayerData<CpuDC>(input);
+			const auto [value, cost_gradient] = cost_func.func_and_deriv(nl.
+				act(layer_data.Input, &layer_data.Trace), reference);
 			const auto [input_grad_result, layer_grad_result] = nl.backpropagate(cost_gradient, layer_data);
 
 			//Assert

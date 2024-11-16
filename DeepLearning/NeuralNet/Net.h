@@ -86,7 +86,7 @@ namespace DeepLearning
 			/// <summary>
 			/// Auxiliary resources used in the calculation of the neural net's gradient 
 			/// </summary>
-			std::vector<LayerProcData<D>> gradient_cache;
+			std::vector<LayerData<D>> gradient_cache;
 			
 			/// <summary>
 			/// Auxiliary resources used in the calculation of the neural net's value 

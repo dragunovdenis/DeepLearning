@@ -240,7 +240,7 @@
     <ClInclude Include="NeuralNet\CostsAndCorrectAnswers.h">
       <Filter>Header Files\NeuralNet</Filter>
     </ClInclude>
-    <ClInclude Include="NeuralNet\LayerProcData.h">
+    <ClInclude Include="NeuralNet\LayerData.h">
       <Filter>Header Files\NeuralNet</Filter>
     </ClInclude>
     <ClInclude Include="NeuralNet\InOutData.h">

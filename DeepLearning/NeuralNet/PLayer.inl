@@ -119,32 +119,32 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	void PLayer<D>::act(typename D::tensor_t& output, ILayerProcData<D>& processing_data, const bool store_backprop_data) const
+	void PLayer<D>::act(const typename D::tensor_t& input, typename D::tensor_t& output, LayerTraceData<D>* const trace_data) const
 	{
-		if (processing_data.input().size_3d() != in_size())
+		if (input.size_3d() != in_size())
 			throw std::exception("Unexpected size of the input tensor");
 
-		if (store_backprop_data)
+		if (trace_data)
 		{
-			processing_data.Derivatives.resize(Index3d(0));
+			trace_data->Derivatives.resize(Index3d(0));
 		}
 
 		if (_pool_operator_id == PoolTypeId::MIN || _pool_operator_id == PoolTypeId::MAX)
 		{
-			if (store_backprop_data)
-				processing_data.input().template min_max_pool<true>(_pool_window_size,
-					_pool_operator_id == PoolTypeId::MAX, output, processing_data.IndexMapping);
+			if (trace_data)
+				input.template min_max_pool<true>(_pool_window_size,
+					_pool_operator_id == PoolTypeId::MAX, output, trace_data->IndexMapping);
 			else
-				processing_data.input().min_max_pool(_pool_window_size, _pool_operator_id == PoolTypeId::MAX, output);
+				input.min_max_pool(_pool_window_size, _pool_operator_id == PoolTypeId::MAX, output);
 		}
 		else if (_pool_operator_id == PoolTypeId::AVERAGE)
-			processing_data.input().average_pool(_pool_window_size, output);
+			input.average_pool(_pool_window_size, output);
 		else 
 			throw std::exception("Unsupported pool type");
 	}
 
 	template <class D>
-	void PLayer<D>::backpropagate(const typename D::tensor_t& deltas, const LayerProcData<D>& processing_data,
+	void PLayer<D>::backpropagate(const typename D::tensor_t& deltas, const LayerData<D>& processing_data,
 		typename D::tensor_t& input_grad, LayerGradient<D>& layer_grad, const bool evaluate_input_gradient,
 		const Real gradient_scale_factor) const
 	{
@@ -159,10 +159,11 @@ namespace DeepLearning
 
 		if (_pool_operator_id == PoolTypeId::MIN || _pool_operator_id == PoolTypeId::MAX)
 		{
-			if (processing_data.IndexMapping.size() != out_size().coord_prod())
+			auto& mapping = processing_data.Trace.IndexMapping;
+			if (mapping.size() != out_size().coord_prod())
 				throw std::exception("Invalid index mapping");
 
-			processing_data.Input.min_max_pool_input_gradient(deltas, processing_data.IndexMapping, input_grad);
+			processing_data.Input.min_max_pool_input_gradient(deltas, mapping, input_grad);
 			return;
 		}
 
@@ -177,18 +178,6 @@ namespace DeepLearning
 	{
 		gradient_container.Biases_grad.resize({ 0, 0, 0 });
 		gradient_container.Weights_grad.resize(0);
-	}
-
-	template <class D>
-	std::tuple<typename D::tensor_t, LayerGradient<D>> PLayer<D>::backpropagate(
-		const typename D::tensor_t& deltas, const LayerProcData<D>& processing_data,
-		const bool evaluate_input_gradient) const
-	{
-		typename D::tensor_t input_grad;
-		LayerGradient<D> layer_grad;
-		allocate(layer_grad, /*fill zeros*/ false);
-		backpropagate(deltas, processing_data, input_grad, layer_grad, evaluate_input_gradient);
-		return std::make_tuple(std::move(input_grad), std::move(layer_grad));
 	}
 
 	template <class D>

@@ -23,7 +23,7 @@
 #include "LayerTypeId.h"
 #include "LayerGradient.h"
 #include "../Math/ActivationFunction.h"
-#include "LayerProcData.h"
+#include "LayerData.h"
 
 namespace DeepLearning
 {
@@ -171,23 +171,22 @@ namespace DeepLearning
 		/// <summary>
 		/// Makes a forward pass for the given input and outputs the result of the layer.
 		/// </summary>
-		/// <param name="processing_data">Contains input data for the layer and provides
-		/// storage for intermediate calculations that later can be used in the backpropagation phaser.
-		/// <param name="store_backprop_data">If "true" indicates that the layer should store intermediate
-		/// calculations into <param name="processing_data"/> so that they can be used during the
-		/// backpropagation phase.</param>
+		/// <param name="input">Input data.</param>
+		/// <param name="trace_data">Pointer to data container to store "trace data",
+		/// that later can be used during the backpropagation phase. Can be null,
+		/// in which case no "trace date" will be stored.</param>
 		/// <returns>Output signal.</returns>
-		typename D::tensor_t act(ILayerProcData<D>& processing_data, const bool store_backprop_data) const;
+		typename D::tensor_t act(const typename D::tensor_t& input, LayerTraceData<D>* const trace_data) const;
 
 		/// <summary>
 		/// Makes a forward pass for the given input and places the result to the given ("output") container
 		/// </summary>
+		/// <param name="input">Input data.</param>
 		/// <param name="output">Place-holder for the result.</param>
-		/// <param name="processing_data">Contains input data for the layer and provides
-		/// storage for data that later can be used during the backpropagation phase.</param>
-		/// <param name="store_backprop_data">If "true" indicates that the layer should store intermediate
-		/// calculations into <param name="processing_data"/> so that they can be used during the backpropagation phase.</param>
-		virtual void act(typename D::tensor_t& output, ILayerProcData<D>& processing_data, const bool store_backprop_data) const = 0;
+		/// <param name="trace_data">Pointer to data container to store "trace data",
+		/// that later can be used during the backpropagation phase. Can be null,
+		/// in which case no "trace date" will be stored.</param>
+		virtual void act(const typename D::tensor_t& input, typename D::tensor_t& output, LayerTraceData<D>* const trace_data) const = 0;
 
 		/// <summary>
 		/// Performs the back-propagation.
@@ -201,8 +200,8 @@ namespace DeepLearning
 		/// <returns>Derivatives of the cost function with respect to the output of the previous neural layer
 		/// (or input of the current neural layer, which is the same) as well as the derivatives of the cost function
 		/// with respect to the weight and biases of the current layer</returns>
-		virtual std::tuple<typename D::tensor_t, LayerGradient<D>> backpropagate(const typename D::tensor_t& deltas,
-			const LayerProcData<D>& processing_data, const bool evaluate_input_gradient = true) const = 0;
+		std::tuple<typename D::tensor_t, LayerGradient<D>> backpropagate(const typename D::tensor_t& deltas,
+			const LayerData<D>& processing_data, const bool evaluate_input_gradient = true) const;
 
 		/// <summary>
 		/// Performs the back-propagation
@@ -217,7 +216,7 @@ namespace DeepLearning
 		/// The evaluation is redundant for the very first layer of the net</param>
 		/// <param name="gradient_scale_factor">Scale factor to be applied to the content of
 		/// `kernel_grad` before adding the gradient value to it.</param>
-		virtual void backpropagate(const typename D::tensor_t& deltas, const LayerProcData<D>& processing_data,
+		virtual void backpropagate(const typename D::tensor_t& deltas, const LayerData<D>& processing_data,
 			typename D::tensor_t& input_grad, LayerGradient<D>& layer_grad,
 			const bool evaluate_input_gradient = true, const Real gradient_scale_factor = static_cast<Real>(0)) const = 0;
 

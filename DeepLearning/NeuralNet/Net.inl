@@ -116,17 +116,18 @@ namespace DeepLearning
 	template <class D>
 	void Net<D>::act_bpg(const typename D::tensor_t& input, Context& context) const
 	{
-		if (context.gradient_cache.size() != _layers.size())
+		auto& gradient_cache = context.gradient_cache;
+		if (gradient_cache.size() != _layers.size())
 			throw std::exception("Invalid auxiliary data.");
 
-		context.gradient_cache[0].Input = input;
+		gradient_cache[0].Input = input;
 		for (auto layer_id = 0ull; layer_id < _layers.size(); layer_id++)
 		{
-			_layers[layer_id].layer().ApplyDropout(context.gradient_cache[layer_id].Input, true);
+			_layers[layer_id].layer().ApplyDropout(gradient_cache[layer_id].Input, true);
 			const auto layer_id_next = layer_id + 1;
-			_layers[layer_id].layer().act(layer_id_next < _layers.size() ?
-				context.gradient_cache[layer_id_next].Input : context.value_cache.out(),
-				context.gradient_cache[layer_id], true);
+			_layers[layer_id].layer().act(gradient_cache[layer_id].Input,
+				layer_id_next < _layers.size() ? gradient_cache[layer_id_next].Input : context.value_cache.out(),
+				&gradient_cache[layer_id].Trace);
 		}
 	}
 
@@ -140,7 +141,7 @@ namespace DeepLearning
 		{
 			eval_data.swap();
 			_layers[layer_id].layer().ApplyDropout(eval_data.in(), false);
-			_layers[layer_id].layer().act(eval_data.out(), eval_data.in_data(), false);
+			_layers[layer_id].layer().act(eval_data.in(), eval_data.out(), nullptr);
 		}
 	}
 

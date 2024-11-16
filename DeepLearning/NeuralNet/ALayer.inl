@@ -57,17 +57,27 @@ namespace DeepLearning
 	template <class D>
 	typename D::tensor_t ALayer<D>::act(const typename D::tensor_t& input) const
 	{
-		thread_local LayerProcData<D> data{};
-		data.Input = input;
-		return act(data, false);
+		return act(input, nullptr);
 	}
 
 	template <class D>
-	typename D::tensor_t ALayer<D>::act(ILayerProcData<D>& processing_data, const bool store_backprop_data) const
+	typename D::tensor_t ALayer<D>::act(const typename D::tensor_t& input,
+	                                    LayerTraceData<D>* const trace_data) const
 	{
 		typename D::tensor_t result;
-		act(result, processing_data, store_backprop_data);
+		act(input, result, trace_data);
 		return std::move(result);
+	}
+
+	template <class D>
+	std::tuple<typename D::tensor_t, LayerGradient<D>> ALayer<D>::backpropagate(const typename D::tensor_t& deltas,
+		const LayerData<D>& processing_data, const bool evaluate_input_gradient) const
+	{
+		typename D::tensor_t input_grad;
+		LayerGradient<D> layer_grad;
+		allocate(layer_grad, /*fill zeros*/false);
+		backpropagate(deltas, processing_data, input_grad, layer_grad, evaluate_input_gradient);
+		return std::make_tuple(std::move(input_grad), std::move(layer_grad));
 	}
 
 	template <class D>

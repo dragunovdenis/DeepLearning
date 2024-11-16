@@ -21,22 +21,12 @@
 namespace DeepLearning
 {
 	/// <summary>
-	/// Interface for the corresponding class.
+	/// Auxiliary structure to hold data that is produced during an
+	/// "act" phase and can be used during the subsequent "backpropagation" phase.
 	/// </summary>
 	template <class D = CpuDC>
-	class ILayerProcData
+	struct LayerTraceData
 	{
-	public:
-		/// <summary>
-		/// Public destructor.
-		/// </summary>
-		virtual ~ILayerProcData() = default;
-
-		/// <summary>
-		/// Read-only access to the input data container.
-		/// </summary>
-		virtual const typename D::tensor_t& input() const = 0;
-
 		/// <summary>
 		/// Container to store derivatives of the activation function.
 		/// </summary>
@@ -53,30 +43,26 @@ namespace DeepLearning
 	/// (e.g. input data as well as data needed to run backpropagation) for a layer.
 	/// </summary>
 	template <class D = CpuDC>
-	class LayerProcData : public ILayerProcData<D>
+	struct LayerData
 	{
-	public:
 		/// <summary>
 		/// Container to store input data for a layer.
 		/// </summary>
 		typename D::tensor_t Input{};
 
 		/// <summary>
-		/// Read-only access to the input data.
+		/// Trace data.
 		/// </summary>
-		const typename D::tensor_t& input() const override
-		{
-			return Input;
-		}
+		LayerTraceData<D> Trace{};
 
 		/// <summary>
 		/// Default constructor.
 		/// </summary>
-		LayerProcData() = default;
+		LayerData() = default;
 
 		/// <summary>
 		/// Constructor.
 		/// </summary>
-		LayerProcData(const typename D::tensor_t& input) : Input(input){}
+		LayerData(const typename D::tensor_t& input) : Input(input){}
 	};
 }
