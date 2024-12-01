@@ -210,6 +210,19 @@ namespace DeepLearning
 			[](const auto& x, const auto& y) { return x * y; });
 	}
 
+	void BasicCollection::hadamard_prod_add(const BasicCollection& op0, const BasicCollection& op1)
+	{
+		if (size() != op0.size() || size() != op1.size())
+			throw std::exception("Inconsistent input");
+
+		const auto op0_arr = op0.begin();
+		const auto op1_arr = op1.begin();
+		auto res_arr = begin();
+
+		for (auto id = 0ull; id < size(); id++)
+			res_arr[id] += op0_arr[id] * op1_arr[id];
+	}
+
 	Real BasicCollection::dot_product(const BasicCollection& collection) const
 	{
 		if (size() != collection.size())
@@ -275,6 +288,19 @@ namespace DeepLearning
 		auto& gen_alias = seeder ? *seeder : gen;
 		std::normal_distribution<Real> dist{ 0, sigma < Real(0) ? Real(1) / Real(std::sqrt(size())) : sigma };
 		std::generate(begin(), end(), [&]() {return dist(gen_alias); });
+	}
+
+	void BasicCollection::init(const InitializationStrategy strategy, std::mt19937* seeder)
+	{
+		switch (strategy)
+		{
+			case None: return;
+			case FillZero: fill_zero(); return;
+			case FillRandomUniform: uniform_random_fill(-1, 1, seeder); return;
+			case FillRandomNormal: standard_random_fill(1, seeder); return;
+			default:
+				throw std::exception("Unknown initialization strategy.");
+		}
 	}
 
 	bool BasicCollection::is_nan() const

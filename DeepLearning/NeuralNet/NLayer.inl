@@ -151,8 +151,7 @@ namespace DeepLearning
 
 		const auto nontrivial_scaling = gradient_scale_factor != static_cast<Real>(0);
 		thread_local typename D::tensor_t bias_shared;
-		auto& pure_bias_grad = nontrivial_scaling ? bias_shared.
-			get_resized(layer_grad.Biases_grad.size_3d()) : layer_grad.Biases_grad;
+		auto& pure_bias_grad = nontrivial_scaling ? bias_shared.get_resized(out_size()) : layer_grad.Biases_grad;
 
 		this->get_func().calc_in_grad(deltas, processing_data.Trace.Derivatives, pure_bias_grad);
 

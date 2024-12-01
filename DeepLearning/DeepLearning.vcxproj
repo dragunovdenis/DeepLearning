@@ -264,6 +264,7 @@
     <ClInclude Include="Math\CostFunctionHelper.h" />
     <ClInclude Include="Math\CostFunctionId.h" />
     <ClInclude Include="Math\Functions.h" />
+    <ClInclude Include="Math\InitializationStrategy.h" />
     <ClInclude Include="Math\LinAlg3d.h" />
     <ClInclude Include="Math\Matrix.h" />
     <ClInclude Include="Math\Optimization\NelderMeadOptimizer.h" />
@@ -277,7 +278,9 @@
     <ClInclude Include="Memory\MemHandle.h" />
     <ClInclude Include="MnistDataUtils.h" />
     <ClInclude Include="MsgPackUtils.h" />
+    <ClInclude Include="NeuralNet\IMLayerExchangeData.h" />
     <ClInclude Include="NeuralNet\InOutData.h" />
+    <ClInclude Include="NeuralNet\InOutMData.h" />
     <ClInclude Include="NeuralNet\LayerData.h" />
     <ClInclude Include="NeuralNet\CLayer.h" />
     <ClInclude Include="NeuralNet\CostsAndCorrectAnswers.h" />
@@ -285,9 +288,13 @@
     <ClInclude Include="NeuralNet\DataContext.h" />
     <ClInclude Include="NeuralNet\LayerGradient.h" />
     <ClInclude Include="NeuralNet\LayerHandle.h" />
+    <ClInclude Include="NeuralNet\LazyVector.h" />
+    <ClInclude Include="NeuralNet\MLayerData.h" />
+    <ClInclude Include="NeuralNet\MLayerGradient.h" />
     <ClInclude Include="NeuralNet\Net.h" />
     <ClInclude Include="NeuralNet\NLayer.h" />
     <ClInclude Include="NeuralNet\PLayer.h" />
+    <ClInclude Include="NeuralNet\RMLayer.h" />
     <ClInclude Include="RandomGenerator.h" />
     <ClInclude Include="StopWatch.h" />
     <ClInclude Include="ThirdParty\BitmapUtils.h" />
@@ -335,6 +342,7 @@
     <ClCompile Include="Utilities.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="NeuralNet\MRLayer.inl" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

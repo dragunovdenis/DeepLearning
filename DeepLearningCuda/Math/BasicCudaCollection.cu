@@ -16,6 +16,7 @@
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "BasicCudaCollection.cuh"
+#include <device_launch_parameters.h>
 #include <nvfunctional>
 #include <thrust/transform.h>
 #include <thrust/transform_reduce.h>
@@ -33,6 +34,7 @@
 #include <exception>
 #include <random>
 #include <Utilities.h>
+#include "CudaSetup.h"
 
 namespace DeepLearning
 {
@@ -231,6 +233,32 @@ namespace DeepLearning
 		CUDA_SANITY_CHECK
 	}
 
+	/// <summary>
+	/// Kernel to calculate Hadamard product of the given two vectors <paramref name="op0"/>, <paramref name="op1"/>
+	/// and adding the result to the given <paramref name="res"/> vector.
+	/// </summary>
+	__global__ void hadamard_prod_add_kernel(const Real* __restrict__ op0,
+		const Real* __restrict__ op1, Real* __restrict__ res, const int size)
+	{
+		const auto thread_id = threadIdx.x + blockIdx.x * blockDim.x;
+
+		if (thread_id >= size)
+			return;
+
+		res[thread_id] += op0[thread_id] * op1[thread_id];
+	}
+
+	void BasicCudaCollection::hadamard_prod_add(const BasicCudaCollection& op0, const BasicCudaCollection& op1)
+	{
+		if (size() != op0.size() || size() != op1.size())
+			throw std::exception("Inconsistent input");
+
+		const auto blocks_cnt = CudaSetup::calc_blocks(size());
+		hadamard_prod_add_kernel << <blocks_cnt, CudaSetup::max_threads_per_block(), 0, cudaStreamPerThread >> > (
+			op0.begin(), op1.begin(), begin(), static_cast<int>(size()));
+		CUDA_SANITY_CHECK
+	}
+
 	Real BasicCudaCollection::dot_product(const BasicCudaCollection& collection) const
 	{
 		const auto result = thrust::inner_product(thrust::cuda::par.on(cudaStreamPerThread),
@@ -338,6 +366,19 @@ namespace DeepLearning
 			thrust::make_counting_iterator(static_cast<int>(size())), begin(),
 			UniformRandGen{ min, max,  seeder ? static_cast<int>((*seeder)()) : Utils::get_random_int()});
 		CUDA_SANITY_CHECK
+	}
+
+	void BasicCudaCollection::init(const InitializationStrategy strategy, std::mt19937* seeder)
+	{
+		switch (strategy)
+		{
+			case None: return;
+			case FillZero: fill_zero(); return;
+			case FillRandomUniform: uniform_random_fill(-1, 1, seeder); return;
+			case FillRandomNormal: standard_random_fill(1, seeder); return;
+			default:
+				throw std::exception("Unknown initialization strategy.");
+		}
 	}
 
 	bool BasicCudaCollection::is_nan() const

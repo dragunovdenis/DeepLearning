@@ -142,6 +142,29 @@ namespace DeepLearningTest
 			Assert::IsTrue(cuda_result.to_host() == host_result, L"Actual and reference vectors are not equal");
 		}
 
+		TEST_METHOD(HadamardProdAddTest)
+		{
+			//Arrange
+			const auto v0 = CudaVectorFactory();
+			const auto v1 = CudaVectorFactory();
+			const auto v2 = CudaVectorFactory();
+
+			Assert::IsTrue(v0 != v1 && v2.max_abs() > 0,
+				L"Vectors are supposed to be different and nonzero");
+
+			//Act
+			auto result = v2;
+			result.hadamard_prod_add(v0, v1);
+
+			//Assert
+			CudaVector result_expected(v0.size());
+			result_expected.hadamard_prod(v0, v1);
+			result_expected += v2;
+
+			Assert::IsTrue((result - result_expected).max_abs() < 10 * std::numeric_limits<Real>::epsilon(),
+				L"Too high difference between actual and expected values");
+		}
+
 		TEST_METHOD(DotProdTest)
 		{
 			//Arrange

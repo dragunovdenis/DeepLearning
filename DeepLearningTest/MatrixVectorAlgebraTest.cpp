@@ -388,6 +388,25 @@ namespace DeepLearningTest
 			}
 		}
 
+		TEST_METHOD(HadamardVectorProductAddTest)
+		{
+			//Arrange
+			const auto dim = 10;
+			const Vector vector1(dim, -1, 1);
+			const Vector vector2(dim, -1, 1);
+			Vector result(dim, -1, 1);
+			const auto result_original = result;
+			Assert::IsTrue(vector1.max_abs() > 0 && vector2.max_abs() > 0 && result.max_abs() > 0,
+				L"The input vectors are supposed to be non-zero!");
+
+			//Act
+			result.hadamard_prod_add(vector1, vector2);
+
+			//Assert
+			const auto result_expected = vector1.hadamard_prod(vector2) + result_original;
+			Assert::IsTrue(result == result_expected, L"Actual and expected results are not the same.");
+		}
+
 		TEST_METHOD(MatrixVectorMultiplicationAndAdditionTest)
 		{
 			//Arrange
@@ -440,8 +459,9 @@ namespace DeepLearningTest
 
 		TEST_METHOD(BaseCollectionInstanceCounterTestTest)
 		{
-			check_alive_instances_and_allocated_memory(0, 0);
-			std::size_t expected_allocated_memory = 0;
+			const auto baseline_instances = BasicCollection::get_total_instances_count();
+			const auto baseline_memory = BasicCollection::get_total_allocated_memory();
+			std::size_t expected_allocated_memory = baseline_memory;
 
 			{
 				const Vector vector(1234);
@@ -455,16 +475,16 @@ namespace DeepLearningTest
 						const Tensor tensor(123, 456, 789);
 						expected_allocated_memory += tensor.get_allocated_memory();
 
-						check_alive_instances_and_allocated_memory(3, expected_allocated_memory);
+						check_alive_instances_and_allocated_memory(baseline_instances + 3, expected_allocated_memory);
 						expected_allocated_memory -= tensor.get_allocated_memory();
 					}
-					check_alive_instances_and_allocated_memory(2, expected_allocated_memory);
+					check_alive_instances_and_allocated_memory(baseline_instances + 2, expected_allocated_memory);
 					expected_allocated_memory -= matrix.get_allocated_memory();
 				}
-				check_alive_instances_and_allocated_memory(1, expected_allocated_memory);
+				check_alive_instances_and_allocated_memory(baseline_instances + 1, expected_allocated_memory);
 				expected_allocated_memory -= vector.get_allocated_memory();
 			}
-			check_alive_instances_and_allocated_memory(0, expected_allocated_memory);
+			check_alive_instances_and_allocated_memory(baseline_instances, expected_allocated_memory);
 		}
 	};
 }

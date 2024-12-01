@@ -406,7 +406,6 @@ namespace DeepLearning
 			throw std::exception("Unexpected amount of memory to store the result");
 
 		const auto blocks_cnt = CudaSetup::calc_blocks(result_size.coord_prod());
-		const auto kernel_size_bytes = sizeof(Real) * kernel_size.coord_prod();
 
 		for (auto kernel_id = 0ull; kernel_id < kernels.size(); kernel_id++)
 		{

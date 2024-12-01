@@ -21,6 +21,7 @@
 #include <random>
 #include "CostFunctionHelper.h"
 #include "ActivationFunctionHelper.h"
+#include "InitializationStrategy.h"
 #include "../Memory/MemHandle.h"
 #include "LinAlg3d.h"
 
@@ -193,6 +194,12 @@ namespace DeepLearning
 		void hadamard_prod(const BasicCollection& op0, const BasicCollection& op1);
 
 		/// <summary>
+		/// Calculates Hadamard (element-wise) product of the two given operands and
+		/// adds the result to the current collection.
+		/// </summary>
+		void hadamard_prod_add(const BasicCollection& op0, const BasicCollection& op1);
+
+		/// <summary>
 		/// Performs the Hadamard (element-wise) product operation between the current collection and the input
 		/// </summary>
 		template<class T>
@@ -246,6 +253,11 @@ namespace DeepLearning
 		/// by the square root of the elements in the collection
  		/// </summary>
 		void standard_random_fill(const Real& sigma = -1, std::mt19937* seeder = nullptr);
+
+		/// <summary>
+		/// Fills the collection according to the given strategy.
+		/// </summary>
+		void init(const InitializationStrategy strategy, std::mt19937* seeder = nullptr);
 
 		/// <summary>
 		/// Returns "true" if at least one element of the collection is "nan"

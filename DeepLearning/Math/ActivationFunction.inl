@@ -62,6 +62,18 @@ namespace DeepLearning
 		T::Base::ActivationHelper::evaluate_softmax_input_grad(aux_data, out_grad, result);
 	}
 
+	template<class T>
+	void SoftMaxActivationFunction<T>::add_in_grad(const typename T::Base& out_grad, const T& aux_data, T& out_res) const
+	{
+		if (out_grad.size() != aux_data.size())
+			throw std::exception("Inconsistent input data");
+
+		thread_local T temp{};
+		temp.resize(out_res.size_3d());
+		T::Base::ActivationHelper::evaluate_softmax_input_grad(aux_data, out_grad, temp);
+		out_res += temp;
+	}
+
 	template <class T>
 	T AFunction<T>::operator()(const T& input) const
 	{
@@ -91,6 +103,12 @@ namespace DeepLearning
 	void AFunction<T>::calc_in_grad(const typename T::Base& out_grad, const T& aux_data, T& out) const
 	{
 		out.hadamard_prod(aux_data, out_grad);
+	}
+
+	template<class T>
+	void AFunction<T>::add_in_grad(const typename T::Base& out_grad, const T& aux_data, T& out_res) const
+	{
+		out_res.hadamard_prod_add(aux_data, out_grad);
 	}
 
 	template <class T>

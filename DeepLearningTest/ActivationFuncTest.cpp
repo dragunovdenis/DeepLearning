@@ -213,6 +213,39 @@ namespace DeepLearningTest
 			}
 		}
 
+		/// <summary>
+		/// General method to test "add-in-gradient" functionality of different cost functions.
+		/// </summary>
+		template <template <class> class F>
+		static void function_add_in_grad_test()
+		{
+			constexpr auto dim = 10;
+			const F<Vector> func{};
+			const auto out_grad = Vector(dim, -1, 1);
+			const auto aux_data = Vector(dim, -1, 1);
+			const auto init_value = Vector(dim, -1, 1);
+			Assert::IsTrue(out_grad.max_abs() > 0 && aux_data.max_abs() &&
+				init_value.max_abs() > 0, L"Vector is supposed to be nonzero");
+
+			//Act
+			auto result = init_value;
+			func.add_in_grad(out_grad, aux_data, result);
+
+			// Assert
+			const auto result_expected = func.get_in_grad(out_grad, aux_data) + init_value;
+			Assert::IsTrue(result == result_expected, L"Expected and actual results are not the same.");
+		}
+
+		TEST_METHOD(SoftMaxFunctionAddInGradTest)
+		{
+			function_add_in_grad_test<SoftMaxActivationFunction>();
+		}
+
+		TEST_METHOD(SigmoidFunctionAddInGradTest)
+		{
+			function_add_in_grad_test<SigmoidActivationFunction>();
+		}
+
 		TEST_METHOD(SoftMaxFunctionAndDerivativeCudaTest)
 		{
 			//Arrange

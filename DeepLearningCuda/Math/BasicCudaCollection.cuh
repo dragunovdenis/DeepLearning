@@ -24,6 +24,7 @@
 #include "ActivationFunctionHelperCuda.cuh"
 #include <Memory/MemHandle.h>
 #include <Math/LinAlg3d.h>
+#include "Math/InitializationStrategy.h"
 
 namespace DeepLearning
 {
@@ -179,6 +180,12 @@ namespace DeepLearning
 		void hadamard_prod(const BasicCudaCollection& op0, const BasicCudaCollection& op1);
 
 		/// <summary>
+		/// Calculates Hadamard (element-wise) product of the two given operands and
+		/// adds the result to the current collection.
+		/// </summary>
+		void hadamard_prod_add(const BasicCudaCollection& op0, const BasicCudaCollection& op1);
+
+		/// <summary>
 		/// Performs the Hadamard (element-wise) product operation between the current collection and the input
 		/// </summary>
 		template<class T>
@@ -232,6 +239,11 @@ namespace DeepLearning
 		/// Fills the collection with uniformly distributed random values from [min, max] segment
 		/// </summary>
 		void uniform_random_fill(const Real& min, const Real& max, std::mt19937* seeder = nullptr);
+
+		/// <summary>
+		/// Fills the collection according to the given strategy.
+		/// </summary>
+		void init(const InitializationStrategy strategy, std::mt19937* seeder = nullptr);
 
 		/// <summary>
 		/// Returns "true" if at least one element of the collection is "nan"

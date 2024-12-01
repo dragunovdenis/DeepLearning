@@ -64,6 +64,9 @@
     <Filter Include="Source Files\Math\ActivationFunction">
       <UniqueIdentifier>{5ddcbe88-e08f-4fa2-b92f-00fd0ff57377}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\NeuralNet\MultiNet">
+      <UniqueIdentifier>{edd3a133-ab37-4d97-ae87-7d5dfe7db8d6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="defs.h">
@@ -246,6 +249,27 @@
     <ClInclude Include="NeuralNet\InOutData.h">
       <Filter>Header Files\NeuralNet</Filter>
     </ClInclude>
+    <ClInclude Include="Math\InitializationStrategy.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="NeuralNet\IMLayerExchangeData.h">
+      <Filter>Header Files\NeuralNet\MultiNet</Filter>
+    </ClInclude>
+    <ClInclude Include="NeuralNet\InOutMData.h">
+      <Filter>Header Files\NeuralNet\MultiNet</Filter>
+    </ClInclude>
+    <ClInclude Include="NeuralNet\MLayerData.h">
+      <Filter>Header Files\NeuralNet\MultiNet</Filter>
+    </ClInclude>
+    <ClInclude Include="NeuralNet\MLayerGradient.h">
+      <Filter>Header Files\NeuralNet\MultiNet</Filter>
+    </ClInclude>
+    <ClInclude Include="NeuralNet\LazyVector.h">
+      <Filter>Header Files\NeuralNet\MultiNet</Filter>
+    </ClInclude>
+    <ClInclude Include="NeuralNet\RMLayer.h">
+      <Filter>Header Files\NeuralNet\MultiNet</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Matrix.cpp">
@@ -329,5 +353,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="NeuralNet\MRLayer.inl">
+      <Filter>Header Files\NeuralNet\MultiNet</Filter>
+    </None>
   </ItemGroup>
 </Project>
