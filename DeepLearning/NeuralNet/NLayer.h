@@ -55,7 +55,7 @@ namespace DeepLearning
 		void initialize(const std::size_t in_dim, const std::size_t out_dim,
 			const Real rand_low, const Real rand_high, const bool standard_init_for_weights);
 
-		int _msg_pack_version = 1;
+		static constexpr int MSG_PACK_VER = 1;
 
 		/// <summary>
 		/// Json keys.
@@ -91,7 +91,7 @@ namespace DeepLearning
 		template <typename Packer>
 		void msgpack_pack(Packer& msgpack_pk) const
 		{
-			msgpack::type::make_define_array(_msg_pack_version, MSGPACK_BASE(ALayer<D>), _biases, _weights).msgpack_pack(msgpack_pk);
+			msgpack::type::make_define_array(MSG_PACK_VER, MSGPACK_BASE(ALayer<D>), _biases, _weights).msgpack_pack(msgpack_pk);
 		}
 
 		/// <summary>

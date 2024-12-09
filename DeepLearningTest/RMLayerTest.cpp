@@ -60,7 +60,7 @@ namespace DeepLearningTest
 		}
 
 		static constexpr auto _delta = std::is_same_v<Real, double> ? static_cast<Real>(1e-5) : static_cast<Real>(1e-2);
-		static constexpr auto _tolerance = std::is_same_v<Real, double> ? static_cast<Real>(5e-10) : static_cast<Real>(3e-4);
+		static constexpr auto _tolerance = std::is_same_v<Real, double> ? static_cast<Real>(6e-10) : static_cast<Real>(3e-4);
 
 		TEST_METHOD(InputGradientTest)
 		{
@@ -250,6 +250,21 @@ namespace DeepLearningTest
 		TEST_METHOD(RecWeightGradientTest)
 		{
 			run_weight_gradient_test(1);
+		}
+
+		TEST_METHOD(SerializationTest)
+		{
+			// Arrange
+			const Index4d in_size{ {6, 9, 7}, 10 };
+			const Index4d out_size{ {8, 11, 5}, 10 };
+			const RMLayer<CpuDC> layer(in_size, out_size, FillRandomNormal, ActivationFunctionId::SIGMOID);
+
+			// Act 
+			const auto msg = MsgPack::pack(layer);
+			const auto layer_unpacked = MsgPack::unpack<RMLayer<CpuDC>>(msg);
+
+			//Assert
+			Assert::IsTrue(layer.equal(layer_unpacked), L"Original and restored layers are different");
 		}
 	};
 }

@@ -270,6 +270,12 @@
     <ClInclude Include="NeuralNet\RMLayer.h">
       <Filter>Header Files\NeuralNet\MultiNet</Filter>
     </ClInclude>
+    <ClInclude Include="Math\LinAlg4d.h">
+      <Filter>Header Files\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="NeuralNet\AMLayer.h">
+      <Filter>Header Files\NeuralNet\MultiNet</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Matrix.cpp">

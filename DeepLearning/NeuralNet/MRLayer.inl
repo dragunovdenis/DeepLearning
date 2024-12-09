@@ -21,27 +21,51 @@
 namespace DeepLearning
 {
 	template<class D>
-	inline typename D::matrix_t& RMLayer<D>::in_weights()
+	typename D::matrix_t& RMLayer<D>::in_weights()
 	{
 		return _weights[IN_W];
 	}
 
 	template<class D>
-	inline const typename D::matrix_t& RMLayer<D>::in_weights() const
+	const typename D::matrix_t& RMLayer<D>::in_weights() const
 	{
 		return _weights[IN_W];
 	}
 
 	template<class D>
-	inline typename D::matrix_t& RMLayer<D>::rec_weights()
+	typename D::matrix_t& RMLayer<D>::rec_weights()
 	{
 		return _weights[REC_W];
 	}
 
 	template<class D>
-	inline const typename D::matrix_t& RMLayer<D>::rec_weights() const
+	const typename D::matrix_t& RMLayer<D>::rec_weights() const
 	{
 		return _weights[REC_W];
+	}
+
+	template<class D>
+	long long& RMLayer<D>::rec_depth()
+	{
+		return _out_size.w;
+	}
+
+	template<class D>
+	const long long& RMLayer<D>::rec_depth() const
+	{
+		return _out_size.w;
+	}
+
+	template<class D>
+	Index3d& RMLayer<D>::out_sub_dim()
+	{
+		return _out_size.xyz;
+	}
+
+	template<class D>
+	const Index3d& RMLayer<D>::out_sub_dim() const
+	{
+		return _out_size.xyz;
 	}
 
 	template <class D>
@@ -71,14 +95,33 @@ namespace DeepLearning
 			get_func().func_in_place(in_out);
 	}
 
+	template<class D>
+	Index4d RMLayer<D>::in_size() const
+	{
+		return _in_size;
+	}
+
+	template<class D>
+	Index4d RMLayer<D>::out_size() const
+	{
+		return _out_size;
+	}
+
 	template <class D>
 	RMLayer<D>::RMLayer(const int rec_depth, const int in_sub_dim, const Index3d& out_sub_dim,
 		const InitializationStrategy init_strategy, ActivationFunctionId func_id) :
-		_rec_depth(rec_depth), _out_sub_dim(out_sub_dim)
+		RMLayer({{1, 1, in_sub_dim}, rec_depth }, { out_sub_dim, rec_depth }, init_strategy, func_id) {}
+
+	template <class D>
+	RMLayer<D>::RMLayer(const Index4d& in_size, const Index4d& out_size, const InitializationStrategy init_strategy,
+		ActivationFunctionId func_id) : _in_size{ in_size }, _out_size{out_size}
 	{
+		if (in_size.w != _out_size.w)
+			throw std::exception("Unsupported input-output dimensionality");
+
 		set_func_id(func_id);
-		const auto out_sub_dim_lin = _out_sub_dim.coord_prod();
-		in_weights().resize(out_sub_dim_lin, in_sub_dim);
+		const auto out_sub_dim_lin = this->out_sub_dim().coord_prod();
+		in_weights().resize(out_sub_dim_lin, _in_size.xyz.coord_prod());
 		in_weights().init(init_strategy);
 
 		rec_weights().resize(out_sub_dim_lin, out_sub_dim_lin);
@@ -91,12 +134,13 @@ namespace DeepLearning
 	template<class D>
 	RMLayer<D>::RMLayer(const int rec_depth, const Index3d& out_sub_dim, const typename D::matrix_t& in_w,
 		const typename D::matrix_t& r_w, const typename D::vector_t& b, ActivationFunctionId func_id) :
-		_rec_depth(rec_depth), _out_sub_dim(out_sub_dim)
+		_in_size{ Index3d{1ll, 1ll, static_cast<long long>(in_w.col_dim())}, rec_depth },
+		_out_size{ out_sub_dim, rec_depth }
 	{
 		if (in_w.row_dim() != b.dim() || r_w.row_dim() != b.dim() || r_w.row_dim() != r_w.col_dim())
 			throw std::exception("Incompatible dimensions of weights and biases.");
 
-		if (_out_sub_dim.coord_prod() != b.dim())
+		if (this->out_sub_dim().coord_prod() != b.dim())
 			throw std::exception("Invalid dimension of an output item.");
 
 		set_func_id(func_id);
@@ -125,14 +169,14 @@ namespace DeepLearning
 	void RMLayer<D>::act(const IMLayerExchangeData<typename D::tensor_t>& input,
 		IMLayerExchangeData<typename D::tensor_t>& output, IMLayerTraceData<D>* const trace_data) const
 	{
-		if (input.size() != _rec_depth || (trace_data && trace_data->size() != _rec_depth))
+		if (input.size() != rec_depth() || (trace_data && trace_data->size() != rec_depth()))
 			throw std::exception("Invalid input data");
 
-		output.resize(_rec_depth);
+		output.resize(rec_depth());
 
-		for (auto iter_id = 0; iter_id < _rec_depth; iter_id++)
+		for (auto iter_id = 0; iter_id < rec_depth(); iter_id++)
 		{
-			output[iter_id].resize(_out_sub_dim);
+			output[iter_id].resize(out_sub_dim());
 
 			in_weights().mul_add(input[iter_id], _biases, output[iter_id]);
 
@@ -149,17 +193,17 @@ namespace DeepLearning
 		IMLayerExchangeData<typename D::tensor_t>& out_input_grad, MLayerGradient<D>& out_layer_grad,
 		const bool evaluate_input_gradient) const
 	{
-		if (out_grad.size() != _rec_depth || output.size() != _rec_depth ||
-			processing_data.size() != _rec_depth || out_layer_grad.size() != 1 ||
-			(evaluate_input_gradient && out_input_grad.size() != _rec_depth))
+		if (out_grad.size() != rec_depth() || output.size() != rec_depth() ||
+			processing_data.size() != rec_depth() || out_layer_grad.size() != 1 ||
+			(evaluate_input_gradient && out_input_grad.size() != rec_depth()))
 			throw std::exception("Invalid input.");
 
 		thread_local typename D::tensor_t aux{};
-		aux.resize(_out_sub_dim);
+		aux.resize(out_sub_dim());
 		aux.fill_zero();
 
 		thread_local typename D::tensor_t temp{};
-		temp.resize(_out_sub_dim);
+		temp.resize(out_sub_dim());
 
 		auto& biases_grad = out_layer_grad[0].Biases_grad;
 		auto& in_weights_grad = out_layer_grad[0].Weights_grad[IN_W];
@@ -169,7 +213,7 @@ namespace DeepLearning
 		in_weights_grad.fill_zero();
 		rec_weights_grad.fill_zero();
 
-		for (auto step_id = _rec_depth - 1; step_id >= 0; step_id--)
+		for (auto step_id = rec_depth() - 1; step_id >= 0; step_id--)
 		{
 			get_func().add_in_grad(out_grad[step_id], processing_data[step_id].Trace.Derivatives, aux);
 			biases_grad += aux;
@@ -188,5 +232,46 @@ namespace DeepLearning
 				get_func().calc_in_grad(temp, processing_data[step_id - 1].Trace.Derivatives, aux);
 			}
 		}
+	}
+
+	template <class D>
+	void RMLayer<D>::msgpack_unpack(msgpack::object const& msgpack_o)
+	{
+		auto msg_pack_version = 0;
+		msgpack::type::make_define_array(msg_pack_version).msgpack_unpack(msgpack_o);
+
+		if (msg_pack_version != MSG_PACK_VER)
+			throw std::exception("Unexpected version of an object");
+
+		msgpack::type::make_define_array(msg_pack_version, MSGPACK_BASE(AMLayer<D>),
+			_in_size, _out_size, _biases, _weights, _func_id).msgpack_unpack(msgpack_o);
+	}
+
+	template <class D>
+	template <typename Packer>
+	void RMLayer<D>::msgpack_pack(Packer& msgpack_pk) const
+	{
+		msgpack::type::make_define_array(MSG_PACK_VER, MSGPACK_BASE(AMLayer<D>),
+			_in_size, _out_size, _biases, _weights, _func_id).msgpack_pack(msgpack_pk);
+	}
+
+	template<class D>
+	bool RMLayer<D>::equal_hyperparams(const AMLayer<D>& layer) const
+	{
+		const auto other_nlayer_ptr = dynamic_cast<const RMLayer<D>*>(&layer);
+		return other_nlayer_ptr != nullptr && AMLayer<D>::equal_hyperparams(layer)
+			&& _in_size == other_nlayer_ptr->_in_size && _out_size == other_nlayer_ptr->_out_size &&
+			_func_id == other_nlayer_ptr->_func_id;
+	}
+
+	template<class D>
+	bool RMLayer<D>::equal(const AMLayer<D>& layer) const
+	{
+		if (!equal_hyperparams(layer))
+			return false;
+
+		const auto other_nlayer_ptr = dynamic_cast<const RMLayer<D>*>(&layer);
+		return other_nlayer_ptr != nullptr && AMLayer<D>::equal(layer)
+			&& _biases == other_nlayer_ptr->_biases && _weights == other_nlayer_ptr->_weights;
 	}
 }

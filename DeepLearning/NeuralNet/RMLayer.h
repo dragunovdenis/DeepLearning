@@ -16,9 +16,7 @@
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #pragma once
-#include "DataContext.h"
-#include "MLayerData.h"
-#include "MLayerGradient.h"
+#include "AMLayer.h"
 #include "../Math/Matrix.h"
 #include "../Math/LinAlg3d.h"
 #include "../Math/ActivationFunction.h"
@@ -30,7 +28,7 @@ namespace DeepLearning
 	/// Recurrent multi-layer.
 	/// </summary>
 	template <class D = CpuDC>
-	class RMLayer
+	class RMLayer : public AMLayer<D>
 	{
 		/// <summary>
 		/// Vector of bias coefficients.
@@ -47,6 +45,10 @@ namespace DeepLearning
 		/// </summary>
 		static constexpr int IN_W = 0;
 		static constexpr int REC_W = 1;
+		static constexpr int MSG_PACK_VER = 1;
+
+		Index4d _in_size{};
+		Index4d _out_size{};
 
 		/// <summary>
 		/// Access to the "input" weight matrix.
@@ -73,12 +75,23 @@ namespace DeepLearning
 		///	which coincides with the dimensionality of an array of tensors
 		///	that the layer receives as an input.
 		/// </summary>
-		int _rec_depth{};
+		long long& rec_depth();
+
+		/// <summary>
+		/// Const version of the corresponding method.
+		/// </summary>
+		const long long& rec_depth() const;
 
 		/// <summary>
 		/// Dimensionality of tensors in the output collection that the layer produces.
 		/// </summary>
-		Index3d _out_sub_dim{};
+		Index3d& out_sub_dim();
+
+		/// <summary>
+		/// Const version of the corresponding method.
+		/// </summary>
+		/// <returns></returns>
+		const Index3d& out_sub_dim() const;
 
 		/// <summary>
 		/// Pointer to an instance of activation function.
@@ -108,6 +121,16 @@ namespace DeepLearning
 	public:
 
 		/// <summary>
+		/// Input dimensions of the layer.
+		/// </summary>
+		Index4d in_size() const override;
+
+		/// <summary>
+		/// Output dimensions of the layer.
+		/// </summary>
+		Index4d out_size() const override;
+
+		/// <summary>
 		/// Default constructor.
 		/// </summary>
 		RMLayer() = default;
@@ -126,6 +149,16 @@ namespace DeepLearning
 			const InitializationStrategy init_strategy, ActivationFunctionId func_id = ActivationFunctionId::TANH);
 
 		/// <summary>
+		/// Constructor.
+		/// </summary>
+		/// <param name="in_size">Dimensionality of the layer's input.</param>
+		/// <param name="out_size">Dimensionality of the layer's output.</param>
+		/// <param name="init_strategy">Strategy used to fill weight during the initialization phase.</param>
+		/// <param name="func_id">Identifier of activation function.</param>
+		RMLayer(const Index4d& in_size, const Index4d& out_size,
+			const InitializationStrategy init_strategy, ActivationFunctionId func_id = ActivationFunctionId::TANH);
+
+		/// <summary>
 		/// Constructs an instance using the given set of the weights and biases.
 		/// </summary>
 		/// <param name="rec_depth">Recurrence depth.</param>
@@ -141,7 +174,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Returns a container to be used in back-propagation procedure./>
 		/// </summary>
-		MLayerGradient<D> allocate_gradient_container() const;
+		MLayerGradient<D> allocate_gradient_container() const override;
 
 		/// <summary>
 		/// Calculates result of the layer evaluated on the given <param name="input"/> data.
@@ -152,7 +185,7 @@ namespace DeepLearning
 		/// that later can be used during the backpropagation phase. Can be null,
 		/// in which case no "trace date" will be stored.</param>
 		void act(const IMLayerExchangeData<typename D::tensor_t>& input, IMLayerExchangeData<typename D::tensor_t>& output,
-			IMLayerTraceData<D>* const trace_data) const;
+			IMLayerTraceData<D>* const trace_data) const override;
 
 		/// <summary>
 		/// Calculates derivatives with respect to all the parameters of the layer.
@@ -167,7 +200,28 @@ namespace DeepLearning
 		/// <param name="evaluate_input_gradient">If "false" gradient of the layers input won't be calculated.</param>
 		void backpropagate(const IMLayerExchangeData<typename D::tensor_t>& out_grad, const IMLayerExchangeData<typename D::tensor_t>& output,
 			const IMLayerExchangeData<LayerData<D>>& processing_data, IMLayerExchangeData<typename D::tensor_t>& out_input_grad,
-			MLayerGradient<D>& out_layer_grad, const bool evaluate_input_gradient = true) const;
+			MLayerGradient<D>& out_layer_grad, const bool evaluate_input_gradient = true) const override;
+
+		/// <summary>
+		/// Custom "unpacking" method
+		/// </summary>
+		void msgpack_unpack(msgpack::object const& msgpack_o);
+
+		/// <summary>
+		/// Custom "packing" method
+		/// </summary>
+		template <typename Packer>
+		void msgpack_pack(Packer& msgpack_pk) const;
+
+		/// <summary>
+		/// Returns "true" if the current instance of the layer has the same set of hyper-parameters as the given one
+		/// </summary>
+		bool equal_hyperparams(const AMLayer<D>& layer) const override;
+
+		/// <summary>
+		/// Returns "true" if the given layer is (absolutely) equal to the current one
+		/// </summary>
+		bool equal(const AMLayer<D>& layer) const override;
 	};
 }
 
