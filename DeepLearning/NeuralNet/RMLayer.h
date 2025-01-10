@@ -200,6 +200,16 @@ namespace DeepLearning
 		/// Returns "true" if the given layer is (absolutely) equal to the current one
 		/// </summary>
 		bool equal(const AMLayer<D>& layer) const override;
+
+		/// <summary>
+		/// See the summary of the base class.
+		/// </summary>
+		MLayerTypeId get_type_id() const override;
+
+		/// <summary>
+		/// Returns ID of the class.
+		/// </summary>
+		static constexpr  MLayerTypeId ID() { return MLayerTypeId::RECURRENT; };
 	};
 }
 

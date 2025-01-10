@@ -67,6 +67,9 @@
     <Filter Include="Header Files\NeuralNet\MultiNet">
       <UniqueIdentifier>{edd3a133-ab37-4d97-ae87-7d5dfe7db8d6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\NeuralNet\MultiNet">
+      <UniqueIdentifier>{e4a7821a-0ccd-4a08-acbd-106e721e384e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="defs.h">
@@ -276,6 +279,12 @@
     <ClInclude Include="NeuralNet\AMLayer.h">
       <Filter>Header Files\NeuralNet\MultiNet</Filter>
     </ClInclude>
+    <ClInclude Include="NeuralNet\MLayerTypeId.h">
+      <Filter>Header Files\NeuralNet\MultiNet</Filter>
+    </ClInclude>
+    <ClInclude Include="NeuralNet\MLayerHandle.h">
+      <Filter>Header Files\NeuralNet\MultiNet</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Matrix.cpp">
@@ -356,10 +365,16 @@
     <ClCompile Include="NeuralNet\DataContext.cpp">
       <Filter>Source Files\NeuralNet</Filter>
     </ClCompile>
+    <ClCompile Include="NeuralNet\MLayerTypeId.cpp">
+      <Filter>Source Files\NeuralNet\MultiNet</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="NeuralNet\MRLayer.inl">
+      <Filter>Header Files\NeuralNet\MultiNet</Filter>
+    </None>
+    <None Include="NeuralNet\MLayerHandle.inl">
       <Filter>Header Files\NeuralNet\MultiNet</Filter>
     </None>
   </ItemGroup>

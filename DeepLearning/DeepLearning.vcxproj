@@ -293,6 +293,8 @@
     <ClInclude Include="NeuralNet\LazyVector.h" />
     <ClInclude Include="NeuralNet\MLayerData.h" />
     <ClInclude Include="NeuralNet\MLayerGradient.h" />
+    <ClInclude Include="NeuralNet\MLayerHandle.h" />
+    <ClInclude Include="NeuralNet\MLayerTypeId.h" />
     <ClInclude Include="NeuralNet\Net.h" />
     <ClInclude Include="NeuralNet\NLayer.h" />
     <ClInclude Include="NeuralNet\PLayer.h" />
@@ -337,6 +339,7 @@
     <ClInclude Include="NeuralNet\Net.inl" />
     <ClInclude Include="NeuralNet\NLayer.inl" />
     <ClInclude Include="NeuralNet\PLayer.inl" />
+    <ClCompile Include="NeuralNet\MLayerTypeId.cpp" />
     <ClCompile Include="RandomGenerator.cpp" />
     <ClCompile Include="StopWatch.cpp" />
     <ClCompile Include="ThirdParty\BitmapUtils.cpp" />
@@ -344,6 +347,7 @@
     <ClCompile Include="Utilities.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="NeuralNet\MLayerHandle.inl" />
     <None Include="NeuralNet\MRLayer.inl" />
     <None Include="packages.config" />
   </ItemGroup>

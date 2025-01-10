@@ -264,4 +264,10 @@ namespace DeepLearning
 		return other_layer_ptr != nullptr && AMLayer<D>::equal(layer)
 			&& _biases == other_layer_ptr->_biases && _weights == other_layer_ptr->_weights;
 	}
+
+	template <class D>
+	MLayerTypeId RMLayer<D>::get_type_id() const
+	{
+		return ID();
+	}
 }

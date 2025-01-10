@@ -21,6 +21,7 @@
 #include "../Math/LinAlg4d.h"
 #include "MLayerGradient.h"
 #include "MLayerData.h"
+#include "MLayerTypeId.h"
 
 namespace DeepLearning
 {
@@ -82,6 +83,11 @@ namespace DeepLearning
 		/// Returns "true" if the given layer is (absolutely) equal to the current one
 		/// </summary>
 		virtual bool equal(const AMLayer<D>& layer) const { return true; };
+
+		/// <summary>
+		/// Returns layer ID of the current instance.
+		/// </summary>
+		virtual MLayerTypeId get_type_id() const = 0;
 
 		/// <summary>
 		/// Updates weights of the current layer with the given <paramref name="increment"/>

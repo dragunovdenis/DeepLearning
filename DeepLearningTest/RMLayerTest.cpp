@@ -18,6 +18,7 @@
 #include "CppUnitTest.h"
 #include <NeuralNet/RMLayer.h>
 #include "StandardTestUtils.h"
+#include <NeuralNet/MLayerHandle.h>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;
@@ -204,6 +205,22 @@ namespace DeepLearningTest
 
 			//Assert
 			Assert::IsTrue(layer.equal(layer_unpacked), L"Original and restored layers are different");
+		}
+
+		TEST_METHOD(HandleSerializationTest)
+		{
+			// Arrange
+			const Index4d in_size{ {6, 9, 7}, 10 };
+			const Index4d out_size{ {8, 11, 5}, 10 };
+			const auto layer_handle = MLayerHandle<CpuDC>::make<RMLayer>(in_size, out_size, FillRandomNormal, ActivationFunctionId::SIGMOID);
+
+			// Act
+			const auto msg = MsgPack::pack(layer_handle);
+			const auto layer_handle_unpacked = MsgPack::unpack<MLayerHandle<CpuDC>>(msg);
+
+			// Assert
+
+			Assert::IsTrue(layer_handle == layer_handle_unpacked, L"Original and restored layers are different");
 		}
 	};
 }
