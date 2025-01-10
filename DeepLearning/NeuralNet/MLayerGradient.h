@@ -58,6 +58,15 @@ namespace DeepLearning
 		}
 
 		/// <summary>
+		/// Fills all the collections with zeros.
+		/// </summary>
+		void fill_zero()
+		{
+			for (auto& g : sub_gradients)
+				g.fill_zero();
+		}
+
+		/// <summary>
 		/// Default constructor.
 		/// </summary>
 		MLayerGradient() = default;

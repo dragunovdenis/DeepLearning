@@ -237,10 +237,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Returns zero initialized instance of cumulative gradient suitable for the current instance of the layer
 		/// </summary>
-		[[nodiscard]] virtual CumulativeGradient<D> init_cumulative_gradient() const
-		{
-			return CumulativeGradient<D>(weight_tensor_size(), out_size());
-		}
+		[[nodiscard]] CumulativeGradient<D> init_cumulative_gradient() const;
 
 		/// <summary>
 		/// Logs layer to the given directory (for diagnostic purposes)

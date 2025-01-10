@@ -64,7 +64,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Allocates gradient container for multi-thread computations
 		/// </summary>
-		static void allocate_per_thread(const Net<D>& net, std::vector<std::vector<LayerGradient<D>>>& per_thread_gradient_container);
+		static void allocate_per_thread(const Net& net, std::vector<std::vector<LayerGradient<D>>>& per_thread_gradient_container);
 
 		/// <summary>
 		/// Layers of neurons
@@ -254,7 +254,7 @@ namespace DeepLearning
 		/// <param name="gradient">Collection of gradient structures, one for each layer.</param>
 		/// <param name="learning_rate">Learning rate</param>
 		/// <param name="lambda">Regularization factor</param>
-		void update(const std::vector<typename DeepLearning::LayerGradient<D>>& gradient, const Real learning_rate, const Real& lambda);
+		void update(const std::vector<LayerGradient<D>>& gradient, const Real learning_rate, const Real& lambda);
 
 		/// <summary>
 		/// Evaluates number of "correct answers" for the given collection of the
@@ -384,7 +384,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Loads instance of the net from the given file (in messagepack format)
 		/// </summary>
-		static Net<D> load_from_file(const std::filesystem::path& file_name);
+		static Net load_from_file(const std::filesystem::path& file_name);
 	};
 }
 

@@ -1,4 +1,3 @@
-#include "RMLayer.h"
 //Copyright (c) 2024 Denys Dragunov, dragunovdenis@gmail.com
 //Permission is hereby granted, free of charge, to any person obtaining a copy
 //of this software and associated documentation files(the "Software"), to deal
@@ -132,35 +131,21 @@ namespace DeepLearning
 	}
 
 	template<class D>
-	RMLayer<D>::RMLayer(const int rec_depth, const Index3d& out_sub_dim, const typename D::matrix_t& in_w,
-		const typename D::matrix_t& r_w, const typename D::vector_t& b, ActivationFunctionId func_id) :
-		_in_size{ Index3d{1ll, 1ll, static_cast<long long>(in_w.col_dim())}, rec_depth },
-		_out_size{ out_sub_dim, rec_depth }
-	{
-		if (in_w.row_dim() != b.dim() || r_w.row_dim() != b.dim() || r_w.row_dim() != r_w.col_dim())
-			throw std::exception("Incompatible dimensions of weights and biases.");
-
-		if (this->out_sub_dim().coord_prod() != b.dim())
-			throw std::exception("Invalid dimension of an output item.");
-
-		set_func_id(func_id);
-		in_weights() = in_w;
-		rec_weights() = r_w;
-		_biases = b;
-	}
-
-	template<class D>
-	MLayerGradient<D> RMLayer<D>::allocate_gradient_container() const
+	MLayerGradient<D> RMLayer<D>::allocate_gradient_container(const bool fill_zero) const
 	{
 		MLayerGradient<D> result(1);
 
-		auto& w = result[0].Weights_grad;
-		w.resize(_weights.size());
+		auto& d = result[0].data;
+		d.resize(_weights.size() + 1);
+		d.shrink_to_fit();
 
-		for (auto w_id = 0ull; w_id < w.size(); ++w_id)
-			w[w_id].resize(_weights[w_id].size_3d());
+		for (auto w_id = 1ull; w_id < d.size(); ++w_id)
+			d[w_id].resize(_weights[w_id - 1].size_3d());
 
-		result[0].Biases_grad.resize(_biases.size_3d());
+		d[0].resize(_biases.size_3d());
+
+		if (fill_zero)
+			result.fill_zero();
 
 		return result;
 	}
@@ -183,7 +168,7 @@ namespace DeepLearning
 			if (iter_id > 0)
 				rec_weights().mul_add(output[iter_id - 1], output[iter_id], output[iter_id]);
 
-			apply_activation_function(output[iter_id], trace_data ? &trace_data->item(iter_id).Derivatives : nullptr);
+			apply_activation_function(output[iter_id], trace_data ? &trace_data->trace(iter_id).Derivatives : nullptr);
 		}
 	}
 
@@ -205,15 +190,11 @@ namespace DeepLearning
 		thread_local typename D::tensor_t temp{};
 		temp.resize(out_sub_dim());
 
-		auto& biases_grad = out_layer_grad[0].Biases_grad;
-		auto& in_weights_grad = out_layer_grad[0].Weights_grad[IN_W];
-		auto& rec_weights_grad = out_layer_grad[0].Weights_grad[REC_W];
+		auto& biases_grad = out_layer_grad[0].data[0];
+		auto& in_weights_grad = out_layer_grad[0].data[IN_W + 1];
+		auto& rec_weights_grad = out_layer_grad[0].data[REC_W + 1];
 
-		biases_grad.fill_zero();
-		in_weights_grad.fill_zero();
-		rec_weights_grad.fill_zero();
-
-		for (auto step_id = rec_depth() - 1; step_id >= 0; step_id--)
+		for (auto step_id = rec_depth() - 1; step_id >= 0; --step_id)
 		{
 			get_func().add_in_grad(out_grad[step_id], processing_data[step_id].Trace.Derivatives, aux);
 			biases_grad += aux;
@@ -232,6 +213,15 @@ namespace DeepLearning
 				get_func().calc_in_grad(temp, processing_data[step_id - 1].Trace.Derivatives, aux);
 			}
 		}
+	}
+
+	template <class D>
+	void RMLayer<D>::update(const MLayerGradient<D>& increment, const Real learning_rate)
+	{
+		const auto& grad = increment[0];
+		_biases.add_scaled(grad.data[0], learning_rate);
+		_weights[IN_W].add_scaled(grad.data[IN_W + 1], learning_rate);
+		_weights[REC_W].add_scaled(grad.data[REC_W + 1], learning_rate);
 	}
 
 	template <class D>
@@ -258,10 +248,10 @@ namespace DeepLearning
 	template<class D>
 	bool RMLayer<D>::equal_hyperparams(const AMLayer<D>& layer) const
 	{
-		const auto other_nlayer_ptr = dynamic_cast<const RMLayer<D>*>(&layer);
-		return other_nlayer_ptr != nullptr && AMLayer<D>::equal_hyperparams(layer)
-			&& _in_size == other_nlayer_ptr->_in_size && _out_size == other_nlayer_ptr->_out_size &&
-			_func_id == other_nlayer_ptr->_func_id;
+		const auto other_layer_ptr = dynamic_cast<const RMLayer*>(&layer);
+		return other_layer_ptr != nullptr && AMLayer<D>::equal_hyperparams(layer)
+			&& _in_size == other_layer_ptr->_in_size && _out_size == other_layer_ptr->_out_size &&
+			_func_id == other_layer_ptr->_func_id;
 	}
 
 	template<class D>
@@ -270,8 +260,8 @@ namespace DeepLearning
 		if (!equal_hyperparams(layer))
 			return false;
 
-		const auto other_nlayer_ptr = dynamic_cast<const RMLayer<D>*>(&layer);
-		return other_nlayer_ptr != nullptr && AMLayer<D>::equal(layer)
-			&& _biases == other_nlayer_ptr->_biases && _weights == other_nlayer_ptr->_weights;
+		const auto other_layer_ptr = dynamic_cast<const RMLayer*>(&layer);
+		return other_layer_ptr != nullptr && AMLayer<D>::equal(layer)
+			&& _biases == other_layer_ptr->_biases && _weights == other_layer_ptr->_weights;
 	}
 }

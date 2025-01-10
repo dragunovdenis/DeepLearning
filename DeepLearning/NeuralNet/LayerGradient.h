@@ -29,16 +29,11 @@ namespace DeepLearning
 	struct LayerGradient
 	{
 		/// <summary>
-		/// Gradient with respect to the biases of the convolution layer
+		/// Container to hold generalized gradient.
 		/// </summary>
-		typename D::tensor_t Biases_grad{};
+		std::vector<typename D::tensor_t> data{};
 
-		/// <summary>
-		/// Gradient with respect to the weights of the convolution layer
-		/// </summary>
-		std::vector<typename D::tensor_t> Weights_grad{};
-
-		MSGPACK_DEFINE(Biases_grad, Weights_grad);
+		MSGPACK_DEFINE(data);
 
 		/// <summary>
 		///	Equality operator
@@ -84,6 +79,11 @@ namespace DeepLearning
 		/// Scales the current instance of gradient by the given scalar and adds the given instance of gradient to it
 		/// </summary>
 		LayerGradient& scale_and_add(const Real& scalar, const LayerGradient& lg);
+
+		/// <summary>
+		/// Fills all the sub-collections with zeros.
+		/// </summary>
+		void fill_zero();
 	};
 
 	/// <summary>

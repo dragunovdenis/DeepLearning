@@ -17,7 +17,6 @@
 
 #pragma once
 #include "AMLayer.h"
-#include "../Math/Matrix.h"
 #include "../Math/LinAlg3d.h"
 #include "../Math/ActivationFunction.h"
 #include "../Math/InitializationStrategy.h"
@@ -159,48 +158,27 @@ namespace DeepLearning
 			const InitializationStrategy init_strategy, ActivationFunctionId func_id = ActivationFunctionId::TANH);
 
 		/// <summary>
-		/// Constructs an instance using the given set of the weights and biases.
+		/// See the summary of the base class method.
 		/// </summary>
-		/// <param name="rec_depth">Recurrence depth.</param>
-		/// <param name="out_sub_dim">Dimensions of a single output item.</param>
-		/// <param name="in_w">"Input" weights.</param>
-		/// <param name="r_w">"Recurrence" weights.</param>
-		/// <param name="b">Biases.</param>
-		/// <param name="func_id">Activation function</param>
-		RMLayer(const int rec_depth, const Index3d& out_sub_dim, const typename D::matrix_t& in_w,
-			const typename D::matrix_t& r_w, const typename D::vector_t& b,
-			ActivationFunctionId func_id = ActivationFunctionId::TANH);
+		MLayerGradient<D> allocate_gradient_container(const bool fill_zero = false) const override;
 
 		/// <summary>
-		/// Returns a container to be used in back-propagation procedure./>
+		/// See the summary of the base class method.
 		/// </summary>
-		MLayerGradient<D> allocate_gradient_container() const override;
-
-		/// <summary>
-		/// Calculates result of the layer evaluated on the given <param name="input"/> data.
-		/// </summary>
-		/// <param name="input">Input data.</param>
-		/// <param name="output">Container to receive the result.</param>
-		/// <param name="trace_data">Pointer to data container to store "trace data",
-		/// that later can be used during the backpropagation phase. Can be null,
-		/// in which case no "trace date" will be stored.</param>
 		void act(const IMLayerExchangeData<typename D::tensor_t>& input, IMLayerExchangeData<typename D::tensor_t>& output,
 			IMLayerTraceData<D>* const trace_data) const override;
 
 		/// <summary>
-		/// Calculates derivatives with respect to all the parameters of the layer.
+		/// See the summary of the base class method.
 		/// </summary>
-		/// <param name="out_grad">Derivatives of the cost function with respect
-		/// to the output of the layer.</param>
-		/// <param name="output">The output of the layer.</param>
-		/// <param name="processing_data">Intermediate data prepared during the "act"
-		/// phase that is needed to calculate the derivatives.</param>
-		/// <param name="out_input_grad">A container that holds gradient of the layer's input upon the method's return.</param>
-		/// <param name="out_layer_grad">A container that holds the layer's gradient upon the method's return.</param>
-		/// <param name="evaluate_input_gradient">If "false" gradient of the layers input won't be calculated.</param>
 		void backpropagate(const IMLayerExchangeData<typename D::tensor_t>& out_grad, const IMLayerExchangeData<typename D::tensor_t>& output,
 			const IMLayerExchangeData<LayerData<D>>& processing_data, IMLayerExchangeData<typename D::tensor_t>& out_input_grad,
 			MLayerGradient<D>& out_layer_grad, const bool evaluate_input_gradient = true) const override;
+
+		/// <summary>
+		/// See the summary of the base class method.
+		/// </summary>
+		void update(const MLayerGradient<D>& increment, const Real learning_rate) override;
 
 		/// <summary>
 		/// Custom "unpacking" method

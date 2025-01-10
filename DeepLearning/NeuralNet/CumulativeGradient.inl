@@ -18,17 +18,11 @@
 #pragma once
 
 #include <exception>
-#include "../Math/CollectionArithmetics.h"
 
 namespace DeepLearning
 {
 	template <class D>
-	CumulativeGradient<D>::CumulativeGradient(const Index3d& weight_tensor_size, const Index3d& bias_tensor_size)
-	{
-		const auto filters_cnt = bias_tensor_size.x;//Number of layers (channels) in the tensor of biases
-		_gradient_sum.Weights_grad = std::vector<typename D::tensor_t>(filters_cnt, typename D::tensor_t(weight_tensor_size) );
-		_gradient_sum.Biases_grad = typename D::tensor_t(bias_tensor_size);
-	}
+	CumulativeGradient<D>::CumulativeGradient(LayerGradient<D>&& seed) : _gradient_sum{std::move(seed)} {}
 
 	template <class D>
 	void CumulativeGradient<D>::add(const LayerGradient<D>& gradient)
@@ -62,9 +56,8 @@ namespace DeepLearning
 	template <class D>
 	void CumulativeGradient<D>::reset()
 	{
-		_gradient_sum.Biases_grad.fill_zero();
-		for (auto item_id = 0ull; item_id < _gradient_sum.Weights_grad.size(); item_id++)
-			_gradient_sum.Weights_grad[item_id].fill_zero();
+		for (auto& item : _gradient_sum.data)
+			item.fill_zero();
 
 		_accumulated_items_count = 0;
 	}

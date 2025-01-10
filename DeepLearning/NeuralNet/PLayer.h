@@ -48,6 +48,13 @@ namespace DeepLearning
 
 		int _msg_pack_version = 1;
 
+		/// <summary>
+		/// Json keys.
+		/// </summary>
+		static constexpr auto json_in_size_id() { return  "InSize"; }
+		static constexpr auto json_pool_window_size_id() { return "FilterSize"; }
+		static constexpr auto json_pool_operator_id() { return "PoolOperator"; }
+
 	public:
 
 		/// <summary>
@@ -138,11 +145,6 @@ namespace DeepLearning
 		/// For the "pooling" layer this method does nothing except a sanity check that the input increments are empty
 		/// </summary>
 		void update(const LayerGradient<D>& gradient, const Real& l_rate, const Real& reg_factor) override;
-
-		/// <summary>
-		/// Returns zero initialized instance of cumulative gradient suitable for the current instance of the layer
-		/// </summary>
-		CumulativeGradient<D> init_cumulative_gradient() const override;
 
 		/// <summary>
 		/// See description in the base class

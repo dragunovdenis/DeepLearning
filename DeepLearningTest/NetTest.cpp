@@ -400,8 +400,8 @@ namespace DeepLearningTest
 
 			//Assert
 			const auto gradient = std::get<0>(gradient_and_value);
-			const auto weight_derivative = gradient[0].Weights_grad[0];
-			const auto bias_derivative = gradient[0].Biases_grad;
+			const auto weight_derivative = gradient[0].data[1];
+			const auto bias_derivative = gradient[0].data[0];
 
 			Assert::IsTrue((weight_derivative - expected_weight_derivative).max_abs() < 10 * std::numeric_limits<Real>::epsilon(),
 				L"Too high deviation from the expected derivative with respect to the weight");
@@ -455,22 +455,14 @@ namespace DeepLearningTest
 		/// </summary>
 		static void randomize_gradient(std::vector<LayerGradient<CpuDC>>& gradient)
 		{
-			auto check = 0.0;
 			for (auto& layer_grad : gradient)
 			{
-				layer_grad.Biases_grad.uniform_random_fill(-1, 1);
-
-				for (auto& filter_grad : layer_grad.Weights_grad)
+				for (auto& filter_grad : layer_grad.data)
 					filter_grad.uniform_random_fill(-1, 1);
-
-				check = layer_grad.max_abs();
-
-
 			}
 
 			Assert::IsTrue(std::ranges::all_of(gradient,
-				[](const auto& g) { return g.max_abs() > 0 ||
-				g.Weights_grad.empty() && g.Biases_grad.empty(); }), L"There should not be zero gradients");
+				[](const auto& g) { return g.max_abs() > 0 || g.data.empty(); }), L"There should not be zero gradients");
 		}
 
 		TEST_METHOD(NetGradientWithScalingTest)

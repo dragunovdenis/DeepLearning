@@ -42,7 +42,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Access to the data of a layer with the given index.
 		/// </summary>
-		virtual LayerTraceData<D>& item(const int layer_id) = 0;
+		virtual LayerTraceData<D>& trace(const int layer_id) = 0;
 	};
 
 	/// <summary>
@@ -61,7 +61,7 @@ namespace DeepLearning
 		/// <summary>
 		/// See the summary in the base class.
 		/// </summary>
-		LayerTraceData<D>& item(const int layer_id) override
+		LayerTraceData<D>& trace(const int layer_id) override
 		{
 			return Data[layer_id].Trace;
 		}

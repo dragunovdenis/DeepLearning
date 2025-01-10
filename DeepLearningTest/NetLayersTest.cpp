@@ -171,7 +171,7 @@ namespace DeepLearningTest
 		void RunGeneralDerivativeWithRespectToWeightsAndBiasesTest( const L& nl, const CostFunctionId cost_function_id,
 			const Real& tolerance_weights, const Real& tolerance_biases)
 		{
-			const auto input = Tensor(nl.in_size(), Real(-1), Real(1));
+			const auto input = Tensor(nl.in_size(), static_cast<Real>(-1), static_cast<Real>(1));
 			const auto weight_tensor_size = nl.weight_tensor_size();
 			const auto out_size = nl.out_size();
 			const auto filters_count = out_size.x;
@@ -184,21 +184,21 @@ namespace DeepLearningTest
 			const auto [value, cost_gradient] = cost_func.func_and_deriv(nl.
 				act(layer_data.Input, &layer_data.Trace), reference);
 			const auto [input_grad_result, layer_grad_result] = nl.backpropagate(cost_gradient, layer_data);
-			const auto wight_grad = layer_grad_result.Weights_grad;
-			const auto bias_grad = layer_grad_result.Biases_grad;
+			const auto grad_data = layer_grad_result.data;
 
 			//Assert
-			Assert::IsTrue(wight_grad.size() == filters_count && std::all_of(wight_grad.begin(), wight_grad.end(),
+			Assert::IsTrue(grad_data.size() == filters_count + 1 && std::all_of(grad_data.begin() + 1, grad_data.end(),
 				[&](const auto& x) { return x.size_3d() == weight_tensor_size; }), L"Unexpected size of the weights gradient data structure");
 
-			Assert::IsTrue(bias_grad.size_3d() == out_size, L"Unexpected size of the biases gradient data structure");
+			Assert::IsTrue(grad_data[0].size_3d() == out_size, L"Unexpected size of the biases gradient data structure");
 
-			const auto zero_weights = std::vector<Tensor>(filters_count, Tensor(weight_tensor_size, true));
-			const auto zero_biases = Tensor(out_size, true);
+			LayerGradient<CpuDC> zero_gradient;
+			nl.allocate(zero_gradient, /*fill zero*/ true);
+			const auto zero_grad_data = zero_gradient.data;
 
-			const auto delta = std::is_same_v<Real, double> ? Real(1e-5) : Real(1e-3);
+			constexpr auto delta = std::is_same_v<Real, double> ? static_cast<Real>(1e-5) : static_cast<Real>(1e-3);
 
-			auto weights_max_diff = Real(0);
+			auto weights_max_diff = static_cast<Real>(0);
 			//Check derivatives with respect to weights
 			Logger::WriteMessage("Weights:\n");
 			for (auto filter_id = 0ll; filter_id < filters_count; filter_id++)
@@ -207,24 +207,21 @@ namespace DeepLearningTest
 						for (auto col_id = 0ll; col_id < weight_tensor_size.z; col_id++)
 						{
 							//Calculate partial derivative with respect to the corresponding weight
-							auto weights_minus_delta = zero_weights;
-							weights_minus_delta[filter_id](layer_id, row_id, col_id) = -delta;
+							auto weights_minus_delta = zero_grad_data;
+							weights_minus_delta[filter_id + 1](layer_id, row_id, col_id) = -delta;
 
 							auto layer_minus = nl;//create a mutable copy of the initial layer
-							layer_minus.update(LayerGradient<CpuDC>{zero_biases, weights_minus_delta}, 1, 0);
+							layer_minus.update(LayerGradient<CpuDC>{weights_minus_delta }, 1, 0);
 							const auto result_minus = cost_func(layer_minus.act(input), reference);
 
-							auto weights_plus_delta = zero_weights;
-							weights_plus_delta[filter_id](layer_id, row_id, col_id) = delta;
-
 							auto layer_plus = nl;//create a mutable copy of the initial layer
-							layer_plus.update(LayerGradient<CpuDC>{zero_biases, weights_plus_delta}, 1, 0);
+							layer_plus.update(LayerGradient<CpuDC>{ weights_minus_delta }, -1, 0);
 							const auto result_plus = cost_func(layer_plus.act(input), reference);
 
 							const auto deriv_numeric = (result_plus - result_minus) / (2 * delta);
 
 							//Now do the same using the back-propagation approach
-							const auto diff = std::abs(deriv_numeric - wight_grad[filter_id](layer_id, row_id, col_id));
+							const auto diff = std::abs(deriv_numeric - grad_data[filter_id + 1](layer_id, row_id, col_id));
 							Logger::WriteMessage((std::string("Difference = ") + Utils::to_string(diff) + '\n').c_str());
 							weights_max_diff = std::max(weights_max_diff, diff);
 							Assert::IsTrue(diff <= tolerance_weights, L"Unexpectedly high deviation (weight derivatives)!");
@@ -232,7 +229,7 @@ namespace DeepLearningTest
 
 			Logger::WriteMessage((std::string("Max. Difference = ") + Utils::to_string(weights_max_diff) + '\n').c_str());
 
-			auto biases_max_diff = Real(0);
+			auto biases_max_diff = static_cast<Real>(0);
 			//Check derivatives with respect to biases
 			Logger::WriteMessage("Biases:\n");
 			for (auto layer_id = 0ll; layer_id < out_size.x; layer_id++)
@@ -240,24 +237,21 @@ namespace DeepLearningTest
 					for (auto col_id = 0ll; col_id < out_size.z; col_id++)
 					{
 						//Calculate partial derivative with respect to the corresponding bias
-						auto biases_minus_delta = zero_biases;
-						biases_minus_delta(layer_id, row_id, col_id) = -delta;
+						auto biases_minus_delta = zero_grad_data;
+						biases_minus_delta[0](layer_id, row_id, col_id) = -delta;
 
 						auto layer_minus = nl;//create a mutable copy of the initial layer
-						layer_minus.update(LayerGradient<CpuDC>{biases_minus_delta, zero_weights}, 1, 0);
+						layer_minus.update(LayerGradient<CpuDC>{biases_minus_delta }, 1, 0);
 						const auto result_minus = cost_func(layer_minus.act(input), reference);
 
-						auto biases_plus_delta = zero_biases;
-						biases_plus_delta(layer_id, row_id, col_id) = delta;
-
 						auto layer_plus = nl;//create a mutable copy of the initial layer
-						layer_plus.update(LayerGradient<CpuDC>{biases_plus_delta, zero_weights}, 1, 0);
+						layer_plus.update(LayerGradient<CpuDC>{ biases_minus_delta }, -1, 0);
 						const auto result_plus = cost_func(layer_plus.act(input), reference);
 
 						const auto deriv_numeric = (result_plus - result_minus) / (2 * delta);
 
 						//Now do the same using the back-propagation approach
-						const auto diff = std::abs(deriv_numeric - bias_grad(layer_id, row_id, col_id));
+						const auto diff = std::abs(deriv_numeric - grad_data[0](layer_id, row_id, col_id));
 						Logger::WriteMessage((std::string("Difference = ") + Utils::to_string(diff) + '\n').c_str());
 						biases_max_diff = std::max(biases_max_diff, diff);
 						Assert::IsTrue(diff <= tolerance_biases, L"Unexpectedly high deviation (bias derivatives)!");
@@ -278,9 +272,8 @@ namespace DeepLearningTest
 			LayerGradient<D> gradient_container;
 			nl.allocate(gradient_container, /*fill zeros*/ false);
 
-			gradient_container.Biases_grad.standard_random_fill();
-			for (auto& filter_gradient : gradient_container.Weights_grad)
-				filter_gradient.standard_random_fill();
+			for (auto& gradient_item : gradient_container.data)
+				gradient_item.standard_random_fill();
 
 			const auto gradient_container_input = gradient_container;
 			const auto gradient_scale_factor = Utils::get_random(-1, 1);
@@ -327,14 +320,14 @@ namespace DeepLearningTest
 		/// <summary>
 		/// Returns L-infinity norm of the difference between the given 4D tensors
 		/// </summary>
-		Real max_abs(const std::vector<Tensor>& v1, const std::vector<CudaTensor>& v2)
+		static Real max_abs(const std::vector<Tensor>& v1, const std::vector<CudaTensor>& v2, const std::size_t skip_count)
 		{
 			if (v1.size() != v2.size())
 				throw std::exception("The input vectors must be of the same size");
 
 			auto result = Real(0);
 
-			for (auto tensor_id = 0ull; tensor_id < v1.size(); tensor_id++)
+			for (auto tensor_id = skip_count; tensor_id < v1.size(); tensor_id++)
 				result = std::max(result, (v1[tensor_id] - v2[tensor_id].to_host()).max_abs());
 
 			return result;
@@ -373,13 +366,13 @@ namespace DeepLearningTest
 			const auto in_gradient_diff = (in_gradient_host - in_gradient.to_host()).max_abs();
 			StandardTestUtils::LogAndAssertLessOrEqualTo("in_gradient_diff", in_gradient_diff, 10 * std::numeric_limits<Real>::epsilon());
 
-			if (!layer_gradient_host.Biases_grad.empty() || !layer_gradient.Biases_grad.empty())
+			if (!layer_gradient_host.empty() || !layer_gradient.empty())
 			{
-				const auto biases_gradient_diff = (layer_gradient_host.Biases_grad - layer_gradient.Biases_grad.to_host()).max_abs();
+				const auto biases_gradient_diff = (layer_gradient_host.data[0] - layer_gradient.data[0].to_host()).max_abs();
 				StandardTestUtils::LogAndAssertLessOrEqualTo("biases_gradient_diff", biases_gradient_diff, 10 * std::numeric_limits<Real>::epsilon());
 			}
 
-			const auto weights_gradient_diff = max_abs(layer_gradient_host.Weights_grad, layer_gradient.Weights_grad);
+			const auto weights_gradient_diff = max_abs(layer_gradient_host.data, layer_gradient.data, /*skip count*/ 1);
 			StandardTestUtils::LogAndAssertLessOrEqualTo("weights_gradient_diff", weights_gradient_diff, 10 * std::numeric_limits<Real>::epsilon());
 
 			const auto& layer_trace = layer_data.Trace;
@@ -525,8 +518,8 @@ namespace DeepLearningTest
 			const auto [input_grad_result, layer_grad_result] = nl.backpropagate(cost_gradient, layer_data);
 
 			//Assert
-			Assert::IsTrue(layer_grad_result.Biases_grad.size() == 0 &&
-				layer_grad_result.Weights_grad.size() == 0, L"Unexpected output of the back-propagation procedure");
+			Assert::IsTrue(layer_grad_result.data.size() == 0,
+				L"Unexpected output of the back-propagation procedure");
 		}
 
 

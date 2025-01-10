@@ -29,7 +29,7 @@ namespace DeepLearningTest
 		/// <summary>
 		/// Returns an instance of "input data" initialized according to the given set of parameters.
 		/// </summary>
-		static MLayerData<CpuDC> get_random(const int size,
+		static MLayerData<CpuDC> construct_random(const int size,
 			const Index3d& item_size, const InitializationStrategy init_strategy)
 		{
 			MLayerData<CpuDC> result(size);
@@ -71,13 +71,13 @@ namespace DeepLearningTest
 			const Index3d in_item_size(1, 1, in_size_plain);
 			const Index3d out_item_size(1, 1, out_size_plain);
 			const auto out_grad = construct_and_fill(rec_depth, out_item_size, 1);
-			const auto input = get_random(rec_depth, in_item_size, FillRandomUniform);
+			const auto input = construct_random(rec_depth, in_item_size, FillRandomUniform);
 			auto trace_data = input;
 			LazyVector<CpuDC::tensor_t> output;
 			const RMLayer<CpuDC> layer(rec_depth, in_size_plain, out_item_size,
 				FillRandomNormal, ActivationFunctionId::SIGMOID);
 			LazyVector<CpuDC::tensor_t> in_gradient(rec_depth);
-			auto layer_grad = layer.allocate_gradient_container();
+			auto layer_grad = layer.allocate_gradient_container(true /*fill zero*/);
 
 			// Act
 			layer.act(input, output, &trace_data);
@@ -118,70 +118,10 @@ namespace DeepLearningTest
 				max_gradient_diff, _tolerance);
 		}
 
-		TEST_METHOD(BiasesGradientTest)
-		{
-			constexpr auto rec_depth = 5;
-			constexpr auto in_size_plain = 10;
-			constexpr auto out_size_plain = 8;
-			const Index3d in_item_size(1, 1, in_size_plain);
-			const Index3d out_item_size(1, 1, out_size_plain);
-			const auto out_grad = construct_and_fill(rec_depth, out_item_size, 1);
-			const auto input = get_random(rec_depth, in_item_size, FillRandomUniform);
-			const CpuDC::matrix_t in_weights(out_size_plain, in_size_plain, -1, 1);
-			const CpuDC::matrix_t rec_weights(out_size_plain, out_size_plain, -1, 1);
-			const CpuDC::vector_t biases(out_size_plain, -1, 1);
-			auto trace_data = input;
-			LazyVector<CpuDC::tensor_t> output;
-			const RMLayer<CpuDC> layer(rec_depth, out_item_size, in_weights, rec_weights, biases, ActivationFunctionId::SIGMOID);
-			LazyVector<CpuDC::tensor_t> in_gradient{};
-			auto layer_grad = layer.allocate_gradient_container();
-
-			// Act
-			layer.act(input, output, &trace_data);
-			layer.backpropagate(out_grad, output, trace_data.Data, in_gradient,
-				layer_grad, false /*evaluate input gradient*/);
-
-			// Assert
-			Real max_gradient_diff{};
-			constexpr auto one_over_double_delta = static_cast<Real>(0.5) / _delta;
-
-			const auto& biases_grad = layer_grad[0].Biases_grad;
-			Assert::AreEqual<std::size_t>(biases_grad.size(), out_size_plain,
-				L"Invalid dimension of biases gradient vector.");
-
-			for (auto item_id = 0; item_id < out_size_plain; ++item_id)
-			{
-				auto biases_plus_delta = biases;
-				biases_plus_delta[item_id] += _delta;
-
-				LazyVector<CpuDC::tensor_t> output_plus_delta;
-				const RMLayer<CpuDC> layer_plus_delta(rec_depth, out_item_size, in_weights,
-					rec_weights, biases_plus_delta, ActivationFunctionId::SIGMOID);
-				layer_plus_delta.act(input, output_plus_delta, nullptr);
-
-				auto biases_minus_delta = biases;
-				biases_minus_delta[item_id] -= _delta;
-
-				LazyVector<CpuDC::tensor_t> output_minus_delta;
-				const RMLayer<CpuDC> layer_minus_delta(rec_depth, out_item_size, in_weights,
-					rec_weights, biases_minus_delta, ActivationFunctionId::SIGMOID);
-				layer_minus_delta.act(input, output_minus_delta, nullptr);
-
-				const auto biases_grad_reference = (output_plus_delta.sum() - output_minus_delta.sum()) * one_over_double_delta;
-				const auto biases_grad_actual = biases_grad[item_id];
-				const auto diff = std::abs(biases_grad_reference - biases_grad_actual);
-				max_gradient_diff = std::max(max_gradient_diff, diff);
-			}
-
-			StandardTestUtils::LogAndAssertLessOrEqualTo(
-				"Deviation between actual and expected gradients with respect to the bias vector",
-				max_gradient_diff, _tolerance);
-		}
-
 		/// <summary>
-		/// General method to run gradient tests with respect to weights
+		/// General method to run gradient tests with respect to different parameter containers
 		/// </summary>
-		static void run_weight_gradient_test(const int weight_id)
+		static void run_parameter_gradient_test(const int param_container_id)
 		{
 			constexpr auto rec_depth = 5;
 			constexpr auto in_size_plain = 10;
@@ -189,18 +129,15 @@ namespace DeepLearningTest
 			const Index3d in_item_size(1, 1, in_size_plain);
 			const Index3d out_item_size(1, 1, out_size_plain);
 			const auto out_grad = construct_and_fill(rec_depth, out_item_size, 1);
-			const auto input = get_random(rec_depth, in_item_size, FillRandomUniform);
-			const std::vector weights = 
-			{ CpuDC::matrix_t(out_size_plain, in_size_plain, -1, 1),
-			CpuDC::matrix_t(out_size_plain, out_size_plain, -1, 1)	};
-			const CpuDC::vector_t biases(out_size_plain, -1, 1);
+			const auto input = construct_random(rec_depth, in_item_size, FillRandomUniform);
 			auto trace_data = input;
-			LazyVector<CpuDC::tensor_t> output;
-			const RMLayer<CpuDC> layer(rec_depth, out_item_size, weights[0], weights[1], biases, ActivationFunctionId::SIGMOID);
+			const RMLayer<CpuDC> layer(rec_depth, in_size_plain, out_item_size,
+				FillRandomNormal, ActivationFunctionId::SIGMOID);
 			LazyVector<CpuDC::tensor_t> in_gradient{};
-			auto layer_grad = layer.allocate_gradient_container();
+			auto layer_grad = layer.allocate_gradient_container(true /*fill zero*/);
 
 			// Act
+			LazyVector<CpuDC::tensor_t> output;
 			layer.act(input, output, &trace_data);
 			layer.backpropagate(out_grad, output, trace_data.Data, in_gradient,
 				layer_grad, false /*evaluate input gradient*/);
@@ -208,31 +145,28 @@ namespace DeepLearningTest
 			// Assert
 			Real max_gradient_diff{};
 			constexpr auto one_over_double_delta = static_cast<Real>(0.5) / _delta;
+			const auto zero_gradient = layer.allocate_gradient_container(true /*fill zero*/);
+			const auto& param_container_grad = layer_grad[0].data[param_container_id];
 
-			const auto& weights_grad = layer_grad[0].Weights_grad[weight_id];
-			Assert::IsTrue(weights_grad.size_3d() == weights[weight_id].size_3d(),
-				L"Invalid dimension of biases gradient vector.");
-
-			for (auto item_id = 0; item_id < weights_grad.size(); ++item_id)
+			for (auto item_id = 0; item_id < param_container_grad.size(); ++item_id)
 			{
-				auto weights_plus_delta = weights;
-				weights_plus_delta[weight_id][item_id] += _delta;
+				auto zero_gradient_plus_delta = zero_gradient;
+				zero_gradient_plus_delta[0].data[param_container_id][item_id] = _delta;
+
+				auto layer_plus_delta = layer;
+				layer_plus_delta.update(zero_gradient_plus_delta, static_cast<Real>(1));
 
 				LazyVector<CpuDC::tensor_t> output_plus_delta;
-				const RMLayer<CpuDC> layer_plus_delta(rec_depth, out_item_size, weights_plus_delta[0],
-					weights_plus_delta[1], biases, ActivationFunctionId::SIGMOID);
 				layer_plus_delta.act(input, output_plus_delta, nullptr);
 
-				auto weights_minus_delta = weights;
-				weights_minus_delta[weight_id][item_id] -= _delta;
+				auto layer_minus_delta = layer;
+				layer_minus_delta.update(zero_gradient_plus_delta, static_cast<Real>(-1));
 
 				LazyVector<CpuDC::tensor_t> output_minus_delta;
-				const RMLayer<CpuDC> layer_minus_delta(rec_depth, out_item_size, weights_minus_delta[0],
-					weights_minus_delta[1], biases, ActivationFunctionId::SIGMOID);
 				layer_minus_delta.act(input, output_minus_delta, nullptr);
 
 				const auto weight_grad_reference = (output_plus_delta.sum() - output_minus_delta.sum()) * one_over_double_delta;
-				const auto weight_grad_actual = weights_grad[item_id];
+				const auto weight_grad_actual = param_container_grad[item_id];
 				const auto diff = std::abs(weight_grad_reference - weight_grad_actual);
 				max_gradient_diff = std::max(max_gradient_diff, diff);
 			}
@@ -242,14 +176,19 @@ namespace DeepLearningTest
 				max_gradient_diff, _tolerance);
 		}
 
+		TEST_METHOD(BiasesGradientTest)
+		{
+			run_parameter_gradient_test(0);
+		}
+
 		TEST_METHOD(InWeightGradientTest)
 		{
-			run_weight_gradient_test(0);
+			run_parameter_gradient_test(1);
 		}
 
 		TEST_METHOD(RecWeightGradientTest)
 		{
-			run_weight_gradient_test(1);
+			run_parameter_gradient_test(2);
 		}
 
 		TEST_METHOD(SerializationTest)

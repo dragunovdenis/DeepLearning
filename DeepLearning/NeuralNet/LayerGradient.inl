@@ -23,7 +23,7 @@ namespace DeepLearning
 	template <class D>
 	bool LayerGradient<D>::operator ==(const LayerGradient& lg) const
 	{
-		return Biases_grad == lg.Biases_grad && Weights_grad == lg.Weights_grad;
+		return data == lg.data;
 	}
 
 	template <class D>
@@ -35,8 +35,7 @@ namespace DeepLearning
 	template <class D>
 	LayerGradient<D>& LayerGradient<D>::operator +=(const LayerGradient& lg)
 	{
-		Biases_grad += lg.Biases_grad;
-		Weights_grad += lg.Weights_grad;
+		data += lg.data;
 		return *this;
 	}
 
@@ -50,8 +49,7 @@ namespace DeepLearning
 	template <class D>
 	LayerGradient<D>& LayerGradient<D>::operator -=(const LayerGradient& lg)
 	{
-		Biases_grad -= lg.Biases_grad;
-		Weights_grad -= lg.Weights_grad;
+		data -= lg.data;
 		return *this;
 	}
 
@@ -65,8 +63,7 @@ namespace DeepLearning
 	template <class D>
 	LayerGradient<D>& LayerGradient<D>::operator *=(const Real& scalar)
 	{
-		Biases_grad *= scalar;
-		Weights_grad *= scalar;
+		data *= scalar;
 		return *this;
 	}
 
@@ -88,16 +85,8 @@ namespace DeepLearning
 	{
 		auto result = static_cast<Real>(0);
 
-		for (auto item_id = 0ull; item_id < Weights_grad.size(); ++item_id)
-		{
-			const auto wm_abs = Weights_grad[item_id].max_abs();
-			if (result < wm_abs)
-				result = wm_abs;
-		}
-
-		const auto bm_abs = Biases_grad.max_abs();
-		if (result < bm_abs)
-			result = bm_abs;
+		for (const auto& item : data)
+			result = std::max(result, item.max_abs());
 
 		return result;
 	}
@@ -105,19 +94,17 @@ namespace DeepLearning
 	template <class D>
 	bool LayerGradient<D>::empty() const
 	{
-		return Weights_grad.empty() && Biases_grad.empty();
+		return data.empty();
 	}
 
 	template <class D>
 	LayerGradient<D>& LayerGradient<D>::add_scaled(const LayerGradient& lg, const Real& scalar)
 	{
-		Biases_grad.add_scaled(lg.Biases_grad, scalar);
-
-		if (Weights_grad.size() != lg.Weights_grad.size())
+		if (data.size() != lg.data.size())
 			throw std::exception("Inconsistent data");
 
-		for (auto item_id = 0ull; item_id < Weights_grad.size(); ++item_id)
-			Weights_grad[item_id].add_scaled(lg.Weights_grad[item_id], scalar);
+		for (auto item_id = 0ull; item_id < data.size(); ++item_id)
+			data[item_id].add_scaled(lg.data[item_id], scalar);
 
 		return *this;
 	}
@@ -125,14 +112,19 @@ namespace DeepLearning
 	template <class D>
 	LayerGradient<D>& LayerGradient<D>::scale_and_add(const Real& scalar, const LayerGradient& lg)
 	{
-		Biases_grad.scale_and_add(lg.Biases_grad, scalar);
-
-		if (Weights_grad.size() != lg.Weights_grad.size())
+		if (data.size() != lg.data.size())
 			throw std::exception("Inconsistent data");
 
-		for (auto item_id = 0ull; item_id < Weights_grad.size(); ++item_id)
-			Weights_grad[item_id].scale_and_add(lg.Weights_grad[item_id], scalar);
+		for (auto item_id = 0ull; item_id < data.size(); ++item_id)
+			data[item_id].scale_and_add(lg.data[item_id], scalar);
 
 		return *this;
+	}
+
+	template<class D>
+	void LayerGradient<D>::fill_zero()
+	{
+		for (auto& w : data)
+			w.fill_zero();
 	}
 }

@@ -178,6 +178,14 @@ namespace DeepLearning
 	}
 
 	template <class D>
+	CumulativeGradient<D> ALayer<D>::init_cumulative_gradient() const
+	{
+		LayerGradient<D> seed{};
+		allocate(seed, /*fill zeros*/ false);
+		return CumulativeGradient<D>(std::move(seed));
+	}
+
+	template <class D>
 	std::string ALayer<D>::to_string() const
 	{
 		return to_script();

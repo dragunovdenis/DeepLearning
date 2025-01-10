@@ -45,12 +45,9 @@ namespace DeepLearning
 	public:
 
 		/// <summary>
-		/// Constructor
+		/// Constructor.
 		/// </summary>
-		/// <param name="weight_tensor_size">Size of a single weight kernel (filter).
-		/// Number of filters (channels) can be derived from the number of layers (channels) in the tensor of biases</param>
-		/// <param name="bias_tensor_size">Size of the tensor of biases</param>
-		CumulativeGradient(const Index3d& weight_tensor_size, const Index3d& bias_tensor_size);
+		CumulativeGradient(LayerGradient<D>&& seed);
 
 		/// <summary>
 		/// Adds given gradients to the corresponding "sum" structures

@@ -58,26 +58,20 @@ namespace DeepLearning
 		initialize(in_size, pool_window_size, pool_operator_id);
 	}
 
-	namespace {
-		const char* json_in_size_id = "InSize";
-		const char* json_pool_window_size_id = "FilterSize";
-		const char* json_pool_operator_id = "PoolOperator";
-	}
-
 	template <class D>
 	PLayer<D>::PLayer(const std::string& str, const Index3d& default_in_size) : ALayer<D>(str)
 	{
 		const auto json = nlohmann::json::parse(str);
 
-		const auto in_size = json.contains(json_in_size_id) ?
-			Utils::extract_vector<Index3d>(json[json_in_size_id].get<std::string>()) : default_in_size;
+		const auto in_size = json.contains(json_in_size_id()) ?
+			Utils::extract_vector<Index3d>(json[json_in_size_id()].template get<std::string>()) : default_in_size;
 
-		const auto pool_window_size = json.contains(json_pool_window_size_id) ?
-			Utils::extract_vector<Index2d>(json[json_pool_window_size_id].get<std::string>()) :
+		const auto pool_window_size = json.contains(json_pool_window_size_id()) ?
+			Utils::extract_vector<Index2d>(json[json_pool_window_size_id()].template get<std::string>()) :
 			throw std::exception("Can't parse window size of PLayer");
 
-		const auto pool_operator_id = json.contains(json_pool_operator_id) ?
-			parse_pool_type(json[json_pool_operator_id].get<std::string>()) :
+		const auto pool_operator_id = json.contains(json_pool_operator_id()) ?
+			parse_pool_type(json[json_pool_operator_id()].template get<std::string>()) :
 			throw std::exception("Can't parse operator type of PLayer");
 
 		initialize(in_size, pool_window_size, pool_operator_id);
@@ -93,9 +87,9 @@ namespace DeepLearning
 	{
 		nlohmann::json json = nlohmann::json::parse(ALayer<D>::to_script());
 
-		json[json_in_size_id] = _in_size.to_string();
-		json[json_pool_window_size_id] = _pool_window_size.yz().to_string();
-		json[json_pool_operator_id] = DeepLearning::to_string(_pool_operator_id);
+		json[json_in_size_id()] = _in_size.to_string();
+		json[json_pool_window_size_id()] = _pool_window_size.yz().to_string();
+		json[json_pool_operator_id()] = DeepLearning::to_string(_pool_operator_id);
 
 		return json.dump();
 	}
@@ -176,28 +170,21 @@ namespace DeepLearning
 	template <class D>
 	void PLayer<D>::allocate(LayerGradient<D>& gradient_container, bool fill_zeros) const
 	{
-		gradient_container.Biases_grad.resize({ 0, 0, 0 });
-		gradient_container.Weights_grad.resize(0);
+		gradient_container.data.resize(0);
 	}
 
 	template <class D>
 	void PLayer<D>::update(const LayerGradient<D>& gradient, const Real& l_rate, const Real& reg_factor)
 	{
 		//Sanity check 
-		if (gradient.Weights_grad.size() != 0 || gradient.Biases_grad.size() != 0)
+		if (gradient.data.size() != 0)
 			throw std::exception("There should be no increments for weights and/or biases");
-	}
-
-	template <class D>
-	CumulativeGradient<D> PLayer<D>::init_cumulative_gradient() const
-	{
-		return CumulativeGradient<D>(0, 0);
 	}
 
 	template <class D>
 	std::string PLayer<D>::to_string() const
 	{
-		return DeepLearning::to_string(PLayer::ID()) + "; " + to_script();
+		return DeepLearning::to_string(ID()) + "; " + to_script();
 	}
 
 	template <class D>

@@ -151,17 +151,17 @@ namespace DeepLearning
 
 		const auto nontrivial_scaling = gradient_scale_factor != static_cast<Real>(0);
 		thread_local typename D::tensor_t bias_shared;
-		auto& pure_bias_grad = nontrivial_scaling ? bias_shared.get_resized(out_size()) : layer_grad.Biases_grad;
+		auto& pure_bias_grad = nontrivial_scaling ? bias_shared.get_resized(out_size()) : layer_grad.data[0];
 
 		this->get_func().calc_in_grad(deltas, processing_data.Trace.Derivatives, pure_bias_grad);
 
 		if (nontrivial_scaling)
 		{
-			layer_grad.Biases_grad.scale_and_add(pure_bias_grad, gradient_scale_factor);
+			layer_grad.data[0].scale_and_add(pure_bias_grad, gradient_scale_factor);
 			scale_and_add_vector_col_times_vector_row(pure_bias_grad, processing_data.Input,
-				layer_grad.Weights_grad[0], gradient_scale_factor);
+				layer_grad.data[1], gradient_scale_factor);
 		} else
-			vector_col_times_vector_row(pure_bias_grad, processing_data.Input, layer_grad.Weights_grad[0]);
+			vector_col_times_vector_row(pure_bias_grad, processing_data.Input, layer_grad.data[1]);
 
 		if (!evaluate_input_gradient) return;
 
@@ -173,31 +173,29 @@ namespace DeepLearning
 	template <class D>
 	void NLayer<D>::allocate(LayerGradient<D>& gradient_container, bool fill_zeros) const
 	{
-		gradient_container.Biases_grad.resize(_biases.size_3d());
-		gradient_container.Weights_grad.resize(1);
-		gradient_container.Weights_grad[0].resize(_weights.size_3d());
+		gradient_container.data.resize(2);
+		gradient_container.data.shrink_to_fit();
+		gradient_container.data[0].resize(_biases.size_3d());
+		gradient_container.data[1].resize(_weights.size_3d());
 
 		if (fill_zeros)
-		{
-			gradient_container.Biases_grad.fill_zero();
-			gradient_container.Weights_grad[0].fill_zero();
-		}
+			gradient_container.fill_zero();
 	}
 
 	template <class D>
 	void NLayer<D>::update(const LayerGradient<D>& gradient, const Real& l_rate, const Real& reg_factor)
 	{
-		const auto& weights_increment = gradient.Weights_grad;
+		const auto& data = gradient.data;
 
-		if (weights_increment.size() != 1)
+		if (data.size() != 2)
 			throw std::exception("Invalid input");
 
 		if (reg_factor != Real(0))
-			_weights.scale_and_add_scaled(Real(1) + reg_factor, weights_increment[0], l_rate);
+			_weights.scale_and_add_scaled(Real(1) + reg_factor, data[1], l_rate);
 		else
-			_weights.add_scaled(weights_increment[0], l_rate);
+			_weights.add_scaled(data[1], l_rate);
 
-		_biases.add_scaled(gradient.Biases_grad, l_rate);
+		_biases.add_scaled(data[0], l_rate);
 	}
 
 	template <class D>

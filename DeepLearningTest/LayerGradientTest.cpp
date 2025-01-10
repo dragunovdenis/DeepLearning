@@ -30,17 +30,17 @@ namespace DeepLearningTest
 	/// </summary>
 	LayerGradient<CpuDC> layer_gradient_factory(const bool assign_zero = false)
 	{
-		auto result = LayerGradient<CpuDC>{ CpuDC::tensor_t(10, 15, 23, true),
-			{ CpuDC::tensor_t(1, 2, 3, true),
-				CpuDC::tensor_t(4, 5, 6, true),
-				CpuDC::tensor_t(7, 8, 9, true)
-		} };
+		auto result = LayerGradient<CpuDC>{ { CpuDC::tensor_t(10, 15, 23, true),
+			 CpuDC::tensor_t(1, 2, 3, true),
+			 CpuDC::tensor_t(4, 5, 6, true),
+			 CpuDC::tensor_t(7, 8, 9, true)
+			}
+		};
 
 		if (assign_zero)
 			return result;
 
-		result.Biases_grad.standard_random_fill();
-		for (auto& item : result.Weights_grad)
+		for (auto& item : result.data)
 			item.standard_random_fill();
 
 		return result;

@@ -43,7 +43,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Returns a container to be used in back-propagation procedure./>
 		/// </summary>
-		virtual MLayerGradient<D> allocate_gradient_container() const = 0;
+		virtual MLayerGradient<D> allocate_gradient_container(const bool fill_zero = false) const = 0;
 
 		/// <summary>
 		/// Calculates result of the layer evaluated on the given <param name="input"/> data.
@@ -65,7 +65,7 @@ namespace DeepLearning
 		/// <param name="processing_data">Intermediate data prepared during the "act"
 		/// phase that is needed to calculate the derivatives.</param>
 		/// <param name="out_input_grad">A container that holds gradient of the layer's input upon the method's return.</param>
-		/// <param name="out_layer_grad">A container that holds the layer's gradient upon the method's return.</param>
+		/// <param name="out_layer_grad">A container will be incremented with the layer's gradient upon the method's return.</param>
 		/// <param name="evaluate_input_gradient">If "false" gradient of the layers input won't be calculated.</param>
 		virtual void backpropagate(const IMLayerExchangeData<typename D::tensor_t>& out_grad,
 			const IMLayerExchangeData<typename D::tensor_t>& output,
@@ -82,6 +82,12 @@ namespace DeepLearning
 		/// Returns "true" if the given layer is (absolutely) equal to the current one
 		/// </summary>
 		virtual bool equal(const AMLayer<D>& layer) const { return true; };
+
+		/// <summary>
+		/// Updates weights of the current layer with the given <paramref name="increment"/>
+		/// multiplied by the given <paramref name="learning_rate"/>
+		/// </summary>
+		virtual void update(const MLayerGradient<D>& increment, const Real learning_rate) = 0;
 
 		/// <summary>
 		/// To make it possible to persist data on this
