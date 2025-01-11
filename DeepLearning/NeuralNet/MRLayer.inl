@@ -142,12 +142,18 @@ namespace DeepLearning
 		for (auto w_id = 1ull; w_id < d.size(); ++w_id)
 			d[w_id].resize(_weights[w_id - 1].size_3d());
 
-		d[0].resize(_biases.size_3d());
+		d[BIAS_GRAD_ID].resize(_biases.size_3d());
 
 		if (fill_zero)
 			result.fill_zero();
 
 		return result;
+	}
+
+	template<class D>
+	MLayerData<D> RMLayer<D>::allocate_trace_data() const
+	{
+		return MLayerData<D>(rec_depth());
 	}
 
 	template <class D>
@@ -179,9 +185,11 @@ namespace DeepLearning
 		const bool evaluate_input_gradient) const
 	{
 		if (out_grad.size() != rec_depth() || output.size() != rec_depth() ||
-			processing_data.size() != rec_depth() || out_layer_grad.size() != 1 ||
-			(evaluate_input_gradient && out_input_grad.size() != rec_depth()))
+			processing_data.size() != rec_depth() || out_layer_grad.size() != 1)
 			throw std::exception("Invalid input.");
+
+		if (evaluate_input_gradient && out_input_grad.size() != rec_depth())
+			out_input_grad.resize(rec_depth());
 
 		thread_local typename D::tensor_t aux{};
 		aux.resize(out_sub_dim());
@@ -190,9 +198,9 @@ namespace DeepLearning
 		thread_local typename D::tensor_t temp{};
 		temp.resize(out_sub_dim());
 
-		auto& biases_grad = out_layer_grad[0].data[0];
-		auto& in_weights_grad = out_layer_grad[0].data[IN_W + 1];
-		auto& rec_weights_grad = out_layer_grad[0].data[REC_W + 1];
+		auto& biases_grad = out_layer_grad[0].data[BIAS_GRAD_ID];
+		auto& in_weights_grad = out_layer_grad[0].data[IN_W_GRAD_ID];
+		auto& rec_weights_grad = out_layer_grad[0].data[REC_W_GRAD_ID];
 
 		for (auto step_id = rec_depth() - 1; step_id >= 0; --step_id)
 		{
@@ -219,9 +227,9 @@ namespace DeepLearning
 	void RMLayer<D>::update(const MLayerGradient<D>& increment, const Real learning_rate)
 	{
 		const auto& grad = increment[0];
-		_biases.add_scaled(grad.data[0], learning_rate);
-		_weights[IN_W].add_scaled(grad.data[IN_W + 1], learning_rate);
-		_weights[REC_W].add_scaled(grad.data[REC_W + 1], learning_rate);
+		_biases.add_scaled(grad.data[BIAS_GRAD_ID], learning_rate);
+		_weights[IN_W].add_scaled(grad.data[IN_W_GRAD_ID], learning_rate);
+		_weights[REC_W].add_scaled(grad.data[REC_W_GRAD_ID], learning_rate);
 	}
 
 	template <class D>

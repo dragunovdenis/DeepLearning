@@ -295,6 +295,7 @@
     <ClInclude Include="NeuralNet\MLayerGradient.h" />
     <ClInclude Include="NeuralNet\MLayerHandle.h" />
     <ClInclude Include="NeuralNet\MLayerTypeId.h" />
+    <ClInclude Include="NeuralNet\MNet.h" />
     <ClInclude Include="NeuralNet\Net.h" />
     <ClInclude Include="NeuralNet\NLayer.h" />
     <ClInclude Include="NeuralNet\PLayer.h" />
@@ -348,6 +349,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="NeuralNet\MLayerHandle.inl" />
+    <None Include="NeuralNet\MNet.inl" />
     <None Include="NeuralNet\MRLayer.inl" />
     <None Include="packages.config" />
   </ItemGroup>

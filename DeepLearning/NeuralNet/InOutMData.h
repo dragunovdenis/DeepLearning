@@ -42,7 +42,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Current input container for a layer.
 		/// </summary>
-		IMLayerExchangeData<typename D::tensor_t>& in()
+		LazyVector<typename D::tensor_t>& in()
 		{
 			return _data[_id];
 		}
@@ -50,7 +50,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Current container to receive output of a layer.
 		/// </summary>
-		IMLayerExchangeData<typename D::tensor_t>& out()
+		LazyVector<typename D::tensor_t>& out()
 		{
 			return _data[next_id()];
 		}
@@ -58,7 +58,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Current container to receive output of a layer (readonly version).
 		/// </summary>
-		const IMLayerExchangeData<typename D::tensor_t>& out() const
+		const LazyVector<typename D::tensor_t>& out() const
 		{
 			return _data[next_id()];
 		}

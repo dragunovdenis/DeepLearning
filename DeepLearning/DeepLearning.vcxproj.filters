@@ -285,6 +285,9 @@
     <ClInclude Include="NeuralNet\MLayerHandle.h">
       <Filter>Header Files\NeuralNet\MultiNet</Filter>
     </ClInclude>
+    <ClInclude Include="NeuralNet\MNet.h">
+      <Filter>Header Files\NeuralNet\MultiNet</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Matrix.cpp">
@@ -375,6 +378,9 @@
       <Filter>Header Files\NeuralNet\MultiNet</Filter>
     </None>
     <None Include="NeuralNet\MLayerHandle.inl">
+      <Filter>Header Files\NeuralNet\MultiNet</Filter>
+    </None>
+    <None Include="NeuralNet\MNet.inl">
       <Filter>Header Files\NeuralNet\MultiNet</Filter>
     </None>
   </ItemGroup>

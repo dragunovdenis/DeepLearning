@@ -312,6 +312,7 @@
     <ClCompile Include="LinAlg2dTest.cpp" />
     <ClCompile Include="LinAlg3dTest.cpp" />
     <ClCompile Include="MatrixVectorAlgebraTest.cpp" />
+    <ClCompile Include="MNetTest.cpp" />
     <ClCompile Include="MnistDataUtilsTest.cpp" />
     <ClCompile Include="NelderMeadOptimizationTest.cpp" />
     <ClCompile Include="NetTest.cpp" />
@@ -344,6 +345,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="MNetTestUtils.h" />
     <ClInclude Include="StandardTestUtils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

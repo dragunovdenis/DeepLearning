@@ -47,6 +47,11 @@ namespace DeepLearning
 		virtual MLayerGradient<D> allocate_gradient_container(const bool fill_zero = false) const = 0;
 
 		/// <summary>
+		/// Returns trace data contained allocated for the needs of the current layer./>
+		/// </summary>
+		virtual MLayerData<D> allocate_trace_data() const = 0;
+
+		/// <summary>
 		/// Calculates result of the layer evaluated on the given <param name="input"/> data.
 		/// </summary>
 		/// <param name="input">Input data.</param>

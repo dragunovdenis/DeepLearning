@@ -19,6 +19,7 @@
 #include <NeuralNet/RMLayer.h>
 #include "StandardTestUtils.h"
 #include <NeuralNet/MLayerHandle.h>
+#include "MNetTestUtils.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;
@@ -27,39 +28,6 @@ namespace DeepLearningTest
 {
 	TEST_CLASS(RMLayerTest)
 	{
-		/// <summary>
-		/// Returns an instance of "input data" initialized according to the given set of parameters.
-		/// </summary>
-		static MLayerData<CpuDC> construct_random(const int size,
-			const Index3d& item_size, const InitializationStrategy init_strategy)
-		{
-			MLayerData<CpuDC> result(size);
-
-			for (auto itemId = 0; itemId < size; ++itemId)
-			{
-				result[itemId].resize(item_size);
-				result[itemId].init(init_strategy);
-			}
-
-			return result;
-		}
-
-		/// <summary>
-		/// Returns collection filled with the given value.
-		/// </summary>
-		static LazyVector<CpuDC::tensor_t> construct_and_fill(const int size, const Index3d& item_size, const Real val)
-		{
-			LazyVector<CpuDC::tensor_t> result(size);
-
-			for (auto itemId = 0; itemId < size; ++itemId)
-			{
-				result[itemId].resize(item_size);
-				result[itemId].fill(val);
-			}
-
-			return result;
-		}
-
 		static constexpr auto _delta = std::is_same_v<Real, double> ? static_cast<Real>(1e-5) : static_cast<Real>(1e-2);
 		static constexpr auto _tolerance = std::is_same_v<Real, double> ? static_cast<Real>(6e-10) : static_cast<Real>(3e-4);
 
@@ -71,8 +39,8 @@ namespace DeepLearningTest
 			constexpr auto out_size_plain = 8;
 			const Index3d in_item_size(1, 1, in_size_plain);
 			const Index3d out_item_size(1, 1, out_size_plain);
-			const auto out_grad = construct_and_fill(rec_depth, out_item_size, 1);
-			const auto input = construct_random(rec_depth, in_item_size, FillRandomUniform);
+			const auto out_grad = MNetTestUtils::construct_and_fill_vector<CpuDC>(rec_depth, out_item_size, 1);
+			const auto input = MNetTestUtils::construct_random_data<CpuDC>(rec_depth, in_item_size);
 			auto trace_data = input;
 			LazyVector<CpuDC::tensor_t> output;
 			const RMLayer<CpuDC> layer(rec_depth, in_size_plain, out_item_size,
@@ -129,8 +97,8 @@ namespace DeepLearningTest
 			constexpr auto out_size_plain = 8;
 			const Index3d in_item_size(1, 1, in_size_plain);
 			const Index3d out_item_size(1, 1, out_size_plain);
-			const auto out_grad = construct_and_fill(rec_depth, out_item_size, 1);
-			const auto input = construct_random(rec_depth, in_item_size, FillRandomUniform);
+			const auto out_grad = MNetTestUtils::construct_and_fill_vector<CpuDC>(rec_depth, out_item_size, 1);
+			const auto input = MNetTestUtils::construct_random_data<CpuDC>(rec_depth, in_item_size);
 			auto trace_data = input;
 			const RMLayer<CpuDC> layer(rec_depth, in_size_plain, out_item_size,
 				FillRandomNormal, ActivationFunctionId::SIGMOID);
@@ -179,17 +147,17 @@ namespace DeepLearningTest
 
 		TEST_METHOD(BiasesGradientTest)
 		{
-			run_parameter_gradient_test(0);
+			run_parameter_gradient_test(RMLayer<CpuDC>::BIAS_GRAD_ID);
 		}
 
 		TEST_METHOD(InWeightGradientTest)
 		{
-			run_parameter_gradient_test(1);
+			run_parameter_gradient_test(RMLayer<CpuDC>::IN_W_GRAD_ID);
 		}
 
 		TEST_METHOD(RecWeightGradientTest)
 		{
-			run_parameter_gradient_test(2);
+			run_parameter_gradient_test(RMLayer<CpuDC>::REC_W_GRAD_ID);
 		}
 
 		TEST_METHOD(SerializationTest)

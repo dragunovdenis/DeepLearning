@@ -99,6 +99,17 @@ namespace DeepLearning
 		}
 
 		/// <summary>
+		/// Assigns input data collections from the given <paramref name="source"/>.
+		/// It is a responsibility of the caller to ensure that the sizes of the
+		/// destination and source collections are equal.
+		/// </summary>
+		void assign_input(const IMLayerExchangeData<typename D::tensor_t>& source)
+		{
+			for (auto item_id = 0ull; item_id < Data.size(); ++item_id)
+				Data[item_id].Input = source[item_id];
+		}
+
+		/// <summary>
 		/// Default constructor.
 		/// </summary>
 		MLayerData() = default;
@@ -106,6 +117,6 @@ namespace DeepLearning
 		/// <summary>
 		/// Constructor.
 		/// </summary>
-		MLayerData(const int layer_count) : Data(layer_count) {}
+		MLayerData(const std::size_t layer_count) : Data(layer_count) {}
 	};
 }

@@ -162,6 +162,13 @@ namespace DeepLearning
 			const auto one_over_scalar = static_cast<Real>(1) / scalar;
 			return (*this) *= one_over_scalar;
 		}
+
+		void assign(const IMLayerExchangeData<T>& source)
+		{
+			resize(source.size());
+			for (auto item_id = 0ull; item_id < source.size(); ++item_id)
+				_data[item_id] = source[item_id];
+		}
 	};
 
 	/// <summary>

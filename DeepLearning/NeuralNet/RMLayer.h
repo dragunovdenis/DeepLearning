@@ -119,6 +119,10 @@ namespace DeepLearning
 
 	public:
 
+		static constexpr int BIAS_GRAD_ID = 0;
+		static constexpr int IN_W_GRAD_ID = IN_W + 1;
+		static constexpr int REC_W_GRAD_ID = REC_W + 1;
+
 		/// <summary>
 		/// Input dimensions of the layer.
 		/// </summary>
@@ -161,6 +165,11 @@ namespace DeepLearning
 		/// See the summary of the base class method.
 		/// </summary>
 		MLayerGradient<D> allocate_gradient_container(const bool fill_zero = false) const override;
+
+		/// <summary>
+		/// See the summary of the base class method.
+		/// </summary>
+		MLayerData<D> allocate_trace_data() const override;
 
 		/// <summary>
 		/// See the summary of the base class method.
