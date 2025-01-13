@@ -39,6 +39,15 @@ namespace DeepLearning
 	}
 
 	/// <summary>
+	/// Collection addition operator.
+	/// </summary>
+	template <class T>
+	std::vector<T> operator +(std::vector<T> op1, const std::vector<T>& op2)
+	{
+		return op1 += op2;
+	}
+
+	/// <summary>
 	/// Compound collection subtraction operator
 	/// </summary>
 	/// <param name="op1">Operand to subtract from</param>

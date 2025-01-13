@@ -118,16 +118,18 @@ namespace DeepLearning
 		if (in_size.w != _out_size.w)
 			throw std::exception("Unsupported input-output dimensionality");
 
+		auto ran_gen_ptr = &AMLayer<D>::ran_gen();
+
 		set_func_id(func_id);
 		const auto out_sub_dim_lin = this->out_sub_dim().coord_prod();
 		in_weights().resize(out_sub_dim_lin, _in_size.xyz.coord_prod());
-		in_weights().init(init_strategy);
+		in_weights().init(init_strategy, ran_gen_ptr);
 
 		rec_weights().resize(out_sub_dim_lin, out_sub_dim_lin);
-		rec_weights().init(init_strategy);
+		rec_weights().init(init_strategy, ran_gen_ptr);
 
 		_biases.resize(out_sub_dim_lin);
-		_biases.init(FillRandomUniform);
+		_biases.init(FillRandomUniform, ran_gen_ptr);
 	}
 
 	template<class D>

@@ -40,6 +40,27 @@ namespace DeepLearning
 		static void evaluate_cost_gradient_in_place(IMLayerExchangeData<typename D::tensor_t>& in_out,
 			const IMLayerExchangeData<typename D::tensor_t>& reference, const CostFunction<typename D::tensor_t>& cost_func);
 
+		/// <summary>
+		/// Fills the given gradient containers with zero values.
+		/// </summary>
+		static void reset_gradients(std::vector<MLayerGradient<D>>& gradients);
+
+		class Context;
+
+		/// <summary>
+		/// Calculates gradient of the neural net (with respect to its parameters) evaluated
+		/// at the given <paramref name="input"/> - <paramref name="reference"/> pair and
+		/// adds the result to the corresponding container in <paramref name="context"/>.
+		/// </summary>
+		void add_gradient(const LazyVector<typename D::tensor_t>& input,
+			const LazyVector<typename D::tensor_t>& reference,
+			const CostFunction<typename D::tensor_t>& cost_func, Context& context) const;
+
+		/// <summary>
+		/// Returns reference to a thread-local random number generator.
+		/// </summary>
+		static std::mt19937& ran_gen();
+
 	public:
 
 		/// <summary>
@@ -134,6 +155,14 @@ namespace DeepLearning
 			const CostFunction<typename D::tensor_t>& cost_func, Context& context) const;
 
 		/// <summary>
+		/// Calculates and returns sum of gradients of the neural net (with respect to its parameters) evaluated
+		/// for each of the <paramref name="input"/> - <paramref name="reference"/> pairs.
+		/// </summary>
+		std::vector<MLayerGradient<D>> calc_gradient_sum(const std::vector<LazyVector<typename D::tensor_t>>& input,
+			const std::vector<LazyVector<typename D::tensor_t>>& reference,
+			const CostFunction<typename D::tensor_t>& cost_func) const;
+
+		/// <summary>
 		/// Returns gradient of the neural net calculated with for the given
 		/// <paramref name="input"/> - <paramref name="reference"/> pair.
 		/// </summary>
@@ -147,6 +176,14 @@ namespace DeepLearning
 		void learn(const std::vector<LazyVector<typename D::tensor_t>>& input,
 			const std::vector<LazyVector<typename D::tensor_t>>& reference,
 			const CostFunction<typename D::tensor_t>& cost_func, const Real learning_rate, Context& context);
+
+		/// <summary>
+		/// Performs weights adjustment based on the given <paramref name="input"/>,
+		/// <paramref name="reference"/> and <paramref name="cost_func"/>
+		/// </summary>
+		void learn(const std::vector<LazyVector<typename D::tensor_t>>& input,
+			const std::vector<LazyVector<typename D::tensor_t>>& reference,
+			const CostFunction<typename D::tensor_t>& cost_func, const Real learning_rate);
 
 		/// <summary>
 		/// Updates weights of all the layers according to the given gradient <paramref name="increments"/>
@@ -168,6 +205,26 @@ namespace DeepLearning
 		/// Size of the net's output.
 		/// </summary>
 		Index4d out_size() const;
+
+		/// <summary>
+		/// Resets random generator with the given seed.
+		/// </summary>
+		static void reset_random_generator(const unsigned seed);
+
+		/// <summary>
+		/// Resets random generator with the std::random_device generated seed.
+		/// </summary>
+		static void reset_random_generator();
+
+		/// <summary>
+		/// Equality operator.
+		/// </summary>
+		bool operator ==(const MNet& net) const;
+
+		/// <summary>
+		/// Inequality operator.
+		/// </summary>
+		bool operator !=(const MNet& net) const;
 	};
 }
 

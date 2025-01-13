@@ -31,6 +31,14 @@ namespace DeepLearning
 	template <class D = CpuDC>
 	struct AMLayer
 	{
+	protected:
+		/// <summary>
+		/// Returns reference to a thread-local random number generator.
+		/// </summary>
+		static std::mt19937& ran_gen();
+
+	public:
+
 		/// <summary>
 		/// Input dimensions of the layer.
 		/// </summary>
@@ -101,9 +109,38 @@ namespace DeepLearning
 		virtual void update(const MLayerGradient<D>& increment, const Real learning_rate) = 0;
 
 		/// <summary>
+		/// Resets random generator with the given seed.
+		/// </summary>
+		static void reset_random_generator(const unsigned seed);
+
+		/// <summary>
+		/// Resets random generator with the std::random_device generated seed.
+		/// </summary>
+		static void reset_random_generator();
+
+		/// <summary>
 		/// To make it possible to persist data on this
 		/// level without braking backward compatibility.
 		/// </summary>
 		MSGPACK_DEFINE();
 	};
+
+	template <class D>
+	std::mt19937& AMLayer<D>::ran_gen()
+	{
+		thread_local std::mt19937 ran_gen{ std::random_device{}() };
+		return ran_gen;
+	}
+
+	template <class D>
+	void AMLayer<D>::reset_random_generator(const unsigned seed)
+	{
+		ran_gen().seed(seed);
+	}
+
+	template <class D>
+	void AMLayer<D>::reset_random_generator()
+	{
+		ran_gen().seed(std::random_device{}());
+	}
 }

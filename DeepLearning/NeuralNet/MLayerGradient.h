@@ -18,6 +18,7 @@
 #pragma once
 #include <msgpack.hpp>
 #include "LayerGradient.h"
+#include "../Math/CollectionArithmetics.h"
 
 namespace DeepLearning
 {
@@ -36,7 +37,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Subscript operator.
 		/// </summary>
-		LayerGradient<D>& operator [](const int id)
+		LayerGradient<D>& operator [](const std::size_t id)
 		{
 			return sub_gradients[id];
 		}
@@ -44,7 +45,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Subscript operator (const version).
 		/// </summary>
-		const LayerGradient<D>& operator [](const int id) const
+		const LayerGradient<D>& operator [](const std::size_t id) const
 		{
 			return sub_gradients[id];
 		}
@@ -64,6 +65,12 @@ namespace DeepLearning
 		{
 			for (auto& g : sub_gradients)
 				g.fill_zero();
+		}
+
+		MLayerGradient& operator +=(const MLayerGradient& grad)
+		{
+			sub_gradients += grad.sub_gradients;
+			return *this;
 		}
 
 		/// <summary>
