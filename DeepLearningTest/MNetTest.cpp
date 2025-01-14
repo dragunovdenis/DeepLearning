@@ -281,5 +281,14 @@ namespace DeepLearningTest
 			//Assert
 			Assert::IsTrue(net == net_unpacked, L"Original and restored nets are different");
 		}
+
+		TEST_METHOD_CLEANUP(CleanupCheck)
+		{
+			const auto alive_instances = BasicCollection::get_total_instances_count();
+			const auto occupied_memory = BasicCollection::get_total_allocated_memory();
+
+			Logger::WriteMessage((std::to_string(alive_instances) + " alive instance(-s) of `BasicCollection` occupying "
+				+ std::to_string(occupied_memory) + " byte(-s) of memory.\n").c_str());
+		}
 	};
 }

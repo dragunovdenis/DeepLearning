@@ -40,6 +40,11 @@ namespace DeepLearning
 	public:
 
 		/// <summary>
+		/// Destructor.
+		/// </summary>
+		virtual ~AMLayer() = default;
+
+		/// <summary>
 		/// Input dimensions of the layer.
 		/// </summary>
 		virtual Index4d in_size() const = 0;
