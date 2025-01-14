@@ -294,6 +294,11 @@ namespace DeepLearning
 		void allocate(std::vector<LayerGradient<D>>& gradient_container, bool fill_zeros) const;
 
 		/// <summary>
+		/// Returns gradient container allocated for the current net.
+		/// </summary>
+		std::vector<LayerGradient<D>> allocate_gradient(bool fill_zeros) const;
+
+		/// <summary>
 		///	Read-only access to the layers
 		/// </summary>
 		const ALayer<D>& operator [](const std::size_t& id) const;

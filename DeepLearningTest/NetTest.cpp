@@ -25,6 +25,7 @@
 #include <chrono>
 #include <Utilities.h>
 #include <NeuralNet/DataContextCuda.h>
+#include "StandardTestUtils.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;
@@ -245,7 +246,7 @@ namespace DeepLearningTest
 		/// <summary>
 		///	Generates and returns a "standard" net for testing
 		/// </summary>
-		static Net<CpuDC> GenerateStandardNet(const bool no_drop_out = false)
+		static Net<CpuDC> generate_standard_net(const bool no_drop_out = false)
 		{
 			Net<CpuDC> net;
 			constexpr auto layers_count = 7;
@@ -274,7 +275,7 @@ namespace DeepLearningTest
 		TEST_METHOD(NetSerializationTest)
 		{
 			//Arrange
-			const auto net = GenerateStandardNet();
+			const auto net = generate_standard_net();
 
 			//Act
 			const auto msg = MsgPack::pack(net);
@@ -287,7 +288,7 @@ namespace DeepLearningTest
 		TEST_METHOD(NetScriptInstantiationTest)
 		{
 			//Arrange
-			const auto net = GenerateStandardNet();
+			const auto net = generate_standard_net();
 
 			//Act
 			const auto script_str = net.to_script();
@@ -320,7 +321,7 @@ namespace DeepLearningTest
 		TEST_METHOD(SingleItemLearnTest)
 		{
 			//Arrange
-			auto net = GenerateStandardNet(/*no_drop_out*/ true);
+			auto net = generate_standard_net(/*no_drop_out*/ true);
 			auto net_clone = MsgPack::unpack<Net<CpuDC>>(MsgPack::pack(net));
 			constexpr auto learning_rate = static_cast<Real>(0.1);
 			constexpr auto reg_factor = static_cast<Real>(1.5);
@@ -348,7 +349,7 @@ namespace DeepLearningTest
 		{
 			//Arrange
 			Net<CpuDC>::reset_random_generator(0);
-			auto net = GenerateStandardNet(/*no_drop_out*/ false);
+			auto net = generate_standard_net(/*no_drop_out*/ false);
 
 			const auto [input, labels] =
 				generate_artificial_training_data<CpuDC>(40, net.in_size(), net.out_size());
@@ -417,7 +418,7 @@ namespace DeepLearningTest
 		TEST_METHOD(NetCopyTest)
 		{
 			//Arrange
-			const auto net = GenerateStandardNet(/*no_drop_out*/ false);
+			const auto net = generate_standard_net(/*no_drop_out*/ false);
 
 			//Act
 			const auto net_copy = net;
@@ -429,7 +430,7 @@ namespace DeepLearningTest
 		TEST_METHOD(NetResetTest)
 		{
 			//Arrange
-			auto net = GenerateStandardNet();
+			auto net = generate_standard_net();
 			//Sanity check
 			for (auto layer_id = 0ull; layer_id < net.layers_count(); ++layer_id)
 			{
@@ -468,7 +469,7 @@ namespace DeepLearningTest
 		TEST_METHOD(NetGradientWithScalingTest)
 		{
 			////Arrange
-			const auto net = GenerateStandardNet(/*no_drop_out*/ false);
+			const auto net = generate_standard_net(/*no_drop_out*/ false);
 			std::vector<LayerGradient<CpuDC>> out_gradient;
 			net.allocate(out_gradient, /*fill zero*/ false);
 			randomize_gradient(out_gradient);
@@ -506,6 +507,79 @@ namespace DeepLearningTest
 			}
 
 			Assert::IsTrue(value_ref == out_value, L"Net value should not be affected by scaling");
+		}
+
+		/// <summary>
+		///	Generates and returns a "simple" net for testing.
+		/// </summary>
+		static Net<CpuDC> generate_simple_differentiable_net()
+		{
+			Net<CpuDC> net;
+			const auto size_in_next =
+				net.append_layer<CLayer>(Index3d{ 1, 12, 23 }, Index2d{ 5 }, 2 /*filters count*/,
+					ActivationFunctionId::SIGMOID, Index3d{ 0, 0, 0 }, Index3d{ 1, 1, 1 },
+					static_cast<Real>(1) /*no drop-out*/);
+			net.append_layer<NLayer>(size_in_next.coord_prod(), 10, ActivationFunctionId::SIGMOID,
+				static_cast<Real>(-1), static_cast<Real>(1), true /*standard init for weights*/, static_cast<Real>(1) /*no drop-out*/);
+
+			return net;
+		}
+
+		TEST_METHOD(NetGradientTest)
+		{
+			// Arrange
+			const auto net = generate_simple_differentiable_net();
+			Assert::IsTrue(net.layers_count() >= 2, L"Too few layers in the net");
+			const auto in_size = net.in_size();
+			const CpuDC::tensor_t input(in_size, static_cast<Real>(-1), static_cast<Real>(1));
+			const auto out_size = net.out_size();
+			const CpuDC::tensor_t reference(out_size, static_cast<Real>(-1), static_cast<Real>(1));
+			constexpr CostFunctionId cost_func_id = CostFunctionId::SQUARED_ERROR;
+			const CostFunction<CpuDC::tensor_t> cost_function(cost_func_id);
+
+			// Act
+			const auto [gradient, value] = net.calc_gradient_and_value(input, reference, cost_func_id);
+
+			// Assert
+			constexpr auto delta = std::is_same_v<Real, double> ? static_cast<Real>(1e-5) : static_cast<Real>(1e-2);
+			constexpr auto tolerance = std::is_same_v<Real, double> ? static_cast<Real>(1.5e-10) : static_cast<Real>(1e-4);
+			constexpr auto one_over_double_delta = static_cast<Real>(0.5) / delta;
+
+			Real max_diff{};
+			Real max_abs_gradient{};
+			const auto zero_gradient = net.allocate_gradient(true /*fill zeros*/);
+
+			for (auto layer_id = 0ull; layer_id < net.layers_count(); ++layer_id)
+				for (auto container_id = 0ull; container_id < gradient[layer_id].data.size(); ++container_id)
+				{
+					const auto& container = gradient[layer_id].data[container_id];
+
+					for (auto item_id = 0ull; item_id < container.size(); ++item_id)
+					{
+						auto zero_gradient_plus_delta = zero_gradient;
+						zero_gradient_plus_delta[layer_id].data[container_id][item_id] = delta;
+
+						auto net_plus_delta = net;
+						net_plus_delta.update(zero_gradient_plus_delta, -1, 0);
+
+						auto net_minus_delta = net;
+						net_minus_delta.update(zero_gradient_plus_delta, 1, 0);
+
+						const auto gradient_ref = (cost_function(net_plus_delta.act(input), reference) -
+							cost_function(net_minus_delta.act(input), reference)) * one_over_double_delta;
+
+						max_abs_gradient = std::max(max_abs_gradient, std::abs(gradient_ref));
+
+						const auto diff = std::abs(gradient_ref - container[item_id]);
+						max_diff = std::max(max_diff, diff);
+					}
+				}
+
+			Assert::IsTrue(max_abs_gradient > static_cast<Real>(0.1),
+				L"Unexpectedly small maximal magnitude of gradients");
+
+			StandardTestUtils::LogAndAssertLessOrEqualTo<double>(
+				"Maximal difference between actual and expected gradients", max_diff, tolerance);
 		}
 
 		TEST_METHOD_CLEANUP(CleanupCheck)

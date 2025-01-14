@@ -479,6 +479,14 @@ namespace DeepLearning
 	}
 
 	template <class D>
+	std::vector<LayerGradient<D>> Net<D>::allocate_gradient(bool fill_zeros) const
+	{
+		std::vector<LayerGradient<D>> result{};
+		allocate(result, fill_zeros);
+		return result;
+	}
+
+	template <class D>
 	const ALayer<D>& Net<D>::operator [](const std::size_t& id) const
 	{
 		return _layers[id].layer();
