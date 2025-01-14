@@ -268,5 +268,18 @@ namespace DeepLearningTest
 			StandardTestUtils::LogAndAssertLessOrEqualTo<double>("Final difference",
 				final_max_diff, tolerance);
 		}
+
+		TEST_METHOD(SerializationTest)
+		{
+			//Arrange
+			const auto net = build_net();
+
+			//Act
+			const auto msg = MsgPack::pack(net);
+			const auto net_unpacked = MsgPack::unpack<MNet<CpuDC>>(msg);
+
+			//Assert
+			Assert::IsTrue(net == net_unpacked, L"Original and restored nets are different");
+		}
 	};
 }

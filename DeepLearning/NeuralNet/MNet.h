@@ -31,6 +31,8 @@ namespace DeepLearning
 	template <class D = CpuDC>
 	class MNet
 	{
+		static constexpr int MSG_PACK_VER = 1;
+
 		std::vector<MLayerHandle<D>> _layers{};
 
 		/// <summary>
@@ -225,6 +227,27 @@ namespace DeepLearning
 		/// Inequality operator.
 		/// </summary>
 		bool operator !=(const MNet& net) const;
+
+		/// <summary>
+		/// Custom "unpacking" method
+		/// </summary>
+		void msgpack_unpack(msgpack::object const& msgpack_o);
+
+		/// <summary>
+		/// Custom "packing" method
+		/// </summary>
+		template <typename Packer>
+		void msgpack_pack(Packer& msgpack_pk) const;
+
+		/// <summary>
+		/// Serializes current instance to the given file (in messagepack format)
+		/// </summary>
+		void save_to_file(const std::filesystem::path& file_name) const;
+
+		/// <summary>
+		/// Loads instance of the net from the given file (in messagepack format)
+		/// </summary>
+		static MNet load_from_file(const std::filesystem::path& file_name);
 	};
 }
 

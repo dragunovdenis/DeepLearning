@@ -17,6 +17,7 @@
 
 #pragma once
 #include "MNet.h"
+#include "../MsgPackUtils.h"
 
 namespace DeepLearning
 {
@@ -255,6 +256,37 @@ namespace DeepLearning
 	bool MNet<D>::operator!=(const MNet& net) const
 	{
 		return !(*this == net);
+	}
+
+	template <class D>
+	void MNet<D>::msgpack_unpack(msgpack::object const& msgpack_o)
+	{
+		auto msg_pack_version = 0;
+		msgpack::type::make_define_array(msg_pack_version).msgpack_unpack(msgpack_o);
+
+		if (msg_pack_version != MSG_PACK_VER)
+			throw std::exception("Unexpected version of an object");
+
+		msgpack::type::make_define_array(msg_pack_version, _layers).msgpack_unpack(msgpack_o);
+	}
+
+	template <class D>
+	template <typename Packer>
+	void MNet<D>::msgpack_pack(Packer& msgpack_pk) const
+	{
+		msgpack::type::make_define_array(MSG_PACK_VER, _layers).msgpack_pack(msgpack_pk);
+	}
+
+	template <class D>
+	void MNet<D>::save_to_file(const std::filesystem::path& file_name) const
+	{
+		MsgPack::save_to_file(*this, file_name);
+	}
+
+	template <class D>
+	MNet<D> MNet<D>::load_from_file(const std::filesystem::path& file_name)
+	{
+		return MsgPack::load_from_file<MNet>(file_name);
 	}
 
 	template <class D>
