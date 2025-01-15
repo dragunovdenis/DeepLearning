@@ -222,4 +222,4 @@ namespace DeepLearning
 	};
 }
 
-#include "MRLayer.inl"
+#include "RMLayer.inl"

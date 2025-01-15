@@ -374,7 +374,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="NeuralNet\MRLayer.inl">
+    <None Include="NeuralNet\RMLayer.inl">
       <Filter>Header Files\NeuralNet\MultiNet</Filter>
     </None>
     <None Include="NeuralNet\MLayerHandle.inl">

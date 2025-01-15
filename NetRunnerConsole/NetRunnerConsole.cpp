@@ -26,9 +26,15 @@
 #include "Utilities.h"
 #include <chrono>
 #include <string>
+#include "NeuralNet/MNet.h"
 
 using namespace DeepLearning;
 using namespace NetRunnerConsole;
+
+// Instantiate the two classes below in order to
+// ensure that they are compatible with Intel compiler
+template class DeepLearning::MNet<CpuDC>;
+template class DeepLearning::RMLayer<CpuDC>;
 
 int main(int argc, char** argv)
 {

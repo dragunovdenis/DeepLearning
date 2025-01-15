@@ -350,7 +350,7 @@
   <ItemGroup>
     <None Include="NeuralNet\MLayerHandle.inl" />
     <None Include="NeuralNet\MNet.inl" />
-    <None Include="NeuralNet\MRLayer.inl" />
+    <None Include="NeuralNet\RMLayer.inl" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

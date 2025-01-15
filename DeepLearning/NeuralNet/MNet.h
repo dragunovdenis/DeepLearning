@@ -20,8 +20,8 @@
 #include "MLayerHandle.h"
 #include "InOutMData.h"
 #include "MLayerData.h"
-#include "../math/LinAlg4d.h"
-#include "../math/CostFunction.h"
+#include "../Math/LinAlg4d.h"
+#include "../Math/CostFunction.h"
 
 namespace DeepLearning
 {
@@ -31,38 +31,6 @@ namespace DeepLearning
 	template <class D = CpuDC>
 	class MNet
 	{
-		static constexpr int MSG_PACK_VER = 1;
-
-		std::vector<MLayerHandle<D>> _layers{};
-
-		/// <summary>
-		/// Evaluates gradient of the given <paramref name="cost_func"/> with respect
-		/// to the given <paramref name="in_out"/> and <paramref name="reference"/>
-		/// </summary>
-		static void evaluate_cost_gradient_in_place(IMLayerExchangeData<typename D::tensor_t>& in_out,
-			const IMLayerExchangeData<typename D::tensor_t>& reference, const CostFunction<typename D::tensor_t>& cost_func);
-
-		/// <summary>
-		/// Fills the given gradient containers with zero values.
-		/// </summary>
-		static void reset_gradients(std::vector<MLayerGradient<D>>& gradients);
-
-		class Context;
-
-		/// <summary>
-		/// Calculates gradient of the neural net (with respect to its parameters) evaluated
-		/// at the given <paramref name="input"/> - <paramref name="reference"/> pair and
-		/// adds the result to the corresponding container in <paramref name="context"/>.
-		/// </summary>
-		void add_gradient(const LazyVector<typename D::tensor_t>& input,
-			const LazyVector<typename D::tensor_t>& reference,
-			const CostFunction<typename D::tensor_t>& cost_func, Context& context) const;
-
-		/// <summary>
-		/// Returns reference to a thread-local random number generator.
-		/// </summary>
-		static std::mt19937& ran_gen();
-
 	public:
 
 		/// <summary>
@@ -105,6 +73,39 @@ namespace DeepLearning
 			/// </summary>
 			Context() = default;
 		};
+
+	private:
+		static constexpr int MSG_PACK_VER = 1;
+
+		std::vector<MLayerHandle<D>> _layers{};
+
+		/// <summary>
+		/// Evaluates gradient of the given <paramref name="cost_func"/> with respect
+		/// to the given <paramref name="in_out"/> and <paramref name="reference"/>
+		/// </summary>
+		static void evaluate_cost_gradient_in_place(IMLayerExchangeData<typename D::tensor_t>& in_out,
+			const IMLayerExchangeData<typename D::tensor_t>& reference, const CostFunction<typename D::tensor_t>& cost_func);
+
+		/// <summary>
+		/// Fills the given gradient containers with zero values.
+		/// </summary>
+		static void reset_gradients(std::vector<MLayerGradient<D>>& gradients);
+
+		/// <summary>
+		/// Calculates gradient of the neural net (with respect to its parameters) evaluated
+		/// at the given <paramref name="input"/> - <paramref name="reference"/> pair and
+		/// adds the result to the corresponding container in <paramref name="context"/>.
+		/// </summary>
+		void add_gradient(const LazyVector<typename D::tensor_t>& input,
+			const LazyVector<typename D::tensor_t>& reference,
+			const CostFunction<typename D::tensor_t>& cost_func, Context& context) const;
+
+		/// <summary>
+		/// Returns reference to a thread-local random number generator.
+		/// </summary>
+		static std::mt19937& ran_gen();
+
+	public:
 
 		/// <summary>
 		/// Default constructor.
