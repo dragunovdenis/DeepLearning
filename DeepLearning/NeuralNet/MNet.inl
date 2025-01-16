@@ -74,12 +74,10 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	void MNet<D>::act(const IMLayerExchangeData<typename D::tensor_t>& input, Context& context) const
+	void MNet<D>::act(const IMLayerExchangeData<typename D::tensor_t>& input, InOutMData<D>& cache) const
 	{
 		if (_layers.size() == 0)
 			throw std::exception("The result is undefined.");
-
-		auto& cache = context.value_cache;
 
 		_layers[0].layer().act(input, cache.out(), nullptr);
 
@@ -93,9 +91,9 @@ namespace DeepLearning
 	template <class D>
 	LazyVector<typename D::tensor_t> MNet<D>::act(const IMLayerExchangeData<typename D::tensor_t>& input) const
 	{
-		auto context = allocate_context();
-		act(input, context);
-		return context.get_out();
+		thread_local InOutMData<D> cache{};
+		act(input, cache);
+		return cache.out();
 	}
 
 	template <class D>

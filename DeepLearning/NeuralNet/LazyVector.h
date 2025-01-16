@@ -82,22 +82,22 @@ namespace DeepLearning
 		/// <summary>
 		/// Pointer to the first element of the vector.
 		/// </summary>
-		T* begin() { return _data.begin(); }
+		T* begin() { return _data.data(); }
 
 		/// <summary>
 		/// Pointer to the first element of the vector (const version).
 		/// </summary>
-		const T* begin() const { return _data.begin(); }
+		const T* begin() const { return _data.data(); }
 
 		/// <summary>
 		/// Pointer to the after-last element of the vector.
 		/// </summary>
-		T* end() { return _data.begin() + _size; }
+		T* end() { return _data.data() + _size; }
 
 		/// <summary>
 		/// Pointer to the after-last element of the vector (const version).
 		/// </summary>
-		const T* end() const { return _data.begin() + _size; }
+		const T* end() const { return _data.data() + _size; }
 
 		/// <summary>
 		/// Maximal absolute 

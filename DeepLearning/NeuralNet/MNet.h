@@ -141,7 +141,7 @@ namespace DeepLearning
 		/// Evaluated the neural net with respect to the given <paramref name="input"/>.
 		///	The result can be accessed through <paramref name="context"/> parameter.
 		/// </summary>
-		void act(const IMLayerExchangeData<typename D::tensor_t>& input, Context& context) const;
+		void act(const IMLayerExchangeData<typename D::tensor_t>& input, InOutMData<D>& cache) const;
 
 		/// <summary>
 		/// Returns value of the neural calculated at the given <paramref name="input"/>.
