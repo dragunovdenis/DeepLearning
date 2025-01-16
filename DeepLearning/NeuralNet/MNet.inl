@@ -99,8 +99,8 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	void MNet<D>::calc_gradient_sum(const std::vector<LazyVector<typename D::tensor_t>>& input,
-		const std::vector<LazyVector<typename D::tensor_t>>& reference,
+	void MNet<D>::calc_gradient_sum(const LazyVector<LazyVector<typename D::tensor_t>>& input,
+		const LazyVector<LazyVector<typename D::tensor_t>>& reference,
 		const CostFunction<typename D::tensor_t>& cost_func, Context& context) const
 	{
 		if (_layers.size() == 0)
@@ -117,8 +117,8 @@ namespace DeepLearning
 
 	template <class D>
 	std::vector<MLayerGradient<D>> MNet<D>::calc_gradient_sum(
-		const std::vector<LazyVector<typename D::tensor_t>>& input,
-		const std::vector<LazyVector<typename D::tensor_t>>& reference,
+		const LazyVector<LazyVector<typename D::tensor_t>>& input,
+		const LazyVector<LazyVector<typename D::tensor_t>>& reference,
 		const CostFunction<typename D::tensor_t>& cost_func) const
 	{
 		auto context = allocate_context();
@@ -170,8 +170,8 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	void MNet<D>::learn(const std::vector<LazyVector<typename D::tensor_t>>& input,
-		const std::vector<LazyVector<typename D::tensor_t>>& reference,
+	void MNet<D>::learn(const LazyVector<LazyVector<typename D::tensor_t>>& input,
+		const LazyVector<LazyVector<typename D::tensor_t>>& reference,
 		const CostFunction<typename D::tensor_t>& cost_func, const Real learning_rate, Context& context)
 	{
 		calc_gradient_sum(input, reference, cost_func, context);
@@ -181,8 +181,8 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	void MNet<D>::learn(const std::vector<LazyVector<typename D::tensor_t>>& input,
-		const std::vector<LazyVector<typename D::tensor_t>>& reference,
+	void MNet<D>::learn(const LazyVector<LazyVector<typename D::tensor_t>>& input,
+		const LazyVector<LazyVector<typename D::tensor_t>>& reference,
 		const CostFunction<typename D::tensor_t>& cost_func, const Real learning_rate)
 	{
 		auto context = allocate_context();

@@ -153,16 +153,16 @@ namespace DeepLearning
 		/// for each of the <paramref name="input"/> - <paramref name="reference"/> pairs.
 		/// The result is stored in the corresponding field of <paramref name="context"/>.
 		/// </summary>
-		void calc_gradient_sum(const std::vector<LazyVector<typename D::tensor_t>>& input,
-			const std::vector<LazyVector<typename D::tensor_t>>& reference,
+		void calc_gradient_sum(const LazyVector<LazyVector<typename D::tensor_t>>& input,
+			const LazyVector<LazyVector<typename D::tensor_t>>& reference,
 			const CostFunction<typename D::tensor_t>& cost_func, Context& context) const;
 
 		/// <summary>
 		/// Calculates and returns sum of gradients of the neural net (with respect to its parameters) evaluated
 		/// for each of the <paramref name="input"/> - <paramref name="reference"/> pairs.
 		/// </summary>
-		std::vector<MLayerGradient<D>> calc_gradient_sum(const std::vector<LazyVector<typename D::tensor_t>>& input,
-			const std::vector<LazyVector<typename D::tensor_t>>& reference,
+		std::vector<MLayerGradient<D>> calc_gradient_sum(const LazyVector<LazyVector<typename D::tensor_t>>& input,
+			const LazyVector<LazyVector<typename D::tensor_t>>& reference,
 			const CostFunction<typename D::tensor_t>& cost_func) const;
 
 		/// <summary>
@@ -176,16 +176,16 @@ namespace DeepLearning
 		/// Performs a single weight adjustment iteration based on the given <paramref name="input"/>,
 		/// <paramref name="reference"/> and <paramref name="cost_func"/>
 		/// </summary>
-		void learn(const std::vector<LazyVector<typename D::tensor_t>>& input,
-			const std::vector<LazyVector<typename D::tensor_t>>& reference,
+		void learn(const LazyVector<LazyVector<typename D::tensor_t>>& input,
+			const LazyVector<LazyVector<typename D::tensor_t>>& reference,
 			const CostFunction<typename D::tensor_t>& cost_func, const Real learning_rate, Context& context);
 
 		/// <summary>
 		/// Performs weights adjustment based on the given <paramref name="input"/>,
 		/// <paramref name="reference"/> and <paramref name="cost_func"/>
 		/// </summary>
-		void learn(const std::vector<LazyVector<typename D::tensor_t>>& input,
-			const std::vector<LazyVector<typename D::tensor_t>>& reference,
+		void learn(const LazyVector<LazyVector<typename D::tensor_t>>& input,
+			const LazyVector<LazyVector<typename D::tensor_t>>& reference,
 			const CostFunction<typename D::tensor_t>& cost_func, const Real learning_rate);
 
 		/// <summary>

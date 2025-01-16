@@ -80,6 +80,26 @@ namespace DeepLearning
 		}
 
 		/// <summary>
+		/// Pointer to the first element of the vector.
+		/// </summary>
+		T* begin() { return _data.begin(); }
+
+		/// <summary>
+		/// Pointer to the first element of the vector (const version).
+		/// </summary>
+		const T* begin() const { return _data.begin(); }
+
+		/// <summary>
+		/// Pointer to the after-last element of the vector.
+		/// </summary>
+		T* end() { return _data.begin() + _size; }
+
+		/// <summary>
+		/// Pointer to the after-last element of the vector (const version).
+		/// </summary>
+		const T* end() const { return _data.begin() + _size; }
+
+		/// <summary>
 		/// Maximal absolute 
 		/// </summary>
 		Real max_abs() const
@@ -114,6 +134,11 @@ namespace DeepLearning
 		/// Constructor.
 		/// </summary>
 		LazyVector(const std::size_t size) : _data(size), _size(size){}
+
+		/// <summary>
+		/// Construction from initializer list.
+		/// </summary>
+		LazyVector(std::initializer_list<T> list) : _data(list), _size(_data.size()) {}
 
 		/// <summary>
 		/// Compound addition operator.

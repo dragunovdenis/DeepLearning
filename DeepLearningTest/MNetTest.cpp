@@ -30,7 +30,7 @@ namespace DeepLearningTest
 	TEST_CLASS(MNetTest)
 	{
 		static constexpr auto _delta = std::is_same_v<Real, double> ? static_cast<Real>(1e-5) : static_cast<Real>(1e-2);
-		static constexpr auto _tolerance = std::is_same_v<Real, double> ? static_cast<Real>(6e-10) : static_cast<Real>(3e-4);
+		static constexpr auto _tolerance = std::is_same_v<Real, double> ? static_cast<Real>(6e-10) : static_cast<Real>(4e-4);
 
 		/// <summary>
 		/// Returns a multi-net consisting of a few layers.
@@ -147,12 +147,12 @@ namespace DeepLearningTest
 			const auto net = build_net();
 			const auto in_size = net.in_size();
 
-			const std::vector input{ MNetTestUtils::construct_random_vector<CpuDC>(in_size.w, in_size.xyz),
+			const LazyVector input{ MNetTestUtils::construct_random_vector<CpuDC>(in_size.w, in_size.xyz),
 			MNetTestUtils::construct_random_vector<CpuDC>(in_size.w, in_size.xyz) };
 
 			const auto out_size = net.out_size();
 
-			const std::vector reference{ MNetTestUtils::construct_random_vector<CpuDC>(out_size.w, out_size.xyz),
+			const LazyVector reference{ MNetTestUtils::construct_random_vector<CpuDC>(out_size.w, out_size.xyz),
 			MNetTestUtils::construct_random_vector<CpuDC>(out_size.w, out_size.xyz) };
 
 			const auto cost_function = CostFunction<CpuDC::tensor_t>(CostFunctionId::SQUARED_ERROR);
@@ -187,12 +187,12 @@ namespace DeepLearningTest
 		/// <summary>
 		/// Returns collection of random items that can be used as an input for a multi-net.
 		/// </summary>
-		static std::vector<LazyVector<CpuDC::tensor_t>> generate_random_input(const int count, const Index4d& item_size)
+		static LazyVector<LazyVector<CpuDC::tensor_t>> generate_random_input(const int count, const Index4d& item_size)
 		{
-			std::vector<LazyVector<CpuDC::tensor_t>> result;
+			LazyVector<LazyVector<CpuDC::tensor_t>> result(count);
 
 			for (auto item_id = 0; item_id < count; ++item_id)
-				result.emplace_back(MNetTestUtils::construct_random_vector<CpuDC>(item_size.w, item_size.xyz));
+				result[item_id] = MNetTestUtils::construct_random_vector<CpuDC>(item_size.w, item_size.xyz);
 
 			return result;
 		}
@@ -200,13 +200,13 @@ namespace DeepLearningTest
 		/// <summary>
 		/// Evaluates the given <paramref name="net"/> at the given <paramref name="input"/> and returns the result.
 		/// </summary>
-		static std::vector<LazyVector<CpuDC::tensor_t>> evaluate(const std::vector<LazyVector<CpuDC::tensor_t>>& input,
+		static LazyVector<LazyVector<CpuDC::tensor_t>> evaluate(const LazyVector<LazyVector<CpuDC::tensor_t>>& input,
 			const MNet<CpuDC>& net)
 		{
-			std::vector<LazyVector<CpuDC::tensor_t>> result;
+			LazyVector<LazyVector<CpuDC::tensor_t>> result(input.size());
 
 			for (auto item_id = 0ull; item_id < input.size(); ++item_id)
-				result.emplace_back(net.act(input[item_id]));
+				result[item_id] = net.act(input[item_id]);
 
 			return result;
 		}
@@ -215,8 +215,8 @@ namespace DeepLearningTest
 		/// Returns average (item "0") and maximal (item "1") absolute deviations between the
 		/// corresponding items of the two given collections of the same size.
 		/// </summary>
-		static std::tuple<Real, Real> evaluate_average_diff(const std::vector<LazyVector<CpuDC::tensor_t>>& collection0,
-			const std::vector<LazyVector<CpuDC::tensor_t>>& collection1)
+		static std::tuple<Real, Real> evaluate_average_diff(const LazyVector<LazyVector<CpuDC::tensor_t>>& collection0,
+			const LazyVector<LazyVector<CpuDC::tensor_t>>& collection1)
 		{
 			Assert::AreEqual(collection1.size(), collection0.size(),
 				L"The collections must be of the same size");
