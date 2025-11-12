@@ -170,31 +170,31 @@ namespace DeepLearning
 	template <class D>
 	void MNet<D>::learn(const LazyVector<LazyVector<typename D::tensor_t>>& input,
 		const LazyVector<LazyVector<typename D::tensor_t>>& reference,
-		const CostFunction<typename D::tensor_t>& cost_func, const Real learning_rate, Context& context)
+		const CostFunction<typename D::tensor_t>& cost_func, const Real learning_rate, const Real reg_factor, Context& context)
 	{
 		calc_gradient_sum(input, reference, cost_func, context);
 
 		const auto scale = - learning_rate / input.size();
-		update(context.gradients, scale);
+		update(context.gradients, scale, reg_factor);
 	}
 
 	template <class D>
 	void MNet<D>::learn(const LazyVector<LazyVector<typename D::tensor_t>>& input,
 		const LazyVector<LazyVector<typename D::tensor_t>>& reference,
-		const CostFunction<typename D::tensor_t>& cost_func, const Real learning_rate)
+		const CostFunction<typename D::tensor_t>& cost_func, const Real learning_rate, const Real reg_factor)
 	{
 		auto context = allocate_context();
-		learn(input, reference, cost_func, learning_rate, context);
+		learn(input, reference, cost_func, learning_rate, reg_factor, context);
 	}
 
 	template <class D>
-	void MNet<D>::update(const std::vector<MLayerGradient<D>>& increments, const Real learning_rate)
+	void MNet<D>::update(const std::vector<MLayerGradient<D>>& increments, const Real learning_rate, const Real reg_factor)
 	{
 		if (increments.size() != _layers.size())
 			throw std::exception("Invalid input.");
 
 		for (auto layer_id = 0ull; layer_id < _layers.size(); ++layer_id)
-			_layers[layer_id].layer().update(increments[layer_id], learning_rate);
+			_layers[layer_id].layer().update(increments[layer_id], learning_rate, reg_factor);
 	}
 
 	template <class D>

@@ -108,12 +108,15 @@ namespace DeepLearning
 
 	template <class D>
 	RMLayer<D>::RMLayer(const int rec_depth, const int in_sub_dim, const Index3d& out_sub_dim,
-		const InitializationStrategy init_strategy, ActivationFunctionId func_id) :
-		RMLayer({{1, 1, in_sub_dim}, rec_depth }, { out_sub_dim, rec_depth }, init_strategy, func_id) {}
+		const InitializationStrategy init_strategy, ActivationFunctionId func_id, Real gradient_clip_threshold,
+		Real weight_scaling_factor) :
+		RMLayer({{1, 1, in_sub_dim}, rec_depth }, { out_sub_dim, rec_depth }, init_strategy, func_id,
+			gradient_clip_threshold, weight_scaling_factor) {}
 
 	template <class D>
 	RMLayer<D>::RMLayer(const Index4d& in_size, const Index4d& out_size, const InitializationStrategy init_strategy,
-		ActivationFunctionId func_id) : _in_size{ in_size }, _out_size{out_size}
+		ActivationFunctionId func_id, Real gradient_clip_threshold, Real weight_scaling_factor) :
+		_in_size{ in_size }, _out_size{out_size}, _gradient_clip_threshold{ gradient_clip_threshold }
 	{
 		if (in_size.w != _out_size.w)
 			throw std::exception("Unsupported input-output dimensionality");
@@ -127,6 +130,7 @@ namespace DeepLearning
 
 		rec_weights().resize(out_sub_dim_lin, out_sub_dim_lin);
 		rec_weights().init(init_strategy, ran_gen_ptr);
+		rec_weights() *= weight_scaling_factor;
 
 		_biases.resize(out_sub_dim_lin);
 		_biases.init(FillRandomUniform, ran_gen_ptr);
@@ -226,12 +230,30 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	void RMLayer<D>::update(const MLayerGradient<D>& increment, const Real learning_rate)
+	void RMLayer<D>::update(const MLayerGradient<D>& increment, const Real learning_rate, const Real reg_factor)
 	{
+		// Apply gradient clipping if enabled
+		Real effective_learning_rate = learning_rate;
+		if (_gradient_clip_threshold > static_cast<Real>(0))
+		{
+			const Real grad_norm = increment.norm();
+			if (grad_norm > _gradient_clip_threshold)
+				effective_learning_rate *= _gradient_clip_threshold / grad_norm;
+		}
+
 		const auto& grad = increment[0];
-		_biases.add_scaled(grad.data[BIAS_GRAD_ID], learning_rate);
-		_weights[IN_W].add_scaled(grad.data[IN_W_GRAD_ID], learning_rate);
-		_weights[REC_W].add_scaled(grad.data[REC_W_GRAD_ID], learning_rate);
+		_biases.add_scaled(grad.data[BIAS_GRAD_ID], effective_learning_rate);
+
+		if (reg_factor <= 0)
+		{
+			_weights[IN_W].add_scaled(grad.data[IN_W_GRAD_ID], effective_learning_rate);
+			_weights[REC_W].add_scaled(grad.data[REC_W_GRAD_ID], effective_learning_rate);
+		} else
+		{
+			const auto scale_factor = static_cast<Real>(1.0) + reg_factor * effective_learning_rate;
+			_weights[IN_W].scale_and_add_scaled(scale_factor, grad.data[IN_W_GRAD_ID], effective_learning_rate);
+			_weights[REC_W].scale_and_add_scaled(scale_factor, grad.data[REC_W_GRAD_ID], effective_learning_rate);
+		}
 	}
 
 	template <class D>
@@ -244,7 +266,8 @@ namespace DeepLearning
 			throw std::exception("Unexpected version of an object");
 
 		msgpack::type::make_define_array(msg_pack_version, MSGPACK_BASE(AMLayer<D>),
-			_in_size, _out_size, _biases, _weights, _func_id).msgpack_unpack(msgpack_o);
+			_in_size, _out_size, _biases, _weights, _func_id, _gradient_clip_threshold).msgpack_unpack(msgpack_o);
+		set_func_id(_func_id);
 	}
 
 	template <class D>
@@ -252,7 +275,7 @@ namespace DeepLearning
 	void RMLayer<D>::msgpack_pack(Packer& msgpack_pk) const
 	{
 		msgpack::type::make_define_array(MSG_PACK_VER, MSGPACK_BASE(AMLayer<D>),
-			_in_size, _out_size, _biases, _weights, _func_id).msgpack_pack(msgpack_pk);
+			_in_size, _out_size, _biases, _weights, _func_id, _gradient_clip_threshold).msgpack_pack(msgpack_pk);
 	}
 
 	template<class D>
@@ -261,7 +284,8 @@ namespace DeepLearning
 		const auto other_layer_ptr = dynamic_cast<const RMLayer*>(&layer);
 		return other_layer_ptr != nullptr && AMLayer<D>::equal_hyperparams(layer)
 			&& _in_size == other_layer_ptr->_in_size && _out_size == other_layer_ptr->_out_size &&
-			_func_id == other_layer_ptr->_func_id;
+			_func_id == other_layer_ptr->_func_id &&
+			_gradient_clip_threshold == other_layer_ptr->_gradient_clip_threshold;
 	}
 
 	template<class D>

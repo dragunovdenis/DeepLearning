@@ -111,7 +111,7 @@ namespace DeepLearning
 		/// Updates weights of the current layer with the given <paramref name="increment"/>
 		/// multiplied by the given <paramref name="learning_rate"/>
 		/// </summary>
-		virtual void update(const MLayerGradient<D>& increment, const Real learning_rate) = 0;
+		virtual void update(const MLayerGradient<D>& increment, const Real learning_rate, const Real reg_factor) = 0;
 
 		/// <summary>
 		/// Resets random generator with the given seed.

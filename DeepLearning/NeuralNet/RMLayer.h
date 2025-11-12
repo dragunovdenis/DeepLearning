@@ -40,11 +40,11 @@ namespace DeepLearning
 		std::vector<typename D::matrix_t> _weights{2};
 
 		/// <summary>
-		/// Indices of "input" and "recursive" weight matrices in the collection of weights. 
+		/// Indices of "input" and "recursive" weight matrices in the collection of weights.
 		/// </summary>
 		static constexpr int IN_W = 0;
 		static constexpr int REC_W = 1;
-		static constexpr int MSG_PACK_VER = 1;
+		static constexpr int MSG_PACK_VER = 2;
 
 		Index4d _in_size{};
 		Index4d _out_size{};
@@ -103,6 +103,11 @@ namespace DeepLearning
 		ActivationFunctionId _func_id{ ActivationFunctionId::UNKNOWN };
 
 		/// <summary>
+		/// Gradient clipping threshold. Values <= 0 disable clipping. Default is 5.0.
+		/// </summary>
+		Real _gradient_clip_threshold{ static_cast<Real>(5.0) };
+
+		/// <summary>
 		/// Returns reference to an instance of activation function.
 		/// </summary>
 		const AFunction<typename D::tensor_t>& get_func() const;
@@ -148,8 +153,12 @@ namespace DeepLearning
 		/// <param name="out_sub_dim">3d shape of tensors in the output collection.</param>
 		/// <param name="init_strategy">Strategy used to fill weight during the initialization phase.</param>
 		/// <param name="func_id">Identifier of activation function.</param>
+		/// <param name="gradient_clip_threshold">Gradient clipping threshold (default 5.0, <= 0 disables).</param>
+		/// <param name="weight_scaling_factor">Scaling factor that will be applied to the recurrence weights
+		/// of the layer after their initialization. </param>
 		RMLayer(const int rec_depth, const int in_sub_dim, const Index3d& out_sub_dim,
-			const InitializationStrategy init_strategy, ActivationFunctionId func_id = ActivationFunctionId::TANH);
+			const InitializationStrategy init_strategy, ActivationFunctionId func_id = ActivationFunctionId::TANH,
+			Real gradient_clip_threshold = static_cast<Real>(5.0), Real weight_scaling_factor = static_cast<Real>(1.0));
 
 		/// <summary>
 		/// Constructor.
@@ -158,8 +167,12 @@ namespace DeepLearning
 		/// <param name="out_size">Dimensionality of the layer's output.</param>
 		/// <param name="init_strategy">Strategy used to fill weight during the initialization phase.</param>
 		/// <param name="func_id">Identifier of activation function.</param>
+		/// <param name="gradient_clip_threshold">Gradient clipping threshold (default 5.0, <= 0 disables).</param>
+		/// <param name="weight_scaling_factor">Scaling factor that will be applied to the recurrence weights
+		/// of the layer after their initialization. </param>
 		RMLayer(const Index4d& in_size, const Index4d& out_size,
-			const InitializationStrategy init_strategy, ActivationFunctionId func_id = ActivationFunctionId::TANH);
+			const InitializationStrategy init_strategy, ActivationFunctionId func_id = ActivationFunctionId::TANH,
+			Real gradient_clip_threshold = static_cast<Real>(5.0), Real weight_scaling_factor = static_cast<Real>(1.0));
 
 		/// <summary>
 		/// See the summary of the base class method.
@@ -187,7 +200,7 @@ namespace DeepLearning
 		/// <summary>
 		/// See the summary of the base class method.
 		/// </summary>
-		void update(const MLayerGradient<D>& increment, const Real learning_rate) override;
+		void update(const MLayerGradient<D>& increment, const Real learning_rate, const Real reg_factor) override;
 
 		/// <summary>
 		/// Custom "unpacking" method

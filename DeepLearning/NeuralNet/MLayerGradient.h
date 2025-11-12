@@ -74,6 +74,19 @@ namespace DeepLearning
 		}
 
 		/// <summary>
+		/// Returns L2 norm of the entire gradient across all parameters.
+		/// </summary>
+		Real norm() const
+		{
+			Real norm_squared = static_cast<Real>(0);
+			for (const auto& sub_grad : sub_gradients)
+				for (const auto& tensor : sub_grad.data)
+					norm_squared += tensor.sum_of_squares();
+
+			return std::sqrt(norm_squared);
+		}
+
+		/// <summary>
 		/// Default constructor.
 		/// </summary>
 		MLayerGradient() = default;

@@ -178,7 +178,7 @@ namespace DeepLearning
 		/// </summary>
 		void learn(const LazyVector<LazyVector<typename D::tensor_t>>& input,
 			const LazyVector<LazyVector<typename D::tensor_t>>& reference,
-			const CostFunction<typename D::tensor_t>& cost_func, const Real learning_rate, Context& context);
+			const CostFunction<typename D::tensor_t>& cost_func, const Real learning_rate, const Real reg_factor, Context& context);
 
 		/// <summary>
 		/// Performs weights adjustment based on the given <paramref name="input"/>,
@@ -186,13 +186,13 @@ namespace DeepLearning
 		/// </summary>
 		void learn(const LazyVector<LazyVector<typename D::tensor_t>>& input,
 			const LazyVector<LazyVector<typename D::tensor_t>>& reference,
-			const CostFunction<typename D::tensor_t>& cost_func, const Real learning_rate);
+			const CostFunction<typename D::tensor_t>& cost_func, const Real learning_rate, const Real reg_factor);
 
 		/// <summary>
 		/// Updates weights of all the layers according to the given gradient <paramref name="increments"/>
 		/// and <paramref name="learning_rate"/>.
 		/// </summary>
-		void update(const std::vector<MLayerGradient<D>>& increments, const Real learning_rate);
+		void update(const std::vector<MLayerGradient<D>>& increments, const Real learning_rate, const Real reg_factor);
 
 		/// <summary>
 		/// Returns number of multi-layers in the net.

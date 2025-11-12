@@ -123,13 +123,13 @@ namespace DeepLearningTest
 				zero_gradient_plus_delta[0].data[param_container_id][item_id] = _delta;
 
 				auto layer_plus_delta = layer;
-				layer_plus_delta.update(zero_gradient_plus_delta, static_cast<Real>(1));
+				layer_plus_delta.update(zero_gradient_plus_delta, static_cast<Real>(1), static_cast<Real>(0) /*reg factor*/);
 
 				LazyVector<CpuDC::tensor_t> output_plus_delta;
 				layer_plus_delta.act(input, output_plus_delta, nullptr);
 
 				auto layer_minus_delta = layer;
-				layer_minus_delta.update(zero_gradient_plus_delta, static_cast<Real>(-1));
+				layer_minus_delta.update(zero_gradient_plus_delta, static_cast<Real>(-1), static_cast<Real>(0) /*reg factor*/);
 
 				LazyVector<CpuDC::tensor_t> output_minus_delta;
 				layer_minus_delta.act(input, output_minus_delta, nullptr);
