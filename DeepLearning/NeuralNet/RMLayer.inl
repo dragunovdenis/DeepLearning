@@ -159,19 +159,21 @@ namespace DeepLearning
 	template<class D>
 	MLayerData<D> RMLayer<D>::allocate_trace_data() const
 	{
-		return MLayerData<D>(rec_depth());
+		return MLayerData<D>(std::max(rec_depth(), 0ll));
 	}
 
 	template <class D>
 	void RMLayer<D>::act(const IMLayerExchangeData<typename D::tensor_t>& input,
 		IMLayerExchangeData<typename D::tensor_t>& output, IMLayerTraceData<D>* const trace_data) const
 	{
-		if (input.size() != rec_depth() || (trace_data && trace_data->size() != rec_depth()))
+		const auto depth = rec_depth() <= 0 ? static_cast<long long>(input.size()) : rec_depth();
+
+		if (depth != input.size() || (trace_data && trace_data->size() != depth))
 			throw std::exception("Invalid input data");
 
-		output.resize(rec_depth());
+		output.resize(depth);
 
-		for (auto iter_id = 0; iter_id < rec_depth(); iter_id++)
+		for (auto iter_id = 0; iter_id < depth; iter_id++)
 		{
 			output[iter_id].resize(out_sub_dim());
 
@@ -190,12 +192,13 @@ namespace DeepLearning
 		IMLayerExchangeData<typename D::tensor_t>& out_input_grad, MLayerGradient<D>& out_layer_grad,
 		const bool evaluate_input_gradient) const
 	{
-		if (out_grad.size() != rec_depth() || output.size() != rec_depth() ||
-			processing_data.size() != rec_depth() || out_layer_grad.size() != 1)
+		const auto depth = rec_depth() <= 0 ? static_cast<long long>(output.size()) : rec_depth();
+
+		if (out_grad.size() != depth || output.size() != depth ||
+			processing_data.size() != depth || out_layer_grad.size() != 1)
 			throw std::exception("Invalid input.");
 
-		if (evaluate_input_gradient && out_input_grad.size() != rec_depth())
-			out_input_grad.resize(rec_depth());
+		if (evaluate_input_gradient) out_input_grad.resize(depth);
 
 		thread_local typename D::tensor_t aux{};
 		aux.resize(out_sub_dim());
@@ -208,7 +211,7 @@ namespace DeepLearning
 		auto& in_weights_grad = out_layer_grad[0].data[IN_W_GRAD_ID];
 		auto& rec_weights_grad = out_layer_grad[0].data[REC_W_GRAD_ID];
 
-		for (auto step_id = rec_depth() - 1; step_id >= 0; --step_id)
+		for (auto step_id = depth - 1; step_id >= 0; --step_id)
 		{
 			get_func().add_in_grad(out_grad[step_id], processing_data[step_id].Trace.Derivatives, aux);
 			biases_grad += aux;

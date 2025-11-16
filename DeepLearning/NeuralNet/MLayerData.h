@@ -105,6 +105,8 @@ namespace DeepLearning
 		/// </summary>
 		void assign_input(const IMLayerExchangeData<typename D::tensor_t>& source)
 		{
+			Data.resize(source.size());
+
 			for (auto item_id = 0ull; item_id < Data.size(); ++item_id)
 				Data[item_id].Input = source[item_id];
 		}

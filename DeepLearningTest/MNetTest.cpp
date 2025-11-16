@@ -285,79 +285,46 @@ namespace DeepLearningTest
 		TEST_METHOD(SineSequencePredictionTest)
 		{
 			Real max_error = 0;
-			for (auto i = 0; i < 1; i++)
-				max_error = std::max(RunSineSequenceTraining(), max_error);
+			Real average_error = 0;
+			auto iteration_count = 1;
+			for (auto i = 0; i < iteration_count; i++)
+			{
+				const auto error = RunSineSequenceTraining();
+				max_error = std::max(error, max_error);
+				average_error += error;
+			}
 
+			average_error /= iteration_count;
+
+			StandardTestUtils::Log("Average error", average_error);
+			StandardTestUtils::Log("Total iterations", iteration_count);
 			StandardTestUtils::LogAndAssertLessOrEqualTo<Real>(
-				"Maximum prediction error ", max_error, static_cast<Real>(1e-2));
+				"Maximum prediction error ", max_error, static_cast<Real>(4e-4));
 		}
 
 		/// <summary>
-		/// Returns maximal prediction error after training a deep RNN on a
-		/// sequences of equidistantly samples values of sine function.
+		/// Trains the given neural net according to the given set of parameters.
 		/// </summary>
-		Real RunSineSequenceTraining() const
+		static void train(MNet<CpuDC>& net, const int depth, const int batch_size, const Real delta_t,
+			const int learning_iterations, const Real step_begin, const Real step_end,
+			const std::function<LazyVector<LazyVector<CpuDC::tensor_t>>(int, int)>& allocator,
+			const std::function<void(Real, LazyVector<CpuDC::tensor_t>&, int)>& sequence_generator)
 		{
-			// Arrange: Build the network, allocate data structures
-			constexpr auto rec_depth = 13;  // Number of timesteps to look back
-			constexpr auto delta_t = static_cast<Real>(1.0/3.0);  // Sample interval (smaller = smoother)
-			constexpr auto gradient_clip_threshold = static_cast<Real>(5);
-			constexpr auto weight_scale_factor = static_cast<Real>(0.7);
 			constexpr auto two_pi = static_cast<Real>(3.141592 * 2);
-			constexpr auto batch_size = 7;
-			constexpr auto batch_sampling_step = two_pi / batch_size;
-
-			MNet<CpuDC> net{};
-			Index4d in_size({ 1, 1, 1 }, rec_depth);  // Single value per timestep
-			in_size = net.append_layer<RMLayer>(in_size, Index4d{ { 1, 1, 16 }, rec_depth },
-				FillRandomNormal, ActivationFunctionId::LINEAR, gradient_clip_threshold, weight_scale_factor);
-			in_size = net.append_layer<RMLayer>(in_size, Index4d{ { 1, 1, 16 }, rec_depth },
-				FillRandomNormal, ActivationFunctionId::LINEAR, gradient_clip_threshold, weight_scale_factor);
-			in_size = net.append_layer<RMLayer>(in_size, Index4d{ { 1, 1, 1 }, rec_depth },
-				FillRandomNormal, ActivationFunctionId::LINEAR, gradient_clip_threshold, weight_scale_factor);
-
-			auto func = [](const auto x) -> Real { return static_cast<Real>(std::sin(x)); };
-
-			// Lambda-function to generate sine sequence starting at the given  time "start_t"
-			auto generate_time_sequence = [&](const Real t_start, LazyVector<CpuDC::tensor_t>& out_result)
-				{
-					for (auto i = 0; i < rec_depth; ++i)
-						out_result[i](0, 0, 0) = func(t_start + i * delta_t);
-				};
-
-			// Lambda function to allocate input and output containers
-			auto allocate_lazy_container = [=]() -> LazyVector<LazyVector<CpuDC::tensor_t>>
-				{
-					LazyVector<LazyVector<CpuDC::tensor_t>> result(batch_size);
-
-					for (auto batch_item_id = 0; batch_item_id < batch_size; ++batch_item_id)
-					{
-						result[batch_item_id].resize(rec_depth);
-						auto& item = result[batch_item_id];
-						for (auto i = 0; i < rec_depth; ++i)
-							item[i].resize({ 1, 1, 1 });
-					}
-
-					return result;
-				};
-
+			const auto batch_sampling_step = two_pi / batch_size;
 			const auto cost_function = CostFunction<CpuDC::tensor_t>(CostFunctionId::SQUARED_ERROR);
 
-			// Act: Train the network
+			// Train the network
 			// Input: a sequence of sine values
 			// Output: a sine sequence shifted one step forward with respect to the input sequence
-			constexpr auto learning_iterations = 2000;
-			constexpr auto initial_learning_rate = static_cast<Real>(0.84);
-			constexpr auto final_learning_rate = static_cast<Real>(1e-1);
-			auto input_batch = allocate_lazy_container();
-			auto target_batch = allocate_lazy_container();
+			auto input_batch = allocator(depth, batch_size);
+			auto target_batch = allocator(depth, batch_size);
 
 			for (auto iter = 0; iter < learning_iterations; ++iter)
 			{
 				// Learning rate decay: linearly decrease from initial to final
 				const Real progress = static_cast<Real>(iter) / static_cast<Real>(learning_iterations);
-				Real learning_rate = initial_learning_rate * (static_cast<Real>(1) - progress) +
-				                            final_learning_rate * progress;
+				Real learning_rate = step_begin * (static_cast<Real>(1) - progress) + step_end * progress;
 
 				learning_rate *= learning_rate;
 				learning_rate *= learning_rate;
@@ -367,35 +334,92 @@ namespace DeepLearningTest
 				// Generate random training sequences
 				for (auto b = 0; b < batch_size; ++b)
 				{
-					generate_time_sequence(t_start, input_batch[b]);
-					generate_time_sequence(t_start + delta_t, target_batch[b]);
+					sequence_generator(t_start, input_batch[b], depth);
+					sequence_generator(t_start + delta_t, target_batch[b], depth);
 					t_start += batch_sampling_step;
 				}
 
 				net.learn(input_batch, target_batch, cost_function,
 					learning_rate, static_cast<Real>(0.1));
 			}
+		}
+
+		/// <summary>
+		/// Returns maximal prediction error after training a deep RNN on a
+		/// sequences of equidistantly samples values of sine function.
+		/// </summary>
+		Real RunSineSequenceTraining() const
+		{
+			// Arrange: Build the network, allocate data structures
+			constexpr auto delta_t = static_cast<Real>(1.0/3.0);  // Sample interval (smaller = smoother)
+			constexpr auto gradient_clip_threshold = static_cast<Real>(5);
+			constexpr auto weight_scale_factor = static_cast<Real>(0.7);
+			constexpr auto batch_size = 7;
+
+			MNet<CpuDC> net{};
+			Index4d in_size({ 1, 1, 1 }, -1);  // Single value per timestep
+			in_size = net.append_layer<RMLayer>(in_size, Index4d{ { 1, 1, 6 }, -1 },
+				FillRandomNormal, ActivationFunctionId::LINEAR, gradient_clip_threshold, weight_scale_factor);
+			in_size = net.append_layer<RMLayer>(in_size, Index4d{ { 1, 1, 1 }, -1 },
+				FillRandomNormal, ActivationFunctionId::LINEAR, gradient_clip_threshold, weight_scale_factor);
+
+			auto func = [](const auto x) -> Real { return static_cast<Real>(std::sin(x)); };
+
+			// Lambda-function to generate sine sequence starting at the given  time "start_t"
+			auto generate_time_sequence = [&](const Real t_start, LazyVector<CpuDC::tensor_t>& out_result, const int d)
+				{
+					for (auto i = 0; i < d; ++i)
+						out_result[i](0, 0, 0) = func(t_start + i * delta_t);
+				};
+
+			// Lambda-function to allocate input and output containers
+			auto allocate_lazy_container = [=](const int d_size, const int b_size) -> LazyVector<LazyVector<CpuDC::tensor_t>>
+				{
+					LazyVector<LazyVector<CpuDC::tensor_t>> result(b_size);
+
+					for (auto batch_item_id = 0; batch_item_id < b_size; ++batch_item_id)
+					{
+						result[batch_item_id].resize(d_size);
+						auto& item = result[batch_item_id];
+						for (auto i = 0; i < d_size; ++i)
+							item[i].resize({ 1, 1, 1 });
+					}
+
+					return result;
+				};
+
+			// Train
+			int local_depth;
+
+			for (local_depth = 5; local_depth < 60; local_depth += 5)
+				train(net, local_depth, batch_size, delta_t, 50,
+					static_cast<Real>(0.84), static_cast<Real>(0.84),
+					allocate_lazy_container, generate_time_sequence);
+
+			train(net, local_depth, batch_size, delta_t, 2000,
+				static_cast<Real>(0.84), static_cast<Real>(0.1),
+				allocate_lazy_container, generate_time_sequence);
 
 			// Evaluate approximation error at a predicted value
 			auto test_time = static_cast<Real>(1);
 			auto test_count = 20;
 			auto error_sum = static_cast<Real>(0);
+			auto input_data = allocate_lazy_container(local_depth, 1)[0];
 
 			for (auto test_id = 0; test_id < test_count; test_id++)
 			{
 				test_time += test_id * static_cast<Real>(0.1);
-				auto test_start_time = test_time - rec_depth * delta_t;
-				generate_time_sequence(test_start_time, input_batch[0]);
+				auto test_start_time = test_time - local_depth * delta_t;
+				generate_time_sequence(test_start_time, input_data, local_depth);
 
-				const auto prediction = net.act(input_batch[0]);
-				const auto predicted_value = prediction[rec_depth - 1](0, 0, 0);
+				const auto prediction = net.act(input_data);
+				const auto predicted_value = prediction[local_depth - 1](0, 0, 0);
 
 				const auto error = std::abs(predicted_value - func(test_time));
 				error_sum += error;
 			}
 
 			auto average_error = error_sum / test_count;
-			StandardTestUtils::Log("Average error after " + std::to_string(test_count) + " tests", average_error);
 
 			return average_error;
 		}
