@@ -17,6 +17,7 @@
 
 #pragma once
 #include <vector>
+#include <span>
 #include "IMLayerExchangeData.h"
 
 namespace DeepLearning
@@ -123,6 +124,17 @@ namespace DeepLearning
 				result += _data[item_id].sum();
 
 			return result;
+		}
+
+		/// <summary>
+		/// Returns read-only span-view onto the items of the vector with
+		/// <paramref name="skip_begin_count"/> items skipped from the beginning
+		/// of the vector and <paramref name="skip_end_count"/> items skipped from
+		/// the end of the vector.
+		/// </summary>
+		std::span<const T> to_span_read_only(const int skip_begin_count = 0, const int skip_end_count = 0) const
+		{
+			return std::span(begin() + skip_begin_count, end() - skip_end_count);
 		}
 
 		/// <summary>

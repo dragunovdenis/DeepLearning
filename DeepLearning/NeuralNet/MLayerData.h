@@ -103,7 +103,7 @@ namespace DeepLearning
 		/// It is a responsibility of the caller to ensure that the sizes of the
 		/// destination and source collections are equal.
 		/// </summary>
-		void assign_input(const IMLayerExchangeData<typename D::tensor_t>& source)
+		void assign_input(const std::span<const typename D::tensor_t>& source)
 		{
 			Data.resize(source.size());
 

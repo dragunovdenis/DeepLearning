@@ -140,6 +140,16 @@ namespace DeepLearningTest
 			Assert::IsTrue(net0 == net2, L"The nets are supposed to be equal");
 		}
 
+		/// <summary>
+		/// Returns a span-based representation of the given <paramref name="source"/> vector.
+		/// </summary>
+		static LazyVector<std::span<const CpuDC::tensor_t>> to_vector_of_spans(const LazyVector<LazyVector<CpuDC::tensor_t>>& source)
+		{
+			LazyVector<std::span<const CpuDC::tensor_t>> result(source.size());
+			std::ranges::transform(source, result.begin(), [](const auto& x) { return x.to_span_read_only(); });
+
+			return result;
+		}
 
 		TEST_METHOD(GradientSumTest)
 		{
@@ -147,13 +157,15 @@ namespace DeepLearningTest
 			const auto net = build_net();
 			const auto in_size = net.in_size();
 
-			const LazyVector input{ MNetTestUtils::construct_random_vector<CpuDC>(in_size.w, in_size.xyz),
+			const LazyVector input_raw{ MNetTestUtils::construct_random_vector<CpuDC>(in_size.w, in_size.xyz),
 			MNetTestUtils::construct_random_vector<CpuDC>(in_size.w, in_size.xyz) };
+			const auto input = to_vector_of_spans(input_raw);
 
 			const auto out_size = net.out_size();
 
-			const LazyVector reference{ MNetTestUtils::construct_random_vector<CpuDC>(out_size.w, out_size.xyz),
+			const LazyVector reference_raw{ MNetTestUtils::construct_random_vector<CpuDC>(out_size.w, out_size.xyz),
 			MNetTestUtils::construct_random_vector<CpuDC>(out_size.w, out_size.xyz) };
+			const auto reference = to_vector_of_spans(reference_raw);
 
 			const auto cost_function = CostFunction<CpuDC::tensor_t>(CostFunctionId::SQUARED_ERROR);
 
@@ -256,8 +268,10 @@ namespace DeepLearningTest
 
 			for (auto i = 0; i < learning_iterations; ++i)
 			{
-				const auto input = generate_random_input(10, in_size);
-				const auto reference = evaluate(input, ref_net);
+				const auto input_raw = generate_random_input(10, in_size);
+				const auto input = to_vector_of_spans(input_raw);
+				const auto reference_raw = evaluate(input_raw, ref_net);
+				const auto reference = to_vector_of_spans(reference_raw);
 
 				net.learn(input, reference, cost_function, learning_rate, static_cast<Real>(0) /*reg factor*/);
 			}
@@ -303,6 +317,33 @@ namespace DeepLearningTest
 		}
 
 		/// <summary>
+		/// Returns a span-based representation of the given <paramref name="source"/>
+		/// vector with the last item of each sub-vector being skipped.
+		/// </summary>
+		static LazyVector<std::span<const CpuDC::tensor_t>> to_vector_of_input_spans(const LazyVector<LazyVector<CpuDC::tensor_t>>& source)
+		{
+			LazyVector<std::span<const CpuDC::tensor_t>> result(source.size());
+			std::ranges::transform(source, result.begin(), [](const auto& x)
+				{ return x.to_span_read_only(0, 1); });
+
+			return result;
+		}
+
+		/// <summary>
+		/// Returns a span-based representation of the given <paramref name="source"/>
+		/// vector with the first item of each sub-vector being skipped.
+		/// </summary>
+		static LazyVector<std::span<const CpuDC::tensor_t>> to_vector_of_target_spans(const LazyVector<LazyVector<CpuDC::tensor_t>>& source)
+		{
+			LazyVector<std::span<const CpuDC::tensor_t>> result(source.size());
+			std::ranges::transform(source, result.begin(), [](const auto& x)
+				{ return x.to_span_read_only(1, 0); });
+
+			return result;
+		}
+
+
+		/// <summary>
 		/// Trains the given neural net according to the given set of parameters.
 		/// </summary>
 		static void train(MNet<CpuDC>& net, const int depth, const int batch_size, const Real delta_t,
@@ -317,8 +358,7 @@ namespace DeepLearningTest
 			// Train the network
 			// Input: a sequence of sine values
 			// Output: a sine sequence shifted one step forward with respect to the input sequence
-			auto input_batch = allocator(depth, batch_size);
-			auto target_batch = allocator(depth, batch_size);
+			auto batch = allocator(depth + 1, batch_size);
 
 			for (auto iter = 0; iter < learning_iterations; ++iter)
 			{
@@ -334,13 +374,15 @@ namespace DeepLearningTest
 				// Generate random training sequences
 				for (auto b = 0; b < batch_size; ++b)
 				{
-					sequence_generator(t_start, input_batch[b], depth);
-					sequence_generator(t_start + delta_t, target_batch[b], depth);
+					sequence_generator(t_start, batch[b], depth + 1);
 					t_start += batch_sampling_step;
 				}
 
-				net.learn(input_batch, target_batch, cost_function,
-					learning_rate, static_cast<Real>(0.1));
+				const auto input = to_vector_of_input_spans(batch);
+				const auto target = to_vector_of_target_spans(batch);
+
+				net.learn(input, target, cost_function,
+				          learning_rate, static_cast<Real>(0.1));
 			}
 		}
 

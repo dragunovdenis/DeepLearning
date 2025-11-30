@@ -20,6 +20,7 @@
 #include "MLayerHandle.h"
 #include "InOutMData.h"
 #include "MLayerData.h"
+#include <span>
 #include "../Math/LinAlg4d.h"
 #include "../Math/CostFunction.h"
 
@@ -84,7 +85,8 @@ namespace DeepLearning
 		/// to the given <paramref name="in_out"/> and <paramref name="reference"/>
 		/// </summary>
 		static void evaluate_cost_gradient_in_place(IMLayerExchangeData<typename D::tensor_t>& in_out,
-			const IMLayerExchangeData<typename D::tensor_t>& reference, const CostFunction<typename D::tensor_t>& cost_func);
+		                                            const std::span<const typename D::tensor_t>& reference,
+													const CostFunction<typename D::tensor_t>& cost_func);
 
 		/// <summary>
 		/// Fills the given gradient containers with zero values.
@@ -96,9 +98,9 @@ namespace DeepLearning
 		/// at the given <paramref name="input"/> - <paramref name="reference"/> pair and
 		/// adds the result to the corresponding container in <paramref name="context"/>.
 		/// </summary>
-		void add_gradient(const LazyVector<typename D::tensor_t>& input,
-			const LazyVector<typename D::tensor_t>& reference,
-			const CostFunction<typename D::tensor_t>& cost_func, Context& context) const;
+		void add_gradient(const std::span<const typename D::tensor_t>& input,
+		                  const std::span<const typename D::tensor_t>& reference,
+		                  const CostFunction<typename D::tensor_t>& cost_func, Context& context) const;
 
 		/// <summary>
 		/// Returns reference to a thread-local random number generator.
@@ -153,40 +155,41 @@ namespace DeepLearning
 		/// for each of the <paramref name="input"/> - <paramref name="reference"/> pairs.
 		/// The result is stored in the corresponding field of <paramref name="context"/>.
 		/// </summary>
-		void calc_gradient_sum(const LazyVector<LazyVector<typename D::tensor_t>>& input,
-			const LazyVector<LazyVector<typename D::tensor_t>>& reference,
-			const CostFunction<typename D::tensor_t>& cost_func, Context& context) const;
+		void calc_gradient_sum(const LazyVector<std::span<const typename D::tensor_t>>& input,
+		                       const LazyVector<std::span<const typename D::tensor_t>>& reference,
+		                       const CostFunction<typename D::tensor_t>& cost_func, Context& context) const;
 
 		/// <summary>
 		/// Calculates and returns sum of gradients of the neural net (with respect to its parameters) evaluated
 		/// for each of the <paramref name="input"/> - <paramref name="reference"/> pairs.
 		/// </summary>
-		std::vector<MLayerGradient<D>> calc_gradient_sum(const LazyVector<LazyVector<typename D::tensor_t>>& input,
-			const LazyVector<LazyVector<typename D::tensor_t>>& reference,
-			const CostFunction<typename D::tensor_t>& cost_func) const;
+		std::vector<MLayerGradient<D>> calc_gradient_sum(const LazyVector<std::span<const typename D::tensor_t>>& input,
+		                                                 const LazyVector<std::span<const typename D::tensor_t>>& reference,
+		                                                 const CostFunction<typename D::tensor_t>& cost_func) const;
 
 		/// <summary>
 		/// Returns gradient of the neural net calculated with for the given
 		/// <paramref name="input"/> - <paramref name="reference"/> pair.
 		/// </summary>
-		std::vector<MLayerGradient<D>> calc_gradient(const LazyVector<typename D::tensor_t>& input,
-			const LazyVector<typename D::tensor_t>& reference, const CostFunction<typename D::tensor_t>& cost_func) const;
+		std::vector<MLayerGradient<D>> calc_gradient(const std::span<const typename D::tensor_t>& input,
+		                                             const std::span<const typename D::tensor_t>& reference,
+		                                             const CostFunction<typename D::tensor_t>& cost_func) const;
 
 		/// <summary>
 		/// Performs a single weight adjustment iteration based on the given <paramref name="input"/>,
 		/// <paramref name="reference"/> and <paramref name="cost_func"/>
 		/// </summary>
-		void learn(const LazyVector<LazyVector<typename D::tensor_t>>& input,
-			const LazyVector<LazyVector<typename D::tensor_t>>& reference,
-			const CostFunction<typename D::tensor_t>& cost_func, const Real learning_rate, const Real reg_factor, Context& context);
+		void learn(const LazyVector<std::span<const typename D::tensor_t>>& input,
+		           const LazyVector<std::span<const typename D::tensor_t>>& reference,
+		           const CostFunction<typename D::tensor_t>& cost_func, const Real learning_rate, const Real reg_factor, Context& context);
 
 		/// <summary>
 		/// Performs weights adjustment based on the given <paramref name="input"/>,
 		/// <paramref name="reference"/> and <paramref name="cost_func"/>
 		/// </summary>
-		void learn(const LazyVector<LazyVector<typename D::tensor_t>>& input,
-			const LazyVector<LazyVector<typename D::tensor_t>>& reference,
-			const CostFunction<typename D::tensor_t>& cost_func, const Real learning_rate, const Real reg_factor);
+		void learn(const LazyVector<std::span<const typename D::tensor_t>>& input,
+		           const LazyVector<std::span<const typename D::tensor_t>>& reference,
+		           const CostFunction<typename D::tensor_t>& cost_func, const Real learning_rate, const Real reg_factor);
 
 		/// <summary>
 		/// Updates weights of all the layers according to the given gradient <paramref name="increments"/>
