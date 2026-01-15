@@ -229,6 +229,7 @@ namespace DeepLearning
 	{
 		ran_gen().seed(seed);
 		AMLayer<D>::reset_random_generator(seed);
+		ALayer<D>::reset_random_generator(seed);
 	}
 
 	template <class D>
@@ -236,6 +237,7 @@ namespace DeepLearning
 	{
 		ran_gen().seed(std::random_device{}());
 		AMLayer<D>::reset_random_generator();
+		ALayer<D>::reset_random_generator();
 	}
 
 	template <class D>

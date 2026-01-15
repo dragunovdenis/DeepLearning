@@ -17,7 +17,6 @@
 
 #pragma once
 #include "../Math/Vector.h"
-#include "../Math/Matrix.h"
 #include "../Math/LinAlg3d.h"
 #include "ALayer.h"
 #include <msgpack.hpp>

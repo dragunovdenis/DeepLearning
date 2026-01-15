@@ -24,8 +24,9 @@ namespace DeepLearning
 	{
 		switch (type_id)
 		{
-			case MLayerTypeId::RECURRENT: return "RECURRENT";
-			default:
+		case MLayerTypeId::RECURRENT: return "RECURRENT";
+		case MLayerTypeId::UNI_FULLY_CONNECTED: return "UNI_FULLY_CONNECTED";
+		default:
 				return "UNKNOWN";
 		}
 	}
@@ -35,7 +36,7 @@ namespace DeepLearning
 		const auto str_normalized = Utils::normalize_string(str);
 
 		for (unsigned int id = static_cast<unsigned int>(MLayerTypeId::RECURRENT);
-			id <= static_cast<unsigned int>(MLayerTypeId::RECURRENT); id++)
+			id <= static_cast<unsigned int>(MLayerTypeId::UNI_FULLY_CONNECTED); id++)
 		{
 			if (to_string(static_cast<MLayerTypeId>(id)) == str_normalized)
 				return static_cast<MLayerTypeId>(id);

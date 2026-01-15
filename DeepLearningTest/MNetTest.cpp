@@ -35,23 +35,27 @@ namespace DeepLearningTest
 		/// <summary>
 		/// Returns a multi-net consisting of a few layers.
 		/// </summary>
-		static MNet<CpuDC> build_net(const bool single_layer = false)
+		static MNet<CpuDC> build_net(const bool tiny_net = false)
 		{
 			constexpr auto rec_depth = 5;
-			constexpr auto in_size_plain = 10;
+			constexpr auto in_size_plain = 3;
 			Index4d in_size({ 1, 1, in_size_plain }, rec_depth);
 
 			// Construct net with two layers.
 			MNet<CpuDC> net{};
-			in_size = net.append_layer<RMLayer>(in_size, Index4d{ { 1, 1, 7 }, rec_depth },
-				FillRandomNormal, ActivationFunctionId::SIGMOID);
+			in_size = net.append_layer<RMLayer>(in_size, Index4d{ { 1, 1, 2 }, rec_depth },
+				FillRandomNormal, ActivationFunctionId::TANH);
+			in_size = net.append_layer<UNMLayer>(in_size, Index4d{ { 1, 1, 3 }, rec_depth },
+				ActivationFunctionId::SIGMOID);
 
-			if (!single_layer)
+			if (!tiny_net)
 			{
 				in_size = net.append_layer<RMLayer>(in_size, Index4d{ { 1, 1, 11 }, rec_depth },
 					FillRandomNormal, ActivationFunctionId::SIGMOID);
 				in_size = net.append_layer<RMLayer>(in_size, Index4d{ { 1, 1, 9 }, rec_depth },
 					FillRandomNormal, ActivationFunctionId::SIGMOID);
+				in_size = net.append_layer<UNMLayer>(in_size, Index4d{ { 2, 2, 2 }, rec_depth },
+					ActivationFunctionId::SOFTMAX);
 			}
 
 			return net;
@@ -79,6 +83,12 @@ namespace DeepLearningTest
 
 			for (auto layer_id = 0; layer_id < net.layer_count(); ++layer_id)
 			{
+				if (gradients[layer_id][0].data.empty())
+					throw std::exception("Gradient container can't be empty");
+
+				if (param_container_id >= gradients[layer_id][0].data.size())
+					continue;
+
 				const auto grad_container = gradients[layer_id][0].data[param_container_id];
 				auto max_gradient_diff = static_cast<Real>(0);
 
@@ -250,8 +260,8 @@ namespace DeepLearningTest
 		{
 			// Arrange
 			MNet<CpuDC>::reset_random_generator(0);
-			const auto ref_net = build_net(true /*single_layer*/);
-			auto net = build_net(true /*single_layer*/);
+			const auto ref_net = build_net(true /*tiny net*/);
+			auto net = build_net(true /*tiny net*/);
 			const auto in_size = net.in_size();
 			const auto cost_function = CostFunction<CpuDC::tensor_t>(CostFunctionId::CROSS_ENTROPY);
 
@@ -259,15 +269,19 @@ namespace DeepLearningTest
 			const auto check_reference = evaluate(check_input, ref_net);
 
 			const auto [init_average_diff, init_max_diff] = evaluate_average_diff(check_reference, evaluate(check_input, net));
-			Assert::IsTrue(init_average_diff > static_cast<Real>(0.5), L"Too low initial difference.");
+			Assert::IsTrue(init_average_diff > static_cast<Real>(0.3), L"Too low initial difference.");
 
 			// Act
-			auto learning_rate = static_cast<Real>(4e-1);
+			constexpr auto step_begin = static_cast<Real>(1);
+			constexpr auto step_end = static_cast<Real>(5e-1);
 			constexpr auto learning_iterations = 10000;
 			constexpr auto tolerance = std::is_same_v<Real, double> ? static_cast<Real>(1e-10) : static_cast<Real>(1e-6);
 
-			for (auto i = 0; i < learning_iterations; ++i)
+			for (auto iter = 0; iter < learning_iterations; ++iter)
 			{
+				const auto progress = static_cast<Real>(iter) / static_cast<Real>(learning_iterations);
+				auto learning_rate = step_begin * (static_cast<Real>(1) - progress) + step_end * progress;
+
 				const auto input_raw = generate_random_input(10, in_size);
 				const auto input = to_vector_of_spans(input_raw);
 				const auto reference_raw = evaluate(input_raw, ref_net);
@@ -341,7 +355,6 @@ namespace DeepLearningTest
 
 			return result;
 		}
-
 
 		/// <summary>
 		/// Trains the given neural net according to the given set of parameters.

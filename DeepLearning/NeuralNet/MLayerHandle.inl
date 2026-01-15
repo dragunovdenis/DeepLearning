@@ -17,6 +17,7 @@
 
 #pragma once
 #include "RMLayer.h"
+#include "UMLayer.h"
 #include "MLayerHandle.h"
 #include <exception>
 
@@ -33,6 +34,9 @@ namespace DeepLearning
 		if (_layer_id == RMLayer<D>::ID())
 		{
 			_layer_ptr = std::make_unique<RMLayer<D>>(dynamic_cast<const RMLayer<D>&>(handle.layer()));
+		} else if (_layer_id == UNMLayer<D>::ID())
+		{
+			_layer_ptr = std::make_unique<UNMLayer<D>>(dynamic_cast<const UNMLayer<D>&>(handle.layer()));
 		}
 		else throw std::exception("Unsupported layer type ID");
 	}
@@ -50,6 +54,13 @@ namespace DeepLearning
 			msgpack::type::make_define_array(_layer_id, proxy).msgpack_unpack(msgpack_o);
 			_layer_ptr = std::make_unique<decltype(proxy)>(std::move(proxy));
 			return;
+		} else if (_layer_id == UNMLayer<D>::ID())
+		{
+			auto proxy = UNMLayer<D>();
+			//Read once again, but this time we read the instance of the layer as well
+			msgpack::type::make_define_array(_layer_id, proxy).msgpack_unpack(msgpack_o);
+			_layer_ptr = std::make_unique<decltype(proxy)>(std::move(proxy));
+			return;
 		}
 
 		throw std::exception("Not implemented");
@@ -62,6 +73,11 @@ namespace DeepLearning
 		if (_layer_id == RMLayer<D>::ID())
 		{
 			const auto& layer_ref_casted = dynamic_cast<const RMLayer<D>&>(layer());
+			msgpack::type::make_define_array(_layer_id, layer_ref_casted).msgpack_pack(msgpack_pk);
+			return;
+		} else if (_layer_id == UNMLayer<D>::ID())
+		{
+			const auto& layer_ref_casted = dynamic_cast<const UNMLayer<D>&>(layer());
 			msgpack::type::make_define_array(_layer_id, layer_ref_casted).msgpack_pack(msgpack_pk);
 			return;
 		}

@@ -1,4 +1,4 @@
-//Copyright (c) 2024 Denys Dragunov, dragunovdenis@gmail.com
+//Copyright (c) 2026 Denys Dragunov, dragunovdenis@gmail.com
 //Permission is hereby granted, free of charge, to any person obtaining a copy
 //of this software and associated documentation files(the "Software"), to deal
 //in the Software without restriction, including without limitation the rights
@@ -16,7 +16,8 @@
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "CppUnitTest.h"
-#include <NeuralNet/RMLayer.h>
+#include <NeuralNet/UMLayer.h>
+#include <NeuralNet/NLayer.h>
 #include "StandardTestUtils.h"
 #include <NeuralNet/MLayerHandle.h>
 #include "MNetTestUtils.h"
@@ -26,21 +27,20 @@ using namespace DeepLearning;
 
 namespace DeepLearningTest
 {
-	TEST_CLASS(RMLayerTest)
+	TEST_CLASS(UMLayerTest)
 	{
 		static constexpr auto _delta = std::is_same_v<Real, double> ? static_cast<Real>(1e-5) : static_cast<Real>(1e-2);
 		static constexpr auto _tolerance = std::is_same_v<Real, double> ? static_cast<Real>(6e-10) : static_cast<Real>(3e-4);
 
 		/// <summary>
-		/// Instantiates a "standard" instance of the RMLayer for testing purposes.
+		/// Instantiates a "standard" instance of the UMLayer for testing purposes.
 		/// </summary>
-		static RMLayer<CpuDC> instantiate_layer()
+		static UNMLayer<CpuDC> instantiate_layer()
 		{
-			constexpr auto rec_depth = 5;
-			constexpr auto in_size_plain = 10;
-			const Index3d out_item_size(1, 1, 8);
-			return RMLayer<CpuDC>(rec_depth, in_size_plain, out_item_size,
-				FillRandomNormal, ActivationFunctionId::SIGMOID);
+			constexpr auto depth = 5;
+			const Index4d in_size = {{2, 2, 2,}, depth};
+			const Index4d out_size = { {2, 1, 5}, depth };
+			return UNMLayer<CpuDC>(in_size, out_size, ActivationFunctionId::SIGMOID);
 		}
 
 		TEST_METHOD(InputGradientTest)
@@ -60,29 +60,22 @@ namespace DeepLearningTest
 
 		TEST_METHOD(BiasesGradientTest)
 		{
-			run_parameter_gradient_test(RMLayer<CpuDC>::BIAS_GRAD_ID);
+			run_parameter_gradient_test(0);
 		}
 
-		TEST_METHOD(InWeightGradientTest)
+		TEST_METHOD(WeightGradientTest)
 		{
-			run_parameter_gradient_test(RMLayer<CpuDC>::IN_W_GRAD_ID);
-		}
-
-		TEST_METHOD(RecWeightGradientTest)
-		{
-			run_parameter_gradient_test(RMLayer<CpuDC>::REC_W_GRAD_ID);
+			run_parameter_gradient_test(1);
 		}
 
 		TEST_METHOD(SerializationTest)
 		{
 			// Arrange
-			const Index4d in_size{ {6, 9, 7}, 10 };
-			const Index4d out_size{ {8, 11, 5}, 10 };
-			const RMLayer<CpuDC> layer(in_size, out_size, FillRandomNormal, ActivationFunctionId::SIGMOID);
+			const auto layer = instantiate_layer();
 
 			// Act 
 			const auto msg = MsgPack::pack(layer);
-			const auto layer_unpacked = MsgPack::unpack<RMLayer<CpuDC>>(msg);
+			const auto layer_unpacked = MsgPack::unpack<UNMLayer<CpuDC>>(msg);
 
 			//Assert
 			Assert::IsTrue(layer.equal(layer_unpacked), L"Original and restored layers are different");
@@ -91,16 +84,17 @@ namespace DeepLearningTest
 		TEST_METHOD(HandleSerializationTest)
 		{
 			// Arrange
-			const Index4d in_size{ {6, 9, 7}, 10 };
-			const Index4d out_size{ {8, 11, 5}, 10 };
-			const auto layer_handle = MLayerHandle<CpuDC>::make<RMLayer>(in_size, out_size, FillRandomNormal, ActivationFunctionId::SIGMOID);
+			constexpr auto depth = 5;
+			const Index4d in_size = { {2, 3, 7,}, depth };
+			const Index4d out_size = { {5, 12, 4}, depth };
+			const auto layer_handle = MLayerHandle<CpuDC>::make<UNMLayer>(in_size,
+				out_size, ActivationFunctionId::TANH);
 
 			// Act
 			const auto msg = MsgPack::pack(layer_handle);
 			const auto layer_handle_unpacked = MsgPack::unpack<MLayerHandle<CpuDC>>(msg);
 
 			// Assert
-
 			Assert::IsTrue(layer_handle == layer_handle_unpacked, L"Original and restored layers are different");
 		}
 	};

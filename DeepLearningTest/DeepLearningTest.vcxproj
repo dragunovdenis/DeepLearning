@@ -320,6 +320,7 @@
     <ClCompile Include="RandomGeneratorTest.cpp" />
     <ClCompile Include="RMLayerTest.cpp" />
     <ClCompile Include="TensorTest.cpp" />
+    <ClCompile Include="UMLayerTest.cpp" />
     <ClCompile Include="UtilsTest.cpp" />
     <ClCompile Include="VectorNdTest.cpp" />
   </ItemGroup>

@@ -300,6 +300,7 @@
     <ClInclude Include="NeuralNet\NLayer.h" />
     <ClInclude Include="NeuralNet\PLayer.h" />
     <ClInclude Include="NeuralNet\RMLayer.h" />
+    <ClInclude Include="NeuralNet\UMLayer.h" />
     <ClInclude Include="RandomGenerator.h" />
     <ClInclude Include="StopWatch.h" />
     <ClInclude Include="ThirdParty\BitmapUtils.h" />
@@ -351,6 +352,7 @@
     <None Include="NeuralNet\MLayerHandle.inl" />
     <None Include="NeuralNet\MNet.inl" />
     <None Include="NeuralNet\RMLayer.inl" />
+    <None Include="NeuralNet\UMLayer.inl" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

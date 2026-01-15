@@ -27,7 +27,8 @@ namespace DeepLearning
 	enum class MLayerTypeId : int
 	{
 		UNKNOWN = 0,
-		RECURRENT = 1
+		RECURRENT = 1,
+		UNI_FULLY_CONNECTED = 2,
 	};
 
 	/// <summary>
