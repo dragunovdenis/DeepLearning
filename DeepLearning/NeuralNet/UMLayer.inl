@@ -68,8 +68,6 @@ namespace DeepLearning
 	template <class D, template<class> class L>
 	void UMLayer<D, L>::update(const MLayerGradient<D>& increment, const Real learning_rate, const Real reg_factor)
 	{
-		const auto check = increment.norm();
-
 		_core.update(increment[0], learning_rate, reg_factor);
 	}
 
