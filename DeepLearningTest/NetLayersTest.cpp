@@ -27,7 +27,7 @@
 #include <algorithm>
 #include <random>
 #include "StandardTestUtils.h"
-#include <NeuralNet/DataContextCuda.h>
+#include "NetLayersTestUtils.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;
@@ -38,28 +38,6 @@ namespace DeepLearningTest
 	{
 
 		/// <summary>
-		/// Generic method to construct a "standard" CLayer for tests (generic version).
-		/// </summary>
-		template <class D>
-		static CLayer<D> CreateCLayer(const ActivationFunctionId activation)
-		{
-			const auto input_dim = Index3d(5, 13, 17);
-			const auto filter_window = Index2d(3);
-			constexpr auto filters_count = 7;
-			const auto paddings = Index3d(0, 3, 6);
-			const auto strides = Index3d(2);
-			return CLayer<D>(input_dim, filter_window, filters_count, activation, paddings, strides);
-		}
-
-		/// <summary>
-		/// Returns a "standard" CLayer instance to be used in testing (CUDA version)
-		/// </summary>
-		static CLayer<GpuDC> CreateCudaCLayer(const ActivationFunctionId activation = ActivationFunctionId::SIGMOID)
-		{
-			return CreateCLayer<GpuDC>(activation);
-		}
-
-		/// <summary>
 		/// Returns a "standard" CLayer instance to be used in testing
 		/// </summary>
 		static CLayer<CpuDC> CreateCpuCLayer(const ActivationFunctionId activation = ActivationFunctionId::SIGMOID)
@@ -68,49 +46,11 @@ namespace DeepLearningTest
 		}
 
 		/// <summary>
-		/// Returns a "standard" PLayer instance to be used in testing (generic version)
-		/// </summary>
-		template <class D>
-		static PLayer<D> CreatePLayer(const PoolTypeId pool_oper_id)
-		{
-			const auto input_dim = Index3d(5, 10, 7);
-			const auto filter_window = Index2d(3, 4);
-			return PLayer<D>(input_dim, filter_window, pool_oper_id);
-		}
-
-		/// <summary>
-		/// Returns a "standard" PLayer instance to be used in testing (CUDA version)
-		/// </summary>
-		static PLayer<GpuDC> CreateCudaPLayer(const PoolTypeId pool_oper_id)
-		{
-			return CreatePLayer<GpuDC>(pool_oper_id);
-		}
-
-		/// <summary>
 		/// Returns a "standard" PLayer instance to be used in testing
 		/// </summary>
 		static PLayer<CpuDC> CreateCpuPLayer(const PoolTypeId pool_oper_id = PoolTypeId::MAX)
 		{
 			return CreatePLayer<CpuDC>(pool_oper_id);
-		}
-
-		/// <summary>
-		/// Returns a "standard" NLayer instance to be used in testing (generic version)
-		/// </summary>
-		template <class D>
-		static NLayer<D> CreateNLayer(const ActivationFunctionId activation_func_id)
-		{
-			const auto input_dim = 10;
-			const auto output_dim = 23;
-			return NLayer<D>(input_dim, output_dim, activation_func_id);
-		}
-
-		/// <summary>
-		/// Returns a "standard" NLayer instance to be used in testing (CUDA version)
-		/// </summary>
-		static NLayer<GpuDC> CreateCudaNLayer(const ActivationFunctionId activation_func_id = ActivationFunctionId::SIGMOID)
-		{
-			return CreateNLayer<GpuDC>(activation_func_id);
 		}
 
 		/// <summary>
@@ -125,9 +65,9 @@ namespace DeepLearningTest
 		/// General method to exercise back-propagation algorithm (for a single neural layer)
 		/// in the part of calculating derivatives with respect to the input 
 		/// </summary>
-		void RunGeneralDerivativeWithRespectToInputValuesTest(const ALayer<CpuDC>& nl, const CostFunctionId cost_function_id, const Real& tolerance,
-			const Real& delta = std::is_same_v<Real, double> ? Real(1e-5) : Real(1e-3),
-			const std::optional<Tensor>& input_op = std::nullopt)
+		static void RunGeneralDerivativeWithRespectToInputValuesTest(const ALayer<CpuDC>& nl, const CostFunctionId cost_function_id, const Real& tolerance,
+																			 const Real& delta = std::is_same_v<Real, double> ? Real(1e-5) : Real(1e-3),
+																			 const std::optional<Tensor>& input_op = std::nullopt)
 		{
 			const auto input = input_op.has_value() ? input_op.value() : Tensor(nl.in_size(), -1, 1);
 			const auto reference = Tensor(nl.out_size(), -1, 1);;
@@ -261,45 +201,10 @@ namespace DeepLearningTest
 		}
 
 		/// <summary>
-		/// General method to test gradient with scaling factor calculation
-		/// </summary>
-		template <template <typename> class L, class D>
-		void RunGeneralGradientWithScalingTest(const L<D>& nl)
-		{
-			const typename D::tensor_t input(nl.in_size(), static_cast<Real>(-1), static_cast<Real>(1));
-			typename D::tensor_t input_grad_result(nl.in_size(), /*fill zeros*/ true);
-			auto layer_data = LayerData<D>(input);
-			LayerGradient<D> gradient_container;
-			nl.allocate(gradient_container, /*fill zeros*/ false);
-
-			for (auto& gradient_item : gradient_container.data)
-				gradient_item.standard_random_fill();
-
-			const auto gradient_container_input = gradient_container;
-			const auto gradient_scale_factor = Utils::get_random(-1, 1);
-
-			//Act
-			const auto output = nl.act(layer_data.Input, &layer_data.Trace);
-			nl.backpropagate(output, layer_data, input_grad_result, gradient_container,
-				/*evaluate_input_gradient*/ true, gradient_scale_factor);
-
-			// Assert
-			const auto [reference_input_grad_result, reference_layer_grad_result] = nl.backpropagate(output, layer_data);
-			const auto diff = (gradient_container_input * gradient_scale_factor +
-				reference_layer_grad_result - gradient_container).max_abs();
-			Logger::WriteMessage((std::string("Gradient discrepancy = ") + Utils::to_string(diff) + '\n').c_str());
-			Assert::IsTrue(diff < 10 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference");
-			const auto input_grad_diff = (reference_input_grad_result - input_grad_result).max_abs();
-			Logger::WriteMessage((std::string("Input gradient discrepancy = ") + Utils::to_string(input_grad_diff) + '\n').c_str());
-			Assert::IsTrue(input_grad_diff < 10 * std::numeric_limits<Real>::epsilon(),
-				L"Input gradient must not be affected by scaling factor");
-		}
-
-		/// <summary>
 		/// General method to exercise back-propagation algorithm (for a single neural layer)
-		/// in the part of calculating derivatives with respect to the input 
+		/// in the part of calculating derivatives with respect to the input
 		/// </summary>
-		void CheckDerivativeWithRespectToInputValuesCalculation(const ActivationFunctionId activation_func_id, const CostFunctionId cost_function_id)
+		static void CheckDerivativeWithRespectToInputValuesCalculation(const ActivationFunctionId activation_func_id, const CostFunctionId cost_function_id)
 		{
 			const auto nl = CreateCpuNLayer(activation_func_id);
 			RunGeneralDerivativeWithRespectToInputValuesTest(nl, cost_function_id, (std::is_same_v<Real, double> ? Real(2e-9) : Real(7.0e-3)));
@@ -315,112 +220,6 @@ namespace DeepLearningTest
 			RunGeneralDerivativeWithRespectToWeightsAndBiasesTest(nl, cost_function_id,
 				(std::is_same_v<Real, double> ? Real(8e-10) : Real(3.5e-3)),
 				(std::is_same_v<Real, double> ? Real(7e-10) : Real(3e-3)));
-		}
-
-		/// <summary>
-		/// Returns L-infinity norm of the difference between the given 4D tensors
-		/// </summary>
-		static Real max_abs(const std::vector<Tensor>& v1, const std::vector<CudaTensor>& v2, const std::size_t skip_count)
-		{
-			if (v1.size() != v2.size())
-				throw std::exception("The input vectors must be of the same size");
-
-			auto result = Real(0);
-
-			for (auto tensor_id = skip_count; tensor_id < v1.size(); tensor_id++)
-				result = std::max(result, (v1[tensor_id] - v2[tensor_id].to_host()).max_abs());
-
-			return result;
-		}
-
-		/// <summary>
-		/// General method to compare CUDA accelerated NLayer implementation with the "usual" one
-		/// </summary>
-		template <template<class> class L>
-		void LayerCudaSupportTest(const std::function<L<GpuDC>()> layer_factory)
-		{
-			//Arrange
-			const auto nl = layer_factory();
-			const auto input = CudaTensor(nl.in_size(), -1, 1);
-			const auto out_gradient = CudaTensor(nl.out_size(), -1, 1);
-			LayerData<GpuDC> layer_data(input);
-			Assert::IsTrue(input.max_abs() > 0 && out_gradient.max_abs() > 0, L"Input tensors are supposed to be nonzero");
-
-			//Act
-			const auto output = nl.act(layer_data.Input, &layer_data.Trace);
-			const auto [in_gradient, layer_gradient] = nl.backpropagate(out_gradient, layer_data, true);
-
-			//Assert
-			Assert::IsTrue(output.max_abs() > 0 && in_gradient.max_abs() > 0, L"Output tensors are supposed to be nonzero");//A sanity check
-			const auto nl_host = nl.template convert<CpuDC>().template convert<GpuDC>().template convert<CpuDC>();//involve "to_device" into the testing as well
-			const auto input_host = input.to_host();
-			const auto out_gradient_host = out_gradient.to_host();
-			LayerData<CpuDC> layer_data_host(input_host);
-
-			const auto output_host = nl_host.act(layer_data_host.Input, &layer_data_host.Trace);
-			const auto [in_gradient_host, layer_gradient_host] = nl_host.backpropagate(out_gradient_host, layer_data_host, true);
-
-			const auto output_diff = (output_host - output.to_host()).max_abs();
-			StandardTestUtils::LogAndAssertLessOrEqualTo("output_diff", output_diff, 10* std::numeric_limits<Real>::epsilon());
-
-			const auto in_gradient_diff = (in_gradient_host - in_gradient.to_host()).max_abs();
-			StandardTestUtils::LogAndAssertLessOrEqualTo("in_gradient_diff", in_gradient_diff, 10 * std::numeric_limits<Real>::epsilon());
-
-			if (!layer_gradient_host.empty() || !layer_gradient.empty())
-			{
-				const auto biases_gradient_diff = (layer_gradient_host.data[0] - layer_gradient.data[0].to_host()).max_abs();
-				StandardTestUtils::LogAndAssertLessOrEqualTo("biases_gradient_diff", biases_gradient_diff, 10 * std::numeric_limits<Real>::epsilon());
-			}
-
-			const auto weights_gradient_diff = max_abs(layer_gradient_host.data, layer_gradient.data, /*skip count*/ 1);
-			StandardTestUtils::LogAndAssertLessOrEqualTo("weights_gradient_diff", weights_gradient_diff, 10 * std::numeric_limits<Real>::epsilon());
-
-			const auto& layer_trace = layer_data.Trace;
-			const auto& layer_trace_host = layer_data_host.Trace;
-
-			if (!layer_trace_host.Derivatives.empty() || !layer_trace.Derivatives.empty())
-			{
-				const auto deriv_diff = (layer_trace_host.Derivatives - layer_trace.Derivatives.to_host()).max_abs();
-				StandardTestUtils::LogAndAssertLessOrEqualTo("deriv_diff", deriv_diff, 50 * std::numeric_limits<Real>::epsilon());
-			}
-
-			const auto indices_are_equal = layer_trace_host.IndexMapping == layer_trace.IndexMapping.to_stdvector();
-			StandardTestUtils::Log("indices_are_equal", indices_are_equal);
-			Assert::IsTrue(indices_are_equal, L"Arrays of indices are not equal");
-
-			const auto sum_of_weight_squares_diff = std::abs(nl.squared_weights_sum() - nl_host.squared_weights_sum());
-			StandardTestUtils::LogAndAssertLessOrEqualTo("sum_of_weight_squares_diff", sum_of_weight_squares_diff,
-				1000 * std::numeric_limits<Real>::epsilon());
-		}
-
-		TEST_METHOD(NLayerSigmoidCudaSupportTest)
-		{
-			LayerCudaSupportTest<NLayer>([]() { return CreateCudaNLayer(ActivationFunctionId::SIGMOID); });
-		}
-
-		TEST_METHOD(NLayerSoftMaxCudaSupportTest)
-		{
-			LayerCudaSupportTest<NLayer>([]() { return CreateCudaNLayer(ActivationFunctionId::SOFTMAX); });
-		}
-
-		TEST_METHOD(CLayerSigmoidCudaSupportTest)
-		{
-			LayerCudaSupportTest<CLayer>([]() { return CreateCudaCLayer(ActivationFunctionId::SIGMOID); });
-		}
-
-		TEST_METHOD(CLayerSoftMaxCudaSupportTest)
-		{
-			LayerCudaSupportTest<CLayer>([]() { return CreateCudaCLayer(ActivationFunctionId::SOFTMAX); });
-		}
-
-		TEST_METHOD(PLayerMaxCudaSupportTest)
-		{
-			LayerCudaSupportTest<PLayer>([]() { return CreateCudaPLayer(PoolTypeId::MAX); });
-		}
-
-		TEST_METHOD(PLayerAverageCudaSupportTest)
-		{
-			LayerCudaSupportTest<PLayer>([]() { return CreateCudaPLayer(PoolTypeId::AVERAGE); });
 		}
 
 		TEST_METHOD(NLayerDerivativeWithRespectToInputValuesCalculationSquaredErrorTest)
@@ -448,19 +247,9 @@ namespace DeepLearningTest
 			RunGeneralGradientWithScalingTest(CreateCpuNLayer());
 		}
 
-		TEST_METHOD(NLayerGradientWithScalingCudaTest)
-		{
-			RunGeneralGradientWithScalingTest(CreateCudaNLayer());
-		}
-
 		TEST_METHOD(CLayerGradientWithScalingTest)
 		{
 			RunGeneralGradientWithScalingTest(CreateCpuCLayer());
-		}
-
-		TEST_METHOD(CLayerGradientWithScalingCudaTest)
-		{
-			RunGeneralGradientWithScalingTest(CreateCudaCLayer());
 		}
 
 		TEST_METHOD(CLayerDerivativeWithRespectToInputValuesCalculationSquaredErrorTest)

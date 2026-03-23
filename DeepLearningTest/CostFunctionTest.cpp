@@ -17,7 +17,6 @@
 
 #include "CppUnitTest.h"
 #include <Math/Vector.h>
-#include <Math/CudaVector.cuh>
 #include <Math/CostFunction.h>
 #include "StandardTestUtils.h"
 
@@ -127,44 +126,6 @@ namespace DeepLearningTest
 			}
 		}
 
-		/// <summary>
-		/// General method to test "CUDA" implementation versus regular (CPU) implementation of the cost function 
-		/// </summary>
-		static void CheckCudaFunction(const CostFunctionId& func_id)
-		{
-			//Arrange
-			const auto dim = 10;
-			const auto input = CudaVector(dim, Real(0.1), Real(0.9));
-			const auto reference = CudaVector(dim, Real(0.1), Real(0.9));
-			Assert::IsTrue(input != reference, L"Reference and input vectors should not be equal.");
-
-			//Act
-			const auto function = CostFunction<CudaVector>(func_id)(input, reference);
-			const auto function_and_gradient = CostFunction<CudaVector>(func_id).func_and_deriv(input, reference);
-			const auto gradient = CostFunction<CudaVector>(func_id).deriv(input, reference);
-
-			//Assert
-			const auto input_host = input.to_host();
-			const auto reference_host = reference.to_host();
-
-			const auto function_host = CostFunction<Vector>(func_id)(input_host, reference_host);
-			const auto gradient_host = CostFunction<Vector>(func_id).deriv(input_host, reference_host);
-
-			const auto func_diff_1 = std::abs(function - function_host);
-			const auto func_diff_2 = std::abs(std::get<0>(function_and_gradient) - function_host);
-			const auto gradient_diff_1 = (gradient.to_host() - gradient_host).max_abs();
-			const auto gradient_diff_2 = (std::get<1>(function_and_gradient).to_host() - gradient_host).max_abs();
-			StandardTestUtils::Log("func_diff_1", func_diff_1);
-			StandardTestUtils::Log("func_diff_2", func_diff_2);
-			StandardTestUtils::Log("gradient_diff_1", gradient_diff_1);
-			StandardTestUtils::Log("gradient_diff_2", gradient_diff_2);
-
-			Assert::IsTrue(func_diff_1 < 25 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference (function 1)");
-			Assert::IsTrue(func_diff_2 < 25 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference (function 2)");
-			Assert::IsTrue(gradient_diff_1 < 10 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference (gradient 1)");
-			Assert::IsTrue(gradient_diff_2 < 10 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference (gradient 2)");
-		}
-
 		TEST_METHOD(SquaredErrorFunctionTest)
 		{
 			CheckFunctionOnly(CostFunctionId::SQUARED_ERROR, SquaredErrorFunc);
@@ -183,16 +144,6 @@ namespace DeepLearningTest
 		TEST_METHOD(CrossEntropyFunctionAndDerivativeTest)
 		{
 			CheckFunctionAndDerivative(CostFunctionId::CROSS_ENTROPY, CrossEntropyFunc, CrossEntropyDerivFunc);
-		}
-
-		TEST_METHOD(SquaredErrorFunctionCudaTest)
-		{
-			CheckCudaFunction(CostFunctionId::SQUARED_ERROR);
-		}
-
-		TEST_METHOD(CrossEntropyFunctionCudaTest)
-		{
-			CheckCudaFunction(CostFunctionId::CROSS_ENTROPY);
 		}
 	};
 }

@@ -24,7 +24,6 @@
 #include <MsgPackUtils.h>
 #include <chrono>
 #include <Utilities.h>
-#include <NeuralNet/DataContextCuda.h>
 #include "StandardTestUtils.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -170,14 +169,6 @@ namespace DeepLearningTest
 				long_test ? static_cast<Real>(0.991) : static_cast<Real>(0.98), long_test, static_cast<Real>(3));
 		}
 
-		//This test works but I am not satisfied with its performance (execution time), so it is out-commented for now
-		//TEST_METHOD(CudaTrainingConvolutionNetWithCrossEntropyCostTest)
-		//{
-		//	constexpr bool long_test = false;
-		//	RunMnistBasedConvolutionNetTrainingTest<GpuDC>(CostFunctionId::CROSS_ENTROPY, static_cast<Real>(0.03),
-		//		long_test ? static_cast<Real>(0.991) : static_cast<Real>(0.98), long_test, static_cast<Real>(3));
-		//}
-
 		TEST_METHOD(TrainingWithQuadraticCostTest)
 		{
 			constexpr bool long_test = false;
@@ -227,14 +218,6 @@ namespace DeepLearningTest
 				long_test ? static_cast<Real>(0.978) : static_cast<Real>(0.95), long_test, static_cast<Real>(0),
 				{ ActivationFunctionId::SIGMOID, ActivationFunctionId::SOFTMAX });
 		}
-
-		//This test works but I am not satisfied with its performance (execution time), so it is out-commented for now
-		//TEST_METHOD(CudaTrainingWithCrossEntropyCostAndSoftMaxActivationTest)
-		//{
-		//	constexpr bool long_test = false;
-		//	RunMnistBasedTrainingTest<GpuDC>(CostFunctionId::CROSS_ENTROPY, Real(0.1), long_test ? Real(0.978) : Real(0.95), long_test, Real(0),
-		//		{ ActivationFunctionId::SIGMOID, ActivationFunctionId::SOFTMAX });
-		//}
 
 		TEST_METHOD(TrainingWithCrossEntropyCostAndReluActivationTest)
 		{
@@ -591,9 +574,4 @@ namespace DeepLearningTest
 				+ std::to_string(occupied_memory) + " byte(-s) of memory.\n").c_str());
 		}
 	};
-
-	/// <summary>
-	/// Instantiate template with the GPU data context to ensure that it is compilable.
-	/// </summary>
-	template class DeepLearning::Net<GpuDC>;
 }
