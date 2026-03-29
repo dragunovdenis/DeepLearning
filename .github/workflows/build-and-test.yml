@@ -1,0 +1,34 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v2
+
+      - name: Restore NuGet packages
+        run: nuget restore DeepLearningCore.sln -PackagesDirectory packages
+
+      - name: Build solution
+        # Override PlatformToolset to v143 (VS 2022) since v145 (VS 2025) is not
+        # available on GitHub-hosted runners.
+        run: msbuild DeepLearningCore.sln /p:Configuration=Release /p:Platform=x64 /p:PlatformToolset=v143 /m
+
+      - name: Run tests
+        run: |
+          $vstest = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -find "Common7\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe"
+          & $vstest "x64\Release\DeepLearningTest.dll" /Platform:x64
