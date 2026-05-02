@@ -256,10 +256,10 @@ namespace DeepLearning
 
 	bool CudaTensor::operator ==(const CudaTensor& tensor) const
 	{
-		return  layer_dim() == tensor.layer_dim() &&
-			    row_dim() == tensor.row_dim() &&
-			    col_dim() == tensor.col_dim() &&
-			    thrust::equal(thrust::cuda::par.on(cudaStreamPerThread), begin(), end(), tensor.begin());
+		return layer_dim() == tensor.layer_dim() &&
+			row_dim() == tensor.row_dim() &&
+			col_dim() == tensor.col_dim() &&
+			elements_are_equal(tensor);
 	}
 
 	bool CudaTensor::operator !=(const CudaTensor& tensor) const

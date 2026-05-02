@@ -157,10 +157,9 @@ namespace DeepLearning
 
 	bool CudaMatrix::operator ==(const CudaMatrix& matr) const
 	{
-		const auto result = _row_dim == matr.row_dim() && _col_dim == matr.col_dim() &&
-			thrust::equal(thrust::cuda::par.on(cudaStreamPerThread), begin(), end(), matr.begin());
-		CUDA_SANITY_CHECK
-		return result;
+		return _row_dim == matr.row_dim() &&
+			_col_dim == matr.col_dim() &&
+			elements_are_equal(matr);
 	}
 
 	bool CudaMatrix::operator !=(const CudaMatrix& matr) const

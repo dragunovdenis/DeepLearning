@@ -83,7 +83,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
-    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 12.6.props" />
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 13.2.props" />
   </ImportGroup>
   <ImportGroup Label="Shared">
   </ImportGroup>
@@ -143,9 +143,9 @@
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
       <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
-      <AdditionalOptions>--allow-unsupported-compiler —expt-extended-lambda --std c++17 --expt-relaxed-constexpr %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>--expt-extended-lambda --std c++17 --expt-relaxed-constexpr %(AdditionalOptions)</AdditionalOptions>
       <GPUDebugInfo>false</GPUDebugInfo>
-      <CodeGeneration>compute_60,sm_60</CodeGeneration>
+      <CodeGeneration>compute_75,sm_75</CodeGeneration>
     </CudaCompile>
     <PostBuildEvent>
       <Command>xcopy "..\Shared\TestData" "$(SolutionDir)$(Platform)\$(Configuration)\TestData" /e /y /i /r</Command>
@@ -170,9 +170,9 @@
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
       <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
-      <AdditionalOptions>--allow-unsupported-compiler —expt-extended-lambda --std c++17 --expt-relaxed-constexpr %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>--expt-extended-lambda --std c++17 --expt-relaxed-constexpr %(AdditionalOptions)</AdditionalOptions>
       <GPUDebugInfo>false</GPUDebugInfo>
-      <CodeGeneration>compute_60,sm_60</CodeGeneration>
+      <CodeGeneration>compute_75,sm_75</CodeGeneration>
     </CudaCompile>
     <PostBuildEvent>
       <Command>xcopy "..\Shared\TestData" "$(SolutionDir)$(Platform)\$(Configuration)\TestData" /e /y /i /r</Command>
@@ -202,8 +202,8 @@
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
       <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
-      <AdditionalOptions>--allow-unsupported-compiler —expt-extended-lambda --std c++17 --expt-relaxed-constexpr %(AdditionalOptions)</AdditionalOptions>
-      <CodeGeneration>compute_60,sm_60</CodeGeneration>
+      <AdditionalOptions>--expt-extended-lambda --std c++17 --expt-relaxed-constexpr %(AdditionalOptions)</AdditionalOptions>
+      <CodeGeneration>compute_75,sm_75</CodeGeneration>
     </CudaCompile>
     <PostBuildEvent>
       <Command>xcopy "..\Shared\TestData" "$(SolutionDir)$(Platform)\$(Configuration)\TestData" /e /y /i /r</Command>
@@ -233,8 +233,8 @@
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
       <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
-      <AdditionalOptions>--allow-unsupported-compiler —expt-extended-lambda --std c++17 --expt-relaxed-constexpr %(AdditionalOptions)</AdditionalOptions>
-      <CodeGeneration>compute_60,sm_60</CodeGeneration>
+      <AdditionalOptions>--expt-extended-lambda --std c++17 --expt-relaxed-constexpr %(AdditionalOptions)</AdditionalOptions>
+      <CodeGeneration>compute_75,sm_75</CodeGeneration>
     </CudaCompile>
     <PostBuildEvent>
       <Command>xcopy "..\Shared\TestData" "$(SolutionDir)$(Platform)\$(Configuration)\TestData" /e /y /i /r</Command>
@@ -263,8 +263,8 @@
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
       <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
-      <AdditionalOptions>--allow-unsupported-compiler —expt-extended-lambda --std c++17 --expt-relaxed-constexpr %(AdditionalOptions)</AdditionalOptions>
-      <CodeGeneration>compute_60,sm_60</CodeGeneration>
+      <AdditionalOptions>--expt-extended-lambda --std c++17 --expt-relaxed-constexpr %(AdditionalOptions)</AdditionalOptions>
+      <CodeGeneration>compute_75,sm_75</CodeGeneration>
     </CudaCompile>
     <PostBuildEvent>
       <Command>xcopy "..\Shared\TestData" "$(SolutionDir)$(Platform)\$(Configuration)\TestData" /e /y /i /r</Command>
@@ -293,15 +293,15 @@
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
       <GenerateRelocatableDeviceCode>true</GenerateRelocatableDeviceCode>
-      <AdditionalOptions>--allow-unsupported-compiler —expt-extended-lambda --std c++17 --expt-relaxed-constexpr %(AdditionalOptions)</AdditionalOptions>
-      <CodeGeneration>compute_60,sm_60</CodeGeneration>
+      <AdditionalOptions>--expt-extended-lambda --std c++17 --expt-relaxed-constexpr %(AdditionalOptions)</AdditionalOptions>
+      <CodeGeneration>compute_75,sm_75</CodeGeneration>
     </CudaCompile>
     <PostBuildEvent>
       <Command>xcopy "..\Shared\TestData" "$(SolutionDir)$(Platform)\$(Configuration)\TestData" /e /y /i /r</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-        <ClInclude Include="..\Shared\ActivationFuncTestUtils.h" />
+    <ClInclude Include="..\Shared\ActivationFuncTestUtils.h" />
     <ClInclude Include="..\Shared\NetLayersTestUtils.h" />
   </ItemGroup>
   <ItemGroup>
@@ -327,7 +327,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="$(SolutionDir)\packages\msgpack-c-cpp-3.1.1-winsoft666.1.0.0.2\build\native\msgpack-c-cpp-3.1.1-winsoft666.targets" Condition="Exists('$(SolutionDir)\packages\msgpack-c-cpp-3.1.1-winsoft666.1.0.0.2\build\native\msgpack-c-cpp-3.1.1-winsoft666.targets')" />
-    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 12.6.targets" />
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 13.2.targets" />
     <Import Project="$(SolutionDir)\packages\nlohmann.json.3.11.2\build\native\nlohmann.json.targets" Condition="Exists('..\packages\nlohmann.json.3.11.2\build\native\nlohmann.json.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

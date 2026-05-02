@@ -20,6 +20,7 @@
 #include "thrust/reduce.h"
 #include <thrust/execution_policy.h>
 #include <thrust/functional.h>
+#include <cuda/functional>
 #include <nvfunctional>
 #include "CudaVector.cuh"
 #include <Math/CostFunctionFactory.h>
@@ -37,7 +38,7 @@ namespace DeepLearning
 			return func(x, y);
 		});
 
-		return thrust::reduce(thrust::cuda::par.on(cudaStreamPerThread), temp.begin(), temp.end(), static_cast<Real>(0), thrust::plus<Real>());
+		return thrust::reduce(thrust::cuda::par.on(cudaStreamPerThread), temp.begin(), temp.end(), static_cast<Real>(0), cuda::std::plus<Real>());
 	}
 
 	Real CostFunctionHelperCuda::evaluate_cost_and_gradient(BasicCudaCollection& output, const BasicCudaCollection& reference, const CostFunctionId id)

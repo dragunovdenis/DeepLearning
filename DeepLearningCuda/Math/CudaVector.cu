@@ -167,8 +167,7 @@ namespace DeepLearning
 
 	bool CudaVector::operator == (const CudaVector & vect) const
 	{
-		return size() == vect.size() &&
-			   thrust::equal(thrust::cuda::par.on(cudaStreamPerThread), begin(), end(), vect.begin());
+		return elements_are_equal(vect);
 	}
 
 	bool CudaVector::operator !=(const CudaVector& vect) const

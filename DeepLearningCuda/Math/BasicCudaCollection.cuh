@@ -213,6 +213,12 @@ namespace DeepLearning
 		[[nodiscard]] Real max_element() const;
 
 		/// <summary>
+		/// Returns true if the current and given collections are of the same size
+		/// and all their corresponding elements are equal (or approximately equal)
+		/// </summary>
+		[[nodiscard]] bool elements_are_equal(const BasicCudaCollection& collection) const;
+
+		/// <summary>
 		/// Converter to std::vector
 		/// </summary>
 		/// <returns></returns>
