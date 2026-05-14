@@ -216,6 +216,44 @@ namespace DeepLearningTest
 					}
 		}
 
+		TEST_METHOD(MultiKernelConvolveMatchesSingleKernelTest)
+		{
+			//Arrange
+			const auto tensor_size = Index3d{ 12, 22, 33 };
+			const auto tensor = TensorFactory(tensor_size);
+			Assert::IsTrue(tensor.max_abs() > 0, L"Tensor is expected to be nonzero");
+
+			const auto kernel_size = Index3d{ tensor_size.x, 5, 7 };
+			constexpr std::size_t kernel_count = 4;
+			std::vector<Tensor> kernels;
+			kernels.reserve(kernel_count);
+			for (std::size_t k = 0; k < kernel_count; ++k)
+			{
+				kernels.emplace_back(TensorFactory(kernel_size));
+				Assert::IsTrue(kernels.back().max_abs() > 0, L"Kernel is expected to be nonzero");
+			}
+
+			const auto paddings = Index3d{ 0, 1, 2 };
+			const auto strides = Index3d{ 1, 2, 3 };
+
+			const auto channel_size = ConvolutionUtils::calc_conv_res_size(tensor_size, kernel_size, paddings, strides);
+			Assert::IsTrue(channel_size.x == 1, L"Each per-kernel result must collapse to a single layer");
+
+			//Act
+			Tensor multi_result(kernel_count, channel_size.y, channel_size.z, false);
+			tensor.convolve(multi_result, kernels, paddings, strides);
+
+			//Assert: stitch N single-kernel scalar results and compare against the multi-kernel one.
+			Tensor reference(kernel_count, channel_size.y, channel_size.z, false);
+			for (std::size_t k = 0; k < kernel_count; ++k)
+				const auto single = tensor.convolve(reference.get_layer_handle(k), kernels[k], paddings, strides);
+
+			const auto diff = (multi_result - reference).max_abs();
+			Logger::WriteMessage((std::string("Diff = ") + Utils::to_string(diff) + "\n").c_str());
+			Assert::IsTrue(diff < 300 * std::numeric_limits<Real>::epsilon(),
+				L"Multi-kernel convolve disagrees with scalar single-kernel reference beyond tolerance");
+		}
+
 		TEST_METHOD(ConvolutionKernelGradientTest)
 		{
 			//Arrange

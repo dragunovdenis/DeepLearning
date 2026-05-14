@@ -64,5 +64,12 @@ namespace DeepLearning
 		/// Converter.
 		/// </summary>
 		static tensor_t from_host(const tensor_t& source);
+
+		/// <summary>
+		/// Tag-field to indicate that the corresponding data
+		/// structures within the current context support fast
+		/// convolution algorithms.
+		/// </summary>
+		static bool constexpr  supports_fast_convolution() { return true; }
 	};
 }

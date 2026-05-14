@@ -36,6 +36,13 @@ namespace DeepLearning
 		/// Container for index mappings.
 		/// </summary>
 		typename D::template index_array_t<int> IndexMapping{};
+
+		/// <summary>
+		/// Cached receptive-field matrix produced by the convolutional forward pass.
+		/// Reused by the matching backward pass to skip rebuilding the matrix from the
+		/// same input.
+		/// </summary>
+		typename D::matrix_t ReceptiveFieldMatrix{};
 	};
 
 	/// <summary>

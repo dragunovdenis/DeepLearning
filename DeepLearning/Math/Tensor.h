@@ -252,7 +252,7 @@ namespace DeepLearning
 		/// </summary>
 		/// <param name="result_handle">Handle of the memory allocated by the caller to store the result of the convolution.
 		/// It is supposed that the size of the handle is equal to the product of sizes in three dimensions returned by method `calc_conv_res_size()`.
-		/// Otherwise an exception will be thrown.</param>
+		/// Otherwise, an exception will be thrown.</param>
 		/// <param name="kernel">Convolution kernel</param>
 		/// <param name="paddings">Paddings in 3-dimensional index space</param>
 		/// <param name="strides">Strides in 3-dimensional index space</param>
@@ -261,15 +261,36 @@ namespace DeepLearning
 
 		/// <summary>
 		/// A special version of convolution with a collection of kernels of the same size.
-		/// It is assumed that the result of convolution with each particular kernel from the collection is a tensor with a single "layer"
-		/// so that the result of convolution with all the collection of kernels can "fit" into another tensor
-		/// with the corresponding number of kernels (a typical situation for the convolution neural layers)
+		/// It is assumed that the result of convolution with each particular kernel from the
+		/// collection is a tensor with a single "layer" so that the result of convolution
+		/// with all the collection of kernels can "fit" into another tensor with the
+		/// corresponding number of kernels (a typical situation for the convolution neural layers).
 		/// </summary>
 		/// <param name="result">Place-holder for the result of the convolution. Should be allocated by the caller</param>
-		/// <param name="kernels">Collection of kernels (tensors of the same size with the number of layers equal to that of the "input" tensor)</param>
-		/// <param name="paddings">Zero paddings to be used when calculating convolution with each kernel from the collection</param>
+		/// <param name="kernels">Collection of kernels (tensors of the same size with the number of layers equal
+		/// to that of the "input" tensor)</param>
+		/// <param name="paddings">Zero paddings to be used when calculating convolution with each
+		/// kernel from the collection</param>
 		/// <param name="strides">Strides to be used in each particular convolution operation</param>
-		void convolve(Tensor& result, const std::vector<Tensor>& kernels, const Index3d& paddings, const Index3d& strides) const;
+		/// <param name="receptive_field_matrix">Caller-owned receptive-field matrix
+		/// representation of the current tensor in the context of the convolution operation
+		/// with the given collection of kernels (see <c>build_receptive_field_matrix</c> for
+		/// the precise definition). The matrix computed during this call is stored into the
+		/// buffer (resized as needed) so the caller can pass it back to
+		/// <c>convolution_gradient</c> and skip the rebuild on the backward pass.</param>
+		void convolve(Tensor& result, const std::vector<Tensor>& kernels, const Index3d& paddings, const Index3d& strides,
+			Matrix& receptive_field_matrix) const;
+
+		/// <summary>
+		/// Thin wrapper around the receptive-field-matrix-aware multi-kernel
+		/// <c>convolve</c> overload that owns the receptive-field matrix internally.
+		/// Convenient for callers that do not need to reuse the matrix on a
+		/// subsequent backward pass (e.g., unit tests). Production hot paths
+		/// (such as <c>CLayer::act</c>) should prefer the overload that accepts
+		/// a caller-owned receptive-field matrix to avoid rebuilding it.
+		/// </summary>
+		void convolve(Tensor& result, const std::vector<Tensor>& kernels,
+			const Index3d& paddings, const Index3d& strides) const;
 
 		/// <summary>
 		/// Convolution with another tensor
@@ -325,13 +346,64 @@ namespace DeepLearning
 		/// <param name="kernel">The convolution kernel</param>
 		/// <param name="paddings">Paddings used for computing the convolution</param>
 		/// <param name="strides">Strides used for computing the convolution</param>
-		/// <param name="kernel_grad">Place holder to store the gradient with respect to convolution kernel dF/dK
+		/// <param name="kernel_grad">Placeholder to store the gradient with respect to convolution kernel dF/dK
 		/// Will be allocated and initialized during the method call</param>
 		/// <param name="kernel_grad_scale">Scale factor to be applied to the content of
 		/// `kernel_grad` before adding the gradient value to it.</param>
+		/// <param name="receptive_field_matrix">Caller-owned receptive-field matrix
+		/// representation of the current tensor in the context of the convolution operation
+		/// (see <c>build_receptive_field_matrix</c>). It can be obtained from the call to
+		/// <c>convolve</c> with the same input, paddings, strides and kernel size, and is
+		/// supposed to improve performance of the gradient calculation by avoiding a rebuild
+		/// on the backward pass.</param>
 		template <bool CALC_INPUT_GRAD>
-		void convolution_gradient(const RealMemHandleConst& conv_res_grad, Tensor& input_grad, Tensor& kernel_grad, const Tensor& kernel, const Index3d& paddings,
+		void convolution_gradient(const RealMemHandleConst& conv_res_grad, Tensor& input_grad,
+			Tensor& kernel_grad, const Tensor& kernel, const Index3d& paddings,
+			const Index3d& strides, const Real kernel_grad_scale, const Matrix& receptive_field_matrix) const;
+
+		/// <summary>
+		/// Thin wrapper around the receptive-field-matrix-aware
+		/// <c>convolution_gradient</c> overload that builds the receptive-field matrix
+		/// internally. Convenient for callers that do not want to manage
+		/// the receptive-field matrix themselves (e.g., unit tests). Production hot
+		/// paths should prefer the overload that accepts a caller-owned receptive-field
+		/// matrix to avoid rebuilding it on the backward pass.
+		/// </summary>
+		template <bool CALC_INPUT_GRAD>
+		void convolution_gradient(const RealMemHandleConst& conv_res_grad, Tensor& input_grad,
+			Tensor& kernel_grad, const Tensor& kernel, const Index3d& paddings,
 			const Index3d& strides, const Real kernel_grad_scale) const;
+
+		/// <summary>
+		/// Computes gradient of a scalar function F with respect to the convolution kernel K (dF/dK)
+		/// from the gradient with respect to the convolution result (`conv_res_grad`) and the
+		/// receptive-field matrix of the convolution input (see <c>build_receptive_field_matrix</c>
+		/// for its precise definition). Static because the computation depends only on the
+		/// receptive-field matrix and the result gradient — algebraically it is
+		/// <c>kernel_grad = receptive_field_matrix^T &middot; vec(conv_res_grad)</c>.
+		/// </summary>
+		/// <param name="conv_res_grad">dF/dR.</param>
+		/// <param name="kernel_grad">Caller-owned destination of dF/dK. Will be scaled by
+		/// `kernel_grad_scale` (or zeroed if it is 0) before accumulation.</param>
+		/// <param name="receptive_field_matrix">Receptive-field matrix produced by
+		/// <c>build_receptive_field_matrix</c>.</param>
+		/// <param name="kernel_grad_scale">Scale factor applied to `kernel_grad` before accumulation.</param>
+		static void convolution_kernel_gradient(const RealMemHandleConst& conv_res_grad,
+			Tensor& kernel_grad, const Matrix& receptive_field_matrix, const Real kernel_grad_scale);
+
+		/// <summary>
+		/// Computes gradient of a scalar function F with respect to the convolution input I (dF/dI)
+		/// by scattering `factor * kernel_slab` contributions into `input_grad`. The accumulation is
+		/// additive: the caller is responsible for initialization of `input_grad`.
+		/// </summary>
+		/// <param name="conv_res_grad">dF/dR.</param>
+		/// <param name="input_grad">Caller-owned destination of dF/dI; must be sized to the current tensor.</param>
+		/// <param name="kernel">Convolution kernel.</param>
+		/// <param name="paddings">Paddings used for computing the convolution.</param>
+		/// <param name="strides">Strides used for computing the convolution.</param>
+		void convolution_input_gradient(const RealMemHandleConst& conv_res_grad,
+			Tensor& input_grad, const Tensor& kernel, const Index3d& paddings,
+			const Index3d& strides) const;
 
 		/// <summary>
 		/// More general implementation of the convolution operation, that can perform pooling operations
@@ -347,9 +419,8 @@ namespace DeepLearning
 		/// </summary>
 		/// <param name="result_handle">Handle of the memory allocated by the caller to store the result of the convolution.
 		/// It is supposed that the size of the handle is equal to the product of sizes in three dimensions returned by method `calc_conv_res_size()`.
-		/// Otherwise an exception will be thrown.</param>
+		/// Otherwise, an exception will be thrown.</param>
 		/// <param name="pool_operator">Instance of the pool operator to be applied (generalization of the convolution kernel)</param>
-		/// <param name="kernel_size">Size of the "window" for the pooling agent operate</param>
 		/// <param name="paddings">Zero paddings (will be applied to the base tensor)</param>
 		/// <param name="strides">Strides defining movement of the "window"</param>
 		/// <returns>Size of the convolution result. To be used to interpret the memory pointed by the handle parameter.</returns>
@@ -361,7 +432,6 @@ namespace DeepLearning
 		/// </summary>
 		/// <param name="pool_operator">Instance of the pool operator to be applied (generalization of the convolution kernel)</param>
 		/// <param name="pool_res_grad">Gradient of the function F with respect to the result of the pooling operation R: dF/dR</param>
-		/// <param name="kernel_size">Size of the "window" for the pooling agent operate</param>
 		/// <param name="paddings">Zero paddings (will be applied to the base tensor)</param>
 		/// <param name="strides">Strides defining movement of the "window"</param>
 		Tensor pool_input_gradient(const Tensor& pool_res_grad, const PoolOperator& pool_operator, const Index3d& paddings,
@@ -372,7 +442,6 @@ namespace DeepLearning
 		/// </summary>
 		/// <param name="pool_operator">Instance of the pool operator to be applied (generalization of the convolution kernel)</param>
 		/// <param name="pool_res_grad">Handle of the memory containing gradient of the function F with respect to the result of the pooling operation R: dF/dR</param>
-		/// <param name="kernel_size">Size of the "window" for the pooling agent operate</param>
 		/// <param name="paddings">Zero paddings (will be applied to the base tensor)</param>
 		/// <param name="strides">Strides defining movement of the "window"</param>
 		Tensor pool_input_gradient(const RealMemHandleConst& pool_res_grad, const PoolOperator& pool_operator, const Index3d& paddings,
@@ -410,7 +479,7 @@ namespace DeepLearning
 		/// of the pooling to the flattened indices of input elements that have been pooled.
 		/// The mapping allows to simplify a back-propagation procedure.
 		/// </summary>
-		/// <param name="window">Operation window size</param>
+		/// <param name="window_size">Operation window size</param>
 		/// <param name="max">If "true" the method implements "max pulling" otherwise -- "min pulling";</param>
 		/// <param name="result">Place-holder for the pool result</param>
 		void min_max_pool(const Index3d& window_size, const bool max, Tensor& result) const;

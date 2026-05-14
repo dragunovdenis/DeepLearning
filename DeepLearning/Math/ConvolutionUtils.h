@@ -87,4 +87,46 @@ namespace DeepLearning::ConvolutionUtils
 	/// <param name="paddings">Sizes of zero paddings of the tensor</param>
 	/// <param name="strides">Sizes of strides to be used</param>
 	Index3d calc_conv_res_size(const Index3d& tensor_size, const Index3d& kernel_size, const Index3d& paddings, const Index3d& strides);
+
+	/// <summary>
+	/// Visits, for a single convolution-result position, every (kernel-row, tensor-row) pair
+	/// that participates in the result and invokes <paramref name="op"/> once per pair with
+	/// flat offsets into the tensor and kernel storage and the length of the z-contiguous run.
+	/// Encapsulates the shared loop nest used by im2col-style receptive-field construction and
+	/// by the convolution input-gradient scatter.
+	/// </summary>
+	/// <param name="tensor_offsets">"tensor_offsets" from <see cref="calc_kernel_loop_offsets"/>.</param>
+	/// <param name="kernel_start">Inclusive kernel-loop start (per-axis).</param>
+	/// <param name="kernel_stop">Exclusive kernel-loop stop (per-axis).</param>
+	/// <param name="t_y_size">Tensor row dimension (Y).</param>
+	/// <param name="t_z_size">Tensor column dimension (Z).</param>
+	/// <param name="k_y_size">Kernel row dimension (Y).</param>
+	/// <param name="k_z_size">Kernel column dimension (Z).</param>
+	/// <param name="op">Callable invoked as op(std::size_t t_off, std::size_t k_off, std::size_t count).</param>
+	template <typename PatchOp>
+	inline void for_each_patch_row(
+		const Index3d& tensor_offsets,
+		const Index3d& kernel_start,
+		const Index3d& kernel_stop,
+		const long long t_y_size, const long long t_z_size,
+		const long long k_y_size, const long long k_z_size,
+		PatchOp&& op)
+	{
+		const auto count_ll = kernel_stop.z - kernel_start.z;
+		if (count_ll <= 0) return;
+		const auto count = static_cast<std::size_t>(count_ll);
+
+		for (auto k_x = kernel_start.x; k_x < kernel_stop.x; ++k_x)
+		{
+			const auto t_x = tensor_offsets.x + k_x;
+			for (auto k_y = kernel_start.y; k_y < kernel_stop.y; ++k_y)
+			{
+				const auto t_y = tensor_offsets.y + k_y;
+				const auto t_z = tensor_offsets.z + kernel_start.z;
+				const auto t_off = static_cast<std::size_t>((t_x * t_y_size + t_y) * t_z_size + t_z);
+				const auto k_off = static_cast<std::size_t>((k_x * k_y_size + k_y) * k_z_size + kernel_start.z);
+				op(t_off, k_off, count);
+			}
+		}
+	}
 }

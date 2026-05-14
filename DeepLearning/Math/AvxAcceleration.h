@@ -17,6 +17,8 @@
 
 #pragma once
 #include <cstddef>
+#include <immintrin.h>
+#include <type_traits>
 
 namespace DeepLearning::Avx
 {
@@ -37,4 +39,34 @@ namespace DeepLearning::Avx
 	/// <param name="size">Size of the vectors</param>
 	/// <returns>Dot product of the vectors</returns>
 	float mm256_dot_product(const float* vec1, const float* vec2, const std::size_t size);
+
+	/// <summary>
+	/// SIMD-accelerated scaled-add: dst[i] += scale * src[i] for i in [0, n).
+	/// </summary>
+	template <typename T>
+	inline void scaled_add(T* dst, const T* src, const T scale, const std::size_t n)
+	{
+		std::size_t i = 0;
+		if constexpr (std::is_same_v<T, double>)
+		{
+			const __m256d s = _mm256_set1_pd(scale);
+			for (; i + 4 <= n; i += 4)
+			{
+				const __m256d d = _mm256_loadu_pd(dst + i);
+				const __m256d v = _mm256_loadu_pd(src + i);
+				_mm256_storeu_pd(dst + i, _mm256_add_pd(d, _mm256_mul_pd(v, s)));
+			}
+		}
+		else if constexpr (std::is_same_v<T, float>)
+		{
+			const __m256 s = _mm256_set1_ps(scale);
+			for (; i + 8 <= n; i += 8)
+			{
+				const __m256 d = _mm256_loadu_ps(dst + i);
+				const __m256 v = _mm256_loadu_ps(src + i);
+				_mm256_storeu_ps(dst + i, _mm256_add_ps(d, _mm256_mul_ps(v, s)));
+			}
+		}
+		for (; i < n; ++i) dst[i] += scale * src[i];
+	}
 }

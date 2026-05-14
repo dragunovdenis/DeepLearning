@@ -112,7 +112,20 @@ namespace DeepLearning
 			throw std::exception("Unexpected size of the input tensor");
 
 		output.resize(out_size());
-		input.convolve(output, _filters, _paddings, _strides);
+		if constexpr (D::supports_fast_convolution())
+		{
+			// Capture the receptive-field matrix into the trace so the matching backward
+			// pass can reuse it without rebuilding from the same input. When no trace
+			// is supplied (inference path), use a thread-local fallback to avoid
+			// per-call allocation.
+			thread_local typename D::matrix_t receptive_field_matrix_fallback;
+			auto& rf_matrix = trace_data ? trace_data->ReceptiveFieldMatrix : receptive_field_matrix_fallback;
+			input.convolve(output, _filters, _paddings, _strides, rf_matrix);
+		}
+		else
+		{
+			input.convolve(output, _filters, _paddings, _strides);
+		}
 
 		output += _biases;
 
@@ -154,14 +167,32 @@ namespace DeepLearning
 
 		for (auto filter_id = 0ull; filter_id < _filters.size(); filter_id++)
 		{
-			if (evaluate_input_gradient)
-				input_tensor.template convolution_gradient<true>(
-					static_cast<const typename D::tensor_t&>(pure_bias_grad).get_layer_handle(filter_id),
-					input_grad, filters_grad[filter_id + 1], _filters[filter_id], _paddings, _strides, gradient_scale_factor);
+			if constexpr (D::supports_fast_convolution())
+			{
+				// Reuse the receptive-field matrix produced by the matching forward pass.
+				const auto& rf_matrix = processing_data.Trace.ReceptiveFieldMatrix;
+				if (evaluate_input_gradient)
+					input_tensor.template convolution_gradient<true>(
+						static_cast<const typename D::tensor_t&>(pure_bias_grad).get_layer_handle(filter_id),
+						input_grad, filters_grad[filter_id + 1], _filters[filter_id],
+						_paddings, _strides, gradient_scale_factor, rf_matrix);
+				else
+					input_tensor.template convolution_gradient<false>(
+						static_cast<const typename D::tensor_t&>(pure_bias_grad).get_layer_handle(filter_id),
+						input_grad, filters_grad[filter_id + 1], _filters[filter_id],
+						_paddings, _strides, gradient_scale_factor, rf_matrix);
+			}
 			else
-				input_tensor.template convolution_gradient<false>(
-					static_cast<const typename D::tensor_t&>(pure_bias_grad).get_layer_handle(filter_id),
-					input_grad, filters_grad[filter_id + 1], _filters[filter_id], _paddings, _strides, gradient_scale_factor);
+			{
+				if (evaluate_input_gradient)
+					input_tensor.template convolution_gradient<true>(
+						static_cast<const typename D::tensor_t&>(pure_bias_grad).get_layer_handle(filter_id),
+						input_grad, filters_grad[filter_id + 1], _filters[filter_id], _paddings, _strides, gradient_scale_factor);
+				else
+					input_tensor.template convolution_gradient<false>(
+						static_cast<const typename D::tensor_t&>(pure_bias_grad).get_layer_handle(filter_id),
+						input_grad, filters_grad[filter_id + 1], _filters[filter_id], _paddings, _strides, gradient_scale_factor);
+			}
 		}
 	}
 

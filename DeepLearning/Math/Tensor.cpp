@@ -24,9 +24,52 @@
 #include "Matrix.h"
 #include "../Diagnostics/Logging.h"
 #include "ConvolutionUtils.h"
+#include "AvxAcceleration.h"
+#include <vector>
 
 namespace DeepLearning
 {
+	namespace {
+		/// <summary>
+		/// Fills up the given matrix with rows corresponding to the receptive field
+		/// of each element in the result of convolution of the given tensor with a
+		/// kernel of the given size, paddings and strides.
+		/// </summary>
+		void build_receptive_field_matrix(const Tensor& data_tensor, const Index3d& kernel_size,
+			const Index3d& paddings, const Index3d& strides, Matrix& out_matrix)
+		{
+			const auto ker_len = static_cast<std::size_t>(kernel_size.coord_prod());
+			const auto t_size = data_tensor.size_3d();
+			const auto result_size = ConvolutionUtils::calc_conv_res_size(t_size, kernel_size, paddings, strides);
+			const auto res_len = static_cast<std::size_t>(result_size.coord_prod());
+			out_matrix.resize(res_len, ker_len);
+			// Zero out the buffer so positions corresponding to zero-padded source
+			// elements (which are not touched by the memcpy below) read as 0.
+			out_matrix.fill_zero();
+
+			const auto t_data = data_tensor.begin();
+			const auto t_y_size = t_size.y;
+			const auto t_z_size = t_size.z;
+			const auto k_y_size = kernel_size.y;
+			const auto k_z_size = kernel_size.z;
+
+			for (std::size_t r = 0; r < res_len; ++r)
+			{
+				const auto r_offsets = ConvolutionUtils::data_id_to_index_3d(static_cast<long long>(r), result_size);
+				const auto [t_offsets, k_start, k_stop] =
+					ConvolutionUtils::calc_kernel_loop_offsets(r_offsets, t_size, kernel_size, paddings, strides);
+
+				Real* row = out_matrix.begin() + r * ker_len;
+				ConvolutionUtils::for_each_patch_row(t_offsets, k_start, k_stop,
+					t_y_size, t_z_size, k_y_size, k_z_size,
+					[&](const std::size_t t_off, const std::size_t k_off, const std::size_t count)
+					{
+						std::memcpy(row + k_off, t_data + t_off, count * sizeof(Real));
+					});
+			}
+		}
+	}
+
 	Tensor::Tensor(const std::size_t layer_dim, const std::size_t row_dim,
 		const std::size_t col_dim, const bool assign_zero)
 	{
@@ -56,7 +99,6 @@ namespace DeepLearning
 		_layer_dim = 0;
 		_row_dim = 0;
 		_col_dim = 0;
-
 	}
 
 	Tensor::Tensor(Tensor&& tensor) noexcept
@@ -324,13 +366,43 @@ namespace DeepLearning
 		return result_size;
 	}
 
-	void Tensor::convolve(Tensor& result, const std::vector<Tensor>& kernels, const Index3d& paddings, const Index3d& strides) const
+	void Tensor::convolve(Tensor& result, const std::vector<Tensor>& kernels,
+		const Index3d& paddings, const Index3d& strides, Matrix& receptive_field_matrix) const
 	{
 		if (result.layer_dim() != kernels.size())
 			throw std::exception("Inconsistent input");
 
+		if (kernels.empty())
+			return;
+
+		// Build the receptive-field matrix once and reuse it across all kernels.
+		const auto k_size_3d = kernels.front().size_3d();
+		const auto k_size = static_cast<std::size_t>(k_size_3d.coord_prod());
+
+		build_receptive_field_matrix(*this, k_size_3d, paddings, strides, receptive_field_matrix);
+		const auto r_size = receptive_field_matrix.row_dim();
+
+		const Real* rf_data = receptive_field_matrix.begin();
+
 		for (auto kernel_id = 0ull; kernel_id < kernels.size(); kernel_id++)
-			convolve(result.get_layer_handle(kernel_id), kernels[kernel_id], paddings, strides);
+		{
+			const auto& kern = kernels[kernel_id];
+			if (kern.size_3d() != k_size_3d)
+				throw std::exception("All the convolution kernels must be of the same size.");
+
+			const Real* kernel_flat = kern.begin();
+			auto handle = result.get_layer_handle(kernel_id);
+
+			for (std::size_t r = 0; r < r_size; ++r)
+				handle[r] = static_cast<Real>(Avx::mm256_dot_product(rf_data + r * k_size, kernel_flat, k_size));
+		}
+	}
+
+	void Tensor::convolve(Tensor& result, const std::vector<Tensor>& kernels,
+		const Index3d& paddings, const Index3d& strides) const
+	{
+		Matrix receptive_field_matrix;
+		convolve(result, kernels, paddings, strides, receptive_field_matrix);
 	}
 
 	Tensor Tensor::convolve(const Tensor& kernel, const Index3d& paddings, const Index3d& strides) const
@@ -382,42 +454,102 @@ namespace DeepLearning
 		return result;
 	}
 
-	template <bool CALC_INPUT_GRAD>
-	void Tensor::convolution_gradient(const RealMemHandleConst& conv_res_grad, Tensor& input_grad, Tensor& kernel_grad, const Tensor& kernel, const Index3d& paddings,
-		const Index3d& strides, const Real kernel_grad_scale) const
+	void Tensor::convolution_kernel_gradient(const RealMemHandleConst& conv_res_grad,
+		Tensor& kernel_grad, const Matrix& receptive_field_matrix, const Real kernel_grad_scale)
 	{
-		const auto tensor_size = size_3d();
-		const auto kernel_size = kernel.size_3d();
-		const auto conv_result_size = ConvolutionUtils::calc_conv_res_size(tensor_size, kernel_size, paddings, strides);
+		if (conv_res_grad.size() != receptive_field_matrix.row_dim())
+			throw std::exception("Inconsistent size of the convolution result gradient and the receptive-field matrix");
 
-		if (conv_res_grad.size() != conv_result_size.coord_prod())
-			throw std::exception("Unexpected size of the convolution result gradient");
-
-		if (CALC_INPUT_GRAD && input_grad.size_3d() != tensor_size)
-			throw std::exception("Unexpected size of the input gradient container");
+		if (static_cast<std::size_t>(kernel_grad.size_3d().coord_prod()) != receptive_field_matrix.col_dim())
+			throw std::exception("Inconsistent size of the kernel gradient and the receptive-field matrix");
 
 		if (kernel_grad_scale != static_cast<Real>(0))
 			kernel_grad *= kernel_grad_scale;
 		else
 			kernel_grad.fill_zero();
 
-		const auto data = begin();
+		const auto k_size = receptive_field_matrix.col_dim();
+		const auto rf_data = receptive_field_matrix.begin();
+		Real* k_grad_data = kernel_grad.begin();
 
-		for (std::size_t res_data_id = 0; res_data_id < conv_res_grad.size(); res_data_id++)
+		for (std::size_t r = 0; r < conv_res_grad.size(); ++r)
+		{
+			const auto factor = conv_res_grad[r];
+			if (factor == static_cast<Real>(0))
+				continue;
+
+			Avx::scaled_add<Real>(k_grad_data, rf_data + r * k_size, factor, k_size);
+		}
+	}
+
+	void Tensor::convolution_input_gradient(const RealMemHandleConst& conv_res_grad,
+		Tensor& input_grad, const Tensor& kernel, const Index3d& paddings,
+		const Index3d& strides) const
+	{
+		const auto t_size = size_3d();
+		const auto k_size = kernel.size_3d();
+		const auto conv_result_size = ConvolutionUtils::calc_conv_res_size(t_size, k_size, paddings, strides);
+
+		if (conv_res_grad.size() != conv_result_size.coord_prod())
+			throw std::exception("Unexpected size of the convolution result gradient");
+
+		if (input_grad.size_3d() != t_size)
+			throw std::exception("Unexpected size of the input gradient container");
+
+		const Real* kernel_flat = kernel.begin();
+		Real* in_grad_flat = input_grad.begin();
+
+		const auto t_row = t_size.y;
+		const auto t_col = t_size.z;
+		const auto k_y_size = k_size.y;
+		const auto k_z_size = k_size.z;
+
+		for (std::size_t res_data_id = 0; res_data_id < conv_res_grad.size(); ++res_data_id)
 		{
 			const auto factor = conv_res_grad[res_data_id];
 			if (factor == static_cast<Real>(0))
 				continue;
 
-			const auto result_offsets = ConvolutionUtils::data_id_to_index_3d(res_data_id, conv_result_size);
-			const auto [tensor_offsets, kernel_start_offsets, kernel_stop_offsets] =
-				ConvolutionUtils::calc_kernel_loop_offsets(result_offsets, tensor_size, kernel_size, paddings, strides);
+			const auto r_offsets = ConvolutionUtils::data_id_to_index_3d(static_cast<long long>(res_data_id), conv_result_size);
+			const auto [t_offsets, k_start, k_stop] =
+				ConvolutionUtils::calc_kernel_loop_offsets(r_offsets, t_size, k_size, paddings, strides);
 
-			KERNEL_LOOP(kernel_start_offsets, kernel_stop_offsets, tensor_offsets,
-				kernel_grad(k_x, k_y, k_z) += data[coords_to_data_id(t_x, t_y, t_z)] * factor;
-			if (CALC_INPUT_GRAD)
-				input_grad(t_x, t_y, t_z) += kernel(k_x, k_y, k_z) * factor;)
+			ConvolutionUtils::for_each_patch_row(t_offsets, k_start, k_stop,
+				t_row, t_col, k_y_size, k_z_size,
+				[&](const std::size_t t_off, const std::size_t k_off, const std::size_t count)
+				{
+					Avx::scaled_add<Real>(in_grad_flat + t_off, kernel_flat + k_off, factor, count);
+				});
 		}
+	}
+
+	template <bool CALC_INPUT_GRAD>
+	void Tensor::convolution_gradient(const RealMemHandleConst& conv_res_grad, Tensor& input_grad,
+		Tensor& kernel_grad, const Tensor& kernel, const Index3d& paddings,
+		const Index3d& strides, const Real kernel_grad_scale, const Matrix& receptive_field_matrix) const
+	{
+		convolution_kernel_gradient(conv_res_grad, kernel_grad, receptive_field_matrix, kernel_grad_scale);
+
+		if constexpr (CALC_INPUT_GRAD)
+			convolution_input_gradient(conv_res_grad, input_grad, kernel, paddings, strides);
+	}
+
+	template void Tensor::convolution_gradient<true>(const RealMemHandleConst& conv_res_grad, Tensor& input_grad,
+		Tensor& kernel_grad, const Tensor& kernel, const Index3d& paddings,
+		const Index3d& strides, const Real kernel_grad_scale, const Matrix& receptive_field_matrix) const;
+	template void Tensor::convolution_gradient<false>(const RealMemHandleConst& conv_res_grad, Tensor& input_grad,
+		Tensor& kernel_grad, const Tensor& kernel, const Index3d& paddings,
+		const Index3d& strides, const Real kernel_grad_scale, const Matrix& receptive_field_matrix) const;
+
+	template <bool CALC_INPUT_GRAD>
+	void Tensor::convolution_gradient(const RealMemHandleConst& conv_res_grad, Tensor& input_grad,
+		Tensor& kernel_grad, const Tensor& kernel, const Index3d& paddings,
+		const Index3d& strides, const Real kernel_grad_scale) const
+	{
+		Matrix receptive_field_matrix;
+		build_receptive_field_matrix(*this, kernel.size_3d(), paddings, strides, receptive_field_matrix);
+		convolution_gradient<CALC_INPUT_GRAD>(conv_res_grad, input_grad, kernel_grad, kernel,
+			paddings, strides, kernel_grad_scale, receptive_field_matrix);
 	}
 
 	template void Tensor::convolution_gradient<true>(const RealMemHandleConst& conv_res_grad, Tensor& input_grad,
@@ -432,7 +564,9 @@ namespace DeepLearning
 		const Index3d& strides) const
 	{
 		Tensor kernel_grad(kernel.size_3d(), false);
-		convolution_gradient<CALC_INPUT_GRAD>(conv_res_grad, input_grad, kernel_grad, kernel, paddings, strides, static_cast<Real>(0));
+		Matrix receptive_field_matrix;
+		build_receptive_field_matrix(*this, kernel.size_3d(), paddings, strides, receptive_field_matrix);
+		convolution_gradient<CALC_INPUT_GRAD>(conv_res_grad, input_grad, kernel_grad, kernel, paddings, strides, static_cast<Real>(0), receptive_field_matrix);
 
 		return kernel_grad;
 	}
