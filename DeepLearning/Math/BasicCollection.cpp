@@ -100,7 +100,11 @@ namespace DeepLearning
 		if (size() != collection.size())
 			throw std::exception("Collections must be of the same size");
 
+#ifdef USE_AVX2
+		Avx::simd_add(begin(), collection.begin(), size());
+#else
 		std::transform(begin(), end(), collection.begin(), begin(), [](const auto& x, const auto& y) { return x + y; });
+#endif
 	}
 
 	void BasicCollection::add_scaled(const BasicCollection& collection, const Real& scalar)
@@ -108,8 +112,12 @@ namespace DeepLearning
 		if (size() != collection.size())
 			throw std::exception("Collections must be of the same size");
 
+#ifdef USE_AVX2
+		Avx::scaled_add(begin(), collection.begin(), scalar, size());
+#else
 		std::transform(begin(), end(), collection.begin(), begin(),
 			[scalar](const auto& x, const auto& y) { return x + y * scalar; });
+#endif
 	}
 
 	void BasicCollection::scale_and_add_scaled(const Real& scalar_0, const BasicCollection& collection,
@@ -118,8 +126,12 @@ namespace DeepLearning
 		if (size() != collection.size())
 			throw std::exception("Collections must be of the same size");
 
+#ifdef USE_AVX2
+		Avx::simd_scale_and_add_scaled(begin(), collection.begin(), scalar_0, scalar_1, size());
+#else
 		std::transform(begin(), end(), collection.begin(), begin(),
 			[scalar_0, scalar_1](const auto& x, const auto& y) { return x * scalar_0 + y * scalar_1; });
+#endif
 	}
 
 	void BasicCollection::scale_and_add(const BasicCollection& collection, const Real& scalar)
@@ -127,7 +139,11 @@ namespace DeepLearning
 		if (size() != collection.size())
 			throw std::exception("Collections must be of the same size");
 
+#ifdef USE_AVX2
+		Avx::simd_scale_and_add(begin(), collection.begin(), scalar, size());
+#else
 		std::transform(begin(), end(), collection.begin(), begin(), [scalar](const auto& x, const auto& y) { return x * scalar + y ; });
+#endif
 	}
 
 	void BasicCollection::sub(const BasicCollection& collection)
@@ -135,12 +151,20 @@ namespace DeepLearning
 		if (size() != collection.size())
 			throw std::exception("Collections must be of the same size");
 
+#ifdef USE_AVX2
+		Avx::simd_sub(begin(), collection.begin(), size());
+#else
 		std::transform(begin(), end(), collection.begin(), begin(), [](const auto& x, const auto& y) { return x - y; });
+#endif
 	}
 
 	void BasicCollection::mul(const Real& scalar)
 	{
+#ifdef USE_AVX2
+		Avx::simd_mul_scalar(begin(), scalar, size());
+#else
 		std::transform(begin(), end(), begin(), [scalar](const auto& x) { return x * scalar; });
+#endif
 	}
 
 	Real BasicCollection::max_abs() const
@@ -158,7 +182,11 @@ namespace DeepLearning
 
 	Real BasicCollection::sum_of_squares() const
 	{
+#ifdef USE_AVX2
+		return Avx::simd_sum_of_squares(begin(), size());
+#else
 		return std::accumulate(begin(), end(), Real(0), [](const auto& sum, const auto& x) { return sum + x * x; });
+#endif
 	}
 
 	void BasicCollection::fill(const Real& val)
@@ -206,8 +234,12 @@ namespace DeepLearning
 		if (size() != op0.size() || size() != op1.size())
 			throw std::exception("Inconsistent input");
 
+#ifdef USE_AVX2
+		Avx::simd_hadamard(begin(), op0.begin(), op1.begin(), size());
+#else
 		std::transform(op0.begin(), op0.end(), op1.begin(), begin(),
 			[](const auto& x, const auto& y) { return x * y; });
+#endif
 	}
 
 	void BasicCollection::hadamard_prod_add(const BasicCollection& op0, const BasicCollection& op1)
@@ -215,12 +247,16 @@ namespace DeepLearning
 		if (size() != op0.size() || size() != op1.size())
 			throw std::exception("Inconsistent input");
 
+#ifdef USE_AVX2
+		Avx::simd_hadamard_add(begin(), op0.begin(), op1.begin(), size());
+#else
 		const auto op0_arr = op0.begin();
 		const auto op1_arr = op1.begin();
 		auto res_arr = begin();
 
 		for (auto id = 0ull; id < size(); id++)
 			res_arr[id] += op0_arr[id] * op1_arr[id];
+#endif
 	}
 
 	Real BasicCollection::dot_product(const BasicCollection& collection) const

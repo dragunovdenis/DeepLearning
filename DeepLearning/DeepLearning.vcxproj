@@ -314,7 +314,6 @@
     <ClInclude Include="Math\ActivationFunction.inl" />
     <ClCompile Include="Math\ActivationFunctionHelper.cpp" />
     <ClCompile Include="Math\ActivationFunctionId.cpp" />
-    <ClCompile Include="Math\AvxAcceleration.cpp" />
     <ClCompile Include="Math\BasicCollection.cpp" />
     <ClCompile Include="Math\ConvolutionUtils.cpp" />
     <ClInclude Include="Math\CostFunction.inl" />

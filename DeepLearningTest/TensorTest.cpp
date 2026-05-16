@@ -451,7 +451,8 @@ namespace DeepLearningTest
 			const auto pool_grad = tensor.pool_input_gradient(cost_grad, pool_operator, paddings, strides);
 
 			//Assert
-			Assert::IsTrue(in_grad_ref == pool_grad, L"Gradients must coincide.");
+			const auto diff = (in_grad_ref - pool_grad).max_abs();
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference", diff, 50 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(MaxPoolTest)
@@ -541,7 +542,8 @@ namespace DeepLearningTest
 			const auto result2 = tensor1 + tensor2 * scalar;
 
 			//Assert
-			Assert::IsTrue(result1 == result2, L"Results are supposed to be the same");
+			const auto diff = (result1 - result2).max_abs();
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference", diff, 10 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(ScaleAndAddTest)
@@ -560,7 +562,8 @@ namespace DeepLearningTest
 			const auto result2 = tensor1 * scalar  + tensor2;
 
 			//Assert
-			Assert::IsTrue(result1 == result2, L"Results are supposed to be the same");
+			const auto diff = (result1 - result2).max_abs();
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference", diff, 10 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(ScaleAndAddScaledTest)
@@ -580,7 +583,8 @@ namespace DeepLearningTest
 			const auto result2 = tensor1 * scalar_0 + tensor2 * scalar_1;
 
 			//Assert
-			Assert::IsTrue(result1 == result2, L"Results are supposed to be the same");
+			const auto diff = (result1 - result2).max_abs();
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference", diff, 10 * std::numeric_limits<Real>::epsilon());
 		}
 
 		void min_max_pool_test_general(const bool max)

@@ -404,7 +404,8 @@ namespace DeepLearningTest
 
 			//Assert
 			const auto result_expected = vector1.hadamard_prod(vector2) + result_original;
-			Assert::IsTrue(result == result_expected, L"Actual and expected results are not the same.");
+			const auto diff = (result - result_expected).max_abs();
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference", diff, std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(MatrixVectorMultiplicationAndAdditionTest)

@@ -172,7 +172,8 @@ namespace DeepLearningTest
 
 			// Assert
 			const auto result_expected = func.get_in_grad(out_grad, aux_data) + init_value;
-			Assert::IsTrue(result == result_expected, L"Expected and actual results are not the same.");
+			const auto diff = (result - result_expected).max_abs();
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference", diff, std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(SoftMaxFunctionAddInGradTest)
