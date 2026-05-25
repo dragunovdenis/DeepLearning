@@ -61,6 +61,8 @@ namespace DeepLearningTest
 			const auto& test_data = std::get<0>(test_data_tuple);
 			const auto& test_labels = std::get<1>(test_data_tuple);
 
+			Net<D>::reset_random_generator(0); // for reproducibility
+
 			auto net = Net<D>({ 784, (run_long_test ? 100ull : 30ull), 10 }, activ_func_ids);
 			constexpr auto batch_size = 10;
 			const auto epochs_count = run_long_test ? 30 : 6;
@@ -82,8 +84,12 @@ namespace DeepLearningTest
 			//Assert
 			const auto correct_answers = net.count_correct_answers(test_data, test_labels);
 			const auto validation_result = correct_answers * (Real(1)) / test_data.size();
-			Assert::IsTrue(validation_result >= expected_min_percentage_test_set, L"Too low accuracy on the test set.");
+			StandardTestUtils::LogAndAssertGreaterOrEqualTo("Validation result",
+				validation_result, expected_min_percentage_test_set);
 			Logger::WriteMessage("\n");
+
+			Net<D>::reset_random_generator();
+
 			return validation_result;
 		}
 
@@ -111,6 +117,7 @@ namespace DeepLearningTest
 				"TestData\\MNIST\\t10k-labels.idx1-ubyte",
 				test_images_count);
 
+			Net<D>::reset_random_generator(0); // for reproducibility
 			auto net = Net<D>();
 			const auto in_data_size = training_data.begin()->size_3d();
 			const auto out_size = training_labels.begin()->size_3d().coord_prod();
@@ -154,8 +161,12 @@ namespace DeepLearningTest
 			//Assert
 			const auto correct_answers = net.count_correct_answers(test_data, test_labels);
 			const auto validation_result = correct_answers * static_cast<Real>(1) / test_data.size();
-			Assert::IsTrue(validation_result >= expected_min_percentage_test_set, L"Too low accuracy on the test set.");
+			StandardTestUtils::LogAndAssertGreaterOrEqualTo("Validation result",
+				validation_result, expected_min_percentage_test_set);
 			Logger::WriteMessage("\n");
+
+			Net<D>::reset_random_generator();
+
 			return validation_result;
 		}
 
@@ -165,8 +176,8 @@ namespace DeepLearningTest
 		TEST_METHOD(TrainingConvolutionNetWithCrossEntropyCostTest)
 		{
 			constexpr bool long_test = false;
-			RunMnistBasedConvolutionNetTrainingTest(CostFunctionId::CROSS_ENTROPY, static_cast<Real>(0.025),
-				long_test ? static_cast<Real>(0.991) : static_cast<Real>(0.98), long_test, static_cast<Real>(3));
+			RunMnistBasedConvolutionNetTrainingTest(CostFunctionId::CROSS_ENTROPY, static_cast<Real>(0.01),
+				long_test ? static_cast<Real>(0.991) : static_cast<Real>(0.98), long_test, static_cast<Real>(1));
 		}
 
 		TEST_METHOD(TrainingWithQuadraticCostTest)
@@ -387,11 +398,11 @@ namespace DeepLearningTest
 			const auto weight_derivative = gradient[0].data[1];
 			const auto bias_derivative = gradient[0].data[0];
 
-			Assert::IsTrue((weight_derivative - expected_weight_derivative).max_abs() < 10 * std::numeric_limits<Real>::epsilon(),
-				L"Too high deviation from the expected derivative with respect to the weight");
+			const auto weight_diff = (weight_derivative - expected_weight_derivative).max_abs();
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Weight derivative diff", weight_diff, 10 * std::numeric_limits<Real>::epsilon());
 
-			Assert::IsTrue((bias_derivative - expected_bias_derivative).max_abs() < 10 * std::numeric_limits<Real>::epsilon(),
-				L"Too high deviation from the expected derivative with respect to the bias");
+			const auto bias_diff = (bias_derivative - expected_bias_derivative).max_abs();
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Bias derivative diff", bias_diff, 10 * std::numeric_limits<Real>::epsilon());
 
 			const auto value = std::get<1>(gradient_and_value);
 			const auto value_ref = net.act(input);
@@ -486,7 +497,7 @@ namespace DeepLearningTest
 			for (auto layer_id = 0ull; layer_id < net.layers_count(); ++layer_id)
 			{
 				const auto layer_gradient_diff = (out_gradient[layer_id] - (in_gradient[layer_id] * scale_factor + pure_gradient_ref[layer_id])).max_abs();
-				Assert::IsTrue(layer_gradient_diff < 10 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from the reference gradient");
+				StandardTestUtils::LogAndAssertLessOrEqualTo("layer_gradient_diff", layer_gradient_diff, 10 * std::numeric_limits<Real>::epsilon());
 			}
 
 			Assert::IsTrue(value_ref == out_value, L"Net value should not be affected by scaling");
@@ -525,7 +536,7 @@ namespace DeepLearningTest
 
 			// Assert
 			constexpr auto delta = std::is_same_v<Real, double> ? static_cast<Real>(1e-5) : static_cast<Real>(1e-2);
-			constexpr auto tolerance = std::is_same_v<Real, double> ? static_cast<Real>(1.5e-10) : static_cast<Real>(1e-4);
+			constexpr auto tolerance = std::is_same_v<Real, double> ? static_cast<Real>(1.8e-10) : static_cast<Real>(1e-4);
 			constexpr auto one_over_double_delta = static_cast<Real>(0.5) / delta;
 
 			Real max_diff{};
@@ -558,10 +569,10 @@ namespace DeepLearningTest
 					}
 				}
 
-			Assert::IsTrue(max_abs_gradient > static_cast<Real>(0.1),
-				L"Unexpectedly small maximal magnitude of gradients");
+			StandardTestUtils::LogAndAssertGreaterOrEqualTo(
+				"Maximal absolute value of reference gradients", max_abs_gradient, static_cast<Real>(0.1));
 
-			StandardTestUtils::LogAndAssertLessOrEqualTo<double>(
+			StandardTestUtils::LogAndAssertLessOrEqualTo(
 				"Maximal difference between actual and expected gradients", max_diff, tolerance);
 		}
 

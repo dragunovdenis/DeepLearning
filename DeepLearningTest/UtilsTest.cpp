@@ -18,6 +18,7 @@
 #include <regex>
 #include "CppUnitTest.h"
 #include <Utilities.h>
+#include "StandardTestUtils.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;
@@ -338,8 +339,8 @@ namespace DeepLearningTest
 
 			const auto diff = std::abs(Utils::str_to_float<Real>(parts[0]) - Utils::hex_to_float<Real>(parts[1]));
 
-			Assert::IsTrue(diff < 100 * std::numeric_limits<Real>::epsilon(),
-				L"Too big difference between the two representations of the same floating-point number");
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Float repr diff",
+				diff, 100 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(GetGuidStringTest)

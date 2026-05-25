@@ -45,10 +45,11 @@ namespace DeepLearningTest
 				[mean](const auto& x) { return (x - mean) * (x - mean); })/dim);
 			const auto sigma_diff = std::abs(sigma - sigma_estimated)/ sigma;
 
-			StandardTestUtils::Log("Mean", mean);
-			StandardTestUtils::Log("sigma_diff", sigma_diff);
-			Assert::IsTrue(std::abs(mean) < 0.35, L"Unexpectedly high deviation of the \"mean\" value from the reference");
-			Assert::IsTrue(std::abs(sigma_diff) < 0.02, L"Unexpectedly high deviation of the \"sigma\" value from the reference");
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Sigma diff",
+				std::abs(sigma_diff), static_cast<Real>(0.02));
+
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Mean",
+				std::abs(mean), static_cast<Real>(0.35));
 		}
 
 		/// <summary>
@@ -161,8 +162,9 @@ namespace DeepLearningTest
 			result_expected.hadamard_prod(v0, v1);
 			result_expected += v2;
 
-			Assert::IsTrue((result - result_expected).max_abs() < 10 * std::numeric_limits<Real>::epsilon(),
-				L"Too high difference between actual and expected values");
+			const auto diff = (result - result_expected).max_abs();
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Diff",
+				diff, 10 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(DotProdTest)
@@ -178,8 +180,9 @@ namespace DeepLearningTest
 
 			//Assert
 			const auto host_result = cuda_v1.to_host().dot_product(cuda_v2.to_host());
-			Assert::IsTrue(std::abs(cuda_result - host_result) < 10 * std::numeric_limits<Real>::epsilon(),
-				L"Too high deviation from reference");
+			const auto diff = std::abs(cuda_result - host_result);
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Diff",
+				diff, 10 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(ElementSumTest)
@@ -193,8 +196,9 @@ namespace DeepLearningTest
 
 			//Assert
 			const auto host_result = cuda_v1.to_host().sum();
-			Assert::IsTrue(std::abs(cuda_result - host_result) < 10 * std::numeric_limits<Real>::epsilon(),
-				L"Too high deviation from reference");
+			const auto diff = std::abs(cuda_result - host_result);
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Diff",
+				diff, 10 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(RandomSelectionMapTest)

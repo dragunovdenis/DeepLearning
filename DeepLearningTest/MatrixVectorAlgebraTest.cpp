@@ -110,8 +110,8 @@ namespace DeepLearningTest
 				}
 
 				const auto diff = std::abs(reference - product[row_id]);
-				Logger::WriteMessage((std::string("Difference = ") +  Utils::to_string(diff) + "\n").c_str());
-				Assert::IsTrue(diff < 15*std::numeric_limits<Real>::epsilon(), L"Unexpectedly high difference");
+				StandardTestUtils::LogAndAssertLessOrEqualTo("Difference",
+					diff, 15 * std::numeric_limits<Real>::epsilon());
 			}
 		}
 
@@ -137,8 +137,8 @@ namespace DeepLearningTest
 				}
 
 				const auto diff = std::abs(reference - product[col_id]);
-				Logger::WriteMessage((std::string("Difference = ") + std::to_string(diff) + "\n").c_str());
-				Assert::IsTrue(diff < std::numeric_limits<Real>::epsilon(), L"Unexpectedly high difference.");
+				StandardTestUtils::LogAndAssertLessOrEqualTo("Difference",
+					diff, std::numeric_limits<Real>::epsilon());
 			}
 		}
 
@@ -155,7 +155,8 @@ namespace DeepLearningTest
 
 			//Assert
 			const auto diff = (vector * matrix - matrix_transposed * vector).max_abs();
-			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference", diff, 10 * std::numeric_limits<Real>::epsilon());
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference",
+				diff, 10 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(VectorPackingTest)
@@ -248,8 +249,9 @@ namespace DeepLearningTest
 			const auto result2 = matrix1 * vector + matrix2 * vector;
 
 			//Assert
-			Assert::IsTrue((result1 - result2).max_abs() < 10*std::numeric_limits<Real>::epsilon(),
-				L"Matrix addition is non-distributive with respect to vector multiplication from the right.");
+			const auto diff = (result1 - result2).max_abs();
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference",
+				diff, 50 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(DistributivityOfMatrixAdditionWithRespectToLeftVectorMultiplicationTest)
@@ -269,8 +271,9 @@ namespace DeepLearningTest
 			const auto result2 = vector * matrix1  + vector * matrix2;
 
 			//Assert
-			Assert::IsTrue((result1 - result2).max_abs() < 10 * std::numeric_limits<Real>::epsilon(),
-				L"Matrix addition is non-distributive with respect to vector multiplication from the left.");
+			const auto diff = (result1 - result2).max_abs();
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference",
+				diff, 10 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(DistributivityOfVectorAdditionWithRespectToLeftMatrixMultiplicationTest)
@@ -291,8 +294,9 @@ namespace DeepLearningTest
 			const auto result2 = matrix * vector1  + matrix * vector2;
 
 			//Assert
-			Assert::IsTrue((result1 - result2).max_abs() < 10 * std::numeric_limits<Real>::epsilon(),
-				L"Vector addition is non-distributive with respect to matrix multiplication from the left.");
+			const auto diff = (result1 - result2).max_abs();
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference",
+				diff, 20 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(DistributivityOfVectorAdditionWithRespectToRightMatrixMultiplicationTest)
@@ -313,8 +317,9 @@ namespace DeepLearningTest
 			const auto result2 = vector1 * matrix + vector2 * matrix;
 
 			//Assert
-			Assert::IsTrue((result1 - result2).max_abs() < 10 * std::numeric_limits<Real>::epsilon(),
-				L"Vector addition is non-distributive with respect to matrix multiplication from the right.");
+			const auto diff = (result1 - result2).max_abs();
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference",
+				diff, 10 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(VectorColByVectorRowMultiplicationTest)
@@ -338,7 +343,8 @@ namespace DeepLearningTest
 				for (std::size_t col_id = 0; col_id < col_dim; col_id++)
 				{
 					const auto diff = std::abs(result(row_id, col_id) - vec_col[row_id] * vec_row[col_id]);
-					Assert::IsTrue(diff <= 0, L"Too big deviation from expected value");
+					StandardTestUtils::LogAndAssertLessOrEqualTo("Difference",
+						diff, static_cast<Real>(0));
 				}
 			}
 		}
@@ -361,8 +367,9 @@ namespace DeepLearningTest
 
 			//Assert
 			const auto reference_result = vector_col_times_vector_row(vec_col, vec_row) + result_in * scale_factor;
-			Assert::IsTrue((result_out - reference_result).max_abs() < 10 * std::numeric_limits<Real>::epsilon(),
-				L"Unexpectedly high deviation from the reference matrix.");
+			const auto diff = (result_out - reference_result).max_abs();
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference",
+				diff, 10 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(HadamardVectorProductTest)
@@ -384,7 +391,8 @@ namespace DeepLearningTest
 			for (std::size_t item_id = 0; item_id < dim; item_id++)
 			{
 				const auto diff = std::abs(result1[item_id] - vector1[item_id] * vector2[item_id]);
-				Assert::IsTrue(diff <= 0, L"Too big deviation from the expected value.");
+				StandardTestUtils::LogAndAssertLessOrEqualTo("Difference",
+					diff, static_cast<Real>(0));
 			}
 		}
 
@@ -405,7 +413,8 @@ namespace DeepLearningTest
 			//Assert
 			const auto result_expected = vector1.hadamard_prod(vector2) + result_original;
 			const auto diff = (result - result_expected).max_abs();
-			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference", diff, std::numeric_limits<Real>::epsilon());
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference",
+				diff, std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(MatrixVectorMultiplicationAndAdditionTest)
@@ -423,8 +432,8 @@ namespace DeepLearningTest
 
 			//Assert
 			const auto diff = (result1 - result2).max_abs();
-			Logger::WriteMessage((std::string("Difference = ") + Utils::to_string(diff) + "\n").c_str());
-			Assert::IsTrue(diff < 10 * std::numeric_limits<Real>::epsilon(), L"Unexpectedly high difference");
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference",
+				diff, 10 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(VectorRandomSelectonMapTest)

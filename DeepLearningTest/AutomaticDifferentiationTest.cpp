@@ -18,6 +18,7 @@
 #include "CppUnitTest.h"
 #include <Math/Dual.h>
 #include <Utilities.h>
+#include "StandardTestUtils.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;
@@ -45,8 +46,7 @@ namespace DeepLearningTest
 
 			//Assert
 			const auto diff = std::abs(deriv_numeric - deriv_automatic);
-			Logger::WriteMessage((std::string("Difference = ") + Utils::to_string(diff) + "\n").c_str());
-			Assert::IsTrue(diff < diff_tolerance, L"too high deviation from reference");
+			StandardTestUtils::LogAndAssertLessOrEqualTo<R>("Difference", diff, diff_tolerance);
 		}
 
 		/// <summary>
@@ -72,10 +72,8 @@ namespace DeepLearningTest
 			//Assert
 			const auto diff1 = std::abs(deriv1_numeric - deriv1_automatic);
 			const auto diff2 = std::abs(deriv2_numeric - deriv2_automatic);
-			Logger::WriteMessage((std::string("Difference 1 = ") + Utils::to_string(diff1) + "\n").c_str());
-			Logger::WriteMessage((std::string("Difference 2 = ") + Utils::to_string(diff2) + "\n").c_str());
-			Assert::IsTrue(diff1 < diff_rolerance, L"too high deviation from reference");
-			Assert::IsTrue(diff2 < diff_rolerance, L"too high deviation from reference");
+			StandardTestUtils::LogAndAssertLessOrEqualTo<R>("Difference 1", diff1, diff_rolerance);
+			StandardTestUtils::LogAndAssertLessOrEqualTo<R>("Difference 2", diff2, diff_rolerance);
 		}
 
 		TEST_METHOD(SingleVarPolynomialFunctionsTest)

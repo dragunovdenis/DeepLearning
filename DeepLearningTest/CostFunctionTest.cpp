@@ -82,7 +82,7 @@ namespace DeepLearningTest
 				result_expected += reference_func(input[item_id], reference[item_id]);
 
 			const auto diff = std::abs(result - result_expected);
-			Assert::IsTrue(diff <= 0, L"Unexpectedly high deviation from the reference value");
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference", diff, static_cast<Real>(0));
 
 		}
 
@@ -112,17 +112,14 @@ namespace DeepLearningTest
 			auto result_func_expected = cost_func(input, reference);
 
 			const auto diff_func = std::abs(result_func - result_func_expected);
-			Assert::IsTrue(diff_func <= 0, L"Unexpectedly high deviation from the reference function value.");
+			StandardTestUtils::LogAndAssertLessOrEqualTo<Real>("diff_func", diff_func, static_cast<Real>(0));
 
 			for (std::size_t item_id = 0; item_id < dim; item_id++)
 			{
 				const auto diff_deriv = std::abs(result_deriv[item_id] - reference_deriv(input[item_id], reference[item_id]));
 				const auto diff_deriv_single = std::abs(result_deriv_single[item_id] - reference_deriv(input[item_id], reference[item_id]));
-				StandardTestUtils::Log("diff_deriv", diff_deriv);
-				StandardTestUtils::Log("diff_deriv_single",diff_deriv_single);
-				Assert::IsTrue(diff_deriv <= 10 * std::numeric_limits<Real>::epsilon(), L"Unexpectedly high deviation from the reference derivative value");
-				Assert::IsTrue(diff_deriv_single <= 10 * std::numeric_limits<Real>::epsilon(),
-					L"Unexpectedly high deviation from the reference derivative value (single version)");
+				StandardTestUtils::LogAndAssertLessOrEqualTo("diff_deriv", diff_deriv, 10 * std::numeric_limits<Real>::epsilon());
+				StandardTestUtils::LogAndAssertLessOrEqualTo("diff_deriv_single", diff_deriv_single, 10 * std::numeric_limits<Real>::epsilon());
 			}
 		}
 

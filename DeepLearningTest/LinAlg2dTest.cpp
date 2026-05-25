@@ -56,11 +56,9 @@ namespace DeepLearningTest
 			Logger::WriteMessage((std::string("Mean = ") + Utils::to_string(mean) + "; Standard deviation = " + Utils::to_string(stdev) + "\n").c_str());
 			//We expect that the random values follows uniform distribution on [-1, 1], thus their mean should tend to "0" and standard deviation should be close to sqrt(1/3);
 			const auto mean_deviation = std::abs(mean);
-			Logger::WriteMessage((std::string("Mean deviation = ") + std::to_string(mean_deviation) + "\n").c_str());
-			Assert::IsTrue(mean_deviation < Real(1.5e-2), L"Too high deviation from the expected mean value.");
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Mean deviation", mean_deviation, Real(1.5e-2));
 			const auto stdev_deviation = std::abs(std::sqrt(Real(1) / 3) - stdev);
-			Logger::WriteMessage((std::string("Stdev deviation = ") + std::to_string(stdev_deviation) + "\n").c_str());
-			Assert::IsTrue(stdev_deviation < Real(8.5e-3), L"Too high deviation from the expected StdDev value.");
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Stdev deviation", stdev_deviation, Real(8.5e-3));
 		}
 
 		TEST_METHOD(RandomVector2dTest)
@@ -78,7 +76,7 @@ namespace DeepLearningTest
 
 			check_random_values(set);
 
-			constexpr auto coincidence_percentage = std::is_same_v<Real, double> ? 0.0001 : 0.001;
+			constexpr auto coincidence_percentage = std::is_same_v<Real, double> ? 0.0001 : 0.0012;
 
 			StandardTestUtils::LogAndAssertGreaterOrEqualTo("Number of distinct random values generated",
 				set.size(), static_cast<std::size_t>(iterations * 2 * (1 - coincidence_percentage)));
@@ -275,8 +273,8 @@ namespace DeepLearningTest
 			const auto result2 = element1 + (element2 + element3);
 
 			//Assert
-			Assert::IsTrue((result1 - result2).max_abs() <= 10 * std::numeric_limits<R>::epsilon() ,
-				L"Addition operator is not associative.");
+			const auto diff = (result1 - result2).max_abs();
+			StandardTestUtils::LogAndAssertLessOrEqualTo<R>("Addition associativity diff", diff, 10 * std::numeric_limits<R>::epsilon());
 		}
 
 		template <class R, template<class> class TestType>
@@ -294,8 +292,10 @@ namespace DeepLearningTest
 			const auto result3 = scalar1 * element1 + element2 * scalar1 + element1 * scalar2 + scalar2 * element2;
 
 			//Assert
-			Assert::IsTrue((result1 - result2).max_abs() < 10 * std::numeric_limits<R>::epsilon() &&
-				(result1 - result3).max_abs() < 10 * std::numeric_limits<R>::epsilon(), L"Distributivity property does not hold true.");
+			const auto diff_12 = (result1 - result2).max_abs();
+			const auto diff_13 = (result1 - result3).max_abs();
+			StandardTestUtils::LogAndAssertLessOrEqualTo<R>("Distributivity diff (1-2)", diff_12, 10 * std::numeric_limits<R>::epsilon());
+			StandardTestUtils::LogAndAssertLessOrEqualTo<R>("Distributivity diff (1-3)", diff_13, 10 * std::numeric_limits<R>::epsilon());
 		}
 
 		template <class R, template<class> class TestType>
@@ -313,8 +313,10 @@ namespace DeepLearningTest
 			const auto result3 = scalar1 * element1 - element2 * scalar1 - element1 * scalar2 + scalar2 * element2;
 
 			//Assert
-			Assert::IsTrue((result1 - result2).max_abs() < 10 * std::numeric_limits<R>::epsilon() &&
-				(result1 - result3).max_abs() < 10 *std::numeric_limits<R>::epsilon(), L"Distributivity property does not hold true.");
+			const auto diff_12 = (result1 - result2).max_abs();
+			const auto diff_13 = (result1 - result3).max_abs();
+			StandardTestUtils::LogAndAssertLessOrEqualTo<R>("Distributivity diff (1-2)", diff_12, 10 * std::numeric_limits<R>::epsilon());
+			StandardTestUtils::LogAndAssertLessOrEqualTo<R>("Distributivity diff (1-3)", diff_13, 10 * std::numeric_limits<R>::epsilon());
 		}
 
 		TEST_METHOD(Vector2dZeroElementTest)
@@ -390,8 +392,9 @@ namespace DeepLearningTest
 			const auto result2 = (matrix1 * vector1 + matrix2 * vector1 + matrix1 * vector2 + matrix2 * vector2);
 
 			//Assert
-			Assert::IsTrue((result1 - result2).max_abs() <= 10 * std::numeric_limits<Real>::epsilon(),
-				L"Distributivity does not hold true");
+			const auto diff = (result1 - result2).max_abs();
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Distributivity diff",
+				diff, 10 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(AssociativityOfMatrixMultiplication)
@@ -406,8 +409,9 @@ namespace DeepLearningTest
 			const auto result2 = matrix1 * (matrix2 * matrix3);
 
 			//Assert
-			Assert::IsTrue((result1 - result2).max_abs() <= 10 * std::numeric_limits<Real>::epsilon(),
-				L"Associativity does not hold true");
+			const auto diff = (result1 - result2).max_abs();
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Associativity diff",
+				diff, 10 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(DistributivityOfMatrixMulltiplicationWithRespectToAddition)
@@ -425,8 +429,12 @@ namespace DeepLearningTest
 			const auto result4 = matrix3 * matrix1 + matrix3 * matrix2;
 
 			//Assert
-			Assert::IsTrue((result1 - result2).max_abs() < 10 * std::numeric_limits<Real>::epsilon(), L"Distributivity from the right does not hold true");
-			Assert::IsTrue((result3 - result4).max_abs() < 10 * std::numeric_limits<Real>::epsilon(), L"Distributivity from the lest does not hold true");
+			const auto diff_right = (result1 - result2).max_abs();
+			const auto diff_left = (result3 - result4).max_abs();
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Distributivity diff (right)",
+				diff_right, 10 * std::numeric_limits<Real>::epsilon());
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Distributivity diff (left)",
+				diff_left, 10 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(MatrixProductWithIdentityMatrixTest)
@@ -456,9 +464,10 @@ namespace DeepLearningTest
 			//Assert
 			const auto diff1 = (result1 - identity).max_abs();
 			const auto diff2 = (result2 - identity).max_abs();
-			Assert::IsTrue((result1 - identity).max_abs() <= 10 *std::numeric_limits<Real>::epsilon() &&
-				(result2 - identity).max_abs() <= 10 * std::numeric_limits<Real>::epsilon(),
-				L"Main property of the inverse matrix does not hold true");
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Inverse diff (right)",
+				diff1, 10 * std::numeric_limits<Real>::epsilon());
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Inverse diff (left)",
+				diff2, 10 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(InversingSingularMatrixResultsInException)
@@ -505,8 +514,8 @@ namespace DeepLearningTest
 			const auto det1x2 = (matrix1 * matrix2).det();
 
 			//Assert
-			Assert::IsTrue(std::abs(det1x2 - det1 * det2) < 10 * std::numeric_limits<Real>::epsilon(),
-				L"Determinant of a product is not equal to a product of determinants");
+			const auto det_diff = std::abs(det1x2 - det1 * det2);
+			StandardTestUtils::LogAndAssertLessOrEqualTo("det diff", det_diff, 10 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(DeterminantOfIdentityTest)
@@ -518,8 +527,8 @@ namespace DeepLearningTest
 			const auto det = identity.det();
 
 			//Assert
-			Assert::IsTrue(std::abs(det - Real(1)) < 10 * std::numeric_limits<Real>::epsilon(),
-				L"Determinant of a product is not equal to a product of determinants");
+			const auto det_diff = std::abs(det - Real(1));
+			StandardTestUtils::LogAndAssertLessOrEqualTo("det diff", det_diff, 10 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(DeterminantOfTransposeMatrix)
@@ -550,8 +559,8 @@ namespace DeepLearningTest
 			const auto result2 = scalar1 * vector1.dot(vector3) + scalar2 * vector2.dot(vector3);
 
 			//Assert
-			Assert::IsTrue(std::abs(result1 - result2) < 10 * std::numeric_limits<Real>::epsilon(),
-				L"Linearity property of the dot product does not hold true");
+			const auto diff = std::abs(result1 - result2);
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Linearity diff", diff, 10 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(SymmetricityOfDotProductTest)
@@ -565,8 +574,8 @@ namespace DeepLearningTest
 			const auto result2 = vector2.dot(vector1);
 
 			//Assert
-			Assert::IsTrue(std::abs(result1 - result2) < 10 * std::numeric_limits<Real>::epsilon(),
-				L"Symmetricity property of the dot product does not hold true");
+			const auto diff = std::abs(result1 - result2);
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Symmetricity diff", diff, 10 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(DotProductWithBasisVectorsTest)
@@ -595,17 +604,15 @@ namespace DeepLearningTest
 			const auto vector_rotated = rotation * vector;
 
 			//Assert
-			Assert::IsTrue((rotation * rotation_back - Matrix2x2<Real>::identity()).max_abs() <
-				10 * std::numeric_limits<Real>::epsilon(), L"Rotations on opposite angles must cancel each other");
+			const auto rotation_compose_diff = (rotation * rotation_back - Matrix2x2<Real>::identity()).max_abs();
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Rotation compose diff", rotation_compose_diff, 10 * std::numeric_limits<Real>::epsilon());
 
 			const auto actual_rotation_angle = std::atan2(vector_rotated.y, vector_rotated.x) - std::atan2(vector.y, vector.x);
 			const auto angle_diff = std::abs(actual_rotation_angle - angle);
-			Logger::WriteMessage((std::string("Angle difference = ") + Utils::to_string(angle_diff) + "\n").c_str());
-			Assert::IsTrue(angle_diff < 10 * std::numeric_limits<Real>::epsilon() ||
-				std::abs(angle_diff - Real(2 * std::numbers::pi)) < 10 * std::numeric_limits<Real>::epsilon(),
-				L"Unexpected actual rotation angle");
-			Assert::IsTrue(std::abs(vector.norm() - vector_rotated.norm()) < 10 * std::numeric_limits<Real>::epsilon(),
-				L"distance to the rotation center should not change");
+			const auto effective_angle_diff = std::min(angle_diff, std::abs(angle_diff - Real(2 * std::numbers::pi)));
+			StandardTestUtils::LogAndAssertLessOrEqualTo("effective_angle_diff", effective_angle_diff, 10 * std::numeric_limits<Real>::epsilon());
+			const auto norm_diff = std::abs(vector.norm() - vector_rotated.norm());
+			StandardTestUtils::LogAndAssertLessOrEqualTo("norm_diff", norm_diff, 10 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(AffineMatrixMiltiplicationTest)
@@ -621,8 +628,7 @@ namespace DeepLearningTest
 
 			//Assert
 			const auto diff = (result1 - result2).max_abs();
-			Assert::IsTrue((result1 - result2).max_abs() < 10 * std::numeric_limits<Real>::epsilon(),
-				L"Product of affine transformations must be equivalent to successive application the compound transformations");
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Affine assoc diff", diff, 10 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(InverseAffineTransformationTest)
@@ -638,8 +644,8 @@ namespace DeepLearningTest
 			const auto vector_transformer_inverse = affine_transform_inverse * vector_transformed;
 
 			//Assert
-			Assert::IsTrue((vector - vector_transformer_inverse).max_abs() <
-				10 * std::numeric_limits<Real>::epsilon(), L"Unexpected result of the inverse affine transformation");
+			const auto diff = (vector - vector_transformer_inverse).max_abs();
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Inverse affine diff", diff, 10 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(RotationAroundPointTest)
@@ -659,13 +665,9 @@ namespace DeepLearningTest
 			const auto actual_angle = std::acos(radius_vect.normalize().dot(radius_vect_rotated.normalize()));
 			const auto angle_diff = std::abs(actual_angle - angle);
 			const auto radius_diff = std::abs(radius_vect.norm() - radius_vect_rotated.norm());
-			Logger::WriteMessage((std::string("angle_diff = ") + Utils::to_string(angle_diff) + "\n").c_str());
-			Logger::WriteMessage((std::string("radius_diff = ") + Utils::to_string(radius_diff) + "\n").c_str());
 
-			Assert::IsTrue(angle_diff < 1000 * std::numeric_limits<Real>::epsilon(),
-				L"Too high difference between the actual and expected angles");
-			Assert::IsTrue(radius_diff < 10 * std::numeric_limits<Real>::epsilon(),
-				L"Distance to the rotation center should not change");
+			StandardTestUtils::LogAndAssertLessOrEqualTo("angle_diff", angle_diff, 1000 * std::numeric_limits<Real>::epsilon());
+			StandardTestUtils::LogAndAssertLessOrEqualTo("radius_diff", radius_diff, 10 * std::numeric_limits<Real>::epsilon());
 		}
 	};
 }

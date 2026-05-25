@@ -47,8 +47,9 @@ namespace DeepLearningTest
 				{
 					const auto edge_length_actual = (regular_simplex[i] - regular_simplex[j]).length();
 
-					Assert::IsTrue(std::abs(edge_length - edge_length_actual) < 10 *std::numeric_limits<Real>::epsilon(),
-						L"Unexpected edge length");
+					const auto edge_length_diff = std::abs(edge_length - edge_length_actual);
+					StandardTestUtils::LogAndAssertLessOrEqualTo("edge length diff",
+						edge_length_diff, 10 * std::numeric_limits<Real>::epsilon());
 				}
 		}
 
@@ -69,8 +70,9 @@ namespace DeepLearningTest
 			{
 				const auto edge_length_actual = (axes_aligned_simplex[0] - axes_aligned_simplex[j]).length();
 
-				Assert::IsTrue(std::abs(edge_length - edge_length_actual) < 10 * std::numeric_limits<Real>::epsilon(),
-					L"Unexpected edge length");
+				const auto edge_length_diff = std::abs(edge_length - edge_length_actual);
+				StandardTestUtils::LogAndAssertLessOrEqualTo("edge length diff",
+					edge_length_diff, 10 * std::numeric_limits<Real>::epsilon());
 			}
 
 			const auto edge_length_ex = std::sqrt(2) * edge_length;
@@ -79,8 +81,9 @@ namespace DeepLearningTest
 				{
 					const auto edge_length_actual = (axes_aligned_simplex[i] - axes_aligned_simplex[j]).length();
 
-					Assert::IsTrue(std::abs(edge_length_ex - edge_length_actual) < 10 * std::numeric_limits<Real>::epsilon(),
-						L"Unexpected edge length");
+					const auto edge_length_diff = static_cast<Real>(std::abs(edge_length_ex - edge_length_actual));
+					StandardTestUtils::LogAndAssertLessOrEqualTo("edge length diff (ex)",
+						edge_length_diff, 10 * std::numeric_limits<Real>::epsilon());
 				}
 		}
 
@@ -247,8 +250,8 @@ namespace DeepLearningTest
 			const auto point_diff = (VectorNdReal<N>(1) - optimizer.get_min_vertex()).max_abs();
 			const auto value_diff = std::abs(optimizer.get_min_value());
 
-			Assert::IsTrue(point_diff < epsilon, L"Unexpected point of minimum");
-			Assert::IsTrue(value_diff < 500 * std::numeric_limits<Real>::epsilon(), L"Unexpected minimum value");
+			StandardTestUtils::LogAndAssertLessOrEqualTo("point_diff", point_diff, epsilon);
+			StandardTestUtils::LogAndAssertLessOrEqualTo("value_diff", value_diff, 500 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(Rosenbrock5dOptimizationTest)
@@ -273,8 +276,8 @@ namespace DeepLearningTest
 			const auto point_diff = std::abs(min_pt - optimizer.get_min_vertex()[0]);
 			const auto value_diff = std::abs(optimizer.get_min_value());
 
-			Assert::IsTrue(point_diff < epsilon, L"Unexpected point of minimum");
-			Assert::IsTrue(value_diff < 500 * std::numeric_limits<Real>::epsilon(), L"Unexpected minimum value");
+			StandardTestUtils::LogAndAssertLessOrEqualTo("point_diff", point_diff, epsilon);
+			StandardTestUtils::LogAndAssertLessOrEqualTo("value_diff", value_diff, 500 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(PackingTest)

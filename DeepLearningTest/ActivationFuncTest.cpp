@@ -49,9 +49,8 @@ namespace DeepLearningTest
 			for (std::size_t item_id = 0; item_id < vector.dim(); item_id++)
 			{
 				const auto diff = std::abs(result[item_id] - Func::sigmoid(vector[item_id]));
-				Logger::WriteMessage((std::string("Difference = ") + std::to_string(diff) + "\n").c_str());
-				Assert::IsTrue(diff < std::numeric_limits<Real>::epsilon(),
-					L"Unexpectedly high deviation from the reference value.");
+				StandardTestUtils::LogAndAssertLessOrEqualTo("Difference",
+					diff, std::numeric_limits<Real>::epsilon());
 			}
 		}
 
@@ -76,9 +75,8 @@ namespace DeepLearningTest
 			for (std::size_t item_id = 0; item_id < vector.dim(); item_id++)
 			{
 				const auto deriv_diff = std::abs(result_deriv[item_id] - Func::sigmoid_deriv(vector[item_id]));
-				Logger::WriteMessage((std::string("Derivative difference = ") + std::to_string(deriv_diff) + "\n").c_str());
-				Assert::IsTrue(deriv_diff < std::numeric_limits<Real>::epsilon(),
-					L"Unexpectedly high deviation from the derivative reference value.");
+				StandardTestUtils::LogAndAssertLessOrEqualTo("Derivative difference",
+					deriv_diff, std::numeric_limits<Real>::epsilon());
 			}
 		}
 
@@ -108,7 +106,8 @@ namespace DeepLearningTest
 			//Assert
 			const auto soft_max_reference_result = soft_max_reference(vec);
 			const auto diff = (soft_max_result - soft_max_reference_result).max_abs();
-			Assert::IsTrue(diff < std::numeric_limits<Real>::epsilon(), L"Too high deviation between the actual and expected values");
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference",
+				diff, std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(SoftMaxFunctionAndDerivativeTest)
@@ -129,7 +128,8 @@ namespace DeepLearningTest
 			//Assert
 			const auto soft_max_reference_result = soft_max_reference(input);
 			const auto diff = (soft_max_result - soft_max_reference_result).max_abs();
-			Assert::IsTrue(diff < std::numeric_limits<Real>::epsilon(), L"Too high deviation between the actual and expected values");
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference",
+				diff, std::numeric_limits<Real>::epsilon());
 
 			constexpr auto double_precision = std::is_same_v<Real, double>;
 			constexpr auto delta = double_precision ? 1e-5 : static_cast<Real>(1e-2);
@@ -148,7 +148,8 @@ namespace DeepLearningTest
 
 				const auto deriv_diff = std::abs(deriv_numeric - activation_input_gradient[element_id]);
 
-				StandardTestUtils::LogAndAssertLessOrEqualTo("Derivative difference", deriv_diff, diff_threshold);
+				StandardTestUtils::LogAndAssertLessOrEqualTo("Derivative difference",
+					deriv_diff, diff_threshold);
 			}
 		}
 
@@ -173,7 +174,8 @@ namespace DeepLearningTest
 			// Assert
 			const auto result_expected = func.get_in_grad(out_grad, aux_data) + init_value;
 			const auto diff = (result - result_expected).max_abs();
-			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference", diff, std::numeric_limits<Real>::epsilon());
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference",
+				diff, std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(SoftMaxFunctionAddInGradTest)

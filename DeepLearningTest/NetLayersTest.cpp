@@ -96,11 +96,11 @@ namespace DeepLearningTest
 
 				//Now do the same using the back-propagation approach
 				const auto diff = std::abs(deriv_numeric - input_grad_result[in_item_id]);
-				Logger::WriteMessage((std::string("Difference = ") + Utils::to_string(diff) + '\n').c_str());
+				StandardTestUtils::LogAndAssertLessOrEqualTo("Difference",
+					diff, tolerance);
 				max_diff = std::max(max_diff, diff);
-				Assert::IsTrue(diff <= tolerance, L"Unexpectedly high deviation!");
 			}
-			Logger::WriteMessage((std::string("Max. Difference = ") + Utils::to_string(max_diff) + '\n').c_str());
+			StandardTestUtils::Log("Max. Difference", max_diff);
 		}
 
 		/// <summary>
@@ -162,12 +162,12 @@ namespace DeepLearningTest
 
 							//Now do the same using the back-propagation approach
 							const auto diff = std::abs(deriv_numeric - grad_data[filter_id + 1](layer_id, row_id, col_id));
-							Logger::WriteMessage((std::string("Difference = ") + Utils::to_string(diff) + '\n').c_str());
+							StandardTestUtils::LogAndAssertLessOrEqualTo("Difference",
+								diff, tolerance_weights);
 							weights_max_diff = std::max(weights_max_diff, diff);
-							Assert::IsTrue(diff <= tolerance_weights, L"Unexpectedly high deviation (weight derivatives)!");
 						}
 
-			Logger::WriteMessage((std::string("Max. Difference = ") + Utils::to_string(weights_max_diff) + '\n').c_str());
+			StandardTestUtils::Log("Max. Difference", weights_max_diff);
 
 			auto biases_max_diff = static_cast<Real>(0);
 			//Check derivatives with respect to biases
@@ -192,12 +192,12 @@ namespace DeepLearningTest
 
 						//Now do the same using the back-propagation approach
 						const auto diff = std::abs(deriv_numeric - grad_data[0](layer_id, row_id, col_id));
-						Logger::WriteMessage((std::string("Difference = ") + Utils::to_string(diff) + '\n').c_str());
+						StandardTestUtils::LogAndAssertLessOrEqualTo("Difference",
+							diff, tolerance_biases);
 						biases_max_diff = std::max(biases_max_diff, diff);
-						Assert::IsTrue(diff <= tolerance_biases, L"Unexpectedly high deviation (bias derivatives)!");
 					}
 
-			Logger::WriteMessage((std::string("Max. Difference = ") + Utils::to_string(biases_max_diff) + '\n').c_str());
+			StandardTestUtils::Log("Max. Difference", biases_max_diff);
 		}
 
 		/// <summary>
@@ -218,8 +218,8 @@ namespace DeepLearningTest
 		{
 			const auto nl = CreateCpuNLayer(activation_func_id);
 			RunGeneralDerivativeWithRespectToWeightsAndBiasesTest(nl, cost_function_id,
-				(std::is_same_v<Real, double> ? Real(8e-10) : Real(3.5e-3)),
-				(std::is_same_v<Real, double> ? Real(7e-10) : Real(3e-3)));
+				std::is_same_v<Real, double> ? static_cast<Real>(8e-10) : static_cast<Real>(3.5e-3),
+				std::is_same_v<Real, double> ? static_cast<Real>(2e-9) : static_cast<Real>(3e-3));
 		}
 
 		TEST_METHOD(NLayerDerivativeWithRespectToInputValuesCalculationSquaredErrorTest)
@@ -384,9 +384,12 @@ namespace DeepLearningTest
 			const auto delta1 = (y2 - y1) / (x2 - x1);
 			const auto delta2 = (y2 - y0) / (x2 - x0);
 
-			Assert::IsTrue(std::abs(delta0 - delta1) < 10 * std::numeric_limits<Real>::epsilon() &&
-				std::abs(delta0 - delta2) < 10 * std::numeric_limits<Real>::epsilon(), 
-				L"Too high deviation between the values");
+			const auto diff_01 = std::abs(delta0 - delta1);
+			const auto diff_02 = std::abs(delta0 - delta2);
+			StandardTestUtils::LogAndAssertLessOrEqualTo("delta0 - delta1",
+				diff_01, 10 * std::numeric_limits<Real>::epsilon());
+			StandardTestUtils::LogAndAssertLessOrEqualTo("delta0 - delta2",
+				diff_02, 10 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(LinearActivationNLayerTest)

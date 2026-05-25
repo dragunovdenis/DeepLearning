@@ -97,7 +97,7 @@ namespace DeepLearning::Utils
     /// Converts given value to string with the given number of digits
     /// </summary>
     template <typename R>
-    std::string to_string(const R a_value, const int n = std::numeric_limits<R>::digits10)
+    std::string to_string(const R a_value, const int n = std::numeric_limits<R>::digits10 + 1)
     {
         std::ostringstream out;
         out.precision(n);

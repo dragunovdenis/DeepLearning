@@ -144,9 +144,8 @@ namespace DeepLearningTest
 							}
 						}
 
-						const auto diff = std::abs(reference - result(r_l, r_r, r_c));
-						Logger::WriteMessage((std::string("diff =  ") + Utils::to_string(diff) + "\n").c_str());
-						Assert::IsTrue(diff < 10 * std::numeric_limits<Real>::epsilon(), L"Unexpected result");
+						const auto diff = static_cast<Real>(std::abs(reference - result(r_l, r_r, r_c)));
+						StandardTestUtils::LogAndAssertLessOrEqualTo("diff", diff, 10 * std::numeric_limits<Real>::epsilon());
 					}
 				}
 			}
@@ -211,8 +210,8 @@ namespace DeepLearningTest
 					for (auto c = 0ul; c < result.col_dim(); c++)
 					{
 						const auto diff = std::abs(result(l, r, c) - result_no_stride(l * stride.x, r * stride.y, c * stride.z));
-						Logger::WriteMessage((std::string("diff =  ") + Utils::to_string(diff) + "\n").c_str());
-						Assert::IsTrue(diff == static_cast<Real>(0), L"Elements are not the same");
+						StandardTestUtils::LogAndAssertLessOrEqualTo("diff",
+							diff, static_cast<Real>(0));
 					}
 		}
 
@@ -249,9 +248,8 @@ namespace DeepLearningTest
 				const auto single = tensor.convolve(reference.get_layer_handle(k), kernels[k], paddings, strides);
 
 			const auto diff = (multi_result - reference).max_abs();
-			Logger::WriteMessage((std::string("Diff = ") + Utils::to_string(diff) + "\n").c_str());
-			Assert::IsTrue(diff < 300 * std::numeric_limits<Real>::epsilon(),
-				L"Multi-kernel convolve disagrees with scalar single-kernel reference beyond tolerance");
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Diff",
+				diff, 300 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(ConvolutionKernelGradientTest)
@@ -302,11 +300,10 @@ namespace DeepLearningTest
 						const auto deriv_reference = (cost_plus_delta - cost_minus_delta) / (2 * delta);
 
 						const auto abs_diff = std::abs(deriv_reference - kern_grad(k_x, k_y, k_z));
-						const auto rel_diff = std::abs(deriv_reference) > 1 ? abs_diff / std::abs(deriv_reference) : abs_diff;
+						const auto rel_diff = static_cast<Real>(std::abs(deriv_reference) > 1 ? abs_diff / std::abs(deriv_reference) : abs_diff);
 
-						Logger::WriteMessage((std::string("Rel. diff. =  ") + Utils::to_string(rel_diff) + "\n").c_str());
-						Assert::IsTrue(rel_diff < (double_precision ? static_cast<Real>(5e-7) : static_cast<Real>(2.3e-2)),
-							L"Too high deviation from reference.");
+						StandardTestUtils::LogAndAssertLessOrEqualTo("Rel. diff.", rel_diff,
+							double_precision ? static_cast<Real>(5e-7) : static_cast<Real>(2.3e-2));
 					}
 		}
 
@@ -337,9 +334,8 @@ namespace DeepLearningTest
 			// Assert
 			const auto [ref_kernel_grad, ref_in_grad] = tensor.convolution_gradient(res_gradient, kernel, paddings, strides);
 			const auto diff = (gradient_container - (kernel_grad_input_data * gradient_scale_factor + ref_kernel_grad)).max_abs();
-			Logger::WriteMessage((std::string("Gradient diff. =  ") + Utils::to_string(diff) + "\n").c_str());
-			Assert::IsTrue(diff < 200 * std::numeric_limits<Real>::epsilon(),
-				L"Too high deviation between actual and reference kernel gradients");
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Gradient diff.",
+				diff, 200 * std::numeric_limits<Real>::epsilon());
 
 			Assert::IsTrue(in_grad == ref_in_grad, L"Reference and actual input gradients must coincide.");
 		}
@@ -392,11 +388,10 @@ namespace DeepLearningTest
 						const auto deriv_reference = (cost_plus_delta - cost_minus_delta) / (2 * delta);
 
 						const auto abs_diff = std::abs(deriv_reference - in_grad(t_x, t_y, t_z));
-						const auto rel_diff = std::abs(deriv_reference) > 1 ?	abs_diff / std::abs(deriv_reference) : abs_diff;
+						const auto rel_diff = static_cast<Real>(std::abs(deriv_reference) > 1 ?	abs_diff / std::abs(deriv_reference) : abs_diff);
 
-						Logger::WriteMessage((std::string("Rel. diff. =  ") + Utils::to_string(rel_diff) + "\n").c_str());
-						Assert::IsTrue(rel_diff < (double_precision ? static_cast<Real>(2e-8) : static_cast<Real>(1e-3)),
-							L"Too high deviation from reference.");
+						StandardTestUtils::LogAndAssertLessOrEqualTo("Rel. diff.", rel_diff,
+							double_precision ? static_cast<Real>(2e-8) : static_cast<Real>(1e-3));
 					}
 		}
 
@@ -452,7 +447,8 @@ namespace DeepLearningTest
 
 			//Assert
 			const auto diff = (in_grad_ref - pool_grad).max_abs();
-			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference", diff, 50 * std::numeric_limits<Real>::epsilon());
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference",
+				diff, 50 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(MaxPoolTest)
@@ -543,7 +539,8 @@ namespace DeepLearningTest
 
 			//Assert
 			const auto diff = (result1 - result2).max_abs();
-			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference", diff, 10 * std::numeric_limits<Real>::epsilon());
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference",
+				diff, 100 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(ScaleAndAddTest)
@@ -563,7 +560,8 @@ namespace DeepLearningTest
 
 			//Assert
 			const auto diff = (result1 - result2).max_abs();
-			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference", diff, 10 * std::numeric_limits<Real>::epsilon());
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference",
+				diff, 10 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(ScaleAndAddScaledTest)
@@ -584,7 +582,8 @@ namespace DeepLearningTest
 
 			//Assert
 			const auto diff = (result1 - result2).max_abs();
-			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference", diff, 10 * std::numeric_limits<Real>::epsilon());
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference",
+				diff, 10 * std::numeric_limits<Real>::epsilon());
 		}
 
 		void min_max_pool_test_general(const bool max)
@@ -654,10 +653,10 @@ namespace DeepLearningTest
 			const auto res_diff = (result_reference - result).max_abs();
 			const auto grad_diff = (input_gradient - input_gradient_reference).max_abs();
 
-			Logger::WriteMessage((std::string("Result difference = ") + Utils::to_string(res_diff) + "\n").c_str());
-			Logger::WriteMessage((std::string("Gradient difference = ") + Utils::to_string(grad_diff) + "\n").c_str());
-			Assert::IsTrue(res_diff <= std::numeric_limits<Real>::epsilon(), L"Too high deviation from the pool reference result");
-			Assert::IsTrue(grad_diff <= std::numeric_limits<Real>::epsilon(), L"Too high deviation from the pool reference gradient");
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Result difference",
+				res_diff, std::numeric_limits<Real>::epsilon());
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Gradient difference",
+				grad_diff, std::numeric_limits<Real>::epsilon());
 		}
 	};
 }

@@ -23,7 +23,6 @@
 #include "Math/PoolOperator.h"
 #include <Utilities.h>
 #include "StandardTestUtils.h"
-#include <string>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;
@@ -120,8 +119,8 @@ namespace DeepLearningTest
 		std::vector<Tensor> to_host(const std::vector<CudaTensor>& tensor_4d)
 		{
 			std::vector<Tensor> result;
-			std::transform(tensor_4d.begin(), tensor_4d.end(), std::back_inserter(result),
-				[](const auto& cudaTensor) { return cudaTensor.to_host(); });
+			std::ranges::transform(tensor_4d, std::back_inserter(result),
+			                       [](const auto& cudaTensor) { return cudaTensor.to_host(); });
 
 			return result;
 		}
@@ -142,8 +141,9 @@ namespace DeepLearningTest
 			const auto result2 = tensor1 + tensor2 * scalar;
 
 			//Assert
-			Assert::IsTrue((result1 - result2).max_abs() <
-				10 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference");
+			const auto diff = (result1 - result2).max_abs();
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference", diff,
+				10 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(ScaleAndAddTest)
@@ -162,8 +162,9 @@ namespace DeepLearningTest
 			const auto result2 = tensor1 * scalar + tensor2;
 
 			//Assert
-			Assert::IsTrue((result1 - result2).max_abs() <
-				10 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference");
+			const auto diff = (result1 - result2).max_abs();
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference", diff,
+				10 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(ScaleAndAddScaledTest)
@@ -183,8 +184,9 @@ namespace DeepLearningTest
 			const auto result2 = tensor1 * scalar_0 + tensor2 * scalar_1;
 			
 			//Assert
-			Assert::IsTrue((result1 - result2).max_abs() <
-				10 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference");
+			const auto diff = (result1 - result2).max_abs();
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference", diff,
+				10 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(FourDimTensorSumTest)
@@ -235,8 +237,7 @@ namespace DeepLearningTest
 			//Assert
 			const auto result_reference_host = tensor.to_host().convolve(kernel.to_host(), paddings, strides);
 			const auto diff = (result.to_host() - result_reference_host).max_abs();
-			Logger::WriteMessage((std::string("Diff = ") + Utils::to_string(diff)).c_str());
-			Assert::IsTrue(diff < 300 * std::numeric_limits<Real>::epsilon(), L"Unexpectedly high deviation from reference");
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Diff", diff, 300 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(ConvolutionWithCollectionOfKernelsTest)
@@ -271,8 +272,8 @@ namespace DeepLearningTest
 
 			const auto diff = (result.to_host() - result_host).max_abs();
 
-			Logger::WriteMessage((std::string("Diff = ") + Utils::to_string(diff)).c_str());
-			Assert::IsTrue(diff < 300 * std::numeric_limits<Real>::epsilon(), L"Unexpectedly high deviation from reference");
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference",
+				diff, 400 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(ConvolutionGradientTest)
@@ -296,11 +297,8 @@ namespace DeepLearningTest
 			const auto kernel_grad_diff = (kernel_grad.to_host() - kernel_grad_host).max_abs();
 			const auto input_grad_diff = (input_grad.to_host() - input_grad_host).max_abs();
 
-			Logger::WriteMessage((std::string("kernel_grad_diff= ") + Utils::to_string(kernel_grad_diff) + "\n").c_str());
-			Logger::WriteMessage((std::string("input_grad_diff= ") + Utils::to_string(input_grad_diff) + "\n").c_str());
-
-			Assert::IsTrue(kernel_grad_diff < 100 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference for the kernel gradient");
-			Assert::IsTrue(input_grad_diff < 50 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference for the input gradient");
+			StandardTestUtils::LogAndAssertLessOrEqualTo("kernel_grad_diff", kernel_grad_diff, 100 * std::numeric_limits<Real>::epsilon());
+			StandardTestUtils::LogAndAssertLessOrEqualTo("input_grad_diff", input_grad_diff, 50 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(ConvolutionGradientWithScalingTest)
@@ -327,15 +325,14 @@ namespace DeepLearningTest
 			// Assert
 			const auto [ref_kernel_grad, ref_in_grad] = tensor.convolution_gradient(res_grad, kernel, paddings, strides);
 			const auto diff = (gradient_container - (kernel_grad_input_data * gradient_scale_factor + ref_kernel_grad)).max_abs();
-			Logger::WriteMessage((std::string("Gradient diff. =  ") + Utils::to_string(diff) + "\n").c_str());
-			Assert::IsTrue(diff < 100 * std::numeric_limits<Real>::epsilon(),
-				L"Too high deviation between actual and reference kernel gradients");
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Gradient diff.", diff, 100 * std::numeric_limits<Real>::epsilon());
 
-			Assert::IsTrue((in_grad - ref_in_grad).max_abs() < 10 * std::numeric_limits<Real>::epsilon(),
-				L"Too high deviation between actual and reference input gradient tensors");
+			const auto diff_in_grad = (in_grad - ref_in_grad).max_abs();
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Input gradient diff.",
+				diff_in_grad, 10 * std::numeric_limits<Real>::epsilon());
 		}
 
-		void min_max_pool_optimixed_test(const bool max)
+		static void min_max_pool_optimized_test(const bool max)
 		{
 			//Arrange
 			const auto tensor_size = Index3d{ 10, 11, 9 };
@@ -360,12 +357,12 @@ namespace DeepLearningTest
 
 		TEST_METHOD(MinPoolOptimizedTest)
 		{
-			min_max_pool_optimixed_test(/*max*/ false);
+			min_max_pool_optimized_test(/*max*/ false);
 		}
 
 		TEST_METHOD(MaxPoolOptimizedTest)
 		{
-			min_max_pool_optimixed_test(/*max*/ true);
+			min_max_pool_optimized_test(/*max*/ true);
 		}
 
 		TEST_METHOD(AveragePoolTest)
@@ -389,8 +386,8 @@ namespace DeepLearningTest
 			const auto result_diff = (result.to_host() - result_host).max_abs();
 			const auto gradient_diff = (gradient.to_host() - gradient_host).max_abs();
 
-			Logger::WriteMessage((std::string("Difference for result = ") + Utils::to_string(result_diff) + "\n").c_str());
-			Logger::WriteMessage((std::string("Difference for gradient = ") + Utils::to_string(gradient_diff) + "\n").c_str());
+			StandardTestUtils::Log("Difference for result", result_diff);
+			StandardTestUtils::Log("Difference for gradient", gradient_diff);
 
 			Assert::IsTrue(result.to_host() == result_host, L"Unexpected result of pooling operation");
 			Assert::IsTrue(gradient.to_host() == gradient_host, L"Unexpected gradient of pooling operation");

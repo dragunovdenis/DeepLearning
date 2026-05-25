@@ -20,7 +20,6 @@
 #include <Math/CudaMatrix.cuh>
 #include <Utilities.h>
 #include "StandardTestUtils.h"
-#include <string>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;
@@ -116,8 +115,8 @@ namespace DeepLearningTest
 			//Assert
 			const auto host_result = matr.to_host() * vect.to_host();
 			const auto diff = (result.to_host() - host_result).max_abs();
-			Logger::WriteMessage((std::string("Diff = ") + Utils::to_string(diff) + "\n").c_str());
-			Assert::IsTrue(diff < 1000 * std::numeric_limits<Real>::epsilon(), L"too high deviation from reference");
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Diff",
+				diff, 1000 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(MatrixVectorMulAddTest)
@@ -138,8 +137,8 @@ namespace DeepLearningTest
 			//Assert
 			const auto host_result = matr.to_host().mul_add(vect_mul.to_host(), vect_add.to_host());
 			const auto diff = (result.to_host() - host_result).max_abs();
-			Logger::WriteMessage((std::string("Diff = ") + Utils::to_string(diff) + "\n").c_str());
-			Assert::IsTrue(diff < 1000 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference");
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Diff",
+				diff, 1000 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(VectorMatrixMultiplicationTest)
@@ -159,8 +158,8 @@ namespace DeepLearningTest
 			//Assert
 			const auto host_result = vect.to_host() * matr.to_host();
 			const auto diff = (result.to_host() - host_result).max_abs();
-			Logger::WriteMessage((std::string("Diff = ") + Utils::to_string(diff) + "\n").c_str());
-			Assert::IsTrue(diff < 50 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference");
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Diff", 
+				diff, 50 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(VectorColByVectorRowMultiplicationTest)
@@ -184,12 +183,13 @@ namespace DeepLearningTest
 			//Assert
 			const auto host_result = vector_col_times_vector_row(vect_col.to_host(), vect_row.to_host());
 			const auto diff = (result.to_host() - host_result).max_abs();
-			Logger::WriteMessage((std::string("Diff = ") + Utils::to_string(diff) + "\n").c_str());
-			Assert::IsTrue(diff < 10 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference");
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Diff",
+				diff, 10 * std::numeric_limits<Real>::epsilon());
 
 			const auto result_out_reference = result + result_in * scale_factor;
-			Assert::IsTrue((result_out - result_out_reference).max_abs() <
-				10 * std::numeric_limits<Real>::epsilon(), L"Too high deviation from reference (scaled result)");
+			const auto diff_out = (result_out - result_out_reference).max_abs();
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Diff out",
+				diff_out, 10 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(TransposeTest)

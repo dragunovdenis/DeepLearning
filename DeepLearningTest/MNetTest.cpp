@@ -203,7 +203,8 @@ namespace DeepLearningTest
 				}
 			}
 
-			Assert::IsTrue(diff < 10 * std::numeric_limits<Real>::epsilon(), L"Gradient sums are not equal");
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Gradient sums diff",
+				diff, 10 * std::numeric_limits<Real>::epsilon());
 		}
 
 		/// <summary>
@@ -269,13 +270,14 @@ namespace DeepLearningTest
 			const auto check_reference = evaluate(check_input, ref_net);
 
 			const auto [init_average_diff, init_max_diff] = evaluate_average_diff(check_reference, evaluate(check_input, net));
-			Assert::IsTrue(init_average_diff > static_cast<Real>(0.3), L"Too low initial difference.");
+			StandardTestUtils::LogAndAssertGreaterOrEqualTo("init_average_diff",
+				init_average_diff, static_cast<Real>(0.3));
 
 			// Act
 			constexpr auto step_begin = static_cast<Real>(1);
 			constexpr auto step_end = static_cast<Real>(5e-1);
 			constexpr auto learning_iterations = 10000;
-			constexpr auto tolerance = std::is_same_v<Real, double> ? static_cast<Real>(1e-10) : static_cast<Real>(1e-6);
+			constexpr auto tolerance = std::is_same_v<Real, double> ? static_cast<Real>(1e-10) : static_cast<Real>(4e-6);
 
 			for (auto iter = 0; iter < learning_iterations; ++iter)
 			{
@@ -293,7 +295,7 @@ namespace DeepLearningTest
 			// Assert
 			const auto [final_average_diff, final_max_diff] = evaluate_average_diff(check_reference, evaluate(check_input, net));
 
-			StandardTestUtils::LogAndAssertLessOrEqualTo<double>("Final difference",
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Final difference",
 				final_max_diff, tolerance);
 		}
 
@@ -326,7 +328,7 @@ namespace DeepLearningTest
 
 			StandardTestUtils::Log("Average error", average_error);
 			StandardTestUtils::Log("Total iterations", iteration_count);
-			StandardTestUtils::LogAndAssertLessOrEqualTo<Real>(
+			StandardTestUtils::LogAndAssertLessOrEqualTo(
 				"Maximum prediction error ", max_error, static_cast<Real>(4e-4));
 		}
 

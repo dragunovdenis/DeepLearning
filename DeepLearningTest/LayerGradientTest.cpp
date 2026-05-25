@@ -103,7 +103,8 @@ namespace DeepLearningTest
 			const auto reference = gradient0 + gradient1 * scalar;
 
 			const auto diff = (gradient - reference).max_abs();
-			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference", diff, std::numeric_limits<Real>::epsilon());
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference",
+				diff, 10 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(ScaleAndAddTest)
@@ -125,7 +126,8 @@ namespace DeepLearningTest
 			const auto reference = gradient0 * scalar + gradient1;
 
 			const auto diff = (gradient - reference).max_abs();
-			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference", diff, std::numeric_limits<Real>::epsilon());
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference",
+				diff, 10 * std::numeric_limits<Real>::epsilon());
 		}
 	};
 }

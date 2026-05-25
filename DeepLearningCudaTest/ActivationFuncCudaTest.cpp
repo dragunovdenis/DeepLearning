@@ -48,9 +48,8 @@ namespace DeepLearningTest
 			const auto result_host = ActivationFunction<Vector>(ActivationFunctionId::SIGMOID)(vector.to_host());
 			const auto diff = (result.to_host() - result_host).max_abs();
 
-			Logger::WriteMessage((std::string("Diff = ") + Utils::to_string(diff) + "\n").c_str());
-			Assert::IsTrue(diff < 10 * std::numeric_limits<Real>::epsilon(),
-				L"Unexpectedly high deviation from the reference value.");
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Diff",
+				diff, 10 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(SigmoidFunctionAndDerivativeCudaTest)
@@ -71,12 +70,14 @@ namespace DeepLearningTest
 			const auto [result_host, result_aux_host] = function_host.func_and_aux(vector.to_host());
 			const auto result_gradient_host = function_host.get_in_grad(out_grad.to_host(), result_aux.to_host());
 
-			Assert::IsTrue((result_host - result.to_host()).max_abs() < 10 * std::numeric_limits<Real>::epsilon(), 
-				L"Result: too high deviation from reference");
-			Assert::IsTrue((result_aux_host - result_aux.to_host()).max_abs() < 10 * std::numeric_limits<Real>::epsilon(),
-				L"Auxiliary data: Too high deviation from reference");
-			Assert::IsTrue((result_gradient_host - result_gradient.to_host()).max_abs() < 10 * std::numeric_limits<Real>::epsilon(),
-				L"Gradient: Too high deviation from reference");
+			const auto result_diff = (result.to_host() - result_host).max_abs();
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Result diff", result_diff, 10 * std::numeric_limits<Real>::epsilon());
+
+			const auto aux_diff = (result_aux.to_host() - result_aux_host).max_abs();
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Aux data diff", aux_diff, 10 * std::numeric_limits<Real>::epsilon());
+
+			const auto gradient_diff = (result_gradient.to_host() - result_gradient_host).max_abs();
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Gradient diff", gradient_diff, 10 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(SoftMaxFunctionCudaTest)
@@ -92,7 +93,8 @@ namespace DeepLearningTest
 			//Assert
 			const auto soft_max_result_host = SoftMaxActivationFunction<Vector>()(vec.to_host());
 			const auto diff = (soft_max_result.to_host() - soft_max_result_host).max_abs();
-			Assert::IsTrue(diff < std::numeric_limits<Real>::epsilon(), L"Too high deviation between the actual and expected values");
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Diff",
+				diff, 10 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(SoftMaxFunctionAndDerivativeCudaTest)
@@ -111,9 +113,12 @@ namespace DeepLearningTest
 			const auto [soft_max_result_host, aux_data_host] = SoftMaxActivationFunction<Vector>().func_and_aux(input.to_host());
 			const auto activation_input_gradient_host = SoftMaxActivationFunction<Vector>().get_in_grad(out_grad.to_host(), aux_data.to_host());
 			const auto diff_func = (soft_max_result.to_host() - soft_max_result_host).max_abs();
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Function diff",
+				diff_func, std::numeric_limits<Real>::epsilon());
+
 			const auto diff_grad = (activation_input_gradient.to_host() - activation_input_gradient_host).max_abs();
-			Assert::IsTrue(diff_func < std::numeric_limits<Real>::epsilon(), L"Too high deviation between the actual and expected values (function)");
-			Assert::IsTrue(diff_grad < std::numeric_limits<Real>::epsilon(), L"Too high deviation between the actual and expected values (gradient)");
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Gradient diff",
+				diff_grad, std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(ReLuOptimizedVsGeneralCudaTest)
