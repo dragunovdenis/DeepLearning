@@ -358,10 +358,17 @@ namespace DeepLearningTest
 			//Assert
 			if (std::is_same_v<Real, double>)
 			{
+#ifdef USE_AVX2
 				//net.save_to_file("../../DeepLearningTest/TestData/Regression//reference_net.dat");
 				//return;
 				const auto reference_net = Net<CpuDC>::load_from_file("TestData\\Regression\\reference_net.dat");
 				Assert::IsTrue(net.equal(reference_net), L"Nets are supposed to be equal.");
+#else
+				//net.save_to_file("../../DeepLearningTest/TestData/Regression//reference_net_no_simd.dat");
+				//return;
+				const auto reference_net = Net<CpuDC>::load_from_file("TestData\\Regression\\reference_net_no_simd.dat");
+				Assert::IsTrue(net.equal(reference_net), L"Nets are supposed to be equal.");
+#endif
 			} else
 			{
 				//net.save_to_file("../../DeepLearningTest/TestData/Regression//reference_net_single.dat");

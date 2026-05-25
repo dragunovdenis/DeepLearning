@@ -26,6 +26,8 @@
 #include "ConvolutionUtils.h"
 #include "AvxAcceleration.h"
 #include <vector>
+#include <numeric>
+#include <algorithm>
 
 namespace DeepLearning
 {
@@ -394,7 +396,14 @@ namespace DeepLearning
 			auto handle = result.get_layer_handle(kernel_id);
 
 			for (std::size_t r = 0; r < r_size; ++r)
+			{
+#ifdef USE_AVX2
 				handle[r] = static_cast<Real>(Avx::mm256_dot_product(rf_data + r * k_size, kernel_flat, k_size));
+#else
+				const Real* row = rf_data + r * k_size;
+				handle[r] = std::inner_product(row, row + k_size, kernel_flat, Real(0));
+#endif // USE_AVX2
+			}
 		}
 	}
 
@@ -478,7 +487,13 @@ namespace DeepLearning
 			if (factor == static_cast<Real>(0))
 				continue;
 
+#ifdef USE_AVX2
 			Avx::scaled_add<Real>(k_grad_data, rf_data + r * k_size, factor, k_size);
+#else
+			const Real* src = rf_data + r * k_size;
+			std::transform(k_grad_data, k_grad_data + k_size, src, k_grad_data,
+				[factor](const auto& x, const auto& y) { return x + y * factor; });
+#endif // USE_AVX2
 		}
 	}
 
@@ -518,7 +533,14 @@ namespace DeepLearning
 				t_row, t_col, k_y_size, k_z_size,
 				[&](const std::size_t t_off, const std::size_t k_off, const std::size_t count)
 				{
+#ifdef USE_AVX2
 					Avx::scaled_add<Real>(in_grad_flat + t_off, kernel_flat + k_off, factor, count);
+#else
+					Real* dst = in_grad_flat + t_off;
+					const Real* src = kernel_flat + k_off;
+					std::transform(dst, dst + count, src, dst,
+						[factor](const auto& x, const auto& y) { return x + y * factor; });
+#endif // USE_AVX2
 				});
 		}
 	}

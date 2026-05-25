@@ -76,13 +76,14 @@ $Configurations = @(
     "Debug",
     "DebugSingle",
     "Release",
+    "NoSimd",
     "ReleaseSingle",
     "IntelCompiler2022",
     "IntelCompiler2022Single"
 )
 
 # Configurations for which tests are NOT expected (no test projects in solution)
-$NoTestConfigs = @("Debug", "DebugSingle", "IntelCompiler2022", "IntelCompiler2022Single")
+$NoTestConfigs = @("IntelCompiler2022", "IntelCompiler2022Single")
 
 # ---------------------------------------------------------------------------
 # Result accumulator
@@ -98,7 +99,7 @@ function Get-VsTestCount([string]$LogContent, [string]$Label) {
 }
 
 function Get-VsTestTime([string]$LogContent) {
-    if ($LogContent -match "(?m)^Total time:\s+(.+)") { return $Matches[1].Trim() }
+    if ($LogContent -match "(?m)^\s*Total time:\s+(.+)") { return $Matches[1].Trim() }
     return "-"
 }
 
