@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!--
+    DeepLearningOpenCpp - injects headers and source files into the consumer's
+    native C++ project, and enforces the language standard required by the library.
+  -->
+
+  <!-- Base settings: include dirs + C++20 + conformance. -->
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+  </ItemDefinitionGroup>
+
+  <!-- USE_AVX2 (default on) -->
+  <ItemDefinitionGroup Condition="'$(DeepLearningUseAvx2)' == 'true'">
+    <ClCompile>
+      <PreprocessorDefinitions>USE_AVX2;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+    </ClCompile>
+  </ItemDefinitionGroup>
+
+  <!-- USE_SINGLE_PRECISION (default on) -->
+  <ItemDefinitionGroup Condition="'$(DeepLearningUseSinglePrecision)' == 'true'">
+    <ClCompile>
+      <PreprocessorDefinitions>USE_SINGLE_PRECISION;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+
+  <!--
+    Inject all shipped .cpp files into the consumer's compilation.
+    PrecompiledHeader=NotUsing avoids collisions with the consumer's PCH setup.
+  -->
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)src\**\*.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+  </ItemGroup>
+</Project>

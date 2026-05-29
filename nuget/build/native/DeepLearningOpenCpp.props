@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!--
+    DeepLearningOpenCpp - default property values.
+    Consumers may override these in their .vcxproj BEFORE the package's
+    import is processed (i.e., set them in the global PropertyGroup at the
+    top of the .vcxproj or in a Directory.Build.props).
+  -->
+  <PropertyGroup>
+    <DeepLearningUseAvx2 Condition="'$(DeepLearningUseAvx2)' == ''">true</DeepLearningUseAvx2>
+    <DeepLearningUseSinglePrecision Condition="'$(DeepLearningUseSinglePrecision)' == ''">true</DeepLearningUseSinglePrecision>
+  </PropertyGroup>
+</Project>
