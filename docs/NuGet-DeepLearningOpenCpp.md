@@ -43,26 +43,37 @@ or add to `packages.config`:
 
 After NuGet restore, the package will:
 
-1. Add `build\native\include\` to `AdditionalIncludeDirectories`.
-2. Add every shipped `.cpp` to the project's `ClCompile` items (with
+1. Add the include root `build\native\include\` plus the sub-folder roots
+   `include\Math\`, `include\NeuralNet\`, `include\Diagnostics\`,
+   `include\ImageProcessing\` and `include\ThirdParty\` to
+   `AdditionalIncludeDirectories`. The sub-folder entries are required so
+   that bare-name sibling `#include`s inside the shipped `.cpp` sources
+   (e.g. `#include "LinAlg2d.h"` from `src\Math\Vector.cpp`) resolve
+   without any extra configuration on the consumer side.
+2. Unless `DeepLearningCompileSources` is set to `false`, add every shipped
+   `.cpp` to the project's `ClCompile` items (with
    `<PrecompiledHeader>NotUsing</PrecompiledHeader>`).
-3. Set `<LanguageStandard>stdcpp20`, `<ConformanceMode>true`.
+3. Set `<LanguageStandard>stdcpp20` and, unless
+   `DeepLearningEnforceConformance` is set to `false`,
+   `<ConformanceMode>true</ConformanceMode>`.
 4. Conditionally append `USE_AVX2;` and `USE_SINGLE_PRECISION;` to
    `PreprocessorDefinitions`, and set `<EnableEnhancedInstructionSet>` to
    `AdvancedVectorExtensions2` when AVX2 is enabled.
 
-## Opt-out properties
+## Opt-out / opt-in properties
 
-Both feature defines are **on** by default. To disable, set the corresponding
-MSBuild property to `false` in your `.vcxproj` (in the top-level
-`PropertyGroup`) or in a `Directory.Build.props`:
+All public properties are MSBuild properties; override them in the
+top-level `<PropertyGroup>` of your `.vcxproj` (or in a
+`Directory.Build.props`) **before** the package import is processed:
 
-| Property                          | Default | Effect when `false`                              |
-| --------------------------------- | ------- | ------------------------------------------------ |
-| `DeepLearningUseAvx2`             | `true`  | Drops `USE_AVX2` define and `/arch:AVX2`.        |
-| `DeepLearningUseSinglePrecision`  | `true`  | Drops `USE_SINGLE_PRECISION` (uses `double`).    |
+| Property                          | Default | Effect when `false`                                                          |
+| --------------------------------- | ------- | ---------------------------------------------------------------------------- |
+| `DeepLearningUseAvx2`             | `true`  | Drops `USE_AVX2` define and `/arch:AVX2`.                                    |
+| `DeepLearningUseSinglePrecision`  | `true`  | Drops `USE_SINGLE_PRECISION` (uses `double`).                                |
+| `DeepLearningCompileSources`      | `true`  | Skips injecting the shipped `.cpp` files (header-only consumer).             |
+| `DeepLearningEnforceConformance`  | `true`  | Drops `<ConformanceMode>true</ConformanceMode>` (`/permissive-` not forced). |
 
-Example:
+Example — disable AVX2 and use `double`:
 
 ```xml
 <PropertyGroup Label="DeepLearningOpenCpp">
@@ -70,6 +81,26 @@ Example:
   <DeepLearningUseSinglePrecision>false</DeepLearningUseSinglePrecision>
 </PropertyGroup>
 ```
+
+## Multi-project solutions (header-only consumers)
+
+In a solution where one project (e.g. a static-lib `Core` project) compiles
+the DeepLearning sources and other projects (tests, DLL, executables)
+consume `Core` transitively, **only the `Core` project should compile the
+sources**. Otherwise the sources are compiled into every consumer and the
+linker reports `LNK2005` / duplicate-symbol errors.
+
+For each header-only consumer, install the package and set:
+
+```xml
+<PropertyGroup Label="DeepLearningOpenCpp">
+  <DeepLearningCompileSources>false</DeepLearningCompileSources>
+</PropertyGroup>
+```
+
+This keeps the include directories, defines and language standard active
+on the consumer (so its own translation units can `#include` DeepLearning
+headers) without re-compiling the library.
 
 ## Migrating `TrainingCell` from `<ProjectReference>` to the NuGet package
 
@@ -83,6 +114,16 @@ In `TrainingCell\TrainingCell.vcxproj`, remove the project reference:
 
 …and add the package to `packages.config` (or via `Install-Package`). The
 git submodule that pulls `DeepLearning` can then be removed.
+
+If the consuming project manages `USE_AVX2` and/or `USE_SINGLE_PRECISION`
+on a per-configuration basis (as `TrainingCell` does), set
+`DeepLearningUseAvx2` / `DeepLearningUseSinglePrecision` to `false` so the
+package doesn't inject them globally.
+
+In every other project in the solution (tests, DLL, console exe) that
+already transitively links against the static lib, install the package
+with `DeepLearningCompileSources=false` so they get the headers but do
+not re-compile the sources.
 
 ## Versioning
 
@@ -102,6 +143,11 @@ consumer's local toolset is what compiles the code.
 - **`cl : Command line error D8016 : '/arch:AVX2' and '/arch:...' incompatible`**
   Set `<DeepLearningUseAvx2>false</DeepLearningUseAvx2>` or remove the
   conflicting `/arch:` flag from the consumer project.
+- **`LNK2005` / "already defined" errors in a multi-project solution**:
+  The shipped `.cpp` sources are being compiled into more than one project.
+  Pick a single project to compile them and set
+  `<DeepLearningCompileSources>false</DeepLearningCompileSources>` on the
+  others (see *Multi-project solutions* above).
 - **PCH errors on injected `.cpp` files**: ensure the consumer project does
   not force `<PrecompiledHeader>Use</PrecompiledHeader>` globally via
   `<ItemDefinitionGroup>`. The package sets `NotUsing` per-file but a

@@ -1,13 +1,81 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <!--
-    DeepLearningOpenCpp - default property values.
-    Consumers may override these in their .vcxproj BEFORE the package's
-    import is processed (i.e., set them in the global PropertyGroup at the
-    top of the .vcxproj or in a Directory.Build.props).
+    DeepLearningOpenCpp - default property values + compile-time settings.
+
+    This file is auto-imported by NuGet in the consumer .vcxproj's
+    <ImportGroup Label="ExtensionSettings"/> (i.e., BEFORE Microsoft.Cpp.props),
+    so the settings declared here are visible to the entire build pipeline.
+
+    Consumers may override the public properties below in their .vcxproj BEFORE
+    the package's import is processed (i.e., in the top-level <PropertyGroup>
+    of the .vcxproj or in a Directory.Build.props).
   -->
+
+  <!-- =================== Public, consumer-overridable properties =================== -->
   <PropertyGroup>
+    <!-- Emit USE_AVX2 and enable /arch:AVX2 codegen. -->
     <DeepLearningUseAvx2 Condition="'$(DeepLearningUseAvx2)' == ''">true</DeepLearningUseAvx2>
+    <!-- Emit USE_SINGLE_PRECISION (float). When false, the library uses double. -->
     <DeepLearningUseSinglePrecision Condition="'$(DeepLearningUseSinglePrecision)' == ''">true</DeepLearningUseSinglePrecision>
+    <!--
+      Compile the shipped .cpp sources into the consumer project.
+
+      Set to 'false' on projects that only need the headers (e.g. test/DLL
+      projects that link against a sibling static library which already
+      compiled the sources). This avoids ODR / duplicate-symbol errors in
+      multi-project solutions where one project produces a .lib consumed by
+      others.
+    -->
+    <DeepLearningCompileSources Condition="'$(DeepLearningCompileSources)' == ''">true</DeepLearningCompileSources>
+    <!-- Enforce /permissive- on the consumer (required by the library headers). -->
+    <DeepLearningEnforceConformance Condition="'$(DeepLearningEnforceConformance)' == ''">true</DeepLearningEnforceConformance>
   </PropertyGroup>
+
+  <!-- =================== Compile settings =================== -->
+
+  <!--
+    Include directories.
+
+    'include\' is the public header root. The library's shipped .cpp files
+    (under build\native\src\...) use a mix of bare-name sibling includes
+    (e.g. #include "LinAlg2d.h" from src\Math\Vector.cpp) and parent-relative
+    includes (e.g. #include "../Utilities.h"). Because headers live under
+    include\ and sources under src\, those two layouts are not siblings, so
+    the per-subfolder include roots below are required for the bare-name
+    sibling resolution to work and to give the "../" includes a valid base.
+
+    Headers-only consumers don't need the sub-folder entries (they only use
+    fully-qualified paths like "NeuralNet/Net.h"), but adding them is
+    harmless and keeps the property identical regardless of
+    DeepLearningCompileSources.
+  -->
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)include\;$(MSBuildThisFileDirectory)include\Math\;$(MSBuildThisFileDirectory)include\NeuralNet\;$(MSBuildThisFileDirectory)include\Diagnostics\;$(MSBuildThisFileDirectory)include\ImageProcessing\;$(MSBuildThisFileDirectory)include\ThirdParty\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+    </ClCompile>
+  </ItemDefinitionGroup>
+
+  <!-- /permissive- (default on). -->
+  <ItemDefinitionGroup Condition="'$(DeepLearningEnforceConformance)' == 'true'">
+    <ClCompile>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+  </ItemDefinitionGroup>
+
+  <!-- USE_AVX2 (default on). -->
+  <ItemDefinitionGroup Condition="'$(DeepLearningUseAvx2)' == 'true'">
+    <ClCompile>
+      <PreprocessorDefinitions>USE_AVX2;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+    </ClCompile>
+  </ItemDefinitionGroup>
+
+  <!-- USE_SINGLE_PRECISION (default on). -->
+  <ItemDefinitionGroup Condition="'$(DeepLearningUseSinglePrecision)' == 'true'">
+    <ClCompile>
+      <PreprocessorDefinitions>USE_SINGLE_PRECISION;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
 </Project>
