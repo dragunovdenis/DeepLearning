@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>DeepLearningOpenCpp</id>
+    <version>$version$</version>
+    <authors>Denys Dragunov</authors>
+    <owners>Denys Dragunov</owners>
+    <projectUrl>https://github.com/dragunovdenis/DeepLearning</projectUrl>
+    <license type="file">LICENSE</license>
+    <readme>docs\NuGet-DeepLearningOpenCpp.md</readme>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Source-only C++20 deep-learning library (CPU) by Denys Dragunov. The package ships headers (.h/.inl) and sources (.cpp) from the DeepLearning project and injects them into the consumer's native C++ project. The consumer's compiler/toolset controls ABI, precision and SIMD, eliminating MSVC ABI drift issues. Defines USE_AVX2 and USE_SINGLE_PRECISION by default; both can be disabled by setting the corresponding MSBuild properties to 'false'.</description>
+    <summary>Source-only C++20 deep-learning library (CPU).</summary>
+    <tags>native cpp c++ c++20 deep-learning neural-network machine-learning cpu source-only</tags>
+    <repository type="git" url="https://github.com/dragunovdenis/DeepLearning" />
+    <dependencies>
+      <group targetFramework="native">
+        <dependency id="msgpack-c-cpp-3.1.1-winsoft666" version="[1.0.0.2, )" />
+      </group>
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="..\LICENSE" target="LICENSE" />
+    <file src="..\docs\NuGet-DeepLearningOpenCpp.md" target="docs\NuGet-DeepLearningOpenCpp.md" />
+    <file src="build\native\DeepLearningOpenCpp.props" target="build\native\DeepLearningOpenCpp.props" />
+    <file src="build\native\DeepLearningOpenCpp.targets" target="build\native\DeepLearningOpenCpp.targets" />
+    <file src="..\DeepLearning\**\*.h" target="build\native\include" />
+    <file src="..\DeepLearning\**\*.inl" target="build\native\include" />
+    <file src="..\DeepLearning\**\*.cpp" target="build\native\src" />
+  </files>
+</package>
