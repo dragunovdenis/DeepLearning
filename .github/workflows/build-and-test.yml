@@ -40,10 +40,12 @@ jobs:
   pack-and-publish:
     # Only runs after build-and-test succeeds. Skipped on pull requests so
     # forks cannot trigger a publish; runs on master pushes (pack-only) and
-    # on v*.*.* tag pushes (pack + publish to nuget.org).
+    # on v*.*.* tag pushes (pack + publish to nuget.org and GitHub Packages).
     needs: build-and-test
     if: github.event_name != 'pull_request'
     runs-on: windows-latest
+    permissions:
+      packages: write
 
     steps:
       - name: Checkout repository
@@ -98,4 +100,14 @@ jobs:
           dotnet nuget push artifacts\*.nupkg `
             --api-key $env:NUGET_API_KEY `
             --source https://api.nuget.org/v3/index.json `
+            --skip-duplicate
+
+      - name: Publish to GitHub Packages
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          dotnet nuget push artifacts\*.nupkg `
+            --api-key $env:GITHUB_TOKEN `
+            --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json `
             --skip-duplicate
