@@ -14,10 +14,6 @@
 
   <!-- =================== Public, consumer-overridable properties =================== -->
   <PropertyGroup>
-    <!-- Emit USE_AVX2 and enable /arch:AVX2 codegen. -->
-    <DeepLearningUseAvx2 Condition="'$(DeepLearningUseAvx2)' == ''">true</DeepLearningUseAvx2>
-    <!-- Emit USE_SINGLE_PRECISION (float). When false, the library uses double. -->
-    <DeepLearningUseSinglePrecision Condition="'$(DeepLearningUseSinglePrecision)' == ''">true</DeepLearningUseSinglePrecision>
     <!--
       Compile the shipped .cpp sources into the consumer project.
 
@@ -28,8 +24,6 @@
       others.
     -->
     <DeepLearningCompileSources Condition="'$(DeepLearningCompileSources)' == ''">true</DeepLearningCompileSources>
-    <!-- Enforce /permissive- on the consumer (required by the library headers). -->
-    <DeepLearningEnforceConformance Condition="'$(DeepLearningEnforceConformance)' == ''">true</DeepLearningEnforceConformance>
   </PropertyGroup>
 
   <!-- =================== Compile settings =================== -->
@@ -54,28 +48,6 @@
     <ClCompile>
       <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)include\;$(MSBuildThisFileDirectory)include\Math\;$(MSBuildThisFileDirectory)include\NeuralNet\;$(MSBuildThisFileDirectory)include\Diagnostics\;$(MSBuildThisFileDirectory)include\ImageProcessing\;$(MSBuildThisFileDirectory)include\ThirdParty\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
-    </ClCompile>
-  </ItemDefinitionGroup>
-
-  <!-- /permissive- (default on). -->
-  <ItemDefinitionGroup Condition="'$(DeepLearningEnforceConformance)' == 'true'">
-    <ClCompile>
-      <ConformanceMode>true</ConformanceMode>
-    </ClCompile>
-  </ItemDefinitionGroup>
-
-  <!-- USE_AVX2 (default on). -->
-  <ItemDefinitionGroup Condition="'$(DeepLearningUseAvx2)' == 'true'">
-    <ClCompile>
-      <PreprocessorDefinitions>USE_AVX2;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
-    </ClCompile>
-  </ItemDefinitionGroup>
-
-  <!-- USE_SINGLE_PRECISION (default on). -->
-  <ItemDefinitionGroup Condition="'$(DeepLearningUseSinglePrecision)' == 'true'">
-    <ClCompile>
-      <PreprocessorDefinitions>USE_SINGLE_PRECISION;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
 </Project>
