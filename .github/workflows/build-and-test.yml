@@ -10,7 +10,7 @@ on:
 
 jobs:
   build-and-test:
-    runs-on: windows-latest
+    runs-on: windows-2025-vs2026
 
     steps:
       - name: Checkout repository
@@ -28,9 +28,7 @@ jobs:
         run: nuget restore DeepLearningCore.sln -PackagesDirectory packages
 
       - name: Build solution
-        # Override PlatformToolset to v143 (VS 2022) since v145 (VS 2025) is not
-        # available on GitHub-hosted runners.
-        run: msbuild DeepLearningCore.sln /p:Configuration=Release /p:Platform=x64 /p:PlatformToolset=v143 /m
+        run: msbuild DeepLearningCore.sln /p:Configuration=Release /p:Platform=x64 /m
 
       - name: Run tests
         run: |
