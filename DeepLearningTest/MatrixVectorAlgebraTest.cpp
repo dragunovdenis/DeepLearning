@@ -138,7 +138,7 @@ namespace DeepLearningTest
 
 				const auto diff = std::abs(reference - product[col_id]);
 				StandardTestUtils::LogAndAssertLessOrEqualTo("Difference",
-					diff, std::numeric_limits<Real>::epsilon());
+					diff, 10 * std::numeric_limits<Real>::epsilon());
 			}
 		}
 

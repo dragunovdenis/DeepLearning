@@ -21,8 +21,6 @@
 #include "../Utilities.h"
 #include <exception>
 #include <numeric>
-#include <iterator>
-#include <cstddef>
 #include <algorithm>
 #include "AvxAcceleration.h"
 #include "../IndexIterator.h"
@@ -30,55 +28,6 @@
 
 namespace DeepLearning
 {
-	/// <summary>
-	/// An iterator allowing to traverse columns of the matrix
-	/// </summary>
-	template <typename T>
-	struct ColumnIterator
-	{
-		using iterator_category = std::input_iterator_tag;
-		using difference_type   = std::ptrdiff_t;
-		using value_type		= T;
-		using pointer			= T*;
-		using reference			= T&;
-
-		/// <summary>
-		/// Constructor
-		/// </summary>
-		/// <param name="ptr">Pointer</param>
-		/// <param name="col_dim">Offset that will be used to calculate position of the "next" pointer</param>
-		ColumnIterator(pointer ptr, const std::size_t col_dim) : _col_dim(col_dim), _ptr(ptr){}
-
-		reference operator *() const { return *_ptr; }
-		pointer operator ->() { return _ptr; }
-
-		/// <summary>
-		/// Prefix increment
-		/// </summary>
-		ColumnIterator& operator++() {
-			_ptr += _col_dim; 
-			return *this;
-		}
-
-		/// <summary>
-		/// Postfix increment
-		/// </summary>
-		ColumnIterator operator ++(int) { 
-			auto temp = *this; 
-			++(*this); 
-			return temp; 
-		}
-
-		friend bool operator== (const ColumnIterator& a, const ColumnIterator& b) { return a._ptr == b._ptr && a._col_dim == b._col_dim; };
-		friend bool operator!= (const ColumnIterator& a, const ColumnIterator& b) { return a._ptr != b._ptr || a._col_dim != b._col_dim; };
-
-	private:
-
-		std::size_t _col_dim;
-		pointer _ptr;
-
-	};
-
 	void Matrix::resize(const std::size_t& new_row_dim, const std::size_t& new_col_dim)
 	{
 		const auto new_size = new_row_dim * new_col_dim;
@@ -260,8 +209,12 @@ namespace DeepLearning
 		{
 			const auto scalar = vec[row_id];
 
+#ifdef USE_AVX2
+			Avx::scaled_add(result.begin(), begin() + row_id * _col_dim, scalar, _col_dim);
+#else
 			std::transform(result.begin(), result.end(), begin() + row_id * _col_dim, result.begin(),
 				[scalar](const auto& x, const auto& y) { return y * scalar + x; });
+#endif // USE_AVX2
 		}
 	}
 
@@ -346,7 +299,6 @@ namespace DeepLearning
 	{
 		auto result = mat;
 		return result *= scalar;
-
 	}
 
 	Matrix operator *(const Real& scalar, const Matrix& mat)
@@ -372,8 +324,13 @@ namespace DeepLearning
 		for (std::size_t row_id = 0; row_id < vec_col.size(); row_id++)
 		{
 			const auto factor = vec_col[row_id];
+			auto result_row_ptr = result.begin() + col_dim * row_id;
+#ifdef USE_AVX2
+			Avx::scale(result_row_ptr, vec_row.begin(), factor, col_dim);
+#else
 			std::transform(vec_row.begin(), vec_row.end(),
-				result.begin() + col_dim * row_id, [factor](const auto& x) {return factor * x; });
+				result_row_ptr, [factor](const auto& x) {return factor * x; });
+#endif
 		}
 	}
 
@@ -387,8 +344,12 @@ namespace DeepLearning
 		{
 			const auto factor = vec_col[row_id];
 			const auto result_row_ptr = result.begin() + col_dim * row_id;
+#ifdef USE_AVX2
+			Avx::simd_scale_and_add_scaled(result_row_ptr, vec_row.begin(), scale_factor, factor, col_dim);
+#else
 			std::transform(vec_row.begin(), vec_row.end(), result_row_ptr,
 				result_row_ptr, [factor, scale_factor](const auto& x, const auto& r) {return factor * x + scale_factor * r; });
+#endif
 		}
 	}
 

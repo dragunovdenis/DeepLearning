@@ -172,7 +172,20 @@ namespace DeepLearning
 		if (empty())
 			return std::numeric_limits<Real>::signaling_NaN();
 
+#ifdef USE_AVX2
+		return Avx::abs_max(begin(), size());
+#else
 		return std::abs(*std::max_element(begin(), end(), [](const auto& x, const auto& y) { return std::abs(x) < std::abs(y); }));
+#endif
+	}
+
+	Real BasicCollection::sum() const
+	{
+#ifdef USE_AVX2
+		return Avx::simd_sum(begin(), size());
+#else
+		return std::accumulate(begin(), end(), Real(0));
+#endif
 	}
 
 	Real BasicCollection::sum(const std::function<Real(Real)>& transform_operator) const

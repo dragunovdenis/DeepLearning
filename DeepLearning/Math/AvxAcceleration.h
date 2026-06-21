@@ -46,37 +46,61 @@ namespace DeepLearning::Avx
 	}
 
 	/// <summary>
-	/// Dot product (double) using FMA and 4 independent accumulators to break
-	/// the latency-bound dependency chain. Inline to ensure cross-TU inlining
-	/// (the non-inlined call was visible as a separate symbol in CPU profiles).
+	/// Horizontal maximum of a 256-bit register of doubles.
+	/// </summary>
+	inline double mm256_reduce_max(const __m256d& input) {
+		const __m128d lo = _mm256_castpd256_pd128(input);
+		const __m128d hi = _mm256_extractf128_pd(input, 1);
+		const __m128d m = _mm_max_pd(lo, hi);
+		const __m128d shuf = _mm_unpackhi_pd(m, m);
+		return _mm_cvtsd_f64(_mm_max_sd(m, shuf));
+	}
+
+	/// <summary>
+	/// Horizontal maximum of a 256-bit register of floats.
+	/// </summary>
+	inline float mm256_reduce_max(const __m256& input) {
+		const __m128 lo = _mm256_castps256_ps128(input);
+		const __m128 hi = _mm256_extractf128_ps(input, 1);
+		__m128 m = _mm_max_ps(lo, hi);
+		m = _mm_max_ps(m, _mm_movehl_ps(m, m));
+		m = _mm_max_ss(m, _mm_shuffle_ps(m, m, 0x1));
+		return _mm_cvtss_f32(m);
+	}
+
+	/// <summary>
+	/// Dot product (double) using FMA and 8 independent accumulators to break
+	/// the latency-bound dependency chain and keep both FMA ports busy for
+	/// in-cache data. Inline to ensure cross-TU inlining (the non-inlined call
+	/// was visible as a separate symbol in CPU profiles).
 	/// </summary>
 	/// <param name="vec1">Pointer to the beginning of the first vector</param>
 	/// <param name="vec2">Pointer to the beginning of the second vector</param>
 	/// <param name="size">Size of the vectors</param>
 	/// <returns>Dot product of the vectors</returns>
-	inline double mm256_dot_product(const double* vec1, const double* vec2, const std::size_t size) {
+	__forceinline double mm256_dot_product(const double* vec1, const double* vec2, const std::size_t size) {
 		__m256d acc0 = _mm256_setzero_pd();
 		__m256d acc1 = _mm256_setzero_pd();
 		__m256d acc2 = _mm256_setzero_pd();
 		__m256d acc3 = _mm256_setzero_pd();
+		__m256d acc4 = _mm256_setzero_pd();
+		__m256d acc5 = _mm256_setzero_pd();
+		__m256d acc6 = _mm256_setzero_pd();
+		__m256d acc7 = _mm256_setzero_pd();
 
 		constexpr std::size_t lane = 4;          // doubles per 256-bit register
-		constexpr std::size_t step = 4 * lane;   // 16 doubles per unrolled iteration
+		constexpr std::size_t step = 8 * lane;   // 32 doubles per unrolled iteration
 
 		std::size_t i = 0;
 		for (; i + step <= size; i += step) {
-			const __m256d x0 = _mm256_loadu_pd(vec1 + i + 0 * lane);
-			const __m256d y0 = _mm256_loadu_pd(vec2 + i + 0 * lane);
-			const __m256d x1 = _mm256_loadu_pd(vec1 + i + 1 * lane);
-			const __m256d y1 = _mm256_loadu_pd(vec2 + i + 1 * lane);
-			const __m256d x2 = _mm256_loadu_pd(vec1 + i + 2 * lane);
-			const __m256d y2 = _mm256_loadu_pd(vec2 + i + 2 * lane);
-			const __m256d x3 = _mm256_loadu_pd(vec1 + i + 3 * lane);
-			const __m256d y3 = _mm256_loadu_pd(vec2 + i + 3 * lane);
-			acc0 = _mm256_fmadd_pd(x0, y0, acc0);
-			acc1 = _mm256_fmadd_pd(x1, y1, acc1);
-			acc2 = _mm256_fmadd_pd(x2, y2, acc2);
-			acc3 = _mm256_fmadd_pd(x3, y3, acc3);
+			acc0 = _mm256_fmadd_pd(_mm256_loadu_pd(vec1 + i + 0 * lane), _mm256_loadu_pd(vec2 + i + 0 * lane), acc0);
+			acc1 = _mm256_fmadd_pd(_mm256_loadu_pd(vec1 + i + 1 * lane), _mm256_loadu_pd(vec2 + i + 1 * lane), acc1);
+			acc2 = _mm256_fmadd_pd(_mm256_loadu_pd(vec1 + i + 2 * lane), _mm256_loadu_pd(vec2 + i + 2 * lane), acc2);
+			acc3 = _mm256_fmadd_pd(_mm256_loadu_pd(vec1 + i + 3 * lane), _mm256_loadu_pd(vec2 + i + 3 * lane), acc3);
+			acc4 = _mm256_fmadd_pd(_mm256_loadu_pd(vec1 + i + 4 * lane), _mm256_loadu_pd(vec2 + i + 4 * lane), acc4);
+			acc5 = _mm256_fmadd_pd(_mm256_loadu_pd(vec1 + i + 5 * lane), _mm256_loadu_pd(vec2 + i + 5 * lane), acc5);
+			acc6 = _mm256_fmadd_pd(_mm256_loadu_pd(vec1 + i + 6 * lane), _mm256_loadu_pd(vec2 + i + 6 * lane), acc6);
+			acc7 = _mm256_fmadd_pd(_mm256_loadu_pd(vec1 + i + 7 * lane), _mm256_loadu_pd(vec2 + i + 7 * lane), acc7);
 		}
 
 		// Tail of 4-lane chunks
@@ -86,11 +110,13 @@ namespace DeepLearning::Avx
 			acc0 = _mm256_fmadd_pd(x, y, acc0);
 		}
 
-		// Pair-tree reduction of the four accumulators (lower rounding error
+		// Pair-tree reduction of the eight accumulators (lower rounding error
 		// than left-fold; also matches the multi-accumulator dataflow).
 		const __m256d s01 = _mm256_add_pd(acc0, acc1);
 		const __m256d s23 = _mm256_add_pd(acc2, acc3);
-		const __m256d s = _mm256_add_pd(s01, s23);
+		const __m256d s45 = _mm256_add_pd(acc4, acc5);
+		const __m256d s67 = _mm256_add_pd(acc6, acc7);
+		const __m256d s = _mm256_add_pd(_mm256_add_pd(s01, s23), _mm256_add_pd(s45, s67));
 		double result = mm256_reduce(s);
 
 		// Scalar tail (< 4 elements)
@@ -100,35 +126,35 @@ namespace DeepLearning::Avx
 	}
 
 	/// <summary>
-	/// Dot product (float) using FMA and 4 independent accumulators.
+	/// Dot product (float) using FMA and 8 independent accumulators.
 	/// </summary>
 	/// <param name="vec1">Pointer to the beginning of the first vector</param>
 	/// <param name="vec2">Pointer to the beginning of the second vector</param>
 	/// <param name="size">Size of the vectors</param>
 	/// <returns>Dot product of the vectors</returns>
-	inline float mm256_dot_product(const float* vec1, const float* vec2, const std::size_t size) {
+	__forceinline float mm256_dot_product(const float* vec1, const float* vec2, const std::size_t size) {
 		__m256 acc0 = _mm256_setzero_ps();
 		__m256 acc1 = _mm256_setzero_ps();
 		__m256 acc2 = _mm256_setzero_ps();
 		__m256 acc3 = _mm256_setzero_ps();
+		__m256 acc4 = _mm256_setzero_ps();
+		__m256 acc5 = _mm256_setzero_ps();
+		__m256 acc6 = _mm256_setzero_ps();
+		__m256 acc7 = _mm256_setzero_ps();
 
 		constexpr std::size_t lane = 8;          // floats per 256-bit register
-		constexpr std::size_t step = 4 * lane;   // 32 floats per unrolled iteration
+		constexpr std::size_t step = 8 * lane;   // 64 floats per unrolled iteration
 
 		std::size_t i = 0;
 		for (; i + step <= size; i += step) {
-			const __m256 x0 = _mm256_loadu_ps(vec1 + i + 0 * lane);
-			const __m256 y0 = _mm256_loadu_ps(vec2 + i + 0 * lane);
-			const __m256 x1 = _mm256_loadu_ps(vec1 + i + 1 * lane);
-			const __m256 y1 = _mm256_loadu_ps(vec2 + i + 1 * lane);
-			const __m256 x2 = _mm256_loadu_ps(vec1 + i + 2 * lane);
-			const __m256 y2 = _mm256_loadu_ps(vec2 + i + 2 * lane);
-			const __m256 x3 = _mm256_loadu_ps(vec1 + i + 3 * lane);
-			const __m256 y3 = _mm256_loadu_ps(vec2 + i + 3 * lane);
-			acc0 = _mm256_fmadd_ps(x0, y0, acc0);
-			acc1 = _mm256_fmadd_ps(x1, y1, acc1);
-			acc2 = _mm256_fmadd_ps(x2, y2, acc2);
-			acc3 = _mm256_fmadd_ps(x3, y3, acc3);
+			acc0 = _mm256_fmadd_ps(_mm256_loadu_ps(vec1 + i + 0 * lane), _mm256_loadu_ps(vec2 + i + 0 * lane), acc0);
+			acc1 = _mm256_fmadd_ps(_mm256_loadu_ps(vec1 + i + 1 * lane), _mm256_loadu_ps(vec2 + i + 1 * lane), acc1);
+			acc2 = _mm256_fmadd_ps(_mm256_loadu_ps(vec1 + i + 2 * lane), _mm256_loadu_ps(vec2 + i + 2 * lane), acc2);
+			acc3 = _mm256_fmadd_ps(_mm256_loadu_ps(vec1 + i + 3 * lane), _mm256_loadu_ps(vec2 + i + 3 * lane), acc3);
+			acc4 = _mm256_fmadd_ps(_mm256_loadu_ps(vec1 + i + 4 * lane), _mm256_loadu_ps(vec2 + i + 4 * lane), acc4);
+			acc5 = _mm256_fmadd_ps(_mm256_loadu_ps(vec1 + i + 5 * lane), _mm256_loadu_ps(vec2 + i + 5 * lane), acc5);
+			acc6 = _mm256_fmadd_ps(_mm256_loadu_ps(vec1 + i + 6 * lane), _mm256_loadu_ps(vec2 + i + 6 * lane), acc6);
+			acc7 = _mm256_fmadd_ps(_mm256_loadu_ps(vec1 + i + 7 * lane), _mm256_loadu_ps(vec2 + i + 7 * lane), acc7);
 		}
 
 		// Tail of 8-lane chunks
@@ -140,7 +166,9 @@ namespace DeepLearning::Avx
 
 		const __m256 s01 = _mm256_add_ps(acc0, acc1);
 		const __m256 s23 = _mm256_add_ps(acc2, acc3);
-		const __m256 s = _mm256_add_ps(s01, s23);
+		const __m256 s45 = _mm256_add_ps(acc4, acc5);
+		const __m256 s67 = _mm256_add_ps(acc6, acc7);
+		const __m256 s = _mm256_add_ps(_mm256_add_ps(s01, s23), _mm256_add_ps(s45, s67));
 		float result = mm256_reduce(s);
 
 		for (; i < size; ++i) result += vec1[i] * vec2[i];
@@ -306,6 +334,44 @@ namespace DeepLearning::Avx
 		for (; i < n; ++i) dst[i] *= scale;
 	}
 
+	/// <summary>SIMD scale-into: dst[i] = src[i] * scale.</summary>
+	template <typename T>
+	inline void scale(T* dst, const T* src, const T scale, const std::size_t n)
+	{
+		std::size_t i = 0;
+		if constexpr (std::is_same_v<T, double>)
+		{
+			const __m256d s = _mm256_set1_pd(scale);
+			constexpr std::size_t lane = 4;
+			constexpr std::size_t step = 4 * lane;
+			for (; i + step <= n; i += step)
+			{
+				_mm256_storeu_pd(dst + i + 0 * lane, _mm256_mul_pd(_mm256_loadu_pd(src + i + 0 * lane), s));
+				_mm256_storeu_pd(dst + i + 1 * lane, _mm256_mul_pd(_mm256_loadu_pd(src + i + 1 * lane), s));
+				_mm256_storeu_pd(dst + i + 2 * lane, _mm256_mul_pd(_mm256_loadu_pd(src + i + 2 * lane), s));
+				_mm256_storeu_pd(dst + i + 3 * lane, _mm256_mul_pd(_mm256_loadu_pd(src + i + 3 * lane), s));
+			}
+			for (; i + lane <= n; i += lane)
+				_mm256_storeu_pd(dst + i, _mm256_mul_pd(_mm256_loadu_pd(src + i), s));
+		}
+		else if constexpr (std::is_same_v<T, float>)
+		{
+			const __m256 s = _mm256_set1_ps(scale);
+			constexpr std::size_t lane = 8;
+			constexpr std::size_t step = 4 * lane;
+			for (; i + step <= n; i += step)
+			{
+				_mm256_storeu_ps(dst + i + 0 * lane, _mm256_mul_ps(_mm256_loadu_ps(src + i + 0 * lane), s));
+				_mm256_storeu_ps(dst + i + 1 * lane, _mm256_mul_ps(_mm256_loadu_ps(src + i + 1 * lane), s));
+				_mm256_storeu_ps(dst + i + 2 * lane, _mm256_mul_ps(_mm256_loadu_ps(src + i + 2 * lane), s));
+				_mm256_storeu_ps(dst + i + 3 * lane, _mm256_mul_ps(_mm256_loadu_ps(src + i + 3 * lane), s));
+			}
+			for (; i + lane <= n; i += lane)
+				_mm256_storeu_ps(dst + i, _mm256_mul_ps(_mm256_loadu_ps(src + i), s));
+		}
+		for (; i < n; ++i) dst[i] = src[i] * scale;
+	}
+
 	/// <summary>SIMD scale-and-add: dst[i] = dst[i] * scale + src[i].</summary>
 	template <typename T>
 	inline void simd_scale_and_add(T* dst, const T* src, const T scale, const std::size_t n)
@@ -456,8 +522,179 @@ namespace DeepLearning::Avx
 		for (; i < n; ++i) dst[i] += a[i] * b[i];
 	}
 
-	/// <summary>SIMD sum of squares: sum(src[i]^2). Uses 4 independent
-	/// accumulators with FMA to break the latency-bound dependency chain.</summary>
+	/// <summary>SIMD maximum absolute value: max(|src[i]|). Uses 8 independent
+	/// accumulators and a sign-mask clear (andnot) for abs. Returns 0 for n==0.
+	/// Order-independent (max is associative), so bit-exact with the scalar
+	/// reference regardless of the accumulator count.</summary>
+	template <typename T>
+	inline T abs_max(const T* src, const std::size_t n)
+	{
+		std::size_t i = 0;
+		if constexpr (std::is_same_v<T, double>)
+		{
+			const __m256d sign_mask = _mm256_set1_pd(-0.0); // 0x8000... in every lane
+			__m256d acc0 = _mm256_setzero_pd();
+			__m256d acc1 = _mm256_setzero_pd();
+			__m256d acc2 = _mm256_setzero_pd();
+			__m256d acc3 = _mm256_setzero_pd();
+			__m256d acc4 = _mm256_setzero_pd();
+			__m256d acc5 = _mm256_setzero_pd();
+			__m256d acc6 = _mm256_setzero_pd();
+			__m256d acc7 = _mm256_setzero_pd();
+			constexpr std::size_t lane = 4;
+			constexpr std::size_t step = 8 * lane;
+			for (; i + step <= n; i += step)
+			{
+				acc0 = _mm256_max_pd(acc0, _mm256_andnot_pd(sign_mask, _mm256_loadu_pd(src + i + 0 * lane)));
+				acc1 = _mm256_max_pd(acc1, _mm256_andnot_pd(sign_mask, _mm256_loadu_pd(src + i + 1 * lane)));
+				acc2 = _mm256_max_pd(acc2, _mm256_andnot_pd(sign_mask, _mm256_loadu_pd(src + i + 2 * lane)));
+				acc3 = _mm256_max_pd(acc3, _mm256_andnot_pd(sign_mask, _mm256_loadu_pd(src + i + 3 * lane)));
+				acc4 = _mm256_max_pd(acc4, _mm256_andnot_pd(sign_mask, _mm256_loadu_pd(src + i + 4 * lane)));
+				acc5 = _mm256_max_pd(acc5, _mm256_andnot_pd(sign_mask, _mm256_loadu_pd(src + i + 5 * lane)));
+				acc6 = _mm256_max_pd(acc6, _mm256_andnot_pd(sign_mask, _mm256_loadu_pd(src + i + 6 * lane)));
+				acc7 = _mm256_max_pd(acc7, _mm256_andnot_pd(sign_mask, _mm256_loadu_pd(src + i + 7 * lane)));
+			}
+			for (; i + lane <= n; i += lane)
+				acc0 = _mm256_max_pd(acc0, _mm256_andnot_pd(sign_mask, _mm256_loadu_pd(src + i)));
+			const __m256d m01 = _mm256_max_pd(acc0, acc1);
+			const __m256d m23 = _mm256_max_pd(acc2, acc3);
+			const __m256d m45 = _mm256_max_pd(acc4, acc5);
+			const __m256d m67 = _mm256_max_pd(acc6, acc7);
+			const __m256d m = _mm256_max_pd(_mm256_max_pd(m01, m23), _mm256_max_pd(m45, m67));
+			T result = mm256_reduce_max(m);
+			for (; i < n; ++i) { const T a = src[i] < 0 ? -src[i] : src[i]; if (a > result) result = a; }
+			return result;
+		}
+		else if constexpr (std::is_same_v<T, float>)
+		{
+			const __m256 sign_mask = _mm256_set1_ps(-0.0f);
+			__m256 acc0 = _mm256_setzero_ps();
+			__m256 acc1 = _mm256_setzero_ps();
+			__m256 acc2 = _mm256_setzero_ps();
+			__m256 acc3 = _mm256_setzero_ps();
+			__m256 acc4 = _mm256_setzero_ps();
+			__m256 acc5 = _mm256_setzero_ps();
+			__m256 acc6 = _mm256_setzero_ps();
+			__m256 acc7 = _mm256_setzero_ps();
+			constexpr std::size_t lane = 8;
+			constexpr std::size_t step = 8 * lane;
+			for (; i + step <= n; i += step)
+			{
+				acc0 = _mm256_max_ps(acc0, _mm256_andnot_ps(sign_mask, _mm256_loadu_ps(src + i + 0 * lane)));
+				acc1 = _mm256_max_ps(acc1, _mm256_andnot_ps(sign_mask, _mm256_loadu_ps(src + i + 1 * lane)));
+				acc2 = _mm256_max_ps(acc2, _mm256_andnot_ps(sign_mask, _mm256_loadu_ps(src + i + 2 * lane)));
+				acc3 = _mm256_max_ps(acc3, _mm256_andnot_ps(sign_mask, _mm256_loadu_ps(src + i + 3 * lane)));
+				acc4 = _mm256_max_ps(acc4, _mm256_andnot_ps(sign_mask, _mm256_loadu_ps(src + i + 4 * lane)));
+				acc5 = _mm256_max_ps(acc5, _mm256_andnot_ps(sign_mask, _mm256_loadu_ps(src + i + 5 * lane)));
+				acc6 = _mm256_max_ps(acc6, _mm256_andnot_ps(sign_mask, _mm256_loadu_ps(src + i + 6 * lane)));
+				acc7 = _mm256_max_ps(acc7, _mm256_andnot_ps(sign_mask, _mm256_loadu_ps(src + i + 7 * lane)));
+			}
+			for (; i + lane <= n; i += lane)
+				acc0 = _mm256_max_ps(acc0, _mm256_andnot_ps(sign_mask, _mm256_loadu_ps(src + i)));
+			const __m256 m01 = _mm256_max_ps(acc0, acc1);
+			const __m256 m23 = _mm256_max_ps(acc2, acc3);
+			const __m256 m45 = _mm256_max_ps(acc4, acc5);
+			const __m256 m67 = _mm256_max_ps(acc6, acc7);
+			const __m256 m = _mm256_max_ps(_mm256_max_ps(m01, m23), _mm256_max_ps(m45, m67));
+			T result = mm256_reduce_max(m);
+			for (; i < n; ++i) { const T a = src[i] < 0 ? -src[i] : src[i]; if (a > result) result = a; }
+			return result;
+		}
+		else
+		{
+			T result{};
+			for (; i < n; ++i) { const T a = src[i] < 0 ? -src[i] : src[i]; if (a > result) result = a; }
+			return result;
+		}
+	}
+
+	/// <summary>SIMD sum: sum(src[i]). Uses 8 independent accumulators to break
+	/// the latency-bound dependency chain and saturate the add ports for
+	/// in-cache data. Accumulation order differs from a sequential scalar sum,
+	/// so the result is NOT bit-exact with std::accumulate.</summary>
+	template <typename T>
+	inline T simd_sum(const T* src, const std::size_t n)
+	{
+		std::size_t i = 0;
+		if constexpr (std::is_same_v<T, double>)
+		{
+			__m256d acc0 = _mm256_setzero_pd();
+			__m256d acc1 = _mm256_setzero_pd();
+			__m256d acc2 = _mm256_setzero_pd();
+			__m256d acc3 = _mm256_setzero_pd();
+			__m256d acc4 = _mm256_setzero_pd();
+			__m256d acc5 = _mm256_setzero_pd();
+			__m256d acc6 = _mm256_setzero_pd();
+			__m256d acc7 = _mm256_setzero_pd();
+			constexpr std::size_t lane = 4;
+			constexpr std::size_t step = 8 * lane;
+			for (; i + step <= n; i += step)
+			{
+				acc0 = _mm256_add_pd(acc0, _mm256_loadu_pd(src + i + 0 * lane));
+				acc1 = _mm256_add_pd(acc1, _mm256_loadu_pd(src + i + 1 * lane));
+				acc2 = _mm256_add_pd(acc2, _mm256_loadu_pd(src + i + 2 * lane));
+				acc3 = _mm256_add_pd(acc3, _mm256_loadu_pd(src + i + 3 * lane));
+				acc4 = _mm256_add_pd(acc4, _mm256_loadu_pd(src + i + 4 * lane));
+				acc5 = _mm256_add_pd(acc5, _mm256_loadu_pd(src + i + 5 * lane));
+				acc6 = _mm256_add_pd(acc6, _mm256_loadu_pd(src + i + 6 * lane));
+				acc7 = _mm256_add_pd(acc7, _mm256_loadu_pd(src + i + 7 * lane));
+			}
+			for (; i + lane <= n; i += lane)
+				acc0 = _mm256_add_pd(acc0, _mm256_loadu_pd(src + i));
+			const __m256d s01 = _mm256_add_pd(acc0, acc1);
+			const __m256d s23 = _mm256_add_pd(acc2, acc3);
+			const __m256d s45 = _mm256_add_pd(acc4, acc5);
+			const __m256d s67 = _mm256_add_pd(acc6, acc7);
+			const __m256d s = _mm256_add_pd(_mm256_add_pd(s01, s23), _mm256_add_pd(s45, s67));
+			T result = mm256_reduce(s);
+			for (; i < n; ++i) result += src[i];
+			return result;
+		}
+		else if constexpr (std::is_same_v<T, float>)
+		{
+			__m256 acc0 = _mm256_setzero_ps();
+			__m256 acc1 = _mm256_setzero_ps();
+			__m256 acc2 = _mm256_setzero_ps();
+			__m256 acc3 = _mm256_setzero_ps();
+			__m256 acc4 = _mm256_setzero_ps();
+			__m256 acc5 = _mm256_setzero_ps();
+			__m256 acc6 = _mm256_setzero_ps();
+			__m256 acc7 = _mm256_setzero_ps();
+			constexpr std::size_t lane = 8;
+			constexpr std::size_t step = 8 * lane;
+			for (; i + step <= n; i += step)
+			{
+				acc0 = _mm256_add_ps(acc0, _mm256_loadu_ps(src + i + 0 * lane));
+				acc1 = _mm256_add_ps(acc1, _mm256_loadu_ps(src + i + 1 * lane));
+				acc2 = _mm256_add_ps(acc2, _mm256_loadu_ps(src + i + 2 * lane));
+				acc3 = _mm256_add_ps(acc3, _mm256_loadu_ps(src + i + 3 * lane));
+				acc4 = _mm256_add_ps(acc4, _mm256_loadu_ps(src + i + 4 * lane));
+				acc5 = _mm256_add_ps(acc5, _mm256_loadu_ps(src + i + 5 * lane));
+				acc6 = _mm256_add_ps(acc6, _mm256_loadu_ps(src + i + 6 * lane));
+				acc7 = _mm256_add_ps(acc7, _mm256_loadu_ps(src + i + 7 * lane));
+			}
+			for (; i + lane <= n; i += lane)
+				acc0 = _mm256_add_ps(acc0, _mm256_loadu_ps(src + i));
+			const __m256 s01 = _mm256_add_ps(acc0, acc1);
+			const __m256 s23 = _mm256_add_ps(acc2, acc3);
+			const __m256 s45 = _mm256_add_ps(acc4, acc5);
+			const __m256 s67 = _mm256_add_ps(acc6, acc7);
+			const __m256 s = _mm256_add_ps(_mm256_add_ps(s01, s23), _mm256_add_ps(s45, s67));
+			T result = mm256_reduce(s);
+			for (; i < n; ++i) result += src[i];
+			return result;
+		}
+		else
+		{
+			T result{};
+			for (; i < n; ++i) result += src[i];
+			return result;
+		}
+	}
+
+	/// <summary>SIMD sum of squares: sum(src[i]^2). Uses 8 independent
+	/// accumulators with FMA to break the latency-bound dependency chain and
+	/// saturate the FMA ports for in-cache data.</summary>
 	template <typename T>
 	inline T simd_sum_of_squares(const T* src, const std::size_t n)
 	{
@@ -468,18 +705,30 @@ namespace DeepLearning::Avx
 			__m256d acc1 = _mm256_setzero_pd();
 			__m256d acc2 = _mm256_setzero_pd();
 			__m256d acc3 = _mm256_setzero_pd();
+			__m256d acc4 = _mm256_setzero_pd();
+			__m256d acc5 = _mm256_setzero_pd();
+			__m256d acc6 = _mm256_setzero_pd();
+			__m256d acc7 = _mm256_setzero_pd();
 			constexpr std::size_t lane = 4;
-			constexpr std::size_t step = 4 * lane;
+			constexpr std::size_t step = 8 * lane;
 			for (; i + step <= n; i += step)
 			{
 				const __m256d x0 = _mm256_loadu_pd(src + i + 0 * lane);
 				const __m256d x1 = _mm256_loadu_pd(src + i + 1 * lane);
 				const __m256d x2 = _mm256_loadu_pd(src + i + 2 * lane);
 				const __m256d x3 = _mm256_loadu_pd(src + i + 3 * lane);
+				const __m256d x4 = _mm256_loadu_pd(src + i + 4 * lane);
+				const __m256d x5 = _mm256_loadu_pd(src + i + 5 * lane);
+				const __m256d x6 = _mm256_loadu_pd(src + i + 6 * lane);
+				const __m256d x7 = _mm256_loadu_pd(src + i + 7 * lane);
 				acc0 = _mm256_fmadd_pd(x0, x0, acc0);
 				acc1 = _mm256_fmadd_pd(x1, x1, acc1);
 				acc2 = _mm256_fmadd_pd(x2, x2, acc2);
 				acc3 = _mm256_fmadd_pd(x3, x3, acc3);
+				acc4 = _mm256_fmadd_pd(x4, x4, acc4);
+				acc5 = _mm256_fmadd_pd(x5, x5, acc5);
+				acc6 = _mm256_fmadd_pd(x6, x6, acc6);
+				acc7 = _mm256_fmadd_pd(x7, x7, acc7);
 			}
 			for (; i + lane <= n; i += lane)
 			{
@@ -488,7 +737,9 @@ namespace DeepLearning::Avx
 			}
 			const __m256d s01 = _mm256_add_pd(acc0, acc1);
 			const __m256d s23 = _mm256_add_pd(acc2, acc3);
-			double result = mm256_reduce(_mm256_add_pd(s01, s23));
+			const __m256d s45 = _mm256_add_pd(acc4, acc5);
+			const __m256d s67 = _mm256_add_pd(acc6, acc7);
+			double result = mm256_reduce(_mm256_add_pd(_mm256_add_pd(s01, s23), _mm256_add_pd(s45, s67)));
 			for (; i < n; ++i) result += src[i] * src[i];
 			return result;
 		}
@@ -498,18 +749,30 @@ namespace DeepLearning::Avx
 			__m256 acc1 = _mm256_setzero_ps();
 			__m256 acc2 = _mm256_setzero_ps();
 			__m256 acc3 = _mm256_setzero_ps();
+			__m256 acc4 = _mm256_setzero_ps();
+			__m256 acc5 = _mm256_setzero_ps();
+			__m256 acc6 = _mm256_setzero_ps();
+			__m256 acc7 = _mm256_setzero_ps();
 			constexpr std::size_t lane = 8;
-			constexpr std::size_t step = 4 * lane;
+			constexpr std::size_t step = 8 * lane;
 			for (; i + step <= n; i += step)
 			{
 				const __m256 x0 = _mm256_loadu_ps(src + i + 0 * lane);
 				const __m256 x1 = _mm256_loadu_ps(src + i + 1 * lane);
 				const __m256 x2 = _mm256_loadu_ps(src + i + 2 * lane);
 				const __m256 x3 = _mm256_loadu_ps(src + i + 3 * lane);
+				const __m256 x4 = _mm256_loadu_ps(src + i + 4 * lane);
+				const __m256 x5 = _mm256_loadu_ps(src + i + 5 * lane);
+				const __m256 x6 = _mm256_loadu_ps(src + i + 6 * lane);
+				const __m256 x7 = _mm256_loadu_ps(src + i + 7 * lane);
 				acc0 = _mm256_fmadd_ps(x0, x0, acc0);
 				acc1 = _mm256_fmadd_ps(x1, x1, acc1);
 				acc2 = _mm256_fmadd_ps(x2, x2, acc2);
 				acc3 = _mm256_fmadd_ps(x3, x3, acc3);
+				acc4 = _mm256_fmadd_ps(x4, x4, acc4);
+				acc5 = _mm256_fmadd_ps(x5, x5, acc5);
+				acc6 = _mm256_fmadd_ps(x6, x6, acc6);
+				acc7 = _mm256_fmadd_ps(x7, x7, acc7);
 			}
 			for (; i + lane <= n; i += lane)
 			{
@@ -518,7 +781,9 @@ namespace DeepLearning::Avx
 			}
 			const __m256 s01 = _mm256_add_ps(acc0, acc1);
 			const __m256 s23 = _mm256_add_ps(acc2, acc3);
-			float result = mm256_reduce(_mm256_add_ps(s01, s23));
+			const __m256 s45 = _mm256_add_ps(acc4, acc5);
+			const __m256 s67 = _mm256_add_ps(acc6, acc7);
+			float result = mm256_reduce(_mm256_add_ps(_mm256_add_ps(s01, s23), _mm256_add_ps(s45, s67)));
 			for (; i < n; ++i) result += src[i] * src[i];
 			return result;
 		}

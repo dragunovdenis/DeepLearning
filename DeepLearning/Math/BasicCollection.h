@@ -158,9 +158,14 @@ namespace DeepLearning
 		[[nodiscard]] Real max_abs() const;
 
 		/// <summary>
+		/// Returns sum of all the elements of the collection.
+		/// </summary>
+		[[nodiscard]] Real sum() const;
+
+		/// <summary>
 		/// Returns sum of all the elements of the collection transformed with the given operator
 		/// </summary>
-		Real sum(const std::function<Real(Real)>& transform_operator = [](const auto& x) {return x; }) const;
+		Real sum(const std::function<Real(Real)>& transform_operator) const;
 
 		/// <summary>
 		/// Returns sum of squares of the elements in the collection
