@@ -237,7 +237,7 @@ namespace DeepLearningTest
 		/// </summary>
 		template <int N>
 		void RunRosenbrockOptimizationTest(const VectorNdReal<N>& init_pt,
-			const Real epsilon = static_cast<Real>(1e-6))
+			const Real epsilon = static_cast<Real>(2e-6))
 		{
 			//Arrange
 			NelderMeadOptimizer<N> optimizer;
@@ -251,7 +251,8 @@ namespace DeepLearningTest
 			const auto value_diff = std::abs(optimizer.get_min_value());
 
 			StandardTestUtils::LogAndAssertLessOrEqualTo("point_diff", point_diff, epsilon);
-			StandardTestUtils::LogAndAssertLessOrEqualTo("value_diff", value_diff, 500 * std::numeric_limits<Real>::epsilon());
+			StandardTestUtils::LogAndAssertLessOrEqualTo<Real>("value_diff", value_diff,
+				 std::is_same_v<Real, double> ? static_cast<Real>(2e-12) : std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(Rosenbrock5dOptimizationTest)

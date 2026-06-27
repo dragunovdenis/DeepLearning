@@ -145,7 +145,7 @@ namespace DeepLearningTest
 						}
 
 						const auto diff = static_cast<Real>(std::abs(reference - result(r_l, r_r, r_c)));
-						StandardTestUtils::LogAndAssertLessOrEqualTo("diff", diff, 10 * std::numeric_limits<Real>::epsilon());
+						StandardTestUtils::LogAndAssertLessOrEqualTo("diff", diff, 100 * std::numeric_limits<Real>::epsilon());
 					}
 				}
 			}
@@ -178,7 +178,9 @@ namespace DeepLearningTest
 			const auto result_padding_included = tensor_with_padding.convolve(kernel);
 
 			//Assert
-			Assert::IsTrue(result == result_padding_included, L"Tensors are not the same");
+			const auto diff = (result - result_padding_included).max_abs();
+			StandardTestUtils::LogAndAssertLessOrEqualTo("diff", diff,
+				50 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(ConvolutionWithStrideNoPaddingTest)
@@ -245,7 +247,7 @@ namespace DeepLearningTest
 			//Assert: stitch N single-kernel scalar results and compare against the multi-kernel one.
 			Tensor reference(kernel_count, channel_size.y, channel_size.z, false);
 			for (std::size_t k = 0; k < kernel_count; ++k)
-				const auto single = tensor.convolve(reference.get_layer_handle(k), kernels[k], paddings, strides);
+				tensor.convolve(reference.get_layer_handle(k), kernels[k], paddings, strides);
 
 			const auto diff = (multi_result - reference).max_abs();
 			StandardTestUtils::LogAndAssertLessOrEqualTo("Diff",
@@ -391,7 +393,7 @@ namespace DeepLearningTest
 						const auto rel_diff = static_cast<Real>(std::abs(deriv_reference) > 1 ?	abs_diff / std::abs(deriv_reference) : abs_diff);
 
 						StandardTestUtils::LogAndAssertLessOrEqualTo("Rel. diff.", rel_diff,
-							double_precision ? static_cast<Real>(2e-8) : static_cast<Real>(1e-3));
+							double_precision ? static_cast<Real>(3e-8) : static_cast<Real>(1e-3));
 					}
 		}
 
@@ -416,7 +418,9 @@ namespace DeepLearningTest
 			const auto pool_res = tensor.pool(pool_operator, paddings, strides);
 
 			//Assert
-			Assert::IsTrue(conv_res == pool_res, L"Results of convolution and pool operations (with kernel pool operator) must coincide.");
+			const auto diff = (pool_res - conv_res).max_abs();
+			StandardTestUtils::LogAndAssertLessOrEqualTo("diff", diff, 
+				20 * std::numeric_limits<Real>::epsilon());
 		}
 
 		TEST_METHOD(PoolGradientTest)

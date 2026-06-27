@@ -214,7 +214,6 @@ namespace DeepLearningTest::StandardTestUtils
 	void CopyConstructorTest(const std::function<T()>& factory)
 	{
 		//Arrange
-		const auto dim = 10;
 		const auto instance = factory();
 
 		//Act
@@ -239,7 +238,6 @@ namespace DeepLearningTest::StandardTestUtils
 		const auto ptr_before_assignment = inst_to_assign.begin();
 
 		auto inst_to_assign1 = factory();
-		const auto ptr_before_assignment1 = inst_to_assign1.begin();
 
 		const auto inst_to_copy = factory();
 		const auto inst_to_copy1 = factory_diff_size();

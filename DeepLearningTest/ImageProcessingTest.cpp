@@ -47,18 +47,18 @@ namespace DeepLearningTest
 			std::size_t image_width = 21;
 			auto image = Image8Bit(image_height, image_width);
 
-			const Image8Bit::pixel_t north_marker  = 50;
-			const Image8Bit::pixel_t west_marker   = 100;
-			const Image8Bit::pixel_t south_marker  = 150;
-			const Image8Bit::pixel_t east_marker   = 200;
-			const Image8Bit::pixel_t center_marker = 250;
+			constexpr Image8Bit::pixel_t north_marker  = 50;
+			constexpr Image8Bit::pixel_t west_marker   = 100;
+			constexpr Image8Bit::pixel_t south_marker  = 150;
+			constexpr Image8Bit::pixel_t east_marker   = 200;
+			constexpr Image8Bit::pixel_t center_marker = 250;
 
 			draw_cross_pattern(image, { north_marker , east_marker, south_marker, west_marker, center_marker},
 				0, image.height(), 0, image.width());
 
 			//Rotation around center of the image
-			const auto transformation = MatrixAffine2d<Real>::build_rotation(Real(std::numbers::pi/2),
-				Vector2d<Real>{image_width * Real(0.5), image_height * Real(0.5)});
+			const auto transformation = MatrixAffine2d<Real>::build_rotation(static_cast<Real>(std::numbers::pi / 2),
+				Vector2d<Real>{image_width * static_cast<Real>(0.5), image_height * static_cast<Real>(0.5)});
 
 			//Act
 			const auto image_transformed = ImageUtils::transform(image, transformation);
@@ -67,7 +67,7 @@ namespace DeepLearningTest
 			//so we can draw the reference image in the following way
 			auto image_reference = Image8Bit(image_height, image_width);
 			draw_cross_pattern(image_reference, { west_marker, north_marker , east_marker, south_marker, center_marker },
-				0, image.height(), (image_width - image_height)/2 , image_width - (image_width - image_height) / 2);
+				0, image.height(), (image_width - image_height) / 2 , image_width - (image_width - image_height) / 2);
 
 			Assert::IsTrue(image_reference == image_transformed, L"Transformed image differs from the reference one");
 		}

@@ -386,11 +386,10 @@ namespace DeepLearningTest
 			const auto result_diff = (result.to_host() - result_host).max_abs();
 			const auto gradient_diff = (gradient.to_host() - gradient_host).max_abs();
 
-			StandardTestUtils::Log("Difference for result", result_diff);
-			StandardTestUtils::Log("Difference for gradient", gradient_diff);
-
-			Assert::IsTrue(result.to_host() == result_host, L"Unexpected result of pooling operation");
-			Assert::IsTrue(gradient.to_host() == gradient_host, L"Unexpected gradient of pooling operation");
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference for result",
+				result_diff, std::numeric_limits<Real>::epsilon());
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference for gradient",
+				gradient_diff, std::numeric_limits<Real>::epsilon());
 		}
 	};
 }

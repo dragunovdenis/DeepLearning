@@ -83,7 +83,7 @@ $Configurations = @(
 )
 
 # Configurations for which tests are NOT expected (no test projects in solution)
-$NoTestConfigs = @("IntelCompiler2022", "IntelCompiler2022Single")
+$NoTestConfigs = @()
 
 # ---------------------------------------------------------------------------
 # Result accumulator

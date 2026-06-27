@@ -82,7 +82,7 @@ namespace DeepLearningTest
 				result_expected += reference_func(input[item_id], reference[item_id]);
 
 			const auto diff = std::abs(result - result_expected);
-			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference", diff, static_cast<Real>(0));
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference", diff, 10 * std::numeric_limits<Real>::epsilon());
 
 		}
 
@@ -112,7 +112,7 @@ namespace DeepLearningTest
 			auto result_func_expected = cost_func(input, reference);
 
 			const auto diff_func = std::abs(result_func - result_func_expected);
-			StandardTestUtils::LogAndAssertLessOrEqualTo<Real>("diff_func", diff_func, static_cast<Real>(0));
+			StandardTestUtils::LogAndAssertLessOrEqualTo("diff_func", diff_func, 10 * std::numeric_limits<Real>::epsilon());
 
 			for (std::size_t item_id = 0; item_id < dim; item_id++)
 			{

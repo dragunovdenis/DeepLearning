@@ -107,9 +107,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="StandardTestUtils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="MNetTestUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -117,6 +114,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\Shared\ActivationFuncTestUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Shared\StandardTestUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

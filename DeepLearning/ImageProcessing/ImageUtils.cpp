@@ -68,14 +68,14 @@ namespace DeepLearning::ImageUtils
 				const auto col_id_base = static_cast<long long>(std::floor(tl_pt_transformed.x));
 				const auto row_id_base = static_cast<long long>(std::floor(tl_pt_transformed.y));
 
-				result(row_id, col_id) = static_cast<typename Image::pixel_t>(access_pixel_safely(image, row_id_base, col_id_base) *
+				result(row_id, col_id) = static_cast<typename Image::pixel_t>(std::round(access_pixel_safely(image, row_id_base, col_id_base) *
 					(col_id_base + 1 - tl_pt_transformed.x) * (row_id_base + 1 - tl_pt_transformed.y) +
 					access_pixel_safely(image, row_id_base + 1, col_id_base) *
 					(col_id_base + 1 - tl_pt_transformed.x) * (tl_pt_transformed.y - row_id_base) +
 					access_pixel_safely(image, row_id_base, col_id_base + 1) *
 					(tl_pt_transformed.x - col_id_base) * (row_id_base + 1 - tl_pt_transformed.y) +
 					access_pixel_safely(image, row_id_base + 1, col_id_base + 1) *
-					(tl_pt_transformed.x - col_id_base) * (tl_pt_transformed.y - row_id_base));
+					(tl_pt_transformed.x - col_id_base) * (tl_pt_transformed.y - row_id_base)));
 			}
 
 		return result;

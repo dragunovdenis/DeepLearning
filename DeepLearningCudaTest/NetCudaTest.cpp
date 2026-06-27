@@ -22,6 +22,11 @@
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using namespace DeepLearning;
 
+namespace DeepLearning
+{
+	template class Net<GpuDC>;
+}
+
 namespace DeepLearningTest
 {
 	//This test works but I am not satisfied with its performance (execution time), so it is out-commented for now
@@ -43,5 +48,4 @@ namespace DeepLearningTest
 	/// <summary>
 	/// Instantiate template with the GPU data context to ensure that it is compilable.
 	/// </summary>
-	template class DeepLearning::Net<GpuDC>;
 }
