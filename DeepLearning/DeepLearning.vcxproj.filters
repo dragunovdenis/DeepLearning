@@ -70,6 +70,12 @@
     <Filter Include="Source Files\NeuralNet\MultiNet">
       <UniqueIdentifier>{e4a7821a-0ccd-4a08-acbd-106e721e384e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Utilities">
+      <UniqueIdentifier>{fc44f9ff-6efd-49dc-bf20-e5aaf0caa3e0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Utilities">
+      <UniqueIdentifier>{8979f1f9-ac26-40b8-9a19-4388f1f112b3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="defs.h">
@@ -81,23 +87,11 @@
     <ClInclude Include="Math\Vector.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
-    <ClInclude Include="Utilities.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MsgPackUtils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Math\Dual.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
     <ClInclude Include="NeuralNet\NLayer.h">
       <Filter>Header Files\NeuralNet</Filter>
-    </ClInclude>
-    <ClInclude Include="MnistDataUtils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Image8Bit.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ThirdParty\BitmapUtils.h">
       <Filter>Header Files\ThirdParty</Filter>
@@ -168,26 +162,17 @@
     <ClInclude Include="Math\Functions.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
-    <ClInclude Include="ThreadPool.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="NeuralNet\LayerGradient.h">
       <Filter>Header Files\NeuralNet</Filter>
     </ClInclude>
     <ClInclude Include="Math\CollectionArithmetics.h">
       <Filter>Source Files\Math</Filter>
     </ClInclude>
-    <ClInclude Include="StopWatch.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Math\VectorNd.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
     <ClInclude Include="Math\Optimization\NelderMeadOptimizer.h">
       <Filter>Header Files\Math\Optimization</Filter>
-    </ClInclude>
-    <ClInclude Include="RandomGenerator.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Math\CostFunction.h">
       <Filter>Header Files\Math\CostFunction</Filter>
@@ -291,6 +276,33 @@
     <ClInclude Include="NeuralNet\UMLayer.h">
       <Filter>Header Files\NeuralNet\MultiNet</Filter>
     </ClInclude>
+    <ClInclude Include="Image8Bit.h">
+      <Filter>Header Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="MnistDataUtils.h">
+      <Filter>Header Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="MsgPackUtils.h">
+      <Filter>Header Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="RandomGenerator.h">
+      <Filter>Header Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="StopWatch.h">
+      <Filter>Header Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities.h">
+      <Filter>Header Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="ThreadPool.h">
+      <Filter>Header Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="DoubleStreamBuffer.h">
+      <Filter>Header Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="LogRedirector.h">
+      <Filter>Header Files\Utilities</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Math\Matrix.cpp">
@@ -299,20 +311,11 @@
     <ClCompile Include="Math\Vector.cpp">
       <Filter>Source Files\Math</Filter>
     </ClCompile>
-    <ClCompile Include="Image8Bit.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MnistDataUtils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ThirdParty\BitmapUtils.cpp">
       <Filter>Source Files\ThirdParty</Filter>
     </ClCompile>
     <ClCompile Include="Math\DiffFunc.cpp">
       <Filter>Source Files\Math</Filter>
-    </ClCompile>
-    <ClCompile Include="Utilities.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ImageProcessing\ImageUtils.cpp">
       <Filter>Source Files\ImageProcessing</Filter>
@@ -335,20 +338,11 @@
     <ClCompile Include="Math\ConvolutionUtils.cpp">
       <Filter>Source Files\Math</Filter>
     </ClCompile>
-    <ClCompile Include="ThreadPool.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="StopWatch.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Math\LinAlg2d.cpp">
       <Filter>Source Files\Math</Filter>
     </ClCompile>
     <ClCompile Include="Math\LinAlg3d.cpp">
       <Filter>Source Files\Math</Filter>
-    </ClCompile>
-    <ClCompile Include="RandomGenerator.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Math\CostFunctionId.cpp">
       <Filter>Source Files\Math\CostFunction</Filter>
@@ -370,6 +364,30 @@
     </ClCompile>
     <ClCompile Include="NeuralNet\MLayerTypeId.cpp">
       <Filter>Source Files\NeuralNet\MultiNet</Filter>
+    </ClCompile>
+    <ClCompile Include="Image8Bit.cpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="MnistDataUtils.cpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="RandomGenerator.cpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="StopWatch.cpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="ThreadPool.cpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities.cpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="DoubleStreamBuffer.cpp">
+      <Filter>Source Files\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="LogRedirector.cpp">
+      <Filter>Source Files\Utilities</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

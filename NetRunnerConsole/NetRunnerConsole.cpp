@@ -26,10 +26,31 @@
 #include "Utilities.h"
 #include <chrono>
 #include <string>
+#include "LogRedirector.h"
 #include "NeuralNet/MNet.h"
 
 using namespace DeepLearning;
 using namespace NetRunnerConsole;
+
+/// <summary>
+/// Get the path to the executable's directory
+/// </summary>
+std::string get_executable_directory()
+{
+	char buffer[MAX_PATH];
+	GetModuleFileNameA(nullptr, buffer, MAX_PATH);
+	std::filesystem::path exe_path(buffer);
+	return exe_path.parent_path().string();
+}
+
+/// <summary>
+/// Generate a log file name with timestamp
+/// </summary>
+std::string generate_log_file_path()
+{
+	const auto exe_dir = get_executable_directory(); 
+	return exe_dir + "\\NetRunnerConsole_log.txt";
+}
 
 // Instantiate the two classes below in order to
 // ensure that they are compatible with Intel compiler
@@ -38,6 +59,14 @@ template class DeepLearning::RMLayer<CpuDC>;
 
 int main(int argc, char** argv)
 {
+	// Initialize logging - redirect stdout to both console and log file
+	const auto log_file_path = generate_log_file_path();
+	LogRedirector log_redirector(log_file_path);
+
+	if (log_redirector.is_active())
+		std::cout << "Logging to: " << log_file_path << std::endl;
+	else
+		std::cout << "Warning: Failed to initialize log file at: " << log_file_path << std::endl;
 
 	TCLAP::CmdLine cmd("Network teaching engine", ' ', "1.0");
 

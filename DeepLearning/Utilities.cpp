@@ -95,10 +95,10 @@ namespace DeepLearning::Utils
     std::string normalize_separator_characters(const std::string& str)
     {
         std::string result;
-        std::replace_copy_if(str.begin(), str.end(), std::back_inserter<std::string>(result),
-            [](const auto x) {
-                return x == ',' || x == ';';
-            }, ' ');
+        std::ranges::replace_copy_if(str, std::back_inserter<std::string>(result),
+                                     [](const auto x) {
+	                                     return x == ',' || x == ';';
+                                     }, ' ');
 
         return result;
     }
@@ -349,7 +349,7 @@ namespace DeepLearning::Utils
 
     std::string get_elapsed_time_formatted(const std::chrono::system_clock::time_point& start_pt, const std::chrono::system_clock::time_point& stop_pt)
     {
-        const auto epoch_time_sec = std::chrono::duration_cast<std::chrono::seconds>(stop_pt - start_pt);
+        const auto epoch_time_sec = std::chrono::duration_cast<std::chrono::milliseconds>(stop_pt - start_pt);
         return std::format("{:%T}", epoch_time_sec);
     }
 
