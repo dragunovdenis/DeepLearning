@@ -281,7 +281,7 @@ copy /Y "..\$(Platform)\$(Configuration)\ScottPlotWrapper.dll" "bin\$(Platform)\
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);USE_AVX2</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>..\DeepLearning;$(SolutionDir)\packages\tclap.1.2.1\build\native\include\tclap;..\ManagedToUnmanagedBridge;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
@@ -310,7 +310,7 @@ copy /Y "..\$(Platform)\$(Configuration)\ScottPlotWrapper.dll" "bin\$(Platform)\
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;USE_SINGLE_PRECISION;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;USE_SINGLE_PRECISION;%(PreprocessorDefinitions);USE_AVX2</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>..\DeepLearning;$(SolutionDir)\packages\tclap.1.2.1\build\native\include\tclap;..\ManagedToUnmanagedBridge;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
