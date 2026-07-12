@@ -252,7 +252,10 @@ namespace DeepLearning
 		/// <param name="l_rate">Learning rate</param>
 		/// <param name="reg_factor">Regularization factor, that (if non-zero) 
 		/// results in term "reg_factor*w_i" being added to each weight "w_i" </param>
-		void update(const LayerGradient<D>& gradient, const Real& l_rate, const Real& reg_factor);
+		/// <param name="grad_scale_factor">Scale factor to be applied to the given
+		/// <paramref name="gradient"/> before using its value.</param>
+		void update(const LayerGradient<D>& gradient, const Real& l_rate, const Real& reg_factor,
+			const Real& grad_scale_factor = static_cast<Real>(1));
 
 		/// <summary>
 		/// Returns zero initialized instance of cumulative gradient suitable for the current instance of the layer

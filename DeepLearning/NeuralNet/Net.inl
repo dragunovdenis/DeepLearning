@@ -217,8 +217,7 @@ namespace DeepLearning
 		if (training_items.size() == 0)
 			return;
 
-		const auto lambda_scaled = lambda / training_items.size();
-		const auto reg_factor = -learning_rate * lambda_scaled;
+		const auto reg_factor = lambda / training_items.size();
 
 		const auto cost_function = CostFunction<typename D::tensor_t>(cost_func_id);
 
@@ -303,15 +302,16 @@ namespace DeepLearning
 				}
 
 				thread_pool.wait_until_jobs_done(actual_jobs_count);
+				const auto grad_norm_factor = static_cast<Real>(1) / (batch_end_elem_id - batch_start_elem_id);
 
 				batch_start_elem_id = batch_end_elem_id;
 
 				for (std::size_t layer_id = 0; layer_id < _layers.size(); layer_id++)
 					_layers[layer_id].layer().update(gradient_collectors[layer_id].get_gradient_sum(),
-						-learning_rate / static_cast<Real>(gradient_collectors[layer_id].items_count()), reg_factor);
+						-learning_rate, reg_factor, grad_norm_factor);
 			}
 
-			epoch_callback(epoch_id, static_cast<Real>(0.5) * lambda_scaled);
+			epoch_callback(epoch_id, static_cast<Real>(0.5) * reg_factor);
 		}
 
 		for (auto layer_id = 0ull; layer_id < _layers.size(); ++layer_id)
@@ -372,11 +372,8 @@ namespace DeepLearning
 	template <class D>
 	void Net<D>::update(const std::vector<LayerGradient<D>>& gradient, const Real learning_rate, const Real& lambda)
 	{
-		const auto reg_factor = -learning_rate * lambda;
 		for (auto layer_id = 0ull; layer_id < _layers.size(); ++layer_id)
-		{
-			_layers[layer_id].layer().update(gradient[layer_id], -learning_rate, reg_factor);
-		}
+			_layers[layer_id].layer().update(gradient[layer_id], -learning_rate, lambda);
 	}
 
 	template <class D>

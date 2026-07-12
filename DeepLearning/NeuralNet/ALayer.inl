@@ -95,7 +95,8 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	void ALayer<D>::update(const LayerGradient<D>& gradient, const Real& l_rate, const Real& reg_factor)
+	void ALayer<D>::update(const LayerGradient<D>& gradient, const Real& l_rate,
+		const Real& reg_factor, const Real& grad_scale_factor)
 	{
 		const auto& grad_data = gradient.data;
 		const auto cont_count = this->param_container_count();
@@ -105,17 +106,18 @@ namespace DeepLearning
 				"ALayer<D>::update: the number of gradient containers does not match the number of parameter containers");	
 
 		bool reg_eligible;
-		const auto scaleFactor = static_cast<Real>(1) + reg_factor;
-		const auto nontrivial_reg = reg_factor != static_cast<Real>(0);
+		const auto param_scale = static_cast<Real>(1) + reg_factor * l_rate;
+		const auto nontrivial_reg = reg_factor > static_cast<Real>(0);
+		const auto grad_total_scale = l_rate * grad_scale_factor;
 
 		for (auto cont_idx = 0; cont_idx < grad_data.size(); ++cont_idx)
 		{
 			auto& param_container = this->param_container(cont_idx, reg_eligible);
 
 			if (reg_eligible && nontrivial_reg)
-				param_container.scale_and_add_scaled(scaleFactor, grad_data[cont_idx], l_rate);
+				param_container.scale_and_add_scaled(param_scale, grad_data[cont_idx], grad_total_scale);
 			else
-				param_container.add_scaled(grad_data[cont_idx], l_rate);
+				param_container.add_scaled(grad_data[cont_idx], grad_total_scale);
 		}
 	}
 
