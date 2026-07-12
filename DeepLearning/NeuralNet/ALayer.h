@@ -87,6 +87,26 @@ namespace DeepLearning
 		/// </summary>
 		void set_keep_rate(const Real keep_rate);
 
+		/// <summary>
+		/// Returns number of tensors constituting the parameter set of the corresponding layer.
+		/// </summary>
+		virtual int param_container_count() const = 0;
+
+		/// <summary>
+		/// Returns reference to the parameter container with the given <paramref name="index"/>.
+		/// Valid indices are supposed to be in the range [0, param_container_count() - 1].
+		/// </summary>
+		/// <param name="index">Index of the parameter container.</param>
+		/// <param name="out_reg_eligible">Output flag indicating if the parameter container
+		/// is eligible for regularization.</param>
+		virtual typename D::basic_collection_t& param_container(int index, bool& out_reg_eligible) = 0;
+
+		/// <summary>
+		/// Size of the paremeter container with the given <paramref name="index"/>.
+		/// Valid indices are supposed to be in the range [0, param_container_count() - 1].
+		/// </summary>
+		virtual Index3d param_container_size(int index) const = 0;
+
 	public:
 
 		/// <summary>
@@ -223,7 +243,7 @@ namespace DeepLearning
 		/// <summary>
 		/// Resizes the given container so that it matches the size of the layer's gradient.
 		/// </summary>
-		virtual void allocate(LayerGradient<D>& gradient_container, bool fill_zeros) const = 0;
+		void allocate(LayerGradient<D>& gradient_container, bool fill_zeros) const;
 
 		/// <summary>
 		/// Adds given increments multiplied by the "learning rate" to the weights and biases respectively
@@ -232,7 +252,7 @@ namespace DeepLearning
 		/// <param name="l_rate">Learning rate</param>
 		/// <param name="reg_factor">Regularization factor, that (if non-zero) 
 		/// results in term "reg_factor*w_i" being added to each weight "w_i" </param>
-		virtual void update(const LayerGradient<D>& gradient, const Real& l_rate, const Real& reg_factor) = 0;
+		void update(const LayerGradient<D>& gradient, const Real& l_rate, const Real& reg_factor);
 
 		/// <summary>
 		/// Returns zero initialized instance of cumulative gradient suitable for the current instance of the layer

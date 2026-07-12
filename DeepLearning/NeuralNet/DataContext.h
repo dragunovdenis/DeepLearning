@@ -31,6 +31,7 @@ namespace DeepLearning
 		using vector_t = Vector;
 		using matrix_t = Matrix;
 		using tensor_t = Tensor;
+		using basic_collection_t = BasicCollection;
 
 		template <typename I>
 		using index_array_t = std::vector<I>;

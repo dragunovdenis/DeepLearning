@@ -197,33 +197,28 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	void CLayer<D>::allocate(LayerGradient<D>& gradient_container, bool fill_zeros) const
+	int CLayer<D>::param_container_count() const
 	{
-		gradient_container.data.resize(_filters.size() + 1);
-		gradient_container.data.shrink_to_fit();
-		gradient_container.data[0].resize(_biases.size_3d());
-		auto& grad_data = gradient_container.data;
-
-		for (auto filter_id = 1ull; filter_id < grad_data.size(); ++filter_id)
-			grad_data[filter_id].resize(_filters[filter_id - 1].size_3d());
-
-		if (fill_zeros)
-			gradient_container.fill_zero();
+		return static_cast<int>(_filters.size() + 1 /*biases*/);
 	}
 
 	template <class D>
-	void CLayer<D>::update(const LayerGradient<D>& gradient, const Real& l_rate, const Real& reg_factor)
+	typename D::basic_collection_t& CLayer<D>::param_container(int index, bool& out_reg_eligible)	
 	{
-		const auto& data = gradient.data;
+		if (index < 0 || index >= param_container_count())
+			throw std::exception("Invalid parameter container index");
 
-		if (reg_factor != static_cast<Real>(0))
-			for (auto filter_id = 1ull; filter_id < data.size(); filter_id++)
-				_filters[filter_id - 1].scale_and_add_scaled(Real(1) + reg_factor, data[filter_id], l_rate);
-		else
-			for (auto filter_id = 1ull; filter_id < data.size(); filter_id++)
-				_filters[filter_id - 1].add_scaled(data[filter_id], l_rate);
+		out_reg_eligible = index > 0;
+		return index == 0 ? _biases : _filters[index - 1];
+	}
 
-		_biases.add_scaled(gradient.data[0], l_rate);
+	template <class D>
+	Index3d CLayer<D>::param_container_size(int index) const
+	{
+		if (index < 0 || index >= param_container_count())
+			throw std::exception("Invalid parameter container index");
+
+		return index == 0 ? _biases.size_3d() : _weight_tensor_size;
 	}
 
 	template <class D>

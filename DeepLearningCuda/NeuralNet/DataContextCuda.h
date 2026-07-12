@@ -33,6 +33,7 @@ namespace DeepLearning
 		using vector_t = CudaVector;
 		using matrix_t = CudaMatrix;
 		using tensor_t = CudaTensor;
+		using basic_collection_t = BasicCudaCollection;
 
 		template <typename I>
 		using index_array_t = CudaArray<I>;

@@ -171,31 +171,34 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	void NLayer<D>::allocate(LayerGradient<D>& gradient_container, bool fill_zeros) const
+	int NLayer<D>::param_container_count() const
 	{
-		gradient_container.data.resize(2);
-		gradient_container.data.shrink_to_fit();
-		gradient_container.data[0].resize(_biases.size_3d());
-		gradient_container.data[1].resize(_weights.size_3d());
-
-		if (fill_zeros)
-			gradient_container.fill_zero();
+		return 2;
 	}
 
 	template <class D>
-	void NLayer<D>::update(const LayerGradient<D>& gradient, const Real& l_rate, const Real& reg_factor)
+	typename D::basic_collection_t& NLayer<D>::param_container(int index, bool& out_reg_eligible)
 	{
-		const auto& data = gradient.data;
+		if (index < 0 || index >= param_container_count())
+			throw std::exception("Invalid index");
 
-		if (data.size() != 2)
-			throw std::exception("Invalid input");
+		if (index == 0)
+		{
+			out_reg_eligible = false;
+			return _biases;
+		}
 
-		if (reg_factor != Real(0))
-			_weights.scale_and_add_scaled(Real(1) + reg_factor, data[1], l_rate);
-		else
-			_weights.add_scaled(data[1], l_rate);
+		out_reg_eligible = true;
+		return _weights;
+	}
 
-		_biases.add_scaled(data[0], l_rate);
+	template <class D>
+	Index3d NLayer<D>::param_container_size(int index) const
+	{
+		if (index < 0 || index >= param_container_count())
+			throw std::exception("Invalid index");
+
+		return index == 0 ? _biases.size_3d() : _weights.size_3d()	;
 	}
 
 	template <class D>

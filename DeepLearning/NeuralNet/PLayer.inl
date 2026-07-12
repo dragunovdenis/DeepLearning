@@ -168,17 +168,21 @@ namespace DeepLearning
 	}
 
 	template <class D>
-	void PLayer<D>::allocate(LayerGradient<D>& gradient_container, bool fill_zeros) const
+	int PLayer<D>::param_container_count() const
 	{
-		gradient_container.data.resize(0);
+		return 0;
 	}
 
 	template <class D>
-	void PLayer<D>::update(const LayerGradient<D>& gradient, const Real& l_rate, const Real& reg_factor)
+	typename D::basic_collection_t& PLayer<D>::param_container(int index, bool& out_reg_eligible)
 	{
-		//Sanity check 
-		if (gradient.data.size() != 0)
-			throw std::exception("There should be no increments for weights and/or biases");
+		throw std::out_of_range("Invalid parameter container index");
+	}
+
+	template <class D>
+	Index3d PLayer<D>::param_container_size(int index) const
+	{
+		throw std::out_of_range("Invalid parameter container index");
 	}
 
 	template <class D>

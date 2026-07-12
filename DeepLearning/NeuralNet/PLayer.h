@@ -16,7 +16,6 @@
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #pragma once
-#include <vector>
 #include "ALayer.h"
 #include "../Math/PoolOperator.h"
 #include <msgpack.hpp>
@@ -54,6 +53,17 @@ namespace DeepLearning
 		static constexpr auto json_in_size_id() { return  "InSize"; }
 		static constexpr auto json_pool_window_size_id() { return "FilterSize"; }
 		static constexpr auto json_pool_operator_id() { return "PoolOperator"; }
+
+	protected:
+
+		/// <inheritdoc/>
+		int param_container_count() const override;
+
+		/// <inheritdoc/>
+		typename D::basic_collection_t& param_container(int index, bool& out_reg_eligible) override;
+
+		/// <inheritdoc/>
+		Index3d param_container_size(int index) const override;
 
 	public:
 
@@ -135,16 +145,6 @@ namespace DeepLearning
 		void backpropagate(const typename D::tensor_t& deltas, const LayerData<D>& processing_data,
 			typename D::tensor_t& input_grad, LayerGradient<D>& layer_grad, const bool evaluate_input_gradient = true,
 			const Real gradient_scale_factor = static_cast<Real>(0)) const override;
-
-		/// <summary>
-		/// See the summary to the corresponding method in the base class
-		/// </summary>
-		void allocate(LayerGradient<D>& gradient_container, bool fill_zeros) const override;
-
-		/// <summary>
-		/// For the "pooling" layer this method does nothing except a sanity check that the input increments are empty
-		/// </summary>
-		void update(const LayerGradient<D>& gradient, const Real& l_rate, const Real& reg_factor) override;
 
 		/// <summary>
 		/// See description in the base class

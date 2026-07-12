@@ -81,6 +81,45 @@ namespace DeepLearning
 	}
 
 	template <class D>
+	void ALayer<D>::allocate(LayerGradient<D>& gradient_container, bool fill_zeros) const
+	{
+		const auto cont_count = this->param_container_count();
+		gradient_container.data.resize(cont_count);
+		gradient_container.data.shrink_to_fit();
+
+		for (auto cont_idx = 0; cont_idx < cont_count; ++cont_idx)
+			gradient_container.data[cont_idx].resize(this->param_container_size(cont_idx));
+
+		if (fill_zeros)
+			gradient_container.fill_zero();
+	}
+
+	template <class D>
+	void ALayer<D>::update(const LayerGradient<D>& gradient, const Real& l_rate, const Real& reg_factor)
+	{
+		const auto& grad_data = gradient.data;
+		const auto cont_count = this->param_container_count();
+
+		if (cont_count != grad_data.size())
+			throw std::invalid_argument(
+				"ALayer<D>::update: the number of gradient containers does not match the number of parameter containers");	
+
+		bool reg_eligible;
+		const auto scaleFactor = static_cast<Real>(1) + reg_factor;
+		const auto nontrivial_reg = reg_factor != static_cast<Real>(0);
+
+		for (auto cont_idx = 0; cont_idx < grad_data.size(); ++cont_idx)
+		{
+			auto& param_container = this->param_container(cont_idx, reg_eligible);
+
+			if (reg_eligible && nontrivial_reg)
+				param_container.scale_and_add_scaled(scaleFactor, grad_data[cont_idx], l_rate);
+			else
+				param_container.add_scaled(grad_data[cont_idx], l_rate);
+		}
+	}
+
+	template <class D>
 	ALayer<D>::ALayer(const Real keep_rate, const ActivationFunctionId func_id) : _keep_rate(keep_rate)
 	{
 		set_func_id(func_id);
