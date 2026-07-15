@@ -235,7 +235,7 @@ namespace DeepLearning
 		/// input data will be actually evaluated.
 		/// The evaluation is redundant for the very first layer of the net</param>
 		/// <param name="gradient_scale_factor">Scale factor to be applied to the content of
-		/// `kernel_grad` before adding the gradient value to it.</param>
+		/// `layer_grad` before adding the calculated gradient value to it.</param>
 		virtual void backpropagate(const typename D::tensor_t& deltas, const LayerData<D>& processing_data,
 			typename D::tensor_t& input_grad, LayerGradient<D>& layer_grad,
 			const bool evaluate_input_gradient = true, const Real gradient_scale_factor = static_cast<Real>(0)) const = 0;

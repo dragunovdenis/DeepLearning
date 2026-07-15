@@ -52,16 +52,6 @@ namespace DeepLearning
 		static std::vector<std::size_t> get_indices(const std::size_t elements_count);
 
 		/// <summary>
-		/// Returns collection of the gradient collectors that is "compatible" with the given collection of neural layers
-		/// </summary>
-		static std::vector<CumulativeGradient<D>> init_gradient_collectors(const std::vector<LayerHandle<D>>& layers);
-
-		/// <summary>
-		/// Resets all the collectors in the given collection
-		/// </summary>
-		static void reset_gradient_collectors(std::vector<CumulativeGradient<D>>& collectors);
-
-		/// <summary>
 		/// Allocates gradient container for multi-thread computations
 		/// </summary>
 		static void allocate_per_thread(const Net& net, std::vector<std::vector<LayerGradient<D>>>& per_thread_gradient_container);

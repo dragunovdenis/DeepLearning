@@ -153,6 +153,12 @@ For each header-only consumer project:
   expected-completion count to `wait_all_jobs_done()` (replaces the former 
   `wait_until_jobs_done(expected_count)`), job counters are typed as `std::size_t`, 
   and `notify_all` is replaced with `notify_one`.
+- **Fully deterministic implementation of `Net<D>.learn(...)`**
+  The multi-threaded batch processing was reworked so that now gradient 
+  accumulation happens independently in each thread instead of using a
+  centralized accumulation container. This allowed to get rid of the mutex
+  synchronization which seems to have a considerable positive impact on
+  the performance of the method.
 
 ### 2.5.0
 - Full AVX2 support for the `Matrix` class.

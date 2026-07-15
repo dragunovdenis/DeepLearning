@@ -20,7 +20,6 @@
 #include <numeric>
 #include <algorithm>
 #include <exception>
-#include "CumulativeGradient.h"
 #include <thread>
 #include <ppl.h>
 #include "../IndexIterator.h"
@@ -170,33 +169,6 @@ namespace DeepLearning
 	}
 
 	/// <summary>
-	/// Returns collection of the gradient collectors that is "compatible" with the given collection of neural layers
-	/// </summary>
-	template <class D>
-	std::vector<CumulativeGradient<D>> Net<D>::init_gradient_collectors(const std::vector<LayerHandle<D>>& layers)
-	{
-		std::vector<CumulativeGradient<D>> result;
-
-		for (std::size_t layer_id = 0; layer_id < layers.size(); layer_id++)
-		{
-			const auto& layer = layers[layer_id].layer();
-			result.emplace_back(layer.init_cumulative_gradient());
-		}
-
-		return result;
-	}
-
-	/// <summary>
-	/// Resets all the collectors in the given collection
-	/// </summary>
-	template <class D>
-	void Net<D>::reset_gradient_collectors(std::vector<CumulativeGradient<D>>& collectors)
-	{
-		for (std::size_t collector_id = 0; collector_id < collectors.size(); collector_id++)
-			collectors[collector_id].reset();
-	}
-
-	/// <summary>
 	/// Allocates gradient container for multi-thread computations
 	/// </summary>
 	template <class D>
@@ -221,8 +193,6 @@ namespace DeepLearning
 
 		const auto cost_function = CostFunction<typename D::tensor_t>(cost_func_id);
 
-		auto gradient_collectors = init_gradient_collectors(_layers);
-
 		const auto physical_cores_count = std::thread::hardware_concurrency() / 2;
 		//For some reason, this exact number of threads (when used in the parallel "for" loop below)
 		//gives the best performance on a PC with i7-10750H (the only PC where this code was
@@ -234,7 +204,6 @@ namespace DeepLearning
 		auto context_data = std::vector <Context>(threads_to_use, Context(_layers.size()));
 		auto layer_gradient_data = std::vector<std::vector<LayerGradient<D>>>(threads_to_use);
 		allocate_per_thread(*this, layer_gradient_data);
-		std::mutex mutex;
 
 		auto  data_index_mapping = get_indices(training_items.size());
 
@@ -245,9 +214,6 @@ namespace DeepLearning
 			std::size_t batch_start_elem_id = 0;
 			while (batch_start_elem_id < training_items.size())
 			{
-				//Reset gradient collectors before each batch
-				reset_gradient_collectors(gradient_collectors);
-
 				//Generate new drop-out masks
 				for (auto layer_id = 0ull; layer_id < _layers.size(); ++layer_id)
 					_layers[layer_id].layer().SetUpDropoutMask();
@@ -260,7 +226,7 @@ namespace DeepLearning
 
 				const auto items_per_thread = (batch_end_elem_id - batch_start_elem_id + threads_to_use - 1) / threads_to_use;
 				auto current_thread_start_id = batch_start_elem_id;
-				auto job_counter = 0;
+				std::size_t job_counter = 0;
 
 				while (current_thread_start_id < batch_end_elem_id)
 				{
@@ -275,6 +241,7 @@ namespace DeepLearning
 							auto& back_prop_out = layer_gradient_data[job_id];
 							for (auto elem_id = current_thread_start_id; elem_id < current_thread_end_id; elem_id++)
 							{
+								const auto accum_factor = elem_id == current_thread_start_id ? static_cast<Real>(0.0) : static_cast<Real>(1.0);
 								const auto input_item_id = data_index_mapping[elem_id];
 								const auto& input = training_items[input_item_id];
 								const auto& reference = reference_items[input_item_id];
@@ -286,15 +253,12 @@ namespace DeepLearning
 								{
 									e_data.swap();
 									_layers[layer_id].layer().backpropagate(e_data.in(), aux_data[layer_id],
-										e_data.out(), back_prop_out[layer_id], layer_id != 0);
+										e_data.out(), back_prop_out[layer_id], 
+										layer_id != 0, accum_factor);
 
 									if (layer_id != 0)
 										_layers[layer_id].layer().ApplyDropout(e_data.out(), true);
 								}
-
-								std::lock_guard guard(mutex);
-								for (std::size_t layer_id = 0; layer_id < _layers.size(); layer_id++)
-									gradient_collectors[layer_id].add(back_prop_out[layer_id]);
 							}
 						});
 
@@ -304,12 +268,20 @@ namespace DeepLearning
 
 				thread_pool.wait_all_jobs_done();
 
+				auto& gradient_collector = layer_gradient_data[0];
+				for (auto job_id = 1ull; job_id < job_counter; ++job_id)
+				{
+					const auto& current_gradient = layer_gradient_data[job_id];
+					for (std::size_t layer_id = 0; layer_id < _layers.size(); layer_id++)
+						gradient_collector[layer_id] += current_gradient[layer_id];
+				}
+
 				const auto grad_norm_factor = static_cast<Real>(1) / (batch_end_elem_id - batch_start_elem_id);
 
 				batch_start_elem_id = batch_end_elem_id;
 
 				for (std::size_t layer_id = 0; layer_id < _layers.size(); layer_id++)
-					_layers[layer_id].layer().update(gradient_collectors[layer_id].get_gradient_sum(),
+					_layers[layer_id].layer().update(gradient_collector[layer_id],
 						-learning_rate, reg_factor, grad_norm_factor);
 			}
 
