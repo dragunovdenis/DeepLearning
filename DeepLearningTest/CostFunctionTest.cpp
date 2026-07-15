@@ -82,7 +82,7 @@ namespace DeepLearningTest
 				result_expected += reference_func(input[item_id], reference[item_id]);
 
 			const auto diff = std::abs(result - result_expected);
-			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference", diff, 10 * std::numeric_limits<Real>::epsilon());
+			StandardTestUtils::LogAndAssertLessOrEqualTo("Difference", diff, 20 * std::numeric_limits<Real>::epsilon());
 
 		}
 

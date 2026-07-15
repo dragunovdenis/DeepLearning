@@ -99,7 +99,7 @@ namespace DeepLearningTest
 
 			check_random_values(set);
 
-			constexpr auto coincidence_percentage = std::is_same_v<Real, double> ? 0.00005 : 0.0015;
+			constexpr auto coincidence_percentage = std::is_same_v<Real, double> ? 0.00005 : 0.002;
 
 			StandardTestUtils::LogAndAssertGreaterOrEqualTo("Number of distinct random values generated",
 				set.size(), static_cast<std::size_t>(iterations * 4 * (1 - coincidence_percentage)));

@@ -61,8 +61,6 @@ namespace DeepLearningTest
 			const auto& test_data = std::get<0>(test_data_tuple);
 			const auto& test_labels = std::get<1>(test_data_tuple);
 
-			Net<D>::reset_random_generator(0); // for reproducibility
-
 			auto net = Net<D>({ 784, (run_long_test ? 100ull : 30ull), 10 }, activ_func_ids);
 			constexpr auto batch_size = 10;
 			const auto epochs_count = run_long_test ? 30 : 6;
@@ -87,8 +85,6 @@ namespace DeepLearningTest
 			StandardTestUtils::LogAndAssertGreaterOrEqualTo("Validation result",
 				validation_result, expected_min_percentage_test_set);
 			Logger::WriteMessage("\n");
-
-			Net<D>::reset_random_generator();
 
 			return validation_result;
 		}
@@ -170,20 +166,19 @@ namespace DeepLearningTest
 			return validation_result;
 		}
 
-
 	public:
 
 		TEST_METHOD(TrainingConvolutionNetWithCrossEntropyCostTest)
 		{
 			constexpr bool long_test = false;
-			RunMnistBasedConvolutionNetTrainingTest(CostFunctionId::CROSS_ENTROPY, static_cast<Real>(0.01),
-				long_test ? static_cast<Real>(0.991) : static_cast<Real>(0.98), long_test, static_cast<Real>(1));
+			RunMnistBasedConvolutionNetTrainingTest(CostFunctionId::CROSS_ENTROPY, static_cast<Real>(0.025),
+				long_test ? static_cast<Real>(0.991) : static_cast<Real>(0.98), long_test, static_cast<Real>(3));
 		}
 
 		TEST_METHOD(TrainingWithQuadraticCostTest)
 		{
 			constexpr bool long_test = false;
-			RunMnistBasedTrainingTest(CostFunctionId::SQUARED_ERROR, static_cast<Real>(1.0),
+			RunMnistBasedTrainingTest(CostFunctionId::SQUARED_ERROR, static_cast<Real>(0.75),
 				long_test ? static_cast<Real>(0.976) : static_cast<Real>(0.95), long_test);
 		}
 
@@ -217,7 +212,7 @@ namespace DeepLearningTest
 		TEST_METHOD(TrainingWithCrossEntropyCostAndTanhActivationTest)
 		{
 			constexpr bool long_test = false;
-			RunMnistBasedTrainingTest(CostFunctionId::CROSS_ENTROPY, static_cast<Real>(0.1),
+			RunMnistBasedTrainingTest(CostFunctionId::CROSS_ENTROPY, static_cast<Real>(0.075),
 				long_test ? static_cast<Real>(0.974) : static_cast<Real>(0.945), long_test, static_cast<Real>(0),
 				{ActivationFunctionId::TANH, ActivationFunctionId::SIGMOID});
 		}

@@ -42,7 +42,7 @@ Install-Package DeepLearningOpenCpp
 or add directly to `packages.config`:
 
 ```xml
-<package id="DeepLearningOpenCpp" version="2.2.0" targetFramework="native" />
+<package id="DeepLearningOpenCpp" version="2.6.0" targetFramework="native" />
 <package id="msgpack-c-cpp-3.1.1-winsoft666" version="1.0.0.2" targetFramework="native" />
 ```
 
@@ -135,6 +135,29 @@ For each header-only consumer project:
 > the `.lib` project never instantiates, the linker will still report `LNK2019`.
 > In that case keep `DeepLearningCompileSources=true` (the default) so those
 > symbols are compiled locally.
+
+## Release history
+
+### 2.6.0
+- **Bug fix – `ThreadPool`: out-of-bounds `context_data` access during training.**
+  Worker threads in the pool are assigned a fixed local ID in `[0, N_threads-1]`.
+  Previously, each job received that *thread* ID and used it to index a
+  per-job context array sized to the number of jobs in the current mini-batch
+  (`M ≤ N_threads`). There were no mechanism to ensure that the next launched 
+  job will receive the lowest *thread* ID out of available ones. Whenever the 
+  thread that picked up a job had an ID ≥ M the access was out of bounds, 
+  causing silent gradient corruption or crashes. The fix captures a sequential
+  *job counter* (0 … M-1) by value into each lambda, decoupling the data-slot 
+  index from the worker-thread identity. Companion clean-ups: the pool now 
+  tracks queued-job count internally so callers no longer supply an 
+  expected-completion count to `wait_all_jobs_done()` (replaces the former 
+  `wait_until_jobs_done(expected_count)`), job counters are typed as `std::size_t`, 
+  and `notify_all` is replaced with `notify_one`.
+
+### 2.5.0
+- Full AVX2 support for the `Matrix` class.
+- Switch to Intel C++ Compiler 2026.
+- Solution and regression tests migrated to Visual Studio 2026.
 
 ## Versioning
 

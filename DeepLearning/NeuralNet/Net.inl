@@ -260,18 +260,19 @@ namespace DeepLearning
 
 				const auto items_per_thread = (batch_end_elem_id - batch_start_elem_id + threads_to_use - 1) / threads_to_use;
 				auto current_thread_start_id = batch_start_elem_id;
-				auto actual_jobs_count = 0;
+				auto job_counter = 0;
 
 				while (current_thread_start_id < batch_end_elem_id)
 				{
 					const auto current_thread_end_id = std::min(current_thread_start_id + items_per_thread, batch_end_elem_id);
 
-					thread_pool.queue_job([&, current_thread_start_id, current_thread_end_id](const std::size_t local_thread_id)
-						{
-							auto& context = context_data[local_thread_id];
+					thread_pool.queue_job([&, current_thread_start_id, current_thread_end_id, job_counter]
+					{
+							const auto job_id = job_counter;
+							auto& context = context_data[job_id];
 							auto& aux_data = context.gradient_cache;
 							auto& e_data = context.value_cache;
-							auto& back_prop_out = layer_gradient_data[local_thread_id];
+							auto& back_prop_out = layer_gradient_data[job_id];
 							for (auto elem_id = current_thread_start_id; elem_id < current_thread_end_id; elem_id++)
 							{
 								const auto input_item_id = data_index_mapping[elem_id];
@@ -298,10 +299,11 @@ namespace DeepLearning
 						});
 
 					current_thread_start_id = current_thread_end_id;
-					++actual_jobs_count;
+					++job_counter;
 				}
 
-				thread_pool.wait_until_jobs_done(actual_jobs_count);
+				thread_pool.wait_all_jobs_done();
+
 				const auto grad_norm_factor = static_cast<Real>(1) / (batch_end_elem_id - batch_start_elem_id);
 
 				batch_start_elem_id = batch_end_elem_id;
