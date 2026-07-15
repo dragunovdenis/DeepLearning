@@ -46,6 +46,15 @@ jobs:
           path: "**/*.trx"
           reporter: dotnet-trx
           fail-on-error: true
+          list-suites: all
+          list-tests: all
+
+      - name: Upload TRX artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-trx
+          path: "**/*.trx"
 
   pack-and-publish:
     # Only runs after build-and-test succeeds. Skipped on pull requests so
