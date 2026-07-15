@@ -159,6 +159,7 @@ For each header-only consumer project:
   centralized accumulation container. This allowed to get rid of the mutex
   synchronization which seems to have a considerable positive impact on
   the performance of the method.
+- `class CumulativeGradient` was removed as it is no longer used.
 
 ### 2.5.0
 - Full AVX2 support for the `Matrix` class.

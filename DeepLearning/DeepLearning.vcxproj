@@ -327,7 +327,6 @@
     <ClInclude Include="NeuralNet\LayerData.h" />
     <ClInclude Include="NeuralNet\CLayer.h" />
     <ClInclude Include="NeuralNet\CostsAndCorrectAnswers.h" />
-    <ClInclude Include="NeuralNet\CumulativeGradient.h" />
     <ClInclude Include="NeuralNet\DataContext.h" />
     <ClInclude Include="NeuralNet\LayerGradient.h" />
     <ClInclude Include="NeuralNet\LayerHandle.h" />
@@ -373,7 +372,6 @@
     <ClInclude Include="NeuralNet\ALayer.h" />
     <ClInclude Include="NeuralNet\ALayer.inl" />
     <ClInclude Include="NeuralNet\CLayer.inl" />
-    <ClInclude Include="NeuralNet\CumulativeGradient.inl" />
     <ClInclude Include="NeuralNet\LayerGradient.inl" />
     <ClInclude Include="NeuralNet\LayerHandle.inl" />
     <ClCompile Include="NeuralNet\CostAndCorrectAnswers.cpp" />

@@ -96,9 +96,6 @@
     <ClInclude Include="ThirdParty\BitmapUtils.h">
       <Filter>Header Files\ThirdParty</Filter>
     </ClInclude>
-    <ClInclude Include="NeuralNet\CumulativeGradient.h">
-      <Filter>Header Files\NeuralNet</Filter>
-    </ClInclude>
     <ClInclude Include="Math\DiffFunc.h">
       <Filter>Header Files\Math</Filter>
     </ClInclude>
@@ -208,9 +205,6 @@
       <Filter>Header Files\NeuralNet</Filter>
     </ClInclude>
     <ClInclude Include="NeuralNet\LayerHandle.inl">
-      <Filter>Header Files\NeuralNet</Filter>
-    </ClInclude>
-    <ClInclude Include="NeuralNet\CumulativeGradient.inl">
       <Filter>Header Files\NeuralNet</Filter>
     </ClInclude>
     <ClInclude Include="NeuralNet\ALayer.inl">

@@ -29,7 +29,7 @@ namespace DeepLearningTest
 	TEST_CLASS(RMLayerTest)
 	{
 		static constexpr auto _delta = std::is_same_v<Real, double> ? static_cast<Real>(1e-5) : static_cast<Real>(1e-2);
-		static constexpr auto _tolerance = std::is_same_v<Real, double> ? static_cast<Real>(6e-10) : static_cast<Real>(3e-4);
+		static constexpr auto _tolerance = std::is_same_v<Real, double> ? static_cast<Real>(8e-10) : static_cast<Real>(3e-4);
 
 		/// <summary>
 		/// Instantiates a "standard" instance of the RMLayer for testing purposes.

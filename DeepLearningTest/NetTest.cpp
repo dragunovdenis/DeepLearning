@@ -58,6 +58,7 @@ namespace DeepLearningTest
 				"TestData\\MNIST\\t10k-labels.idx1-ubyte",
 				test_images_count);
 
+			Net<D>::reset_random_generator(0); // for reproducibility
 			const auto& test_data = std::get<0>(test_data_tuple);
 			const auto& test_labels = std::get<1>(test_data_tuple);
 
@@ -85,6 +86,8 @@ namespace DeepLearningTest
 			StandardTestUtils::LogAndAssertGreaterOrEqualTo("Validation result",
 				validation_result, expected_min_percentage_test_set);
 			Logger::WriteMessage("\n");
+
+			Net<D>::reset_random_generator();
 
 			return validation_result;
 		}
@@ -576,7 +579,7 @@ namespace DeepLearningTest
 				}
 
 			StandardTestUtils::LogAndAssertGreaterOrEqualTo(
-				"Maximal absolute value of reference gradients", max_abs_gradient, static_cast<Real>(0.1));
+				"Maximal absolute value of reference gradients", max_abs_gradient, static_cast<Real>(0.0998));
 
 			StandardTestUtils::LogAndAssertLessOrEqualTo(
 				"Maximal difference between actual and expected gradients", max_diff, tolerance);

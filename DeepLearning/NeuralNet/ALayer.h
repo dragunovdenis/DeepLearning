@@ -16,7 +16,6 @@
 //SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #pragma once
-#include "CumulativeGradient.h"
 #include <filesystem>
 #include <random>
 #include <string>
@@ -256,11 +255,6 @@ namespace DeepLearning
 		/// <paramref name="gradient"/> before using its value.</param>
 		void update(const LayerGradient<D>& gradient, const Real& l_rate, const Real& reg_factor,
 			const Real& grad_scale_factor = static_cast<Real>(1));
-
-		/// <summary>
-		/// Returns zero initialized instance of cumulative gradient suitable for the current instance of the layer
-		/// </summary>
-		[[nodiscard]] CumulativeGradient<D> init_cumulative_gradient() const;
 
 		/// <summary>
 		/// Logs layer to the given directory (for diagnostic purposes)
