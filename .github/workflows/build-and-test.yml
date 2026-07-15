@@ -11,6 +11,8 @@ on:
 jobs:
   build-and-test:
     runs-on: windows-2025-vs2026
+    permissions:
+      checks: write
 
     steps:
       - name: Checkout repository
@@ -33,7 +35,17 @@ jobs:
       - name: Run tests
         run: |
           $vstest = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -find "Common7\IDE\CommonExtensions\Microsoft\TestWindow\vstest.console.exe"
-          & $vstest "x64\Release\DeepLearningTest.dll" /Platform:x64
+          & $vstest "x64\Release\DeepLearningTest.dll" /Platform:x64 /logger:"trx;LogFileName=results.trx"
+        continue-on-error: true
+
+      - name: Publish test report
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: C++ Unit Tests
+          path: "**/*.trx"
+          reporter: dotnet-trx
+          fail-on-error: true
 
   pack-and-publish:
     # Only runs after build-and-test succeeds. Skipped on pull requests so
