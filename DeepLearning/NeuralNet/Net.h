@@ -188,13 +188,12 @@ namespace DeepLearning
 		/// where n is the number of training items, w_{i} --- weights.</param>
 		/// <param name="epoch_callback">Callback method that will be called after each learning epoch.
 		/// It is supposed to serve diagnostic evaluation purposes.</param>
-		/// <param name="single_threaded">Determines whether learning should be run in a single-threaded
-		/// way to ensure determinism (presumably for testing purposes)</param>
+		/// <param name="parallelism">Number of threads to use for parallel execution.
+		/// If less or equal to "0", the system will use the number of available hardware threads (logical cores).</param>
 		void learn(const std::vector<typename D::tensor_t>& training_items, const std::vector<typename D::tensor_t>& reference_items,
 			const std::size_t batch_size, const std::size_t epochs_count, const Real learning_rate, const CostFunctionId& cost_func_id,
-			const Real& lambda = Real(0),
-			const std::function<void(const std::size_t, const Real)>& epoch_callback =
-			[](const auto epoch_id, const auto scaled_l2_reg_factor) {}, const bool single_threaded = false);
+			const Real& lambda = Real(0), const std::function<void(const std::size_t, const Real)>& epoch_callback =
+			[](const auto epoch_id, const auto scaled_l2_reg_factor) {}, const int parallelism = -1);
 
 		/// <summary>
 		/// Specific implementation of the corresponding general function which

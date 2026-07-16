@@ -181,23 +181,21 @@ namespace DeepLearning
 	template <class D>
 	void Net<D>::learn(const std::vector<typename D::tensor_t>& training_items, const std::vector<typename D::tensor_t>& reference_items,
 		const std::size_t batch_size, const std::size_t epochs_count, const Real learning_rate, const CostFunctionId& cost_func_id,
-		const Real& lambda, const std::function<void(const std::size_t, const Real)>& epoch_callback, const bool single_threaded)
+		const Real& lambda, const std::function<void(const std::size_t, const Real)>& epoch_callback, const int parallelism)
 	{
 		if (training_items.size() != reference_items.size())
 			throw std::exception("Incompatible collection of training and reference items.");
 
-		if (training_items.size() == 0)
+		if (training_items.size() == 0 || batch_size == 0)
 			return;
 
 		const auto reg_factor = lambda / training_items.size();
 
 		const auto cost_function = CostFunction<typename D::tensor_t>(cost_func_id);
 
-		const auto physical_cores_count = std::thread::hardware_concurrency() / 2;
-		//For some reason, this exact number of threads (when used in the parallel "for" loop below)
-		//gives the best performance on a PC with i7-10750H (the only PC where this code was
-		//tested so far). Whoever is reading this comment, feel free to try other numbers of the threads.
-		const auto threads_to_use = single_threaded ? 1 : std::max<int>(1, physical_cores_count);
+		const auto physical_cores_count = std::max<int>(1, std::thread::hardware_concurrency());
+		auto threads_to_use = parallelism <= 0 ? physical_cores_count : std::min(parallelism, physical_cores_count);
+		threads_to_use = std::min<std::size_t>(threads_to_use, batch_size); // does not make sense to use more threads than batch size
 
 		ThreadPool thread_pool(threads_to_use);
 
@@ -205,7 +203,7 @@ namespace DeepLearning
 		auto layer_gradient_data = std::vector<std::vector<LayerGradient<D>>>(threads_to_use);
 		allocate_per_thread(*this, layer_gradient_data);
 
-		auto  data_index_mapping = get_indices(training_items.size());
+		auto data_index_mapping = get_indices(training_items.size());
 
 		for (std::size_t epoch_id = 0; epoch_id < epochs_count; ++epoch_id)
 		{

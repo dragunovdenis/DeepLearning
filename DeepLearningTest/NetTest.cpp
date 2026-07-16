@@ -75,7 +75,7 @@ namespace DeepLearningTest
 			//Act
 			const auto start = std::chrono::steady_clock::now();
 			net.learn(training_data, training_labels, batch_size, epochs_count,
-				learning_rate, cost_func_id, lambda, evaluation_action);
+				learning_rate, cost_func_id, lambda, evaluation_action, /*parallelism*/ 2);
 			const auto end = std::chrono::steady_clock::now();
 			Logger::WriteMessage(("Learning time : " +
 				std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()) + " ms.").c_str());
@@ -353,7 +353,7 @@ namespace DeepLearningTest
 			//Act
 			net.learn(input, labels, /*batch size*/10, /*epochs count*/ 3,
 				/*learning rate*/ static_cast<Real>(0.1), /*const func*/CostFunctionId::SQUARED_ERROR,
-				/*regularization*/static_cast<Real>(1.5), [](const auto a, const auto b) {}, /*single threaded*/ true);
+				/*regularization*/static_cast<Real>(1.5), [](const auto a, const auto b) {}, /*parallelism*/ 1);
 
 			Net<CpuDC>::reset_random_generator();
 

@@ -173,7 +173,8 @@ int main(int argc, char** argv)
 		};
 
 		net_to_train.learn(training_data, training_labels, batch_size, epochs_count,
-			learning_rate, cost_func_id, reg_factor, evaluation_action);
+			learning_rate, cost_func_id, reg_factor, evaluation_action,
+			batch_size / 2 /*at least 2 items per one thread*/);
 	}
 
 	const auto stop = std::chrono::system_clock::now();
