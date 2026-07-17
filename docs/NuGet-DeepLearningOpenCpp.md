@@ -160,6 +160,8 @@ For each header-only consumer project:
   synchronization which seems to have a considerable positive impact on
   the performance of the method.
 - `class CumulativeGradient` was removed as it is no longer used.
+- Parallel (2 threads so far) summation of the gradients was implemented in
+  `Net<D>::learn(...)` which improved performance of the method.
 
 ### 2.5.0
 - Full AVX2 support for the `Matrix` class.

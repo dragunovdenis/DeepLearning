@@ -57,6 +57,14 @@ namespace DeepLearning
 		static void allocate_per_thread(const Net& net, std::vector<std::vector<LayerGradient<D>>>& per_thread_gradient_container);
 
 		/// <summary>
+		/// Adds gradients from the gradient container with index <paramref name="source_id"/>
+		/// to the gradient container with index <paramref name="collector_id"/>
+		/// (within the given <paramref name="collection"/>)
+		/// </summary>
+		static void collect(std::vector<std::vector<LayerGradient<D>>>& collection,
+			const std::size_t collector_id, const std::size_t source_id);
+
+		/// <summary>
 		/// Layers of neurons
 		/// </summary>
 		std::vector<LayerHandle<D>> _layers{};

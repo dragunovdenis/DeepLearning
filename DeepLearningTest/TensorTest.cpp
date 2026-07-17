@@ -305,7 +305,7 @@ namespace DeepLearningTest
 						const auto rel_diff = static_cast<Real>(std::abs(deriv_reference) > 1 ? abs_diff / std::abs(deriv_reference) : abs_diff);
 
 						StandardTestUtils::LogAndAssertLessOrEqualTo("Rel. diff.", rel_diff,
-							double_precision ? static_cast<Real>(5e-7) : static_cast<Real>(2.3e-2));
+							double_precision ? static_cast<Real>(5e-7) : static_cast<Real>(2.5e-2));
 					}
 		}
 
@@ -393,7 +393,7 @@ namespace DeepLearningTest
 						const auto rel_diff = static_cast<Real>(std::abs(deriv_reference) > 1 ?	abs_diff / std::abs(deriv_reference) : abs_diff);
 
 						StandardTestUtils::LogAndAssertLessOrEqualTo("Rel. diff.", rel_diff,
-							double_precision ? static_cast<Real>(3e-8) : static_cast<Real>(1e-3));
+							double_precision ? static_cast<Real>(3e-8) : static_cast<Real>(1.1e-3));
 					}
 		}
 

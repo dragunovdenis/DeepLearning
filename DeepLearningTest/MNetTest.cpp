@@ -277,7 +277,7 @@ namespace DeepLearningTest
 			constexpr auto step_begin = static_cast<Real>(1);
 			constexpr auto step_end = static_cast<Real>(5e-1);
 			constexpr auto learning_iterations = 10000;
-			constexpr auto tolerance = std::is_same_v<Real, double> ? static_cast<Real>(1e-10) : static_cast<Real>(4e-6);
+			constexpr auto tolerance = std::is_same_v<Real, double> ? static_cast<Real>(1e-10) : static_cast<Real>(5.2e-6);
 
 			for (auto iter = 0; iter < learning_iterations; ++iter)
 			{

@@ -22,6 +22,7 @@
 #include <exception>
 #include <thread>
 #include <ppl.h>
+#include <barrier>
 #include "../IndexIterator.h"
 #include "../Diagnostics/Logging.h"
 #include <fstream>
@@ -179,6 +180,16 @@ namespace DeepLearning
 	}
 
 	template <class D>
+	void Net<D>::collect(std::vector<std::vector<LayerGradient<D>>>& collection,
+		const std::size_t collector_id, const std::size_t source_id)
+	{
+		auto& collector = collection[collector_id];
+		const auto& source = collection[source_id];
+		for (std::size_t layer_id = 0; layer_id < collector.size(); layer_id++)
+			collector[layer_id] += source[layer_id];
+	}
+
+	template <class D>
 	void Net<D>::learn(const std::vector<typename D::tensor_t>& training_items, const std::vector<typename D::tensor_t>& reference_items,
 		const std::size_t batch_size, const std::size_t epochs_count, const Real learning_rate, const CostFunctionId& cost_func_id,
 		const Real& lambda, const std::function<void(const std::size_t, const Real)>& epoch_callback, const int parallelism)
@@ -193,14 +204,16 @@ namespace DeepLearning
 
 		const auto cost_function = CostFunction<typename D::tensor_t>(cost_func_id);
 
-		const auto physical_cores_count = std::max<int>(1, std::thread::hardware_concurrency());
-		auto threads_to_use = parallelism <= 0 ? physical_cores_count : std::min(parallelism, physical_cores_count);
-		threads_to_use = std::min<std::size_t>(threads_to_use, batch_size); // does not make sense to use more threads than batch size
+		const auto physical_cores_count = std::max<std::size_t>(1u, std::thread::hardware_concurrency());
+		auto threads_to_use = parallelism <= 0 ? physical_cores_count :
+			std::min<std::size_t>(parallelism, physical_cores_count);
+		threads_to_use = std::min(threads_to_use, batch_size); // it does not make sense to use more threads than batch size
 
 		ThreadPool thread_pool(threads_to_use);
 
 		auto context_data = std::vector <Context>(threads_to_use, Context(_layers.size()));
 		auto layer_gradient_data = std::vector<std::vector<LayerGradient<D>>>(threads_to_use);
+		constexpr auto grad_collector_id = 0;
 		allocate_per_thread(*this, layer_gradient_data);
 
 		auto data_index_mapping = get_indices(training_items.size());
@@ -226,39 +239,66 @@ namespace DeepLearning
 				auto current_thread_start_id = batch_start_elem_id;
 				std::size_t job_counter = 0;
 
+				const auto expected_threads_count = (batch_end_elem_id - batch_start_elem_id + items_per_thread - 1) / items_per_thread;
+				std::barrier sync(expected_threads_count);
+
 				while (current_thread_start_id < batch_end_elem_id)
 				{
 					const auto current_thread_end_id = std::min(current_thread_start_id + items_per_thread, batch_end_elem_id);
 
-					thread_pool.queue_job([&, current_thread_start_id, current_thread_end_id, job_counter]
+					thread_pool.queue_job([&, current_thread_start_id, current_thread_end_id,
+						job_counter, expected_threads_count]
 					{
-							const auto job_id = job_counter;
-							auto& context = context_data[job_id];
-							auto& aux_data = context.gradient_cache;
-							auto& e_data = context.value_cache;
-							auto& back_prop_out = layer_gradient_data[job_id];
-							for (auto elem_id = current_thread_start_id; elem_id < current_thread_end_id; elem_id++)
+						const auto job_id = job_counter;
+						auto& context = context_data[job_id];
+						auto& aux_data = context.gradient_cache;
+						auto& e_data = context.value_cache;
+						auto& back_prop_out = layer_gradient_data[job_id];
+						for (auto elem_id = current_thread_start_id; elem_id < current_thread_end_id; elem_id++)
+						{
+							const auto accum_factor = elem_id == current_thread_start_id ? static_cast<Real>(0.0) : static_cast<Real>(1.0);
+							const auto input_item_id = data_index_mapping[elem_id];
+							const auto& input = training_items[input_item_id];
+							const auto& reference = reference_items[input_item_id];
+							act_bpg(input, context);
+							cost_function.deriv_in_place(e_data.out(), reference);
+
+							//Back-propagate through all the layers
+							for (long long layer_id = _layers.size() - 1; layer_id >= 0; --layer_id)
 							{
-								const auto accum_factor = elem_id == current_thread_start_id ? static_cast<Real>(0.0) : static_cast<Real>(1.0);
-								const auto input_item_id = data_index_mapping[elem_id];
-								const auto& input = training_items[input_item_id];
-								const auto& reference = reference_items[input_item_id];
-								act_bpg(input, context);
-								cost_function.deriv_in_place(e_data.out(), reference);
+								e_data.swap();
+								_layers[layer_id].layer().backpropagate(e_data.in(), aux_data[layer_id],
+									e_data.out(), back_prop_out[layer_id], 
+									layer_id != 0, accum_factor);
 
-								//Back-propagate through all the layers
-								for (long long layer_id = _layers.size() - 1; layer_id >= 0; --layer_id)
-								{
-									e_data.swap();
-									_layers[layer_id].layer().backpropagate(e_data.in(), aux_data[layer_id],
-										e_data.out(), back_prop_out[layer_id], 
-										layer_id != 0, accum_factor);
-
-									if (layer_id != 0)
-										_layers[layer_id].layer().ApplyDropout(e_data.out(), true);
-								}
+								if (layer_id != 0)
+									_layers[layer_id].layer().ApplyDropout(e_data.out(), true);
 							}
-						});
+						}
+
+						if (job_id == 0 || job_id == 1)
+						{
+							const auto coll_id = job_id == 0 ? grad_collector_id : expected_threads_count / 2;
+							const auto coll_start = job_id == 0 ? grad_collector_id + 1 : expected_threads_count / 2 + 1;
+							const auto coll_end = job_id == 0 ? expected_threads_count / 2 : expected_threads_count;
+
+							sync.arrive_and_wait();
+							for (auto i = coll_start; i < coll_end; ++i)
+								collect(layer_gradient_data, coll_id, i);
+
+							if (job_id == 0 && expected_threads_count / 2 != 0)
+							{
+								sync.arrive_and_wait();
+								collect(layer_gradient_data, grad_collector_id, expected_threads_count / 2);
+							}
+							else
+								(void)sync.arrive();
+						}
+						else
+						{
+							sync.arrive_and_drop();
+						}
+					});
 
 					current_thread_start_id = current_thread_end_id;
 					++job_counter;
@@ -266,14 +306,7 @@ namespace DeepLearning
 
 				thread_pool.wait_all_jobs_done();
 
-				auto& gradient_collector = layer_gradient_data[0];
-				for (auto job_id = 1ull; job_id < job_counter; ++job_id)
-				{
-					const auto& current_gradient = layer_gradient_data[job_id];
-					for (std::size_t layer_id = 0; layer_id < _layers.size(); layer_id++)
-						gradient_collector[layer_id] += current_gradient[layer_id];
-				}
-
+				const auto& gradient_collector = layer_gradient_data[grad_collector_id];
 				const auto grad_norm_factor = static_cast<Real>(1) / (batch_end_elem_id - batch_start_elem_id);
 
 				batch_start_elem_id = batch_end_elem_id;

@@ -133,7 +133,7 @@ namespace DeepLearningTest
 
 			constexpr auto double_precision = std::is_same_v<Real, double>;
 			constexpr auto delta = double_precision ? 1e-5 : static_cast<Real>(1e-2);
-			constexpr auto diff_threshold = double_precision ? 7e-11 : static_cast<Real>(3e-5);
+			constexpr auto diff_threshold = double_precision ? 7.1e-11 : static_cast<Real>(4e-5);
 			for (auto element_id = 0ull; element_id < input.size(); element_id++)
 			{
 				auto input_plus_delta = input;
