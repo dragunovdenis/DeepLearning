@@ -95,6 +95,9 @@ int main(int argc, char** argv)
 		"Transformations to construct extra training data {`rotation angle around image center`, `translation X`, `translation Y`}", false, "", "string");
 	cmd.add(transform_arg);
 
+	auto parallel_arg = TCLAP::ValueArg<int>("p", "parallel", "Number of threads to do the training", false, -1, "integer");
+	cmd.add(parallel_arg);
+
 	cmd.parse(argc, argv);
 
 	const auto batch_size = minibatch_arg.getValue();
@@ -103,6 +106,7 @@ int main(int argc, char** argv)
 	const auto reg_factor = reg_factor_arg.getValue();
 	const auto cost_func_id = parse_cost_type(cost_func_arg.getValue());
 	const auto transformations = Utils::extract_vectors<Vector3d<Real>>(transform_arg.getValue());
+	const auto parallel_threads = parallel_arg.getValue();
 
 	if (cost_func_id == CostFunctionId::UNKNOWN)
 	{
@@ -127,6 +131,7 @@ int main(int argc, char** argv)
 		"Learning rate : " + Utils::to_string(learning_rate) + "\n" +
 		"Regularization factor : " + Utils::to_string(reg_factor) + "\n" +
 		"Cost function : " + to_string(cost_func_id) + "\n" +
+		"Parallel threads: " + std::to_string(parallel_threads) + "\n" +
 		"Transformations :\n" + Utils::to_string(transformations) + "\n" +
 		"Net architecture: " + "\n" + net_to_train.to_string() + "\n";
 
@@ -173,8 +178,7 @@ int main(int argc, char** argv)
 		};
 
 		net_to_train.learn(training_data, training_labels, batch_size, epochs_count,
-			learning_rate, cost_func_id, reg_factor, evaluation_action,
-			batch_size /*at least 1 item per one thread*/);
+			learning_rate, cost_func_id, reg_factor, evaluation_action, parallel_threads);
 	}
 
 	const auto stop = std::chrono::system_clock::now();
